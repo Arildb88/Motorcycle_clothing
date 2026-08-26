@@ -14,6 +14,7 @@ An app that checks the weather along your motorcycle routes and recommends what 
 - Saved routes with a default **normal commute**
 - Live weather for the route (MET Norway / yr.no forecasts + real station temperatures via Frost)
 - Clothing recommendations that improve from your ride feedback
+- Small, non-intrusive banner ads for income (not blocking core actions)
 - Local + shared test/staging environments
 
 ## Documentation

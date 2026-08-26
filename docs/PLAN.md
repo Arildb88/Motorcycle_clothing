@@ -27,6 +27,7 @@ A cross-platform mobile app (Android + iPhone) that recommends motorcycle clothi
 | Comfort | User-tunable thresholds for gloves, extra jacket/pants layer, wool base layers |
 | Recommendation | “What to wear” for selected route + departure time |
 | Feedback | After ride: too cold / OK / too warm (+ optional notes) |
+| Ads | Small, non-intrusive banner for income (see §8.1) |
 | Environments | Local + shared **test/staging** + production |
 
 ### 2.2 Should-have (v1.1)
@@ -43,6 +44,7 @@ A cross-platform mobile app (Android + iPhone) that recommends motorcycle clothi
 - Offline last-known recommendation
 - Advanced personalization ML (beyond per-user offsets)
 - Wearable / connected-gear integrations
+- Optional “remove ads” / supporter unlock (only if ads feel necessary long-term)
 
 ---
 
@@ -243,6 +245,45 @@ weather_cache
 
 Design principle: first screen after login = brand + today’s commute recommendation, not a dashboard of widgets.
 
+### 8.1 Monetization — small ad block
+
+Goal: modest income without blocking the ride-prep flow.
+
+**Provider:** Google **AdMob** (standard Flutter plugin; works on Android + iOS). One mediation setup is enough for MVP.
+
+**Ad format (MVP):** anchored **banner only** (typically ~50–60 dp / ~320×50). No full-screen interstitials, no rewarded video, no ads on login, and no ads that cover CTAs or map controls.
+
+**Placement rules (keep it out of the way):**
+
+| Allowed | Not allowed |
+|---------|-------------|
+| Thin banner pinned to the **bottom** of secondary screens: Routes list, Profile, Comfort settings | Overlay on the clothing recommendation or primary CTA |
+| Optional: bottom of Home **below** the fold / after the recommendation content (never competing with “what to wear”) | Interstitial when opening the app or before viewing weather |
+| Fail silently if ad fails to load (no empty grey box) | Auto-playing video / expandable takeovers |
+
+**UX constraints:**
+
+- Single banner slot max per screen; never stack ads.
+- Reserve a fixed small height so content doesn’t jump when the ad loads.
+- High contrast outdoor UI remains readable; ad stays visually secondary (no glow, no fake “card promo” framing around core content).
+- Safe for quick glove use: banner is not a required tap target for any core action.
+
+**Privacy / compliance:**
+
+- Show a consent / ATT flow where required (GDPR/EEA, Apple App Tracking Transparency).
+- Privacy policy must mention AdMob / advertising identifiers.
+- Prefer non-personalized ads until consent is granted.
+
+**Environments:**
+
+| Env | Ads behavior |
+|-----|----------------|
+| local / CI | Ads **off** or AdMob **test unit IDs** only |
+| staging | Test unit IDs |
+| production | Real AdMob unit IDs |
+
+Config via Flutter flavors / remote config flags: `ADS_ENABLED`, `ADMOB_BANNER_ID`.
+
 ---
 
 ## 9. Environments & testing
@@ -297,20 +338,22 @@ Android Studio run configurations for `dev` and `prod`.
 - Rule engine + explanation text
 - Feedback capture + personal bias updates
 
-### Phase 3 — Real observations & polish
+### Phase 3 — Real observations, ads & polish
 - Frost nearest-station temps
 - Departure-time picker, notifications
+- AdMob banner slot on secondary screens (test IDs in staging)
 - Hardening, analytics, store readiness (Play + App Store)
 
 ---
 
 ## 11. Non-functional requirements
 
-- **Privacy:** location and routes are sensitive; minimize retention; clear privacy policy  
+- **Privacy:** location and routes are sensitive; minimize retention; clear privacy policy (include ads/ATT where required)  
 - **MET terms:** identify app with unique User-Agent; cache aggressively; no abusive polling  
 - **Security:** secrets only on server; OAuth correctly configured per platform  
-- **Performance:** recommendation on home screen &lt; ~2s with warm cache  
+- **Performance:** recommendation on home screen &lt; ~2s with warm cache; ads must not block first paint of recommendation  
 - **Accessibility:** large tap targets for gloved use; high contrast outdoor readability  
+- **Monetization:** banner-only ads; never interrupt the core “what to wear” path  
 
 ---
 
@@ -323,6 +366,8 @@ Android Studio run configurations for `dev` and `prod`.
 | OAuth app review (Facebook) | Start early; use email login as fallback in test |
 | Overfitting comfort model | Bound learning steps; keep manual override of thresholds |
 | Route sampling cost | Cache by geohash + TTL; limit samples for short routes |
+| Ads annoying riders | Banner only, secondary screens, no interstitials; consider optional remove-ads later |
+| Store policy / privacy | Consent + ATT; AdMob test IDs in non-prod; declare ads in store listings |
 
 ---
 
@@ -333,7 +378,8 @@ Android Studio run configurations for `dev` and `prod`.
 3. Implement auth + profile.  
 4. Wire MET Locationforecast behind the API with fixtures.  
 5. Ship routes + default commute + first recommendation UI.  
-6. Add comfort sliders + feedback loop.
+6. Add comfort sliders + feedback loop.  
+7. Add AdMob banner on secondary screens (test IDs first).
 
 ---
 
