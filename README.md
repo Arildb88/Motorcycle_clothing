@@ -25,11 +25,19 @@ docker-compose.yml  Optional Postgres/Redis/API stack
 
 ```bash
 cd apps/api
-cp .env.example .env   # or use the committed .env for local mock weather
 npm install
+npm run setup:env          # copies .env.example → .env (required once)
 npx prisma migrate dev
 npm run start:dev
 ```
+
+Or in one go after `npm install`:
+
+```bash
+npm run prisma:migrate && npm run start:dev
+```
+
+> If you see `Environment variable not found: DATABASE_URL`, run `npm run setup:env` (or `cp .env.example .env`) and retry. `.env` is gitignored on purpose.
 
 Health: `GET http://localhost:3000/api/health`
 
