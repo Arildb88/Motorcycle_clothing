@@ -2,6 +2,18 @@
 
 Cross-platform app (Android + iPhone) that recommends motorcycle clothing from route weather and your personal comfort zone.
 
+## Start here (Windows)
+
+**Idiot-proof guide:** [QUICKSTART.md](QUICKSTART.md)
+
+```bash
+# Terminal 1 — API
+./scripts/start-api.sh
+
+# Terminal 2 — Android (emulator must already be running)
+./scripts/start-android.sh
+```
+
 ## Structure
 
 ```
