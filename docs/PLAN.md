@@ -1,5 +1,11 @@
 # Motorcycle Clothing App — Product & Technical Plan
 
+## Status
+
+**MVP scaffolding implemented** in `apps/api` (NestJS) and `apps/mobile` (Flutter). See repository README for run instructions. This plan remains the product source of truth for upcoming phases (live MET default, richer maps, store release).
+
+---
+
 ## 1. Vision
 
 A cross-platform mobile app (Android + iPhone) that recommends motorcycle clothing for a chosen route based on live weather, the rider’s personal comfort zone, and feedback over time.

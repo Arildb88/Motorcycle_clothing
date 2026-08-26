@@ -1,34 +1,43 @@
-# Gradle files
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build
+**/dist/
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/coverage/
+
+# Flutter/Android
 .gradle/
-build/
-
-# Local configuration file (sdk path, etc)
 local.properties
-
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
-
-# IntelliJ
 *.iml
 .idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
-
-# Keystore files
+*.apk
+*.aab
 *.jks
 *.keystore
+captures/
+.cxx/
+.externalNativeBuild/
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
+# Env & data
+.env
+.env.local
+*.db
+*.db-journal
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
 
-# Android Profiling
-*.hprof
+# Logs / OS
+*.log
+.DS_Store
+
+# Motorcycle Clothing / RideWear skills clutter from Prisma init
+apps/api/.agents/
+apps/api/.claude/
+apps/api/.windsurf/
+apps/api/skills-lock.json
+

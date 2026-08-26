@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  passwordHash String?
+  displayName  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  authProviders   AuthProvider[]
+  profile         Profile?
+  comfortSettings ComfortSettings?
+  routes          Route[]
+  feedback        RideFeedback[]
+}
+
+model AuthProvider {
+  id             String   @id @default(cuid())
+  userId         String
+  provider       String
+  providerUserId String
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+}
+
+model Profile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  homeLat        Float?
+  homeLon        Float?
+  units          String  @default("celsius")
+  defaultRouteId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ComfortSettings {
+  id                       String @id @default(cuid())
+  userId                   String @unique
+  glovesBelowC             Float  @default(10)
+  extraJacketLayerBelowC   Float  @default(12)
+  extraPantsLayerBelowC    Float  @default(8)
+  woolBaseBelowC           Float  @default(5)
+  rainProbThreshold        Float  @default(40)
+  windChillSensitivity     String @default("medium")
+  personalColdBiasC        Float  @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Route {
+  id                 String   @id @default(cuid())
+  userId             String
+  name               String
+  isDefaultCommute   Boolean  @default(false)
+  startLat           Float
+  startLon           Float
+  startLabel         String?
+  endLat             Float
+  endLon             Float
+  endLabel           String?
+  waypointsJson      String   @default("[]")
+  typicalDurationMin Int      @default(30)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedback RideFeedback[]
+}
+
+model RideFeedback {
+  id                   String   @id @default(cuid())
+  userId               String
+  routeId              String?
+  departureAt          DateTime
+  weatherSnapshotJson  String
+  recommendationJson   String
+  rating               String
+  wornItemsJson        String   @default("[]")
+  notes                String?
+  createdAt            DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route Route? @relation(fields: [routeId], references: [id], onDelete: SetNull)
+}
+
+model WeatherCache {
+  id         String   @id @default(cuid())
+  cacheKey   String   @unique
+  payloadJson String
+  validUntil DateTime
+  createdAt  DateTime @default(now())
+}
