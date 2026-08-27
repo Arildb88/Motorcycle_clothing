@@ -38,7 +38,25 @@ git pull
 
 ---
 
-## 1) Start the API (Git Bash window #1)
+## 1) Get the latest code (important)
+
+If `./scripts/start-api.sh` says **No such file or directory**, you need the latest commits:
+
+```bash
+cd ~/source/repos/Motorcycle_clothing
+git pull
+```
+
+You should then have a `scripts` folder with `start-api.sh` and `start-api.bat`.
+
+---
+
+## 2) Start the API
+
+**Option A — double-click (easiest on Windows)**  
+In File Explorer go to `Motorcycle_clothing\scripts\` and double-click **`start-api.bat`**
+
+**Option B — Git Bash window #1**
 
 ```bash
 cd ~/source/repos/Motorcycle_clothing
@@ -59,9 +77,14 @@ You should see `"status":"ok"`.
 
 ---
 
-## 2) Start the Android app (Git Bash window #2)
+## 3) Start the Android app
 
 Make sure the **emulator is already running** in Android Studio.
+
+**Option A — double-click**  
+Double-click **`scripts\start-android.bat`**
+
+**Option B — Git Bash window #2**
 
 ```bash
 cd ~/source/repos/Motorcycle_clothing
@@ -73,7 +96,7 @@ When it finishes, RideWear opens on the emulator.
 
 ---
 
-## 3) Use the app
+## 4) Use the app
 
 1. Tap **Register** → enter name, email, password (min 8 chars) → **Create account**  
    *(or tap Facebook / Microsoft — demo login works in local mode)*
@@ -88,6 +111,7 @@ When it finishes, RideWear opens on the emulator.
 
 | Problem | Fix |
 |--------|-----|
+| `No such file or directory` for start script | Run `git pull` from repo root, or use the manual commands below |
 | `DATABASE_URL` not found | Run `cd apps/api && npm run setup:env` then start API again |
 | `flutter: command not found` | Install Flutter and reopen Git Bash; run `flutter doctor` |
 | `No devices found` | Start an emulator in Android Studio Device Manager first |
