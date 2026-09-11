@@ -66,26 +66,6 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> _oauth(String provider) async {
-    setState(() => _busy = true);
-    final auth = context.read<AuthState>();
-    try {
-      // Demo tokens work in non-production API when OAuth apps are not configured.
-      await auth.oauth(
-        provider: provider,
-        accessToken: 'demo:$provider-rider',
-      );
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(auth.error ?? 'OAuth failed')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AtmosphereBackground(
@@ -142,30 +122,6 @@ class _LoginScreenState extends State<LoginScreen>
                         ? 'Have an account? Sign in'
                         : 'New here? Register',
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Or continue with',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.8)),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _busy ? null : () => _oauth('facebook'),
-                        child: const Text('Facebook'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _busy ? null : () => _oauth('microsoft'),
-                        child: const Text('Microsoft'),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),

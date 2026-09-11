@@ -37,17 +37,15 @@ API (NestJS)
 
 | Module | Responsibility |
 |--------|----------------|
-| `auth` | Register/login, JWT |
+| `auth` | Register/login, JWT (email). OAuth route retained as deferred hook |
 | `users` | Profile, motorcycle profile, sensitivity |
-| `wardrobe` | Garments CRUD |
+| `wardrobe` | Garments CRUD + demo seed (M2) |
 | `places` / `routes` | Saved locations & simple routes |
-| `plans` | ActivityPlan create/read |
+| `plans` | ActivityPlan create/read (**tables ready; API in M4**) |
 | `weather` | Fetch + normalize + cache forecasts |
-| `recommend` | Build recommendation from plan + wardrobe + priors |
-| `feedback` | Post-activity feedback + prior updates |
+| `recommend` | Spike shim until M3; demand engine next |
+| `feedback` | Persist ActivityLog/Feedback; full learning in M5 |
 | `privacy` | Delete activity / account |
-
-Current repo modules (`routes`, `comfort`, `recommend`, `feedback`, `weather`, `auth`, `users`) map into this; `comfort` threshold fields should shrink as the engine moves to warmth-demand + priors.
 
 ---
 
@@ -189,13 +187,14 @@ PersonalOffset
 
 | Old | New |
 |-----|-----|
-| `ComfortSettings` thresholds | Seed defaults into engine config; user sensitivity → `UserProfile.coldSensitivity` |
-| `personalColdBiasC` | Migrate into `PersonalOffset(overall)` |
-| `RideFeedback` | `ActivityLog` + `ActivityFeedback` |
-| `Route` | Keep; extend with places/waypoints |
-| Boolean recommend items | `RecommendationItem` rows / structured JSON |
+| `ComfortSettings` thresholds | Removed; sensitivity → `UserProfile.coldSensitivity`; engine defaults live in code until M3 |
+| `personalColdBiasC` | `PersonalOffset(overall)` with shrinkage fields `n`, `meanResidual` |
+| `RideFeedback` | `ActivityLog` + `ActivityFeedback` (+ `BodyAreaFeedback`) |
+| `Profile` | `UserProfile` |
+| `Route` | Kept; extended relations to plans/logs |
+| Boolean recommend items | Spike shim until M3; structured `Recommendation` / `RecommendationItem` tables ready |
 
-Do this in **M1** with Prisma migrate; keep read compatibility shims only if the Flutter app would otherwise break mid-milestone.
+**M1 applied:** migration `20260911084843_m1_domain_foundations`. Wardrobe module owns garment CRUD; category → layer/zone defaults in `apps/api/src/domain`.
 
 ---
 

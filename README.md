@@ -26,14 +26,15 @@ Cross-platform app (Android + iPhone) that recommends outdoor clothing from weat
 ```
 apps/api      NestJS API (auth, routes, weather, recommendations, feedback)
 apps/mobile   Flutter app (Android + iOS)
-PROJECT_PLAN.md   Product + MVP roadmap (source of truth)
+PROJECT_PLAN.md   Product + MVP roadmap (source of truth) — M1/M2 done
 ARCHITECTURE.md   Technical architecture (source of truth)
+DEVELOPMENT_NOTES.md  M1/M2 implementation notes / debt
 docs/PLAN.md      Older motorcycle-first plan (historical)
 scripts/      Smoke tests + start helpers
 docker-compose.yml  Optional Postgres/Redis/API stack
 ```
 
-> **Note:** The running code is still the motorcycle **spike**. New work should follow `PROJECT_PLAN.md` milestones (wardrobe, demand-based engine, gated personalization) rather than extending boolean comfort thresholds.
+> **Note:** M1/M2 delivered domain foundations + wardrobe. `/api/recommend` is still a **baseline spike shim** until M3. Ads off; email auth only in the UI.
 
 ## Features (MVP)
 

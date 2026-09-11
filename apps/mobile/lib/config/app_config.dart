@@ -7,7 +7,7 @@ class AppConfig {
   /// Android emulator → host machine. iOS simulator uses localhost.
   static const bool adsEnabled = bool.fromEnvironment(
     'ADS_ENABLED',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   /// AdMob test banner (safe for staging / local).

@@ -15,11 +15,15 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  authProviders   AuthProvider[]
-  profile         Profile?
-  comfortSettings ComfortSettings?
-  routes          Route[]
-  feedback        RideFeedback[]
+  authProviders     AuthProvider[]
+  profile           UserProfile?
+  motorcycleProfile MotorcycleProfile?
+  garments          Garment[]
+  places            Place[]
+  routes            Route[]
+  activityPlans     ActivityPlan[]
+  activityLogs      ActivityLog[]
+  personalOffsets   PersonalOffset[]
 }
 
 model AuthProvider {
@@ -34,27 +38,68 @@ model AuthProvider {
   @@unique([provider, providerUserId])
 }
 
-model Profile {
-  id             String  @id @default(cuid())
-  userId         String  @unique
-  homeLat        Float?
-  homeLon        Float?
-  units          String  @default("celsius")
-  defaultRouteId String?
+/// Rider preferences (named UserProfile in architecture).
+model UserProfile {
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  homeLat         Float?
+  homeLon         Float?
+  units           String  @default("celsius")
+  defaultRouteId  String?
+  /// -1 colder than average, 0 average, +1 runs warmer
+  coldSensitivity Int     @default(0)
+  /// Optional 0–3; unused in M1/M2 UX
+  sweatTendency   Int?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model ComfortSettings {
-  id                       String @id @default(cuid())
-  userId                   String @unique
-  glovesBelowC             Float  @default(10)
-  extraJacketLayerBelowC   Float  @default(12)
-  extraPantsLayerBelowC    Float  @default(8)
-  woolBaseBelowC           Float  @default(5)
-  rainProbThreshold        Float  @default(40)
-  windChillSensitivity     String @default("medium")
-  personalColdBiasC        Float  @default(0)
+model MotorcycleProfile {
+  id             String @id @default(cuid())
+  userId         String @unique
+  /// naked|sport|touring|adventure|cruiser|scooter
+  category       String @default("naked")
+  /// none|low|medium|high — architecture hook for windscreen fidelity later
+  windProtection String @default("low")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Garment {
+  id                 String   @id @default(cuid())
+  userId             String
+  name               String
+  /// See GarmentCategory domain enum
+  category           String
+  /// base|mid|outer|accessory
+  layer              String
+  /// torso|legs|hands|feet|head|neck|full_body
+  primaryBodyZone    String
+  /// Ordinal 1–5 (not clo)
+  warmthTier         Int      @default(3)
+  windResistTier     Int      @default(2)
+  waterResistTier    Int      @default(1)
+  breathabilityTier  Int      @default(3)
+  brand              String?
+  model              String?
+  notes              String?
+  /// JSON string array of ActivityType values
+  activityTagsJson   String   @default("[\"motorcycle\"]")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+}
+
+model Place {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  lat       Float
+  lon       Float
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -75,30 +120,135 @@ model Route {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  feedback RideFeedback[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityLogs ActivityLog[]
+  plans        ActivityPlan[]
 }
 
-model RideFeedback {
+model ActivityPlan {
+  id           String   @id @default(cuid())
+  userId       String
+  /// ActivityType; MVP uses motorcycle
+  activityType String   @default("motorcycle")
+  routeId      String?
+  departureAt  DateTime
+  durationMin  Int
+  intensity    String?
+  snapshotJson String   @default("{}")
+  createdAt    DateTime @default(now())
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route            Route?            @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  weatherSnapshot  WeatherSnapshot?
+  recommendation   Recommendation?
+  activityLog      ActivityLog?
+}
+
+model WeatherSnapshot {
+  id          String   @id @default(cuid())
+  planId      String   @unique
+  provider    String
+  payloadJson String
+  createdAt   DateTime @default(now())
+
+  plan ActivityPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
   id                   String   @id @default(cuid())
-  userId               String
-  routeId              String?
-  departureAt          DateTime
-  weatherSnapshotJson  String
-  recommendationJson   String
-  rating               String
-  wornItemsJson        String   @default("[]")
-  notes                String?
+  planId               String   @unique
+  /// low|medium|high
+  confidence           String   @default("low")
+  confidenceScore      Float?
+  summaryJson          String   @default("{}")
+  reasonsJson          String   @default("[]")
+  /// baseline vs personal evidence metadata for explainability
+  personalizationJson  String   @default("{}")
   createdAt            DateTime @default(now())
 
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  route Route? @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  plan  ActivityPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  items RecommendationItem[]
+}
+
+model RecommendationItem {
+  id               String  @id @default(cuid())
+  recommendationId String
+  /// RecommendationSlot
+  slot             String
+  /// wear|pack
+  mode             String
+  garmentId        String?
+  genericLabel     String?
+
+  recommendation Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id                 String   @id @default(cuid())
+  userId             String
+  planId             String?  @unique
+  routeId            String?
+  startedAt          DateTime
+  durationMin        Int?
+  wornGarmentIdsJson String   @default("[]")
+  weatherSummaryJson String   @default("{}")
+  /// Spike-era recommendation payload retained until M3/M5 fully replace home feedback
+  recommendationJson String   @default("{}")
+  createdAt          DateTime @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan     ActivityPlan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  route    Route?            @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  feedback ActivityFeedback?
+}
+
+model ActivityFeedback {
+  id            String   @id @default(cuid())
+  activityLogId String   @unique
+  /// -2..+2 (much too cold … much too warm)
+  overallRating Int
+  /// 0–3 optional
+  sweatLevel    Int?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  activityLog ActivityLog         @relation(fields: [activityLogId], references: [id], onDelete: Cascade)
+  bodyAreas   BodyAreaFeedback[]
+}
+
+model BodyAreaFeedback {
+  id         String @id @default(cuid())
+  feedbackId String
+  /// BodyZone (not full_body for feedback)
+  zone       String
+  /// -2..+2
+  rating     Int
+
+  feedback ActivityFeedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@unique([feedbackId, zone])
+}
+
+/// Shrinkage state per user × activity × zone. Empty until feedback accumulates.
+model PersonalOffset {
+  id           String   @id @default(cuid())
+  userId       String
+  activityType String
+  /// overall | torso | hands | legs | feet | head | neck
+  zone         String
+  n            Float    @default(0)
+  meanResidual Float    @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, activityType, zone])
 }
 
 model WeatherCache {
-  id         String   @id @default(cuid())
-  cacheKey   String   @unique
+  id          String   @id @default(cuid())
+  cacheKey    String   @unique
   payloadJson String
-  validUntil DateTime
-  createdAt  DateTime @default(now())
+  validUntil  DateTime
+  createdAt   DateTime @default(now())
 }

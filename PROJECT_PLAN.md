@@ -1,9 +1,10 @@
 # PROJECT PLAN — Personalized Outdoor Clothing Recommendations
 
-**Status:** Planning (this document is the source of truth for upcoming work)  
+**Status:** M1 + M2 implemented (domain foundations + wardrobe). Stopped before M3.  
 **Date:** 2026-09-11  
+**Product decisions locked:** motorcycle-only MVP; defer social OAuth; defer ads.  
 **Supersedes for product direction:** `docs/PLAN.md` (kept as historical motorcycle-first scaffold notes)  
-**Companion:** [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+**Companion:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`DEVELOPMENT_NOTES.md`](./DEVELOPMENT_NOTES.md)
 
 ---
 
@@ -294,18 +295,18 @@ UI rule: **personal phrasing only if confidence ≥ medium and n≥3 in relevant
 
 Each milestone should be **demoable and verifiable** before the next.
 
-| # | Milestone | Verify |
-|---|-----------|--------|
-| **M0** | Align docs + freeze MVP scope (this plan) | Stakeholders agree motorcycle-only MVP |
-| **M1** | Domain migration foundations | New Prisma models for ActivityPlan, Garment, Feedback zones; keep app compiling |
-| **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics fallback |
-| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response |
-| **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) |
-| **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated |
-| **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK |
-| **M7** | Segment weather v1 | 3–5 samples along route with ETA; duration weighting visible in “why” |
-| **M8** | Privacy + delete | Delete activity; export/delete account basics |
-| **M9** | Hardening | Postgres staging, CI coverage for engine, QUICKSTART update |
+| # | Milestone | Verify | Status |
+|---|-----------|--------|--------|
+| **M0** | Align docs + freeze MVP scope (this plan) | Stakeholders agree motorcycle-only MVP | Done |
+| **M1** | Domain migration foundations | New Prisma models for ActivityPlan, Garment, Feedback zones; keep app compiling | **Done** |
+| **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics/demo seed | **Done** |
+| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next |
+| **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Pending |
+| **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
+| **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK | Pending |
+| **M7** | Segment weather v1 | 3–5 samples along route with ETA; duration weighting visible in “why” | Pending |
+| **M8** | Privacy + delete | Delete activity; export/delete account basics | Pending |
+| **M9** | Hardening | Postgres staging, CI coverage for engine, QUICKSTART update | Pending |
 
 **Stop after M5** for first user tests if possible — that is the personalization hypothesis gate.
 
@@ -344,17 +345,15 @@ Each milestone should be **demoable and verifiable** before the next.
 
 ## 14. Open decisions (only the important ones)
 
-These are worth a brief yes/no from you before M1 coding:
+Locked 2026-09-11:
 
-1. **Confirm motorcycle-only MVP** (recommended: yes).
-2. **Defer OAuth social logins** (recommended: yes).
-3. **Defer ads** (recommended: yes).
-4. **App name:** keep RideWear vs rename for multi-sport future (e.g. Layerwise) — cosmetic, decide anytime before store listing.
-
-Everything else in this plan can proceed without further questions.
+1. **Motorcycle-only MVP** — yes.
+2. **Defer OAuth social logins** — yes (API hooks retained; UI removed).
+3. **Defer ads** — yes (`ADS_ENABLED` defaults false).
+4. **App name:** keep RideWear vs rename for multi-sport future — still open before store listing.
 
 ---
 
-## 15. Next step after approval
+## 15. Next step
 
-Implement **M1 → M2** only: migrate domain foundations + wardrobe MVP, with tests, then pause for verification before the new recommendation engine (M3).
+**M3 only:** demand-based recommendation engine (pure domain package), wardrobe matching, explainability + confidence — without starting M4 UI polish beyond what’s required to call the new API.

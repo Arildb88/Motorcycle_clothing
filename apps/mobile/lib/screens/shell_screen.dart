@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:motorcycle_clothing/screens/comfort_screen.dart';
+import 'package:motorcycle_clothing/features/wardrobe/wardrobe_screen.dart';
 import 'package:motorcycle_clothing/screens/home_screen.dart';
 import 'package:motorcycle_clothing/screens/profile_screen.dart';
 import 'package:motorcycle_clothing/screens/routes_screen.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
+import 'package:motorcycle_clothing/config/app_config.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -19,7 +20,7 @@ class _ShellScreenState extends State<ShellScreen> {
   static const _pages = [
     HomeScreen(),
     RoutesScreen(),
-    ComfortScreen(),
+    WardrobeScreen(),
     ProfileScreen(),
   ];
 
@@ -38,7 +39,7 @@ class _ShellScreenState extends State<ShellScreen> {
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_index != 0) const AdBannerSlot(),
+            if (AppConfig.adsEnabled && _index != 0) const AdBannerSlot(),
             NavigationBar(
               selectedIndex: _index,
               backgroundColor: Colors.white.withValues(alpha: 0.85),
@@ -56,9 +57,9 @@ class _ShellScreenState extends State<ShellScreen> {
                   label: 'Routes',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.thermostat_outlined),
-                  selectedIcon: Icon(Icons.thermostat),
-                  label: 'Comfort',
+                  icon: Icon(Icons.checkroom_outlined),
+                  selectedIcon: Icon(Icons.checkroom),
+                  label: 'Wardrobe',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.person_outline),

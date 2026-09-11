@@ -4,7 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RoutesModule } from './routes/routes.module';
-import { ComfortModule } from './comfort/comfort.module';
+import { WardrobeModule } from './wardrobe/wardrobe.module';
 import { WeatherModule } from './weather/weather.module';
 import { RecommendModule } from './recommend/recommend.module';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -17,7 +17,7 @@ import { HealthController } from './health.controller';
     AuthModule,
     UsersModule,
     RoutesModule,
-    ComfortModule,
+    WardrobeModule,
     WeatherModule,
     RecommendModule,
     FeedbackModule,

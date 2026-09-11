@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { MVP_ACTIVITY_TYPE } from '../domain';
 
 @Injectable()
 export class UsersService {
@@ -16,8 +17,16 @@ export class UsersService {
         email: input.email,
         displayName: input.displayName,
         passwordHash: input.passwordHash,
-        profile: { create: {} },
-        comfortSettings: { create: {} },
+        profile: { create: { coldSensitivity: 0 } },
+        motorcycleProfile: { create: {} },
+        personalOffsets: {
+          create: {
+            activityType: MVP_ACTIVITY_TYPE,
+            zone: 'overall',
+            n: 0,
+            meanResidual: 0,
+          },
+        },
         authProviders: {
           create: {
             provider: 'local',
@@ -38,8 +47,16 @@ export class UsersService {
       data: {
         email: input.email,
         displayName: input.displayName,
-        profile: { create: {} },
-        comfortSettings: { create: {} },
+        profile: { create: { coldSensitivity: 0 } },
+        motorcycleProfile: { create: {} },
+        personalOffsets: {
+          create: {
+            activityType: MVP_ACTIVITY_TYPE,
+            zone: 'overall',
+            n: 0,
+            meanResidual: 0,
+          },
+        },
         authProviders: {
           create: {
             provider: input.provider,
@@ -55,8 +72,9 @@ export class UsersService {
       where: { id: userId },
       include: {
         profile: true,
-        comfortSettings: true,
+        motorcycleProfile: true,
         authProviders: { select: { provider: true } },
+        personalOffsets: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -76,15 +94,33 @@ export class UsersService {
               homeLon: dto.homeLon,
               units: dto.units ?? 'celsius',
               defaultRouteId: dto.defaultRouteId,
+              coldSensitivity: dto.coldSensitivity ?? 0,
             },
             update: {
               homeLat: dto.homeLat,
               homeLon: dto.homeLon,
               units: dto.units,
               defaultRouteId: dto.defaultRouteId,
+              coldSensitivity: dto.coldSensitivity,
             },
           },
         },
+        motorcycleProfile:
+          dto.motorcycleCategory !== undefined ||
+          dto.windProtection !== undefined
+            ? {
+                upsert: {
+                  create: {
+                    category: dto.motorcycleCategory ?? 'naked',
+                    windProtection: dto.windProtection ?? 'low',
+                  },
+                  update: {
+                    category: dto.motorcycleCategory,
+                    windProtection: dto.windProtection,
+                  },
+                },
+              }
+            : undefined,
       },
     });
     return this.getMe(userId);

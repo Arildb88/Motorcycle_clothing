@@ -45,9 +45,21 @@ curl -sf "http://localhost:${PORT}/api/recommend" \
   -H "Authorization: Bearer ${TOKEN}" \
   | grep -q effectiveTempC
 
-curl -sf -X POST "http://localhost:${PORT}/api/auth/oauth" \
+# Wardrobe M2
+curl -sf -X POST "http://localhost:${PORT}/api/wardrobe" \
+  -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
-  -d '{"provider":"facebook","accessToken":"demo:fb-smoke"}' \
-  | grep -q accessToken
+  -d '{"name":"Merino 200","category":"base_layer"}' \
+  | grep -q '"layer":"base"'
+
+curl -sf -X POST "http://localhost:${PORT}/api/wardrobe/actions/seed-demo?force=true" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  | grep -q '"created":8'
+
+curl -sf "http://localhost:${PORT}/api/wardrobe" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  | grep -q 'Insulated winter gloves'
+
+# OAuth endpoints remain as hooks but are deferred from MVP UX — skip social smoke.
 
 echo "API smoke test passed"

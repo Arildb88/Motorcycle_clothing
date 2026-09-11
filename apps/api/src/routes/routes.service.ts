@@ -53,7 +53,7 @@ export class RoutesService {
     });
 
     if (makeDefault) {
-      await this.prisma.profile.updateMany({
+      await this.prisma.userProfile.updateMany({
         where: { userId },
         data: { defaultRouteId: route.id },
       });
@@ -70,7 +70,7 @@ export class RoutesService {
         where: { userId, isDefaultCommute: true },
         data: { isDefaultCommute: false },
       });
-      await this.prisma.profile.updateMany({
+      await this.prisma.userProfile.updateMany({
         where: { userId },
         data: { defaultRouteId: id },
       });
@@ -109,12 +109,12 @@ export class RoutesService {
           where: { id: next.id },
           data: { isDefaultCommute: true },
         });
-        await this.prisma.profile.updateMany({
+        await this.prisma.userProfile.updateMany({
           where: { userId },
           data: { defaultRouteId: next.id },
         });
       } else {
-        await this.prisma.profile.updateMany({
+        await this.prisma.userProfile.updateMany({
           where: { userId },
           data: { defaultRouteId: null },
         });
