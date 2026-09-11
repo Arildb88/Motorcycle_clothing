@@ -1,8 +1,8 @@
 # PROJECT PLAN — Personalized Outdoor Clothing Recommendations
 
-**Status:** M1 + M2 + M2.5 + **M2.6 saved routes** + **garment configuration foundation**. Stopped before M3.  
+**Status:** M1–M2.7 complete + **M3 Motorcycle Recommendation Engine v1**. Stopped before M4.  
 **Date:** 2026-09-11  
-**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login). Saved routes are reusable templates — weather/kit always recalculated. Garment ≠ ride configuration (liners/vents).  
+**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login). Saved routes are reusable templates — weather/kit always recalculated. Garment ≠ ride configuration (liners/vents). M3 engine is rule-based (not ML) with wear/pack, reason codes, and confidence.  
 **Companion:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`DEVELOPMENT_NOTES.md`](./DEVELOPMENT_NOTES.md)
 
 ---
@@ -302,8 +302,8 @@ Each milestone should be **demoable and verifiable** before the next.
 | **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics/demo seed | Done |
 | **M2.5** | Profile, auth identities, activity context, connected services | Startup chooser, default activity, FB/MS IdP architecture, Strava connect foundation | **Done** |
 | **M2.6** | Saved motorcycle routes | CRUD routes + waypoints; favorites; plan-from-route; Motorcycle quick-launch UX; ownership tests | **Done** |
-| **M2.7** | Motorcycle garment configuration | Material, liners as components, vent capability, presets; worn-config shape documented for M5 | **Done** (this branch) |
-| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next |
+| **M2.7** | Motorcycle garment configuration | Material, liners as components, vent capability, presets; worn-config shape documented for M5 | **Done** |
+| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | **Done** |
 | **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Partially started via saved-route launch; full plan UI still pending |
 | **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
 | **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK | Pending |
@@ -397,11 +397,23 @@ Locked:
 
 ---
 
-## 17. Next step after saved routes
+## 17. Next step after M3
 
-**Before M3:** motorcycle garment configuration (liners/vents) — see §18.
+**M4:** Plan Ride UX — departure/duration planning surface that consumes the M3 structured recommendation (wear/pack/why/confidence). Do not build hiking/cycling engines yet.
 
-**M3:** demand-based motorcycle recommendation engine. Do not build hiking/cycling engines yet.
+---
+
+## 17.1 M3 Motorcycle Recommendation Engine v1 (done)
+
+Replaced the threshold spike (`recommendClothing` boolean rules) with an explicit Motorcycle-only pipeline under `apps/api/src/recommend/motorcycle/`:
+
+Weather/route segments → motorcycle exposure → duration-weighted demand → zone/layer demand → wardrobe + garment configuration match → wear/pack → reason codes + confidence.
+
+**Reuse:** existing weather summaries, routes/`typicalDurationMin`, wardrobe + `GarmentComponent`, `effectiveGarmentTiers`, PersonalOffset shrinkage `n/(n+k)`, Flutter reason-code localization.
+
+**Unchanged boundaries:** Nest authz, Route never stores recommendations, no Hiking/Cycling engines, no M5 learning claims, no dense GPS/weather persistence.
+
+**Known limits:** assumed cruise speed when telemetry absent; even split of duration across weather samples until denser route sampling (M7); personalization voice stays baseline until M5.
 
 ---
 
@@ -435,9 +447,10 @@ Priority remains Motorcycle MVP → M3 → feedback → personalization. Do not 
 
 | Topic | Timing |
 |-------|--------|
-| M3 motorcycle demand engine | **NEXT** |
+| M3 motorcycle demand engine | **Done** |
+| M4 Plan Ride UX | **NEXT** |
 | Garment config + saved routes | Done (prerequisites) |
-| Localization `nb`/`en` foundation | **IMPLEMENT NOW** (this branch) |
+| Localization `nb`/`en` foundation | Done |
 | Postgres/Supabase staging | **BEFORE BETA** |
 | Alpine/Snowboard engines | **FUTURE** (architecture reserved) |
 | AdMob banner (responsible rules) | **BEFORE PRODUCTION** / after core validation |

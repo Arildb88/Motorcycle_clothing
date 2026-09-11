@@ -65,6 +65,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get profileSaved => 'Profil lagret';
 
   @override
+  String get wearSection => 'Bruk nå';
+
+  @override
+  String get packSection => 'Pakk med';
+
+  @override
+  String get confidenceLabel => 'Sikkerhet';
+
+  @override
   String get reasonColdMountain =>
       'Det er ventet kald eksponering på fjellstrekningen.';
 
@@ -78,4 +87,71 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get reasonPersonalColdHands =>
       'Ut fra turene dine blir hendene ofte kalde under lignende forhold.';
+
+  @override
+  String get reasonMildConditions =>
+      'Forholdene er milde — unngå unødvendig isolasjon.';
+
+  @override
+  String get reasonLowEffectiveTemperature =>
+      'Effektiv motorsykkeleksponering er lav for denne turen.';
+
+  @override
+  String get reasonSustainedColdExposure =>
+      'Vedvarende kulde øker behovet for varme.';
+
+  @override
+  String get reasonShortColdSegment =>
+      'Et kort kaldt segment kan kreve isolasjon å ha med.';
+
+  @override
+  String get reasonRainProtectionRequired =>
+      'Regnbeskyttelse kreves ved vedvarende våteksponering.';
+
+  @override
+  String get reasonPackRainLayer =>
+      'Pakk vanntett beskyttelse for senere eller kortvarig regnrisiko.';
+
+  @override
+  String get reasonHighWindExposure =>
+      'Høy vind / kjøreluft øker behovet for beskyttelse.';
+
+  @override
+  String get reasonTemperatureVariation => 'Temperaturen varierer langs ruten.';
+
+  @override
+  String get reasonThermalLinerRecommended =>
+      'Sett i termofôret for denne turen.';
+
+  @override
+  String get reasonWaterproofLinerRecommended =>
+      'Sett i vanntett fôr for denne turen.';
+
+  @override
+  String get reasonVentsClosedRecommended =>
+      'Hold ventilene lukket ved kaldere eksponering.';
+
+  @override
+  String get reasonVentsOpenRecommended =>
+      'Åpne ventilene ved varmere eksponering.';
+
+  @override
+  String get reasonPackExtraInsulation =>
+      'Pakk ekstra isolasjon for korte kalde segmenter.';
+
+  @override
+  String get reasonWardrobeGap =>
+      'Fant ingen egnet eid plagg for dette behovet.';
+
+  @override
+  String get reasonIncompleteWeather =>
+      'Værdekningen er ufullstendig — lavere sikkerhet.';
+
+  @override
+  String get reasonIncompleteWardrobe =>
+      'Garderobedekningen er ufullstendig — lavere sikkerhet.';
+
+  @override
+  String get reasonBaselineNoPersonalEvidence =>
+      'Basisanbefaling — ikke nok personlig turhistorikk ennå.';
 }

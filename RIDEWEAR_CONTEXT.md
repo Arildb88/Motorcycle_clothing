@@ -28,7 +28,7 @@ The first complete recommendation engine is **Motorcycle**. The architecture mus
 
 ## Implemented foundation
 
-The pre-M3 baseline includes the M1/M2 foundations plus the agreed M2.5-M2.7 platform work:
+The platform baseline through **M3** includes:
 
 - Core domain and persistence foundations.
 - Shared wardrobe and garment CRUD.
@@ -39,33 +39,30 @@ The pre-M3 baseline includes the M1/M2 foundations plus the agreed M2.5-M2.7 pla
 - Saved Motorcycle routes with ordered waypoints, ownership, route-to-plan snapshots, and point-to-point/multi-stop/loop support.
 - Motorcycle garment configuration foundation separating physical garments from removable components and ride-time configuration such as liners and vents.
 - Security and privacy architecture documentation.
-- CI smoke diagnostics and clean pre-M3 CI baseline.
+- CI smoke diagnostics.
+- **M3 Motorcycle Recommendation Engine v1** — duration-weighted exposure/demand pipeline with wardrobe matching, garment configuration instructions, structured wear vs pack, language-neutral reason codes, and LOW/MEDIUM/HIGH confidence.
 
 ## Recommendation principles
 
-The existing `/recommend` implementation before M3 is a temporary threshold-based spike. Do not extend it as the final engine.
+`/recommend` for Motorcycle uses the M3 pipeline (`motorcycle_v1`), not the old threshold spike.
 
-M3 should move Motorcycle recommendations toward this pipeline:
+Pipeline:
 
 1. Route/weather segmentation.
-2. Motorcycle-specific effective temperature and exposure calculation.
+2. Motorcycle-specific exposure calculation (`motorcycleExposureC`).
 3. Duration-weighted clothing demand so short extreme segments do not dominate a long ride.
-4. Body-zone/layer warmth demand.
+4. Body-zone/layer warmth/wind/water demand (ordinal 1–5).
 5. Match demand to the user's wardrobe and valid garment configurations.
 6. Clearly distinguish **wear now** from **pack/take with you**.
 7. Return structured reason codes/data and confidence so Flutter can localize explanations.
 
-Conceptually:
-
-`Baseline Thermal Model + Activity Adjustment + Weather/Exposure + Rider Bias + Garment Properties + Personal Experience Adjustment`
-
-Do not introduce ML merely to implement M3.
+Do not introduce ML merely to extend M3.
 
 ## Personalization guardrails
 
 New users start from an explainable baseline/default model. Personal evidence gains influence gradually; a shrinkage form such as `n / (n + k)` is appropriate.
 
-RideWear must earn the right to say "you". Until enough relevant evidence exists, recommendation copy remains generic and confidence reflects uncertainty.
+RideWear must earn the right to say "you". Until enough relevant evidence exists, recommendation copy remains generic and confidence reflects uncertainty. M3 may apply shrinkage bias but does **not** emit personal preference claims (reserved for M5).
 
 Future feedback should distinguish too cold, slightly cold, comfortable, slightly warm, and too warm, with optional body zones and sweat information.
 
@@ -77,7 +74,7 @@ Similarity should consider effective temperature, duration, rain/wet exposure, w
 
 The wardrobe is shared across activities. A physical garment is not duplicated just because it can be configured differently.
 
-For Motorcycle gear, removable thermal/waterproof liners belong to the garment. Ride-time state such as installed components and vent state forms a garment configuration. Future recommendations may say to install/remove a liner or open/close vents.
+For Motorcycle gear, removable thermal/waterproof liners belong to the garment. Ride-time state such as installed components and vent state forms a garment configuration. M3 recommendations may say to install/remove a liner or open/close vents.
 
 Canonical enums and domain values remain language-neutral. User-created garment/route names are never translated.
 
@@ -109,7 +106,7 @@ Prefer derived evidence needed for recommendations and learning: temperature/exp
 
 RideWear supports Norwegian Bokmål and English. Use Flutter localization resources rather than scattered language conditionals.
 
-Recommendation engines should emit structured reason codes/data rather than hard-coded final English sentences. Language and measurement units are separate concerns. Explicit user language preference overrides device-language fallback.
+Recommendation engines emit structured reason codes/data rather than hard-coded final English sentences. Language and measurement units are separate concerns. Explicit user language preference overrides device-language fallback.
 
 ## Advertising
 
@@ -127,10 +124,12 @@ Alpine skiing and Snowboarding may eventually share an alpine exposure engine wh
 
 `UserProfile.defaultRouteId` and `Route.isDefaultCommute` currently represent overlapping default-route state. Treat this as known technical debt. Do not casually refactor it during unrelated work; resolve it deliberately when required.
 
+M3 assumes a default cruise speed when telemetry is absent and evenly distributes ride duration across weather samples until denser route sampling (M7).
+
 ## Current milestone boundary
 
-The pre-M3 platform baseline is established. The next planned milestone is **M3: Motorcycle recommendation engine v1**.
+**M3 is complete.** Next planned milestone is **M4: Plan Ride UX**.
 
-M3 must remain Motorcycle-focused and must not silently expand into M4 planning UX, M5 feedback/personalization completion, additional sport engines, production Supabase migration, historical Strava import, advertising SDK integration, or unrelated platform rewrites.
+Do not silently expand into M5 feedback/personalization completion, additional sport engines, production Supabase migration, historical Strava import, advertising SDK integration, or unrelated platform rewrites.
 
-Before starting M3, read the source-of-truth documents and define acceptance tests for the recommendation pipeline. At the end of M3, run verification, report results and remaining risks, and STOP before the next milestone.
+At the end of each milestone, run verification, report results and remaining risks, and STOP before the next milestone.

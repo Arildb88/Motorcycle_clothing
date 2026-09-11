@@ -2,16 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { RoutesService } from '../routes/routes.service';
 import { WeatherService } from '../weather/weather.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { recommendClothing, ComfortInput } from './clothing.engine';
 import { MVP_ACTIVITY_TYPE } from '../domain';
+import {
+  MOTORCYCLE_EXPOSURE,
+  runMotorcycleRecommendationPipeline,
+  type GarmentInput,
+  type KitItem,
+} from './motorcycle';
 
 /**
- * SPIKE SHIM — boolean threshold recommender retained until M3.
- * Uses UserProfile.coldSensitivity + PersonalOffset as a crude bias only.
- * Do not extend this; replace in M3 with demand-based engine.
+ * Motorcycle Recommendation Engine v1 (M3).
  *
  * Always recalculates weather for the selected route — never reads a
  * stored recommendation from Route.
+ *
+ * Personalization: shrinkage `n/(n+k)` bias only; no M5 learning claims.
  */
 @Injectable()
 export class RecommendService {
@@ -53,17 +58,41 @@ export class RecommendService {
       },
     });
 
-    const comfort = this.spikeComfortInput(
-      profile?.coldSensitivity ?? 0,
-      offset,
-    );
+    const n = offset?.n ?? 0;
+    const k = MOTORCYCLE_EXPOSURE.personalShrinkageK;
+    const personalWeight = n / (n + k);
+    const shrunk =
+      n > 0 ? personalWeight * (offset?.meanResidual ?? 0) : 0;
+    const personalColdBiasC = -(profile?.coldSensitivity ?? 0) + shrunk;
+
     const points = this.routes.weatherPointsFor(route);
     const weather = await this.weather.forRoutePoints(points);
 
-    const recommendation = recommendClothing(weather, comfort);
-    const n = offset?.n ?? 0;
-    const k = 6;
-    const personalWeight = n / (n + k);
+    const garments = await this.prisma.garment.findMany({
+      where: { userId },
+      include: { components: true },
+    });
+    const wardrobe = garments.map((g) => this.toGarmentInput(g));
+
+    const engine = runMotorcycleRecommendationPipeline({
+      weather,
+      wardrobe,
+      rideDurationMin: route.typicalDurationMin ?? 30,
+      cruiseKmh: null, // telemetry not yet available — assumed cruise
+      personalColdBiasC,
+      personalSampleCount: n,
+      shrinkageK: k,
+    });
+
+    // M3 may apply shrinkage bias but never emits personal preference claims (M5).
+    const canClaimPersonal = false;
+
+    // Compatibility fields for pre-M3 clients / smoke checks.
+    const items = [
+      ...engine.wear.map((i) => this.kitLabel(i)),
+      ...engine.pack.map((i) => `Pack: ${this.kitLabel(i)}`),
+    ];
+    const reasonCodes = engine.reasons.map((r) => r.code);
 
     return {
       route: {
@@ -88,47 +117,114 @@ export class RecommendService {
       departureAt: _departureAt ?? new Date().toISOString(),
       weather,
       comfort: {
-        ...comfort,
         coldSensitivity: profile?.coldSensitivity ?? 0,
         personalSampleCount: n,
         personalWeight,
+        personalColdBiasC,
       },
       recommendation: {
-        ...recommendation,
+        engine: engine.engine,
+        // Compatibility alias for smoke / older UI metric.
+        effectiveTempC: engine.exposure.motorcycleExposureSustainedC,
+        exposure: engine.exposure,
+        demand: {
+          sustainedWarmth: engine.demand.sustainedWarmth,
+          peakWarmth: engine.demand.peakWarmth,
+          shortExtremeWarmth: engine.demand.shortExtremeWarmth,
+          shortExtremeInfluencesPackOnly:
+            engine.demand.shortExtremeInfluencesPackOnly,
+          sustained: engine.demand.sustained,
+          peak: engine.demand.peak,
+        },
+        wear: engine.wear,
+        pack: engine.pack,
+        reasons: engine.reasons,
+        confidence: engine.confidence,
+        // Legacy list fields (labels / codes) — prefer wear/pack + reasons[].code
+        items,
+        reasonCodes,
         voice: 'baseline' as const,
-        explanationMode:
-          'baseline defaults (personalization engine arrives in M3/M5)',
       },
       personalization: {
-        voice: 'baseline',
+        voice: 'baseline' as const,
         sampleCount: n,
         shrinkageK: k,
         personalWeight,
-        canClaimPersonal: false,
+        canClaimPersonal,
         reason:
-          n < 3
+          n < MOTORCYCLE_EXPOSURE.personalClaimMinN
             ? 'Insufficient similar-ride evidence for personal claims'
-            : 'Spike recommender does not emit personal claims; wait for M3/M5',
+            : 'M3 baseline engine; personal preference claims arrive in M5',
       },
     };
   }
 
-  private spikeComfortInput(
-    coldSensitivity: number,
-    offset: { n: number; meanResidual: number } | null,
-  ): ComfortInput {
-    const k = 6;
-    const n = offset?.n ?? 0;
-    const shrunk = n > 0 ? (n / (n + k)) * (offset?.meanResidual ?? 0) : 0;
-    const sensitivityBias = -coldSensitivity;
+  private kitLabel(item: KitItem): string {
+    if (item.source === 'wardrobe' && item.garmentName) {
+      const configs = item.configuration
+        .map((c) => c.code.toLowerCase().replace(/_/g, ' '))
+        .join(', ');
+      return configs
+        ? `${item.garmentName} (${configs})`
+        : item.garmentName;
+    }
+    return item.genericLabel ?? item.slot;
+  }
+
+  private toGarmentInput(g: {
+    id: string;
+    name: string;
+    category: string;
+    layer: string;
+    primaryBodyZone: string;
+    warmthTier: number;
+    windResistTier: number;
+    waterResistTier: number;
+    breathabilityTier: number;
+    material: string | null;
+    hasVentilation: boolean;
+    isHeated: boolean;
+    activityTagsJson: string;
+    components: Array<{
+      id: string;
+      kind: string;
+      name: string | null;
+      warmthDelta: number;
+      windResistDelta: number;
+      waterResistDelta: number;
+      breathabilityDelta: number;
+    }>;
+  }): GarmentInput {
+    let activityTags: string[] = [MVP_ACTIVITY_TYPE];
+    try {
+      const parsed = JSON.parse(g.activityTagsJson);
+      if (Array.isArray(parsed)) activityTags = parsed.map(String);
+    } catch {
+      /* keep default */
+    }
     return {
-      glovesBelowC: 10,
-      extraJacketLayerBelowC: 12,
-      extraPantsLayerBelowC: 8,
-      woolBaseBelowC: 5,
-      rainProbThreshold: 40,
-      windChillSensitivity: 'medium',
-      personalColdBiasC: sensitivityBias + shrunk,
+      id: g.id,
+      name: g.name,
+      category: g.category,
+      layer: g.layer,
+      primaryBodyZone: g.primaryBodyZone,
+      warmthTier: g.warmthTier,
+      windResistTier: g.windResistTier,
+      waterResistTier: g.waterResistTier,
+      breathabilityTier: g.breathabilityTier,
+      material: g.material,
+      hasVentilation: g.hasVentilation,
+      isHeated: g.isHeated,
+      activityTags,
+      components: g.components.map((c) => ({
+        id: c.id,
+        kind: c.kind,
+        name: c.name,
+        warmthDelta: c.warmthDelta,
+        windResistDelta: c.windResistDelta,
+        waterResistDelta: c.waterResistDelta,
+        breathabilityDelta: c.breathabilityDelta,
+      })),
     };
   }
 }
