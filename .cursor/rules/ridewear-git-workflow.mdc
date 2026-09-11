@@ -1,0 +1,30 @@
+---
+description: RideWear Git workflow and architecture guardrails
+alwaysApply: true
+---
+
+# RideWear Git Workflow Rule
+
+`main` is the stable, owner-controlled branch.
+
+`dev` is the integration branch for ongoing development.
+
+For every development task:
+
+- Start from the latest `dev`.
+- Create a dedicated `feature/...`, `fix/...`, `refactor/...`, or `docs/...` branch.
+- Open pull requests against `dev`, never directly against `main`.
+- Do not push directly to `main`.
+- Do not merge anything into `main`.
+- Do not change the default branch.
+- Do not merge a feature branch into `dev` unless the relevant tests and CI pass.
+- If CI fails, diagnose and fix the failure on the feature branch before considering the task complete.
+- Keep each PR focused on the requested milestone/task. Do not add unrelated architecture changes or features.
+
+`dev -> main` is a controlled release/integration step and must be initiated and merged manually by the repository owner.
+
+Before starting work, read `PROJECT_PLAN.md`, `ARCHITECTURE.md`, `SECURITY.md`, `PRIVACY_ARCHITECTURE.md`, and `RIDEWEAR_CONTEXT.md` when present. Treat these as architectural constraints and source-of-truth documents. If a requested change conflicts with them, explain the conflict instead of silently changing the architecture.
+
+Do not introduce a new framework, database, state-management system, authentication provider, persistence approach, or domain model merely for convenience. Architecture changes require an explicit explanation of the existing decision, reason for change, alternatives, migration impact, and why the change is required now.
+
+Never start the next RideWear milestone automatically. Finish the requested milestone, run its verification, report the result, and STOP.
