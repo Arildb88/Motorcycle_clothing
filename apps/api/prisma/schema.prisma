@@ -51,6 +51,8 @@ model UserProfile {
   homeLat                    Float?
   homeLon                    Float?
   units                      String  @default("celsius")
+  /// UI language: en | nb — null means client uses device fallback
+  preferredLanguage          String?
   defaultRouteId             String?
   /// -1 colder, 0 average, +1 runs warmer
   coldSensitivity            Int     @default(0)

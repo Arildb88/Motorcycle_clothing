@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/config/app_config.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
+import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/screens/login_screen.dart';
 import 'package:motorcycle_clothing/screens/shell_screen.dart';
@@ -20,9 +23,18 @@ Future<void> main() async {
   final api = ApiClient(baseUrl: AppConfig.apiBaseUrl);
   final auth = AuthState(api);
   final activity = ActivityContext();
+  final locale = LocaleController();
+  await locale.hydrate();
   await activity.hydrateLocal();
   await auth.hydrate();
-  runApp(MotorcycleClothingApp(api: api, auth: auth, activity: activity));
+  runApp(
+    MotorcycleClothingApp(
+      api: api,
+      auth: auth,
+      activity: activity,
+      locale: locale,
+    ),
+  );
 }
 
 class MotorcycleClothingApp extends StatelessWidget {
@@ -31,11 +43,13 @@ class MotorcycleClothingApp extends StatelessWidget {
     required this.api,
     required this.auth,
     required this.activity,
+    required this.locale,
   });
 
   final ApiClient api;
   final AuthState auth;
   final ActivityContext activity;
+  final LocaleController locale;
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +58,25 @@ class MotorcycleClothingApp extends StatelessWidget {
         Provider.value(value: api),
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: activity),
+        ChangeNotifierProvider.value(value: locale),
       ],
-      child: MaterialApp(
-        title: 'RideWear',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        home: const _AppGate(),
+      child: Consumer<LocaleController>(
+        builder: (context, localeCtrl, _) {
+          return MaterialApp(
+            onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appTitle,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(),
+            locale: localeCtrl.locale,
+            supportedLocales: LocaleController.supported,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const _AppGate(),
+          );
+        },
       ),
     );
   }
@@ -78,6 +105,7 @@ class _AppGateState extends State<_AppGate> {
   Future<void> _syncProfile() async {
     final api = context.read<ApiClient>();
     final activity = context.read<ActivityContext>();
+    final locale = context.read<LocaleController>();
     try {
       final me = await api.get('/users/me');
       final profile = me['profile'] as Map<String, dynamic>?;
@@ -86,6 +114,7 @@ class _AppGateState extends State<_AppGate> {
         showChooserOnLaunch: profile?['showActivityChooserOnLaunch'] as bool?,
         onboardingCompleted: profile?['onboardingCompleted'] as bool?,
       );
+      await locale.applyFromProfile(profile?['preferredLanguage']?.toString());
     } catch (_) {
       /* keep local prefs */
     } finally {

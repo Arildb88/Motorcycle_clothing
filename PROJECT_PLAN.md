@@ -426,3 +426,27 @@ Locked:
 - Personalization must learn from **actual worn config**, not the recommendation.
 
 **Deferred:** ActivityGarment table, partial vent positions, clo science, product catalogs.
+
+---
+
+## 19. Platform roadmap (accepted direction — not all implement now)
+
+Priority remains Motorcycle MVP → M3 → feedback → personalization. Do not derail for Alpine/ads/Postgres.
+
+| Topic | Timing |
+|-------|--------|
+| M3 motorcycle demand engine | **NEXT** |
+| Garment config + saved routes | Done (prerequisites) |
+| Localization `nb`/`en` foundation | **IMPLEMENT NOW** (this branch) |
+| Postgres/Supabase staging | **BEFORE BETA** |
+| Alpine/Snowboard engines | **FUTURE** (architecture reserved) |
+| AdMob banner (responsible rules) | **BEFORE PRODUCTION** / after core validation |
+| Full SECURITY/PRIVACY production controls | See [`SECURITY.md`](./SECURITY.md) / [`PRIVACY_ARCHITECTURE.md`](./PRIVACY_ARCHITECTURE.md) |
+
+**Companion docs:** `SECURITY.md`, `PRIVACY_ARCHITECTURE.md`.
+
+---
+
+## 20. Localization requirement
+
+RideWear UI supports **Norsk Bokmål** and **English**. See ARCHITECTURE §17. Domain values stay English/canonical; presentation is localized.

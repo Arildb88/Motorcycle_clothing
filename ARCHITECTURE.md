@@ -350,3 +350,70 @@ Motorcycle implements first. Hiking later: metabolic intensity multiplier, less 
 - Don’t normalize every weather field into 15 tables on day one (JSON snapshots are fine)
 
 Optimize for **clear module boundaries** and **tested pure functions**, not for hypothetical scale.
+
+---
+
+## 14. Production topology (target)
+
+```
+Flutter (iOS/Android)
+    │ HTTPS + JWT
+NestJS API (authz, recommend, wardrobe, routes, connections)
+    │ Prisma
+PostgreSQL (Supabase-hosted OK; portable SQL preferred)
+    │
+External: MET weather · FB/MS IdP · Strava (tokens encrypted at rest)
+```
+
+**Supabase timing:** local SQLite now; **Postgres before beta**; production backups before public launch. Do **not** connect Flutter to Postgres with privileged credentials. See [`SECURITY.md`](./SECURITY.md).
+
+---
+
+## 15. Alpine / Snowboard (FUTURE engines — document only)
+
+Motorcycle remains the first full engine. Alpine is next vertical-weather sport after motorcycle personalization validates.
+
+**Ski area model (future):** base + summit coordinates/elevations; period start/end; weather at base and top (do not assume village = summit). Lift/queue exposure vs active descent. Snowboard may share `AlpineExposureEngine` but remains a distinct `ActivityType`.
+
+**Clothing:** shared wardrobe; shell vs insulated jackets/pants must remain distinguishable via warmth + material/category semantics (already supported by ordinal tiers + material). Do not mix Alpine feedback blindly into motorcycle offsets.
+
+**Do not implement Alpine now.**
+
+---
+
+## 16. Responsible advertising
+
+| Rule | Decision |
+|------|----------|
+| Default | `ADS_ENABLED=false` until core loop validated |
+| Allowed format | Small banner / native-banner only |
+| Forbidden | Interstitials, app-open, rewarded-to-unlock kit, ads covering content, ads before recommendation |
+| Ad-free surfaces | Login/OAuth, consent/privacy, account/security, active navigation, safety/weather alerts, **primary recommendation card** |
+| Independence | Ad domain never feeds recommendation scoring |
+| Abstraction | `AdBannerSlot` / config flag — screens request placements |
+| Premium (FUTURE) | Optional no-ads; never degrade safety for free users |
+| Consent | EEA/Norway CMP **BEFORE PRODUCTION** if ads on |
+
+---
+
+## 17. Localization (platform capability)
+
+Supported UI languages: **Norwegian Bokmål (`nb`)**, **English (`en`)**.
+
+- Flutter gen-l10n / ARB — no `if (lang == …)` forks.
+- `UserProfile.preferredLanguage` syncs across devices; local cache for startup + pre-login.
+- First launch: device Norwegian → `nb`, else `en`; explicit choice wins.
+- Language ≠ units.
+- Domain enums stay language-neutral (`motorcycle`, reason codes).
+- Engine emits structured reason codes; UI localizes presentation.
+- User-entered names never auto-translated.
+- New screens must use l10n; legacy hard-coded English tracked as debt.
+
+---
+
+## 18. Safety language
+
+Clothing advice is guidance, not a guarantee. Prefer probabilistic copy. Separate weather/safety warnings from kit lists. Appropriate clothing does not make unsafe conditions safe.
+
+See also [`PRIVACY_ARCHITECTURE.md`](./PRIVACY_ARCHITECTURE.md).
+

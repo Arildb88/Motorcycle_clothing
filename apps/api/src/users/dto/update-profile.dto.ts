@@ -35,6 +35,10 @@ export class UpdateProfileDto {
   units?: string;
 
   @IsOptional()
+  @IsIn(['en', 'nb'])
+  preferredLanguage?: string | null;
+
+  @IsOptional()
   @IsString()
   defaultRouteId?: string;
 

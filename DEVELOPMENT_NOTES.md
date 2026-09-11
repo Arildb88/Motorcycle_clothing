@@ -7,6 +7,19 @@
 - **M2.5** Profile, activity context, identity providers, connected services (Strava foundation)
 - **M2.6** Saved motorcycle routes (Route + RouteWaypoint, quick launch, plan-from-route)
 - **M2.7** Motorcycle garment configuration (material, GarmentComponent liners, vent capability, presets)
+- **Platform docs** Security, privacy, Alpine/ads/Postgres roadmap; **i18n** nb/en foundation
+
+## Localization
+
+- ARB + Flutter gen-l10n (`nb`, `en`)
+- Profile → Language; `UserProfile.preferredLanguage`
+- Local SharedPreferences cache for pre-login / cold start
+- Reason codes stay structured for M3 (do not store only English sentences)
+
+## Security / privacy docs
+
+- [`SECURITY.md`](./SECURITY.md) — authz, secrets, backups, Supabase timing
+- [`PRIVACY_ARCHITECTURE.md`](./PRIVACY_ARCHITECTURE.md) — location minimization, route privacy
 
 ## M2.7 garment configuration
 

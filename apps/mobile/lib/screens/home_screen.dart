@@ -6,8 +6,8 @@ import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart'
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
-import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/screens/feedback_sheet.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -120,26 +120,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              subtitle: const Text('When are you leaving?'),
+              subtitle: Text(AppLocalizations.of(ctx).whenLeaving),
             ),
             ListTile(
               leading: const Icon(Icons.bolt),
-              title: const Text('Leave now'),
+              title: Text(AppLocalizations.of(ctx).leaveNow),
               onTap: () => Navigator.pop(ctx, 'now'),
             ),
             ListTile(
               leading: const Icon(Icons.today),
-              title: const Text('Today at…'),
+              title: Text(AppLocalizations.of(ctx).todayAt),
               onTap: () => Navigator.pop(ctx, 'today'),
             ),
             ListTile(
               leading: const Icon(Icons.event),
-              title: const Text('Tomorrow at…'),
+              title: Text(AppLocalizations.of(ctx).tomorrowAt),
               onTap: () => Navigator.pop(ctx, 'tomorrow'),
             ),
             ListTile(
               leading: const Icon(Icons.edit_calendar),
-              title: const Text('Custom date/time'),
+              title: Text(AppLocalizations.of(ctx).customDateTime),
               onTap: () => Navigator.pop(ctx, 'custom'),
             ),
             const SizedBox(height: 8),
@@ -232,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const ActivitySwitcher(),
                   const SizedBox(height: 6),
                   Text(
-                    'Quick routes',
+                    AppLocalizations.of(context).quickRoutes,
                     style: GoogleFonts.sourceSerif4(
                       fontSize: 22,
                       color: AppTheme.steel,
@@ -259,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _addRoute,
                           icon: const Icon(Icons.add),
-                          label: const Text('Plan new ride'),
+                          label: Text(AppLocalizations.of(context).planNewRide),
                         ),
                       )
                     : ListView.separated(
@@ -316,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Tap a saved route to calculate today’s weather and kit.',
+                  AppLocalizations.of(context).tapSavedRoute,
                   style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
                 ),
               ),
@@ -478,8 +478,7 @@ class _RecommendationBody extends StatelessWidget {
             onPressed: () => showFeedbackSheet(context, data),
             child: const Text('How was the ride?'),
           ),
-          const SizedBox(height: 24),
-          const AdBannerSlot(),
+          // Recommendation card stays ad-free (trust / safety surface).
         ],
       ),
     );

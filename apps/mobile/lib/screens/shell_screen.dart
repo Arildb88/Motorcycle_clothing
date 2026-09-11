@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
 import 'package:motorcycle_clothing/features/profile/profile_settings_screen.dart';
 import 'package:motorcycle_clothing/features/wardrobe/wardrobe_screen.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/screens/routes_screen.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -26,6 +27,7 @@ class _ShellScreenState extends State<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AtmosphereBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -39,32 +41,33 @@ class _ShellScreenState extends State<ShellScreen> {
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Ads never on Today/recommendation (index 0) — safety/trust surface
             if (AppConfig.adsEnabled && _index != 0) const AdBannerSlot(),
             NavigationBar(
               selectedIndex: _index,
               backgroundColor: Colors.white.withValues(alpha: 0.85),
               indicatorColor: AppTheme.mist.withValues(alpha: 0.45),
               onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: const [
+              destinations: [
                 NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Today',
+                  icon: const Icon(Icons.home_outlined),
+                  selectedIcon: const Icon(Icons.home),
+                  label: l10n.navToday,
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.route_outlined),
-                  selectedIcon: Icon(Icons.route),
-                  label: 'Routes',
+                  icon: const Icon(Icons.route_outlined),
+                  selectedIcon: const Icon(Icons.route),
+                  label: l10n.navRoutes,
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.checkroom_outlined),
-                  selectedIcon: Icon(Icons.checkroom),
-                  label: 'Wardrobe',
+                  icon: const Icon(Icons.checkroom_outlined),
+                  selectedIcon: const Icon(Icons.checkroom),
+                  label: l10n.navWardrobe,
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
+                  icon: const Icon(Icons.person_outline),
+                  selectedIcon: const Icon(Icons.person),
+                  label: l10n.navProfile,
                 ),
               ],
             ),
