@@ -40,6 +40,7 @@ export const GARMENT_CATEGORIES = [
   'mid_layer',
   'shell_jacket',
   'pants',
+  'one_piece_suit',
   'gloves',
   'boots',
   'socks',
@@ -135,6 +136,14 @@ export const GARMENT_CATEGORY_DEFAULTS: Record<
     windResistTier: 4,
     waterResistTier: 3,
     breathabilityTier: 3,
+  },
+  one_piece_suit: {
+    layer: 'outer',
+    primaryBodyZone: 'full_body',
+    warmthTier: 3,
+    windResistTier: 5,
+    waterResistTier: 2,
+    breathabilityTier: 2,
   },
   gloves: {
     layer: 'accessory',

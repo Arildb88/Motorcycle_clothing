@@ -4,18 +4,31 @@ import {
   MVP_ACTIVITY_TYPE,
   defaultsForCategory,
 } from './enums';
+import type {
+  GarmentComponentKind,
+  GarmentMaterial,
+} from './garment-config';
+
+export type DemoComponentSeed = {
+  kind: GarmentComponentKind;
+  name?: string;
+};
 
 export type DemoGarmentSeed = {
   name: string;
   category: GarmentCategory;
   brand?: string;
   model?: string;
+  material?: GarmentMaterial;
+  hasVentilation?: boolean;
+  isHeated?: boolean;
   warmthTier?: number;
   windResistTier?: number;
   waterResistTier?: number;
   breathabilityTier?: number;
   notes?: string;
   activityTags?: ActivityType[];
+  components?: DemoComponentSeed[];
 };
 
 /**
@@ -28,28 +41,54 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     category: 'base_layer',
     brand: 'Devold',
     model: '200',
+    material: 'merino',
     warmthTier: 3,
     notes: 'Classic midweight merino',
   },
   {
     name: 'Light fleece mid-layer',
     category: 'mid_layer',
+    material: 'synthetic',
     warmthTier: 3,
   },
   {
-    name: 'Textile motorcycle jacket',
+    name: 'Touring textile jacket',
     category: 'shell_jacket',
     brand: 'Klim',
+    material: 'textile',
+    hasVentilation: true,
     warmthTier: 2,
     windResistTier: 5,
     waterResistTier: 4,
+    components: [{ kind: 'thermal_liner' }, { kind: 'waterproof_liner' }],
+  },
+  {
+    name: 'Mesh summer jacket',
+    category: 'shell_jacket',
+    material: 'mesh',
+    hasVentilation: true,
+    warmthTier: 1,
+    windResistTier: 2,
+    waterResistTier: 1,
+    breathabilityTier: 5,
   },
   {
     name: 'Waterproof motorcycle pants',
     category: 'pants',
+    material: 'textile',
+    hasVentilation: true,
     warmthTier: 2,
     waterResistTier: 5,
     windResistTier: 4,
+    components: [{ kind: 'thermal_liner' }],
+  },
+  {
+    name: 'Armored motorcycle jeans',
+    category: 'pants',
+    material: 'denim',
+    warmthTier: 2,
+    windResistTier: 3,
+    waterResistTier: 1,
   },
   {
     name: 'Summer gloves',
@@ -65,6 +104,12 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     waterResistTier: 4,
   },
   {
+    name: 'Heated gloves',
+    category: 'gloves',
+    isHeated: true,
+    warmthTier: 5,
+  },
+  {
     name: 'Neck tube',
     category: 'neckwear',
     warmthTier: 2,
@@ -72,6 +117,7 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
   {
     name: 'Heated vest',
     category: 'heated_vest',
+    isHeated: true,
     warmthTier: 5,
     notes: 'Battery heated; pack when mountain sections are cold',
   },
@@ -89,6 +135,9 @@ export function expandDemoGarment(seed: DemoGarmentSeed) {
     waterResistTier: seed.waterResistTier ?? defaults.waterResistTier,
     breathabilityTier:
       seed.breathabilityTier ?? defaults.breathabilityTier,
+    material: seed.material ?? null,
+    hasVentilation: seed.hasVentilation ?? false,
+    isHeated: seed.isHeated ?? false,
     brand: seed.brand ?? null,
     model: seed.model ?? null,
     notes: seed.notes ?? null,

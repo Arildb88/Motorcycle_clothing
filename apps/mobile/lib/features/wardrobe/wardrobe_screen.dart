@@ -144,9 +144,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                   child: ListTile(
                                     onTap: () => _openForm(existing: g),
                                     title: Text(g.name),
-                                    subtitle: Text(
-                                      '${g.categoryLabel} · ${g.layerLabel} · warmth ${g.warmthTier}/5',
-                                    ),
+                                    subtitle: Text(g.subtitleBits),
                                     trailing: IconButton(
                                       icon: const Icon(Icons.delete_outline),
                                       onPressed: () => _delete(g),

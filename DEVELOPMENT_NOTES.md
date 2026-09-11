@@ -6,6 +6,16 @@
 - **M2** Wardrobe
 - **M2.5** Profile, activity context, identity providers, connected services (Strava foundation)
 - **M2.6** Saved motorcycle routes (Route + RouteWaypoint, quick launch, plan-from-route)
+- **M2.7** Motorcycle garment configuration (material, GarmentComponent liners, vent capability, presets)
+
+## M2.7 garment configuration
+
+- `Garment.material`, `hasVentilation`, `isHeated`
+- `GarmentComponent` for thermal/waterproof liners (tier deltas)
+- Presets via `POST /wardrobe` `preset` field / Flutter quick type
+- `effectiveGarmentTiers()` helper for M3
+- Vent open/closed is **ride config** — not stored on garment
+- Worn evidence shape documented for M5 (`installedComponentIds`, `vents`)
 
 ## M2.6 saved routes
 

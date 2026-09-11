@@ -1,8 +1,8 @@
 # PROJECT PLAN — Personalized Outdoor Clothing Recommendations
 
-**Status:** M1 + M2 + M2.5 done. **Saved motorcycle routes** domain/UX foundation added (pre-M3). Stopped before M3.  
+**Status:** M1 + M2 + M2.5 + **M2.6 saved routes** + **garment configuration foundation**. Stopped before M3.  
 **Date:** 2026-09-11  
-**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login). Saved routes are reusable templates — weather/kit always recalculated.  
+**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login). Saved routes are reusable templates — weather/kit always recalculated. Garment ≠ ride configuration (liners/vents).  
 **Companion:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`DEVELOPMENT_NOTES.md`](./DEVELOPMENT_NOTES.md)
 
 ---
@@ -301,7 +301,8 @@ Each milestone should be **demoable and verifiable** before the next.
 | **M1** | Domain migration foundations | New Prisma models for ActivityPlan, Garment, Feedback zones; keep app compiling | Done |
 | **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics/demo seed | Done |
 | **M2.5** | Profile, auth identities, activity context, connected services | Startup chooser, default activity, FB/MS IdP architecture, Strava connect foundation | **Done** |
-| **M2.6** | Saved motorcycle routes | CRUD routes + waypoints; favorites; plan-from-route; Motorcycle quick-launch UX; ownership tests | **Done** (this branch) |
+| **M2.6** | Saved motorcycle routes | CRUD routes + waypoints; favorites; plan-from-route; Motorcycle quick-launch UX; ownership tests | **Done** |
+| **M2.7** | Motorcycle garment configuration | Material, liners as components, vent capability, presets; worn-config shape documented for M5 | **Done** (this branch) |
 | **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next |
 | **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Partially started via saved-route launch; full plan UI still pending |
 | **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
@@ -398,6 +399,30 @@ Locked:
 
 ## 17. Next step after saved routes
 
-**Before M3:** review garment configuration (liners/vents) if queued.
+**Before M3:** motorcycle garment configuration (liners/vents) — see §18.
 
 **M3:** demand-based motorcycle recommendation engine. Do not build hiking/cycling engines yet.
+
+---
+
+## 18. Garment vs configuration (M2.7)
+
+**Critical review outcome:** M2 static garments were insufficient for touring jackets whose warmth depends on removable liners and vents. We did **not** duplicate wardrobe rows (“Klim warm” / “Klim cold”).
+
+| Concept | Meaning |
+|---------|---------|
+| **Garment** | Physical item owned (one Klim jacket) |
+| **GarmentComponent** | Removable liner belonging to that garment |
+| **Ride configuration** | Which liners installed + vents open/closed *on that ride* |
+
+**Model choices**
+
+- Coarse categories + optional `material` (textile/leather/mesh/denim/…) rather than many jacket enums.
+- Gloves stay one category; summer/winter/heated via tiers + `isHeated`.
+- `hasVentilation` = capability; open/closed is ride config (deferred storage until worn evidence in M5).
+- UX presets (mesh jacket, jeans, winter gloves…) apply defaults without bloating the DB.
+- New category: `one_piece_suit` (`full_body`).
+- M3 should use `effectiveGarmentTiers(base, installedComponents)` and emit structured reason codes (INSTALL_THERMAL_LINER, VENTS_CLOSED).
+- Personalization must learn from **actual worn config**, not the recommendation.
+
+**Deferred:** ActivityGarment table, partial vent positions, clo science, product catalogs.

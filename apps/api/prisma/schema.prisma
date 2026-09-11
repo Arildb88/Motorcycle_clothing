@@ -87,7 +87,12 @@ model Garment {
   warmthTier        Int      @default(3)
   windResistTier    Int      @default(2)
   waterResistTier   Int      @default(1)
-  breathabilityTier Int     @default(3)
+  breathabilityTier Int      @default(3)
+  /// textile | leather | mesh | denim | synthetic | merino | mixed | other
+  material          String?
+  /// Capability: garment has usable vents (open/closed is ride configuration)
+  hasVentilation    Boolean  @default(false)
+  isHeated          Boolean  @default(false)
   brand             String?
   model             String?
   notes             String?
@@ -95,9 +100,29 @@ model Garment {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  components GarmentComponent[]
 
   @@index([userId, category])
+}
+
+/// Removable part of a physical garment (thermal/waterproof liner, …).
+/// Not a separate wardrobe item the user “wears” independently.
+model GarmentComponent {
+  id                 String   @id @default(cuid())
+  garmentId          String
+  /// thermal_liner | waterproof_liner | other
+  kind               String
+  name               String?
+  warmthDelta        Int      @default(0)
+  windResistDelta    Int      @default(0)
+  waterResistDelta   Int      @default(0)
+  breathabilityDelta Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  garment Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+
+  @@index([garmentId])
 }
 
 model Place {

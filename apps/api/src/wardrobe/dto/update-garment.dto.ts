@@ -1,6 +1,7 @@
 import {
   ArrayUnique,
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -9,8 +10,16 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
-import { ACTIVITY_TYPES, GARMENT_CATEGORIES } from '../../domain';
+import { Type } from 'class-transformer';
+import {
+  ACTIVITY_TYPES,
+  GARMENT_CATEGORIES,
+  GARMENT_COMPONENT_KINDS,
+  GARMENT_MATERIALS,
+} from '../../domain';
+import { GarmentComponentInputDto } from './create-garment.dto';
 
 export class UpdateGarmentDto {
   @IsOptional()
@@ -22,6 +31,18 @@ export class UpdateGarmentDto {
   @IsOptional()
   @IsIn([...GARMENT_CATEGORIES])
   category?: string;
+
+  @IsOptional()
+  @IsIn([...GARMENT_MATERIALS])
+  material?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  hasVentilation?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isHeated?: boolean;
 
   @IsOptional()
   @IsString()
@@ -67,4 +88,13 @@ export class UpdateGarmentDto {
   @ArrayUnique()
   @IsIn([...ACTIVITY_TYPES], { each: true })
   activityTags?: string[];
+
+  /** When provided, replaces the full component list. */
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => GarmentComponentInputDto)
+  components?: GarmentComponentInputDto[];
 }
+
+export { GarmentComponentInputDto };

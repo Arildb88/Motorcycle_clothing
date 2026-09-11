@@ -194,7 +194,9 @@ UserProfile
 MotorcycleProfile
   category, windProtection
 Garment
-  … activityTagsJson (multi-activity)
+  … material?, hasVentilation, isHeated, activityTagsJson
+GarmentComponent
+  kind (thermal_liner|waterproof_liner|other), tier deltas
 ConnectedAccount
   provider (strava|…), encrypted tokens, status, metadata
 OAuthState
@@ -203,6 +205,14 @@ Place / Route / RouteWaypoint / ActivityPlan / WeatherSnapshot / Recommendation*
 ActivityLog / ActivityFeedback / BodyAreaFeedback / PersonalOffset
 WeatherCache
 ```
+
+### Garment vs ride configuration
+
+- **Garment** = owned physical item (one row).
+- **GarmentComponent** = removable liner belonging to that garment (not a separate wardrobe “outfit”).
+- **Ride configuration** (liners installed, vents open/closed) belongs on activity worn-evidence later — not duplicated as extra garments.
+- UX presets map mesh/leather/jeans/heated gloves → category + material + defaults.
+- M3 consumes effective tiers = base ± installed component deltas.
 
 ### Route vs plan vs log (do not conflate)
 
