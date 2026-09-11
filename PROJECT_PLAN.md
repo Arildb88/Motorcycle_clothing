@@ -1,8 +1,8 @@
 # PROJECT PLAN — Personalized Outdoor Clothing Recommendations
 
-**Status:** M1 + M2 + **M2.5 done**. Stopped before M3.  
+**Status:** M1 + M2 + M2.5 done. **Saved motorcycle routes** domain/UX foundation added (pre-M3). Stopped before M3.  
 **Date:** 2026-09-11  
-**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login).  
+**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login). Saved routes are reusable templates — weather/kit always recalculated.  
 **Companion:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`DEVELOPMENT_NOTES.md`](./DEVELOPMENT_NOTES.md)
 
 ---
@@ -195,8 +195,9 @@ Simplified vs the long entity list in the prompt — enough for personalization,
 - `UserProfile` — units, coldSensitivity (−1/0/+1), sweatTendency optional later
 - `MotorcycleProfile` — category (naked/sport/touring/…), windProtection (none/low/med/high)
 - `Garment` — name, category, warmthTier, optional wind/water scores, activity tags
-- `Place` / `Route` — saved start/end (+ optional waypoints JSON); **no mandatory full geometry**
-- `ActivityPlan` — activityType, departureAt, durationMin, route/place refs, intensity (nullable), motorcycle fields snapshot
+- `Place` / `Route` — **saved route templates** with ordered `RouteWaypoint` (coords canonical); optional category/favorite; **no weather or recommendations stored on Route**
+- `ActivityPlan` — activityType, departureAt, durationMin, optional `routeId`, `snapshotJson` (route geometry snapshot at plan time)
+- `ActivityLog` — what actually happened; may retain `routeId` (nullable after delete) + weather/recommendation summaries
 - `WeatherSnapshot` — normalized segment forecasts (JSON OK early)
 - `Recommendation` + `RecommendationItem` — wear/pack, reasons, confidence
 - `ActivityLog` — completed plan + actual worn garment IDs (or generics)
@@ -300,8 +301,9 @@ Each milestone should be **demoable and verifiable** before the next.
 | **M1** | Domain migration foundations | New Prisma models for ActivityPlan, Garment, Feedback zones; keep app compiling | Done |
 | **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics/demo seed | Done |
 | **M2.5** | Profile, auth identities, activity context, connected services | Startup chooser, default activity, FB/MS IdP architecture, Strava connect foundation | **Done** |
-| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next (after M2.5) |
-| **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Pending |
+| **M2.6** | Saved motorcycle routes | CRUD routes + waypoints; favorites; plan-from-route; Motorcycle quick-launch UX; ownership tests | **Done** (this branch) |
+| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next |
+| **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Partially started via saved-route launch; full plan UI still pending |
 | **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
 | **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK | Pending |
 | **M7** | Segment weather v1 | 3–5 samples along route with ETA; duration weighting visible in “why” | Pending |
@@ -369,6 +371,33 @@ Locked:
 
 ---
 
-## 16. Next step after M2.5
+## 16. Saved motorcycle routes (M2.6)
 
-**M3 only:** demand-based motorcycle recommendation engine. Do not build hiking/cycling engines yet.
+**Problem:** Commuters and regular riders should not re-enter the same route every time.
+
+**Architecture choice:** Extend existing Prisma `Route` + add `RouteWaypoint`. Do **not** introduce a competing `SavedRoute` entity. Docs may say “saved route”; the model name remains `Route`.
+
+| Concept | Role |
+|---------|------|
+| **Route** (saved) | Reusable template: name, waypoints, category/favorite |
+| **ActivityPlan** | One planned ride at a date/time; `routeId` + `snapshotJson` |
+| **ActivityLog** | What happened; may reference `routeId` (nullable) |
+
+**Rules**
+
+- Weather and clothing recommendations are **never** stored on `Route`.
+- Launch = create plan (snapshot) → fresh `/recommend?routeId=…`.
+- Edit route = future plans use new geometry; past plans keep `snapshotJson`.
+- Delete route = `routeId` SetNull on plans/logs; history remains via snapshot/summaries.
+- Ownership enforced on every route API; routes are private by default.
+- Map search / routing-provider geometry deferred (form + lat/lon foundation now).
+
+**API:** `GET/POST /routes`, `GET/PATCH/DELETE /routes/:id`, `POST /routes/:id/plan`.
+
+---
+
+## 17. Next step after saved routes
+
+**Before M3:** review garment configuration (liners/vents) if queued.
+
+**M3:** demand-based motorcycle recommendation engine. Do not build hiking/cycling engines yet.

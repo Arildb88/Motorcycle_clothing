@@ -9,7 +9,11 @@ export class RecommendController {
   constructor(private readonly recommend: RecommendService) {}
 
   @Get()
-  get(@Req() req: AuthRequest, @Query('routeId') routeId?: string) {
-    return this.recommend.forUser(req.user.userId, routeId);
+  get(
+    @Req() req: AuthRequest,
+    @Query('routeId') routeId?: string,
+    @Query('departureAt') departureAt?: string,
+  ) {
+    return this.recommend.forUser(req.user.userId, routeId, departureAt);
   }
 }

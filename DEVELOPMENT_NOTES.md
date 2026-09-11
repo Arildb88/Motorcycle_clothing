@@ -5,6 +5,16 @@
 - **M1** Domain foundations
 - **M2** Wardrobe
 - **M2.5** Profile, activity context, identity providers, connected services (Strava foundation)
+- **M2.6** Saved motorcycle routes (Route + RouteWaypoint, quick launch, plan-from-route)
+
+## M2.6 saved routes
+
+- Model name remains **`Route`** (docs: “saved route”). Not a parallel SavedRoute system.
+- Canonical geometry: **`RouteWaypoint`** (ordered lat/lon + label/address).
+- `POST /api/routes/:id/plan` creates `ActivityPlan` with route **snapshot**; then call `GET /api/recommend?routeId=…&departureAt=…` for fresh weather/kit.
+- Flutter: Motorcycle home **Quick routes** + Routes tab editor (form lat/lon). Map provider search deferred.
+- Ordering: favorites → recent (`lastUsedAt`) → other.
+- Historical rides: `snapshotJson` on plan; delete route uses FK `SetNull`.
 
 ## M2.5 architecture extensions (accepted)
 
@@ -70,6 +80,7 @@ Copy `apps/api/.env.example` → `apps/api/.env`.
 | Strava connect/sync API | **ARCHITECTURE READY** — needs Strava + encryption key |
 | Demo social login (`demo:` tokens) | **WORKING in non-prod** when IdPs unset |
 | Hiking/cycling recommendation engines | **DEFERRED** (placeholder homes) |
+| Map search / routing provider geometry | **DEFERRED** (lat/lon form foundation in M2.6) |
 | M3 demand engine | **DEFERRED** |
 
 ## Spike leftovers

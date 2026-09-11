@@ -4,6 +4,8 @@ import {
   defaultsForCategory,
   isGarmentCategory,
   isActivityType,
+  isRouteKind,
+  isRouteCategory,
 } from './enums';
 import { expandDemoGarment, DEMO_MOTORCYCLE_WARDROBE } from './demo-wardrobe';
 
@@ -17,6 +19,13 @@ describe('domain enums', () => {
     expect(isActivityType('motorcycle')).toBe(true);
     expect(isActivityType('hiking')).toBe(true);
     expect(isActivityType('surfing')).toBe(false);
+  });
+
+  it('recognizes route kinds and categories', () => {
+    expect(isRouteKind('loop')).toBe(true);
+    expect(isRouteKind('shortcut')).toBe(false);
+    expect(isRouteCategory('work')).toBe(true);
+    expect(isRouteCategory('folder')).toBe(false);
   });
 
   it('maps categories to layer and body zone', () => {

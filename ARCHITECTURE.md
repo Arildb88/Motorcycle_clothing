@@ -42,8 +42,8 @@ API (NestJS)
 | `users` | UserProfile prefs, motorcycle profile, onboarding, account delete stub |
 | `connections` | Connected services (Strava connect/disconnect/status); encrypted token vault |
 | `wardrobe` | Garments CRUD + demo seed (shared across activities) |
-| `places` / `routes` | Saved locations & simple routes |
-| `plans` | ActivityPlan create/read (**tables ready; API in M4**) |
+| `places` / `routes` | Saved locations & **saved motorcycle routes** (waypoints, favorites, plan-from-route) |
+| `plans` | ActivityPlan create via `POST /routes/:id/plan` (full plans API still M4) |
 | `weather` | Fetch + normalize + cache forecasts |
 | `recommend` | Spike shim until M3; demand engine next |
 | `feedback` | Persist ActivityLog/Feedback; full learning in M5 |
@@ -199,10 +199,24 @@ ConnectedAccount
   provider (strava|…), encrypted tokens, status, metadata
 OAuthState
   ephemeral PKCE/state for IdP + Strava
-Place / Route / ActivityPlan / WeatherSnapshot / Recommendation*
+Place / Route / RouteWaypoint / ActivityPlan / WeatherSnapshot / Recommendation*
 ActivityLog / ActivityFeedback / BodyAreaFeedback / PersonalOffset
 WeatherCache
 ```
+
+### Route vs plan vs log (do not conflate)
+
+| Model | Meaning |
+|-------|---------|
+| **Route** | Reusable saved route template (private to user). Ordered `RouteWaypoint` coords are canonical. Optional `category`, `isFavorite`, `routeKind`. **Never stores weather or clothing recommendations.** |
+| **ActivityPlan** | A specific planned ride (`departureAt`, `durationMin`, optional `routeId`). `snapshotJson` freezes the route definition used at plan time so later edits/deletes do not rewrite history. |
+| **ActivityLog** | What the user actually did. May keep `routeId` (SetNull on route delete) plus weather/recommendation summary JSON for learning. |
+
+**Route kinds** (`point_to_point` | `multi_stop` | `loop`) are conceptual labels over the same ordered-waypoint model — no separate route engines.
+
+**Geometry compromise:** store ordered waypoints (and denormalized start/end). Do **not** permanently store full provider polylines in MVP. Future M7 samples weather along provider geometry at recommendation time; waypoints remain the saved definition.
+
+**Privacy:** saved routes reveal home/work habits. Private by default; no public sharing; ownership checks on every API; avoid logging exact coordinates in app logs; account deletion cascades routes.
 
 ### Migration from current schema
 
@@ -212,7 +226,7 @@ WeatherCache
 | `personalColdBiasC` | `PersonalOffset(overall)` with shrinkage fields `n`, `meanResidual` |
 | `RideFeedback` | `ActivityLog` + `ActivityFeedback` (+ `BodyAreaFeedback`) |
 | `Profile` | `UserProfile` |
-| `Route` | Kept; extended relations to plans/logs |
+| `Route` | Kept; extended with description, activityType, routeKind, category, isFavorite, lastUsedAt + **RouteWaypoint** children; plan snapshot on ActivityPlan |
 | Boolean recommend items | Spike shim until M3; structured `Recommendation` / `RecommendationItem` tables ready |
 
 **M1 applied:** migration `20260911084843_m1_domain_foundations`. Wardrobe module owns garment CRUD; category → layer/zone defaults in `apps/api/src/domain`.
@@ -265,8 +279,9 @@ Uncertainty copy examples: “Few similar rides logged,” “Only start/end wea
 |------|------------|
 | Account email | Required |
 | Home coordinates | Optional |
-| Route geometry | Store start/end + coarse waypoints; **do not** require full GPS trace |
-| Weather | Store summary snapshot with activity log (needed for learning) |
+| Route geometry | Ordered waypoints (coords) + labels; **no mandatory full GPS polyline**; snapshot on ActivityPlan when launching |
+| Saved routes | Private per user; ownership enforced; delete does not erase ActivityLog history |
+| Weather | Store summary snapshot with activity log (needed for learning); never cache “the” recommendation on Route |
 | Feedback | Retained until user deletes activity |
 | Delete | Delete activity log → cascades feedback; account deletion removes user graph |
 | Ads/tracking | Off in MVP |

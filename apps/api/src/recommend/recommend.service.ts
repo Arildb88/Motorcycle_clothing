@@ -9,6 +9,9 @@ import { MVP_ACTIVITY_TYPE } from '../domain';
  * SPIKE SHIM — boolean threshold recommender retained until M3.
  * Uses UserProfile.coldSensitivity + PersonalOffset as a crude bias only.
  * Do not extend this; replace in M3 with demand-based engine.
+ *
+ * Always recalculates weather for the selected route — never reads a
+ * stored recommendation from Route.
  */
 @Injectable()
 export class RecommendService {
@@ -18,15 +21,23 @@ export class RecommendService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async forUser(userId: string, routeId?: string) {
+  async forUser(
+    userId: string,
+    routeId?: string,
+    _departureAt?: string,
+  ) {
     const route = routeId
       ? await this.routes.get(userId, routeId)
       : await this.routes.getDefault(userId);
 
     if (!route) {
       throw new NotFoundException(
-        'No route found. Add a normal commute route first.',
+        'No route found. Save a motorcycle route first.',
       );
+    }
+
+    if (routeId) {
+      await this.routes.touchLastUsed(userId, route.id);
     }
 
     const profile = await this.prisma.userProfile.findUnique({
@@ -46,10 +57,8 @@ export class RecommendService {
       profile?.coldSensitivity ?? 0,
       offset,
     );
-    const weather = await this.weather.forRoutePoints([
-      { lat: route.startLat, lon: route.startLon },
-      { lat: route.endLat, lon: route.endLon },
-    ]);
+    const points = this.routes.weatherPointsFor(route);
+    const weather = await this.weather.forRoutePoints(points);
 
     const recommendation = recommendClothing(weather, comfort);
     const n = offset?.n ?? 0;
@@ -60,11 +69,23 @@ export class RecommendService {
       route: {
         id: route.id,
         name: route.name,
+        description: route.description,
+        activityType: route.activityType,
+        routeKind: route.routeKind,
+        category: route.category,
+        isFavorite: route.isFavorite,
         isDefaultCommute: route.isDefaultCommute,
         startLabel: route.startLabel,
         endLabel: route.endLabel,
         typicalDurationMin: route.typicalDurationMin,
+        waypoints: route.waypoints?.map((w) => ({
+          sortOrder: w.sortOrder,
+          lat: w.lat,
+          lon: w.lon,
+          label: w.label,
+        })),
       },
+      departureAt: _departureAt ?? new Date().toISOString(),
       weather,
       comfort: {
         ...comfort,

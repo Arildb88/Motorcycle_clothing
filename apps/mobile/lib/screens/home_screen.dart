@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
+import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -15,53 +17,222 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<SavedRoute> _routes = [];
   Map<String, dynamic>? _data;
+  String? _selectedRouteId;
   String? _error;
-  bool _loading = true;
+  bool _loadingRoutes = true;
+  bool _loadingRec = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _bootstrap();
   }
 
-  Future<void> _load() async {
+  Future<void> _bootstrap() async {
+    await _loadRoutes();
+    if (_routes.isNotEmpty) {
+      final preferred = _routes.firstWhere(
+        (r) => r.isDefaultCommute,
+        orElse: () => _routes.first,
+      );
+      await _launchRoute(preferred, leaveNow: true, silent: true);
+    } else {
+      setState(() => _loadingRec = false);
+    }
+  }
+
+  Future<void> _loadRoutes() async {
     setState(() {
-      _loading = true;
+      _loadingRoutes = true;
       _error = null;
     });
     try {
       final api = context.read<ApiClient>();
-      final data = await api.get('/recommend');
+      final list = await api.getList('/routes?activityType=motorcycle');
+      if (!mounted) return;
+      setState(() {
+        _routes = list
+            .whereType<Map<String, dynamic>>()
+            .map(SavedRoute.fromJson)
+            .toList();
+        _loadingRoutes = false;
+      });
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+          _loadingRoutes = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _launchRoute(
+    SavedRoute route, {
+    required bool leaveNow,
+    DateTime? departureAt,
+    bool silent = false,
+  }) async {
+    setState(() {
+      _loadingRec = true;
+      _error = null;
+      _selectedRouteId = route.id;
+    });
+    try {
+      final api = context.read<ApiClient>();
+      final when = leaveNow ? DateTime.now().toUtc() : (departureAt ?? DateTime.now().toUtc());
+      await api.post(
+        '/routes/${route.id}/plan',
+        {'departureAt': when.toIso8601String()},
+        auth: true,
+      );
+      final q = Uri(
+        path: '/recommend',
+        queryParameters: {
+          'routeId': route.id,
+          'departureAt': when.toIso8601String(),
+        },
+      );
+      final data = await api.get(q.toString());
       if (mounted) setState(() => _data = data);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _error = 'Could not load recommendation');
-      }
+      if (mounted && !silent) setState(() => _error = e.message);
+      if (mounted && silent) setState(() => _error = e.message);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() => _loadingRec = false);
     }
+  }
+
+  Future<void> _pickDeparture(SavedRoute route) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(
+                route.name,
+                style: GoogleFonts.barlowCondensed(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: const Text('When are you leaving?'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.bolt),
+              title: const Text('Leave now'),
+              onTap: () => Navigator.pop(ctx, 'now'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.today),
+              title: const Text('Today at…'),
+              onTap: () => Navigator.pop(ctx, 'today'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.event),
+              title: const Text('Tomorrow at…'),
+              onTap: () => Navigator.pop(ctx, 'tomorrow'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_calendar),
+              title: const Text('Custom date/time'),
+              onTap: () => Navigator.pop(ctx, 'custom'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+
+    if (choice == 'now') {
+      await _launchRoute(route, leaveNow: true);
+      return;
+    }
+
+    final now = DateTime.now();
+    DateTime base = now;
+    if (choice == 'tomorrow') {
+      base = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    } else if (choice == 'today') {
+      base = DateTime(now.year, now.month, now.day);
+    }
+
+    TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(now.add(const Duration(minutes: 15))),
+    );
+    if (time == null || !mounted) return;
+
+    DateTime departure = DateTime(
+      base.year,
+      base.month,
+      base.day,
+      time.hour,
+      time.minute,
+    );
+
+    if (choice == 'custom') {
+      final date = await showDatePicker(
+        context: context,
+        initialDate: now,
+        firstDate: now.subtract(const Duration(days: 1)),
+        lastDate: now.add(const Duration(days: 14)),
+      );
+      if (date == null || !mounted) return;
+      departure = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    }
+
+    await _launchRoute(route, leaveNow: false, departureAt: departure.toUtc());
+  }
+
+  Future<void> _addRoute() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const RouteEditorScreen()),
+    );
+    if (saved == true) await _loadRoutes();
   }
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _load,
+      onRefresh: () async {
+        await _loadRoutes();
+        SavedRoute? selected;
+        for (final r in _routes) {
+          if (r.id == _selectedRouteId) {
+            selected = r;
+            break;
+          }
+        }
+        selected ??= _routes.isEmpty ? null : _routes.first;
+        if (selected != null) {
+          await _launchRoute(selected, leaveNow: true);
+        }
+      },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 56, 24, 16),
+              padding: const EdgeInsets.fromLTRB(24, 56, 24, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const ActivitySwitcher(),
                   const SizedBox(height: 6),
                   Text(
-                    'Today’s ride kit',
+                    'Quick routes',
                     style: GoogleFonts.sourceSerif4(
                       fontSize: 22,
                       color: AppTheme.steel,
@@ -71,34 +242,140 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          if (_loading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+          if (_loadingRoutes)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
             )
-          else if (_error != null)
+          else
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: _routes.isEmpty ? 72 : 132,
+                child: _routes.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: OutlinedButton.icon(
+                          onPressed: _addRoute,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Plan new ride'),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _routes.length + 1,
+                        separatorBuilder: (_, _) => const SizedBox(width: 10),
+                        itemBuilder: (context, i) {
+                          if (i == _routes.length) {
+                            return _QuickChip(
+                              title: '+ Plan new',
+                              subtitle: 'Save a route',
+                              selected: false,
+                              onTap: _addRoute,
+                            );
+                          }
+                          final r = _routes[i];
+                          return _QuickChip(
+                            title: r.name,
+                            subtitle: '${r.durationLabel}'
+                                '${r.isFavorite ? ' · ★' : ''}',
+                            selected: r.id == _selectedRouteId,
+                            onTap: () => _pickDeparture(r),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          if (_error != null && _data == null)
             SliverFillRemaining(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
-                    ),
+                    Text(_error!, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
                     FilledButton(
-                      onPressed: _load,
+                      onPressed: _bootstrap,
                       child: const Text('Retry'),
                     ),
                   ],
                 ),
               ),
             )
+          else if (_loadingRec)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_data != null)
+            SliverToBoxAdapter(child: _RecommendationBody(data: _data!))
           else
-            SliverToBoxAdapter(child: _RecommendationBody(data: _data!)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Tap a saved route to calculate today’s weather and kit.',
+                  style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickChip extends StatelessWidget {
+  const _QuickChip({
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? AppTheme.mist.withValues(alpha: 0.85)
+          : Colors.white.withValues(alpha: 0.65),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 148,
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.barlowCondensed(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: AppTheme.steel.withValues(alpha: 0.9),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -118,12 +395,12 @@ class _RecommendationBody extends StatelessWidget {
     final reasons = (rec['reasons'] as List).cast<String>();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            route['name']?.toString() ?? 'Commute',
+            route['name']?.toString() ?? 'Ride',
             style: GoogleFonts.barlowCondensed(
               fontSize: 34,
               fontWeight: FontWeight.w600,
@@ -150,11 +427,13 @@ class _RecommendationBody extends StatelessWidget {
               ),
               _Metric(
                 label: 'Rain',
-                value: '${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
+                value:
+                    '${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
               ),
               _Metric(
                 label: 'Wind',
-                value: '${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
+                value:
+                    '${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
               ),
             ],
           ),

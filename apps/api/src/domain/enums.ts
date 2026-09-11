@@ -202,6 +202,37 @@ export function isActivityType(value: string): value is ActivityType {
   return (ACTIVITY_TYPES as readonly string[]).includes(value);
 }
 
+/** Conceptual route shapes — all represented as ordered waypoints. */
+export const ROUTE_KINDS = ['point_to_point', 'multi_stop', 'loop'] as const;
+export type RouteKind = (typeof ROUTE_KINDS)[number];
+
+/** Lightweight optional labels — not folders/tags. */
+export const ROUTE_CATEGORIES = [
+  'work',
+  'commute',
+  'home',
+  'weekend',
+  'touring',
+  'favourite',
+  'custom',
+] as const;
+export type RouteCategory = (typeof ROUTE_CATEGORIES)[number];
+
+export const WAYPOINT_TYPES = ['start', 'stop', 'end', 'via'] as const;
+export type WaypointType = (typeof WAYPOINT_TYPES)[number];
+
+export function isRouteKind(value: string): value is RouteKind {
+  return (ROUTE_KINDS as readonly string[]).includes(value);
+}
+
+export function isRouteCategory(value: string): value is RouteCategory {
+  return (ROUTE_CATEGORIES as readonly string[]).includes(value);
+}
+
+export function isWaypointType(value: string): value is WaypointType {
+  return (WAYPOINT_TYPES as readonly string[]).includes(value);
+}
+
 export function clampTier(value: number): number {
   return Math.min(TIER_MAX, Math.max(TIER_MIN, Math.round(value)));
 }

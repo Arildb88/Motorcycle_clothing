@@ -111,25 +111,60 @@ model Place {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// Reusable saved route template (≠ ActivityPlan ≠ ActivityLog).
+/// Weather / recommendations are never stored on Route — always recalculated.
 model Route {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   userId             String
   name               String
-  isDefaultCommute   Boolean  @default(false)
+  description        String?
+  /// motorcycle | hiking | … (MVP: motorcycle)
+  activityType       String    @default("motorcycle")
+  /// point_to_point | multi_stop | loop — derived from waypoints when omitted
+  routeKind          String    @default("point_to_point")
+  /// Optional light label: work | commute | home | weekend | touring | favourite | custom
+  category           String?
+  isFavorite         Boolean   @default(false)
+  isDefaultCommute   Boolean   @default(false)
+  /// Denormalized from first/last RouteWaypoint for list + spike recommend
   startLat           Float
   startLon           Float
   startLabel         String?
   endLat             Float
   endLon             Float
   endLabel           String?
-  waypointsJson      String   @default("[]")
-  typicalDurationMin Int      @default(30)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  /// Mirror of ordered waypoints for legacy readers; RouteWaypoint is canonical
+  waypointsJson      String    @default("[]")
+  typicalDurationMin Int       @default(30)
+  lastUsedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  waypoints    RouteWaypoint[]
   activityLogs ActivityLog[]
   plans        ActivityPlan[]
+
+  @@index([userId, isFavorite])
+  @@index([userId, activityType])
+}
+
+/// Ordered waypoint for a saved Route. Coordinates are canonical routing data.
+model RouteWaypoint {
+  id           String   @id @default(cuid())
+  routeId      String
+  sortOrder    Int
+  lat          Float
+  lon          Float
+  label        String?
+  address      String?
+  /// start | stop | end | via (optional UX hint)
+  waypointType String?
+  createdAt    DateTime @default(now())
+
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@index([routeId, sortOrder])
 }
 
 model ActivityPlan {

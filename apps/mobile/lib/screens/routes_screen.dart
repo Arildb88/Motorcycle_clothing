@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
@@ -12,7 +14,7 @@ class RoutesScreen extends StatefulWidget {
 }
 
 class _RoutesScreenState extends State<RoutesScreen> {
-  List<dynamic> _routes = [];
+  List<SavedRoute> _routes = [];
   bool _loading = true;
   String? _error;
 
@@ -29,8 +31,15 @@ class _RoutesScreenState extends State<RoutesScreen> {
     });
     try {
       final api = context.read<ApiClient>();
-      final list = await api.getList('/routes');
-      if (mounted) setState(() => _routes = list);
+      final list = await api.getList('/routes?activityType=motorcycle');
+      if (mounted) {
+        setState(() {
+          _routes = list
+              .whereType<Map<String, dynamic>>()
+              .map(SavedRoute.fromJson)
+              .toList();
+        });
+      }
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
@@ -38,31 +47,44 @@ class _RoutesScreenState extends State<RoutesScreen> {
     }
   }
 
-  Future<void> _addDemoCommute() async {
+  Future<void> _openEditor({SavedRoute? existing}) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => RouteEditorScreen(existing: existing),
+      ),
+    );
+    if (saved == true) await _load();
+  }
+
+  Future<void> _toggleFavorite(SavedRoute r) async {
     final api = context.read<ApiClient>();
-    await api.post('/routes', {
-      'name': 'Normal commute',
-      'isDefaultCommute': true,
-      'startLat': 59.9139,
-      'startLon': 10.7522,
-      'startLabel': 'Oslo center',
-      'endLat': 59.9494,
-      'endLon': 10.7686,
-      'endLabel': 'Nydalen',
-      'typicalDurationMin': 25,
-    }, auth: true);
+    await api.patch('/routes/${r.id}', {'isFavorite': !r.isFavorite});
     await _load();
   }
 
-  Future<void> _setDefault(String id) async {
+  Future<void> _delete(SavedRoute r) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete route?'),
+        content: Text(
+          '“${r.name}” will be removed. Past rides keep their route snapshot.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     final api = context.read<ApiClient>();
-    await api.patch('/routes/$id', {'isDefaultCommute': true});
-    await _load();
-  }
-
-  Future<void> _delete(String id) async {
-    final api = context.read<ApiClient>();
-    await api.delete('/routes/$id');
+    await api.delete('/routes/${r.id}');
     await _load();
   }
 
@@ -78,7 +100,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Routes',
+                    'Saved routes',
                     style: GoogleFonts.barlowCondensed(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
@@ -86,8 +108,8 @@ class _RoutesScreenState extends State<RoutesScreen> {
                   ),
                 ),
                 IconButton(
-                  onPressed: _addDemoCommute,
-                  tooltip: 'Add Oslo commute sample',
+                  onPressed: () => _openEditor(),
+                  tooltip: 'Plan new ride',
                   icon: const Icon(Icons.add),
                 ),
               ],
@@ -96,7 +118,8 @@ class _RoutesScreenState extends State<RoutesScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Mark one as your normal commute — it becomes the default on Today.',
+              'Reusable templates for motorcycle. Weather and kit are always '
+              'recalculated when you launch a ride.',
               style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
             ),
           ),
@@ -108,9 +131,10 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     ? Center(child: Text(_error!))
                     : _routes.isEmpty
                         ? Center(
-                            child: FilledButton(
-                              onPressed: _addDemoCommute,
-                              child: const Text('Add normal commute'),
+                            child: FilledButton.icon(
+                              onPressed: () => _openEditor(),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Plan new ride'),
                             ),
                           )
                         : RefreshIndicator(
@@ -121,39 +145,54 @@ class _RoutesScreenState extends State<RoutesScreen> {
                               separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
                               itemBuilder: (context, i) {
-                                final r = _routes[i] as Map<String, dynamic>;
-                                final isDefault = r['isDefaultCommute'] == true;
+                                final r = _routes[i];
                                 return ListTile(
-                                  tileColor: Colors.white.withValues(alpha: 0.55),
+                                  tileColor:
+                                      Colors.white.withValues(alpha: 0.55),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  title: Text(r['name']?.toString() ?? 'Route'),
-                                  subtitle: Text(
-                                    '${r['startLabel'] ?? ''} → ${r['endLabel'] ?? ''}'
-                                        .trim(),
+                                  leading: Icon(
+                                    r.isFavorite
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: r.isFavorite
+                                        ? AppTheme.amber
+                                        : AppTheme.steel,
                                   ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (isDefault)
-                                        Text(
-                                          'COMMUTE',
-                                          style: GoogleFonts.barlowCondensed(
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.amber,
-                                          ),
-                                        )
-                                      else
-                                        TextButton(
-                                          onPressed: () =>
-                                              _setDefault(r['id'] as String),
-                                          child: const Text('Set default'),
+                                  title: Text(r.name),
+                                  subtitle: Text(
+                                    '${r.summaryLabel}\n${r.durationLabel}'
+                                    '${r.category != null ? ' · ${r.category}' : ''}',
+                                  ),
+                                  isThreeLine: true,
+                                  onTap: () => _openEditor(existing: r),
+                                  trailing: PopupMenuButton<String>(
+                                    onSelected: (v) async {
+                                      if (v == 'favorite') {
+                                        await _toggleFavorite(r);
+                                      } else if (v == 'delete') {
+                                        await _delete(r);
+                                      } else if (v == 'edit') {
+                                        await _openEditor(existing: r);
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      PopupMenuItem(
+                                        value: 'favorite',
+                                        child: Text(
+                                          r.isFavorite
+                                              ? 'Unfavorite'
+                                              : 'Favorite',
                                         ),
-                                      IconButton(
-                                        onPressed: () =>
-                                            _delete(r['id'] as String),
-                                        icon: const Icon(Icons.delete_outline),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'edit',
+                                        child: Text('Edit'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text('Delete'),
                                       ),
                                     ],
                                   ),
