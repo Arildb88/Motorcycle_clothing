@@ -30,4 +30,9 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Smoke test
+        env:
+          # Unit tests + build already ran above; smoke focuses on migrate + HTTP.
+          SMOKE_SKIP_UNIT: '1'
+          SMOKE_SKIP_BUILD: '1'
+          ALLOW_DEMO_OAUTH: 'true'
         run: bash ../../scripts/smoke-api.sh
