@@ -1,0 +1,348 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  passwordHash String?
+  displayName  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  authIdentities    AuthIdentity[]
+  profile           UserProfile?
+  motorcycleProfile MotorcycleProfile?
+  garments          Garment[]
+  places            Place[]
+  routes            Route[]
+  activityPlans     ActivityPlan[]
+  activityLogs      ActivityLog[]
+  personalOffsets   PersonalOffset[]
+  connectedAccounts ConnectedAccount[]
+}
+
+/// Login identity (email/local, facebook, microsoft, …). Not a connected service.
+model AuthIdentity {
+  id                 String   @id @default(cuid())
+  userId             String
+  /// local | facebook | microsoft | (future apple|google)
+  provider           String
+  providerSubjectId  String
+  providerEmail      String?
+  avatarUrl          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubjectId])
+  @@index([userId])
+}
+
+model UserProfile {
+  id                         String  @id @default(cuid())
+  userId                     String  @unique
+  homeLat                    Float?
+  homeLon                    Float?
+  units                      String  @default("celsius")
+  /// UI language: en | nb — null means client uses device fallback
+  preferredLanguage          String?
+  defaultRouteId             String?
+  /// -1 colder, 0 average, +1 runs warmer
+  coldSensitivity            Int     @default(0)
+  /// -1 heat-sensitive, 0 average, +1 handles heat well (optional UX)
+  heatSensitivity            Int     @default(0)
+  sweatTendency              Int?
+  avatarUrl                  String?
+  /// motorcycle | hiking | cycling
+  defaultActivity            String  @default("motorcycle")
+  showActivityChooserOnLaunch Boolean @default(true)
+  /// JSON array of ActivityType
+  interestedActivitiesJson   String  @default("[\"motorcycle\"]")
+  onboardingCompleted        Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MotorcycleProfile {
+  id             String @id @default(cuid())
+  userId         String @unique
+  category       String @default("naked")
+  windProtection String @default("low")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Garment {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  category          String
+  layer             String
+  primaryBodyZone   String
+  warmthTier        Int      @default(3)
+  windResistTier    Int      @default(2)
+  waterResistTier   Int      @default(1)
+  breathabilityTier Int      @default(3)
+  /// textile | leather | mesh | denim | synthetic | merino | mixed | other
+  material          String?
+  /// Capability: garment has usable vents (open/closed is ride configuration)
+  hasVentilation    Boolean  @default(false)
+  isHeated          Boolean  @default(false)
+  brand             String?
+  model             String?
+  notes             String?
+  activityTagsJson  String   @default("[\"motorcycle\"]")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  components GarmentComponent[]
+
+  @@index([userId, category])
+}
+
+/// Removable part of a physical garment (thermal/waterproof liner, …).
+/// Not a separate wardrobe item the user “wears” independently.
+model GarmentComponent {
+  id                 String   @id @default(cuid())
+  garmentId          String
+  /// thermal_liner | waterproof_liner | other
+  kind               String
+  name               String?
+  warmthDelta        Int      @default(0)
+  windResistDelta    Int      @default(0)
+  waterResistDelta   Int      @default(0)
+  breathabilityDelta Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  garment Garment @relation(fields: [garmentId], references: [id], onDelete: Cascade)
+
+  @@index([garmentId])
+}
+
+model Place {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  lat       Float
+  lon       Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Reusable saved route template (≠ ActivityPlan ≠ ActivityLog).
+/// Weather / recommendations are never stored on Route — always recalculated.
+model Route {
+  id                 String    @id @default(cuid())
+  userId             String
+  name               String
+  description        String?
+  /// motorcycle | hiking | … (MVP: motorcycle)
+  activityType       String    @default("motorcycle")
+  /// point_to_point | multi_stop | loop — derived from waypoints when omitted
+  routeKind          String    @default("point_to_point")
+  /// Optional light label: work | commute | home | weekend | touring | favourite | custom
+  category           String?
+  isFavorite         Boolean   @default(false)
+  isDefaultCommute   Boolean   @default(false)
+  /// Denormalized from first/last RouteWaypoint for list + spike recommend
+  startLat           Float
+  startLon           Float
+  startLabel         String?
+  endLat             Float
+  endLon             Float
+  endLabel           String?
+  /// Mirror of ordered waypoints for legacy readers; RouteWaypoint is canonical
+  waypointsJson      String    @default("[]")
+  typicalDurationMin Int       @default(30)
+  lastUsedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  waypoints    RouteWaypoint[]
+  activityLogs ActivityLog[]
+  plans        ActivityPlan[]
+
+  @@index([userId, isFavorite])
+  @@index([userId, activityType])
+}
+
+/// Ordered waypoint for a saved Route. Coordinates are canonical routing data.
+model RouteWaypoint {
+  id           String   @id @default(cuid())
+  routeId      String
+  sortOrder    Int
+  lat          Float
+  lon          Float
+  label        String?
+  address      String?
+  /// start | stop | end | via (optional UX hint)
+  waypointType String?
+  createdAt    DateTime @default(now())
+
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@index([routeId, sortOrder])
+}
+
+model ActivityPlan {
+  id           String   @id @default(cuid())
+  userId       String
+  activityType String   @default("motorcycle")
+  routeId      String?
+  departureAt  DateTime
+  durationMin  Int
+  intensity    String?
+  snapshotJson String   @default("{}")
+  createdAt    DateTime @default(now())
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route           Route?           @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  weatherSnapshot WeatherSnapshot?
+  recommendation  Recommendation?
+  activityLog     ActivityLog?
+}
+
+model WeatherSnapshot {
+  id          String   @id @default(cuid())
+  planId      String   @unique
+  provider    String
+  payloadJson String
+  createdAt   DateTime @default(now())
+
+  plan ActivityPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id                  String   @id @default(cuid())
+  planId              String   @unique
+  confidence          String   @default("low")
+  confidenceScore     Float?
+  summaryJson         String   @default("{}")
+  reasonsJson         String   @default("[]")
+  personalizationJson String   @default("{}")
+  createdAt           DateTime @default(now())
+
+  plan  ActivityPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  items RecommendationItem[]
+}
+
+model RecommendationItem {
+  id               String  @id @default(cuid())
+  recommendationId String
+  slot             String
+  mode             String
+  garmentId        String?
+  genericLabel     String?
+
+  recommendation Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id                 String   @id @default(cuid())
+  userId             String
+  planId             String?  @unique
+  routeId            String?
+  startedAt          DateTime
+  durationMin        Int?
+  wornGarmentIdsJson String   @default("[]")
+  weatherSummaryJson String   @default("{}")
+  recommendationJson String   @default("{}")
+  createdAt          DateTime @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan     ActivityPlan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  route    Route?            @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  feedback ActivityFeedback?
+}
+
+model ActivityFeedback {
+  id            String   @id @default(cuid())
+  activityLogId String   @unique
+  overallRating Int
+  sweatLevel    Int?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  activityLog ActivityLog        @relation(fields: [activityLogId], references: [id], onDelete: Cascade)
+  bodyAreas   BodyAreaFeedback[]
+}
+
+model BodyAreaFeedback {
+  id         String @id @default(cuid())
+  feedbackId String
+  zone       String
+  rating     Int
+
+  feedback ActivityFeedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@unique([feedbackId, zone])
+}
+
+model PersonalOffset {
+  id           String   @id @default(cuid())
+  userId       String
+  activityType String
+  zone         String
+  n            Float    @default(0)
+  meanResidual Float    @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, activityType, zone])
+}
+
+/// External integrations (Strava, …). Tokens encrypted at rest.
+model ConnectedAccount {
+  id                   String    @id @default(cuid())
+  userId               String
+  /// strava | (future garmin|health_connect|…)
+  provider             String
+  providerAccountId    String
+  displayName          String?
+  scopes               String    @default("")
+  accessTokenEnc       String
+  refreshTokenEnc      String?
+  accessTokenExpiresAt DateTime?
+  status               String    @default("connected")
+  metadataJson         String    @default("{}")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])
+}
+
+/// Short-lived OAuth PKCE/state rows for IdP and connected-service flows.
+model OAuthState {
+  id            String   @id @default(cuid())
+  state         String   @unique
+  provider      String
+  /// login | link | connect
+  purpose       String
+  codeVerifier  String?
+  userId        String?
+  redirectUri   String?
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+}
+
+model WeatherCache {
+  id          String   @id @default(cuid())
+  cacheKey    String   @unique
+  payloadJson String
+  validUntil  DateTime
+  createdAt   DateTime @default(now())
+}

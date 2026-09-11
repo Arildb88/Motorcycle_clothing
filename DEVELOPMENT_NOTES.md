@@ -1,0 +1,112 @@
+# DEVELOPMENT NOTES
+
+## Completed milestones
+
+- **M1** Domain foundations
+- **M2** Wardrobe
+- **M2.5** Profile, activity context, identity providers, connected services (Strava foundation)
+- **M2.6** Saved motorcycle routes (Route + RouteWaypoint, quick launch, plan-from-route)
+- **M2.7** Motorcycle garment configuration (material, GarmentComponent liners, vent capability, presets)
+- **Platform docs** Security, privacy, Alpine/ads/Postgres roadmap; **i18n** nb/en foundation
+
+## Localization
+
+- ARB + Flutter gen-l10n (`nb`, `en`)
+- Profile → Language; `UserProfile.preferredLanguage`
+- Local SharedPreferences cache for pre-login / cold start
+- Reason codes stay structured for M3 (do not store only English sentences)
+
+## Security / privacy docs
+
+- [`SECURITY.md`](./SECURITY.md) — authz, secrets, backups, Supabase timing
+- [`PRIVACY_ARCHITECTURE.md`](./PRIVACY_ARCHITECTURE.md) — location minimization, route privacy
+
+## M2.7 garment configuration
+
+- `Garment.material`, `hasVentilation`, `isHeated`
+- `GarmentComponent` for thermal/waterproof liners (tier deltas)
+- Presets via `POST /wardrobe` `preset` field / Flutter quick type
+- `effectiveGarmentTiers()` helper for M3
+- Vent open/closed is **ride config** — not stored on garment
+- Worn evidence shape documented for M5 (`installedComponentIds`, `vents`)
+
+## M2.6 saved routes
+
+- Model name remains **`Route`** (docs: “saved route”). Not a parallel SavedRoute system.
+- Canonical geometry: **`RouteWaypoint`** (ordered lat/lon + label/address).
+- `POST /api/routes/:id/plan` creates `ActivityPlan` with route **snapshot**; then call `GET /api/recommend?routeId=…&departureAt=…` for fresh weather/kit.
+- Flutter: Motorcycle home **Quick routes** + Routes tab editor (form lat/lon). Map provider search deferred.
+- Ordering: favorites → recent (`lastUsedAt`) → other.
+- Historical rides: `snapshotJson` on plan; delete route uses FK `SetNull`.
+
+## M2.5 architecture extensions (accepted)
+
+See PROJECT_PLAN §15 and ARCHITECTURE §3.1–3.2.
+
+Key points:
+
+- `currentActivity` (session) ≠ `defaultActivity` (profile)
+- Identity providers ≠ connected services
+- No silent account merge by email
+- Tokens for Strava encrypted with `TOKEN_ENCRYPTION_KEY`
+- Facebook/Microsoft/Strava buttons are **config-gated**
+
+## Environment variables
+
+Copy `apps/api/.env.example` → `apps/api/.env`.
+
+| Variable | Purpose |
+|----------|---------|
+| `OAUTH_REDIRECT_URI` | Mobile deep link, default `ridewear://oauth/callback` |
+| `TOKEN_ENCRYPTION_KEY` | AES key/passphrase for Strava tokens (required to enable Strava) |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Facebook Login |
+| `MICROSOFT_CLIENT_ID` / `MICROSOFT_TENANT_ID` / optional `MICROSOFT_CLIENT_SECRET` | Entra ID (public client + PKCE preferred) |
+| `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET` / `STRAVA_REDIRECT_URI` | Strava connected service |
+| `ALLOW_DEMO_OAUTH` | Non-prod demo tokens via `POST /auth/oauth` |
+
+## Facebook setup
+
+1. Create a Facebook app with **Facebook Login**.
+2. Valid OAuth redirect URI: `ridewear://oauth/callback` (and any Facebook-required https redirect if using intermediary).
+3. Set `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` on the API.
+4. Minimal scopes: `public_profile`, `email`.
+5. Flutter opens authorize URL via `flutter_web_auth_2`; API exchanges code (PKCE).
+
+## Microsoft / Entra setup
+
+1. App registration (mobile/public client).
+2. Redirect URI: `ridewear://oauth/callback`.
+3. Enable ID tokens; expose scopes `openid profile email offline_access`.
+4. Set `MICROSOFT_CLIENT_ID`, `MICROSOFT_TENANT_ID=common` (or your tenant).
+5. Prefer PKCE public client (no secret). Optional confidential secret supported.
+
+## Strava setup
+
+1. Create Strava API application.
+2. Authorization callback domain / redirect: `ridewear://oauth/callback`.
+3. Set `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `TOKEN_ENCRYPTION_KEY`.
+4. Connect from Profile → Connected Services (not login screen).
+5. M2.5 supports connect / disconnect / minimal athlete sync only.
+
+## Local deep link
+
+- Android: `ridewear` scheme in `AndroidManifest.xml`
+- iOS: `CFBundleURLSchemes` = `ridewear`
+
+## Status legend for M2.5 features
+
+| Feature | Status |
+|---------|--------|
+| Email auth, profile prefs, onboarding, activity chooser/switcher | **WORKING NOW** |
+| Wardrobe multi-activity tags | **WORKING NOW** (from M2) |
+| FB/MS PKCE authorize + callback API | **ARCHITECTURE READY** — needs real app credentials |
+| Strava connect/sync API | **ARCHITECTURE READY** — needs Strava + encryption key |
+| Demo social login (`demo:` tokens) | **WORKING in non-prod** when IdPs unset |
+| Hiking/cycling recommendation engines | **DEFERRED** (placeholder homes) |
+| Map search / routing provider geometry | **DEFERRED** (lat/lon form foundation in M2.6) |
+| M3 demand engine | **DEFERRED** |
+
+## Spike leftovers
+
+- `/api/recommend` still baseline motorcycle shim until M3.
+- Avatar uploads deferred (initials / optional provider URL only).

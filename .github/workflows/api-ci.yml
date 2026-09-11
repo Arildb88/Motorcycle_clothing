@@ -1,0 +1,38 @@
+name: api-ci
+
+on:
+  push:
+    paths:
+      - 'apps/api/**'
+      - 'scripts/smoke-api.sh'
+      - '.github/workflows/api-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/api/**'
+      - 'scripts/smoke-api.sh'
+      - '.github/workflows/api-ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm test
+      - run: npm run build
+      - name: Smoke test
+        env:
+          # Unit tests + build already ran above; smoke focuses on migrate + HTTP.
+          SMOKE_SKIP_UNIT: '1'
+          SMOKE_SKIP_BUILD: '1'
+          ALLOW_DEMO_OAUTH: 'true'
+        run: bash ../../scripts/smoke-api.sh
