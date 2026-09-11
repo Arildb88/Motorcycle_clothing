@@ -65,6 +65,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSaved => 'Profile saved';
 
   @override
+  String get wearSection => 'Wear';
+
+  @override
+  String get packSection => 'Pack';
+
+  @override
+  String get confidenceLabel => 'Confidence';
+
+  @override
   String get reasonColdMountain =>
       'Cold exposure expected on the mountain section.';
 
@@ -77,4 +86,71 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reasonPersonalColdHands =>
       'Based on your rides, your hands often get cold in similar conditions.';
+
+  @override
+  String get reasonMildConditions =>
+      'Conditions are mild — avoid unnecessary insulation.';
+
+  @override
+  String get reasonLowEffectiveTemperature =>
+      'Motorcycle exposure temperature is low for this ride.';
+
+  @override
+  String get reasonSustainedColdExposure =>
+      'Sustained cold exposure increases warmth demand.';
+
+  @override
+  String get reasonShortColdSegment =>
+      'A short cold segment may need packable insulation.';
+
+  @override
+  String get reasonRainProtectionRequired =>
+      'Rain protection is required for sustained wet exposure.';
+
+  @override
+  String get reasonPackRainLayer =>
+      'Pack waterproof protection for later or short rain risk.';
+
+  @override
+  String get reasonHighWindExposure =>
+      'High wind / riding airflow increases protection demand.';
+
+  @override
+  String get reasonTemperatureVariation =>
+      'Temperature varies along the route.';
+
+  @override
+  String get reasonThermalLinerRecommended =>
+      'Install the thermal liner for this ride.';
+
+  @override
+  String get reasonWaterproofLinerRecommended =>
+      'Install the waterproof liner for this ride.';
+
+  @override
+  String get reasonVentsClosedRecommended =>
+      'Keep vents closed for colder exposure.';
+
+  @override
+  String get reasonVentsOpenRecommended => 'Open vents for warmer exposure.';
+
+  @override
+  String get reasonPackExtraInsulation =>
+      'Pack extra insulation for short cold segments.';
+
+  @override
+  String get reasonWardrobeGap =>
+      'No suitable owned garment found for this need.';
+
+  @override
+  String get reasonIncompleteWeather =>
+      'Weather coverage is incomplete — lower confidence.';
+
+  @override
+  String get reasonIncompleteWardrobe =>
+      'Wardrobe coverage is incomplete — lower confidence.';
+
+  @override
+  String get reasonBaselineNoPersonalEvidence =>
+      'Baseline recommendation — not enough personal ride evidence yet.';
 }
