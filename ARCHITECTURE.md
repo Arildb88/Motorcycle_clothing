@@ -1,0 +1,307 @@
+# ARCHITECTURE — Personalized Outdoor Clothing App
+
+Companion to [`PROJECT_PLAN.md`](./PROJECT_PLAN.md).  
+Focus: technical structure, adapters, schema, and migration from the current RideWear spike.
+
+---
+
+## 1. Goals for architecture
+
+- Explainable recommendations (no black box in MVP)
+- Activity types modular (ship motorcycle first)
+- Weather / routing / auth replaceable via adapters
+- Personalization with priors + shrinkage (no ML platform)
+- Privacy-minimizing storage of location/route data
+- Evolve existing NestJS + Flutter code instead of rewrite
+
+---
+
+## 2. System context
+
+```
+Mobile (Flutter)
+    │  JWT
+API (NestJS)
+    ├── RecommendationEngine (pure domain, unit-tested)
+    ├── WeatherPort  → MetWeatherAdapter | MockWeatherAdapter | (later OpenMeteo)
+    ├── RoutingPort  → NullRoutingAdapter | (later ORS/Mapbox)
+    ├── Auth         → LocalEmailAuth (later Apple/Google)
+    └── Persistence  → Prisma (SQLite local → Postgres staging/prod)
+```
+
+**Rule:** Flutter never calls MET/routing with secrets. All provider credentials and User-Agent strings stay on the server.
+
+---
+
+## 3. Bounded contexts (API modules)
+
+| Module | Responsibility |
+|--------|----------------|
+| `auth` | Register/login, JWT |
+| `users` | Profile, motorcycle profile, sensitivity |
+| `wardrobe` | Garments CRUD |
+| `places` / `routes` | Saved locations & simple routes |
+| `plans` | ActivityPlan create/read |
+| `weather` | Fetch + normalize + cache forecasts |
+| `recommend` | Build recommendation from plan + wardrobe + priors |
+| `feedback` | Post-activity feedback + prior updates |
+| `privacy` | Delete activity / account |
+
+Current repo modules (`routes`, `comfort`, `recommend`, `feedback`, `weather`, `auth`, `users`) map into this; `comfort` threshold fields should shrink as the engine moves to warmth-demand + priors.
+
+---
+
+## 4. Provider adapters
+
+### WeatherPort
+
+```ts
+interface WeatherPort {
+  forecast(points: Array<{ lat: number; lon: number; at: Date }>): Promise<WeatherSample[]>;
+}
+```
+
+Normalized `WeatherSample`: `airTempC`, `windMs`, `precipProb`, `precipMm`, `humidity?`, `symbol?`, `source`, `fetchedAt`.
+
+Implementations:
+
+- `MockWeatherAdapter` — deterministic for CI
+- `MetLocationForecastAdapter` — existing MET integration, cleaned up
+- Future: `OpenMeteoAdapter` for redundancy
+
+Cache by geohash + hour bucket (Redis later; Prisma `WeatherCache` is fine early).
+
+### RoutingPort
+
+```ts
+interface RoutingPort {
+  route(input: { start; end; waypoints?; departAt }): Promise<RouteGeometry | null>;
+}
+```
+
+MVP: `NullRoutingAdapter` — client/API supplies start, end, optional midpoints, and `durationMin`. Segment ETAs = linear time allocation along points.
+
+Later: OpenRouteService / Mapbox without changing recommend module.
+
+---
+
+## 5. Recommendation engine (domain package)
+
+Keep pure functions in something like `apps/api/src/recommend/engine/` (no Nest decorators) so tests stay fast.
+
+### Pipeline stages
+
+1. `buildSegments(plan, geometry|points) → Segment[]` (ETA per point)
+2. `attachWeather(segments, WeatherPort) → ExposedSegment[]`
+3. `scoreExposure(activityProfile, segments) → ExposureSummary`  
+   - motorcycle: wind chill using speed estimate × windProtection  
+   - includes duration weights + wear vs pack split
+4. `toSlotDemand(ExposureSummary, priors) → SlotDemand`  
+   slots: `base | mid | shell | hands | legs | head | feet | rain`
+5. `matchWardrobe(demand, garments[]) → RecommendationItems`  
+   fallback generics if empty wardrobe
+6. `explain(...) → reasons[] + confidence`
+
+### Motorcycle exposure sketch
+
+```
+speed_ms = f(bikeCategory) // defaults table
+wind_eff = wind_ms * (1 - protectionFactor[windProtection]) + speed_ms * k
+T_eff = T_air - chill(wind_eff) - rainPenalty
+severity = max(0, T_ref - T_eff) ** p
+weighted = Σ severity_i * durationWeight(duration_i)
+```
+
+`protectionFactor`: none 0 → high ~0.5–0.7 (tunable constants, not user-facing).
+
+### Shrinkage personalization
+
+Per `(userId, activityType, zone)` store:
+
+- `n` — effective sample count
+- `meanResidual` — average (felt − predicted) in °C-equivalent or warmth points
+- update with capped deltas after each feedback
+
+```
+appliedOffset = (n / (n + k)) * meanResidual
+```
+
+Global overall feedback updates `zone=overall` and lightly couples to hands/torso until zone feedback exists.
+
+---
+
+## 6. MVP schema (Prisma-oriented)
+
+This is the target model to migrate toward. JSON columns are acceptable early; normalize when queries need it.
+
+```
+User
+AuthProvider
+UserProfile
+  coldSensitivity Int     // -1, 0, +1
+  units
+MotorcycleProfile
+  category        // naked|sport|touring|adventure|cruiser|scooter
+  windProtection  // none|low|medium|high
+Garment
+  userId, name, category, warmthTier (1-5)
+  windResistTier?, waterResistTier?, breathabilityTier?
+  activityTagsJson          // ["motorcycle"]
+  notes?
+Place
+  userId, name, lat, lon
+Route
+  userId, name, isDefaultCommute
+  startPlaceId?/coords, endPlaceId?/coords
+  waypointsJson             // lightweight
+  typicalDurationMin
+ActivityPlan
+  userId, activityType      // "motorcycle" for MVP
+  routeId?, departureAt, durationMin
+  intensity?                // null for motorcycle MVP
+  snapshotJson              // bike category etc. at plan time
+WeatherSnapshot
+  planId, payloadJson, provider
+Recommendation
+  planId, createdAt, confidence
+  summaryJson, reasonsJson
+RecommendationItem
+  recommendationId
+  slot, mode (wear|pack)
+  garmentId?, genericLabel?
+ActivityLog
+  planId?, userId, startedAt, durationMin
+  wornGarmentIdsJson
+  weatherSummaryJson
+ActivityFeedback
+  activityLogId
+  overallRating             // -2..+2
+  sweatLevel?               // optional
+  notes?
+BodyAreaFeedback
+  feedbackId, zone, rating  // hands|torso|legs|feet|head
+PersonalOffset
+  userId, activityType, zone
+  n, meanResidual, updatedAt
+```
+
+### Migration from current schema
+
+| Old | New |
+|-----|-----|
+| `ComfortSettings` thresholds | Seed defaults into engine config; user sensitivity → `UserProfile.coldSensitivity` |
+| `personalColdBiasC` | Migrate into `PersonalOffset(overall)` |
+| `RideFeedback` | `ActivityLog` + `ActivityFeedback` |
+| `Route` | Keep; extend with places/waypoints |
+| Boolean recommend items | `RecommendationItem` rows / structured JSON |
+
+Do this in **M1** with Prisma migrate; keep read compatibility shims only if the Flutter app would otherwise break mid-milestone.
+
+---
+
+## 7. Flutter app structure (target)
+
+```
+lib/
+  config/
+  data/          // API client, DTOs
+  domain/        // entities used by UI
+  features/
+    auth/
+    home/        // today's recommendation
+    plan/        // create activity plan
+    wardrobe/
+    routes/
+    feedback/
+    profile/
+  ui/            // theme, shared widgets
+```
+
+**Primary flow (MVP):** Plan ride → Recommendation → (later) Feedback.
+
+Avoid exposing warmth math. Optional “Advanced” can come later.
+
+Ads: keep code path behind `ADS_ENABLED=false` by default until product validation.
+
+---
+
+## 8. Confidence model (simple)
+
+Score 0–1 from weighted factors:
+
+- Forecast freshness / provider success
+- Number of weather samples along route
+- Wardrobe coverage for required slots
+- `n/(n+k)` personalization strength for relevant bucket
+
+Map to UI: Low / Medium / High (+ optional percent).  
+Uncertainty copy examples: “Few similar rides logged,” “Only start/end weather sampled.”
+
+---
+
+## 9. Privacy design
+
+| Data | MVP policy |
+|------|------------|
+| Account email | Required |
+| Home coordinates | Optional |
+| Route geometry | Store start/end + coarse waypoints; **do not** require full GPS trace |
+| Weather | Store summary snapshot with activity log (needed for learning) |
+| Feedback | Retained until user deletes activity |
+| Delete | Delete activity log → cascades feedback; account deletion removes user graph |
+| Ads/tracking | Off in MVP |
+
+Avoid collecting height/weight until a clear model need exists (it does not for v1).
+
+---
+
+## 10. Environments
+
+| Env | DB | Weather | Auth |
+|-----|----|---------|------|
+| Local | SQLite or local Postgres | mock | email |
+| Staging | Postgres (compose) | met | email |
+| Prod | Postgres | met (+ cache) | email (+ later OAuth) |
+
+Config via env: `DATABASE_URL`, `JWT_SECRET`, `WEATHER_PROVIDER`, `MET_USER_AGENT`, `ADS_ENABLED`.
+
+---
+
+## 11. Testing strategy
+
+| Layer | Focus |
+|-------|-------|
+| Unit | Exposure weighting, shrinkage, wardrobe matching, motorcycle chill |
+| Integration | Plan → recommend → feedback → offset update |
+| Contract | Weather adapter fixtures (recorded MET JSON) |
+| Smoke | Existing `scripts/smoke-api.sh` extended for new endpoints |
+| Manual | Android emulator via QUICKSTART |
+
+Golden tests: fixed weather fixtures → stable explanation strings for key scenarios (cold mountain segment, warm start + cold mid, rain).
+
+---
+
+## 12. Extensibility for other sports
+
+Each activity registers an `ActivityExposureProfile`:
+
+```ts
+interface ActivityExposureProfile {
+  activityType: string;
+  scoreSegments(segments, userCtx): ExposureSummary;
+  defaultSlotPriorities(): Slot[];
+}
+```
+
+Motorcycle implements first. Hiking later: metabolic intensity multiplier, less wind-from-speed. XC/alpine add stationary/lift factors afterward without rewriting the wardrobe or feedback modules.
+
+---
+
+## 13. What not to abstract prematurely
+
+- Don’t build a plugin marketplace for activities
+- Don’t introduce a ML training pipeline
+- Don’t microserve the engine
+- Don’t normalize every weather field into 15 tables on day one (JSON snapshots are fine)
+
+Optimize for **clear module boundaries** and **tested pure functions**, not for hypothetical scale.

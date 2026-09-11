@@ -1,6 +1,13 @@
 # Motorcycle Clothing / RideWear
 
-Cross-platform app (Android + iPhone) that recommends motorcycle clothing from route weather and your personal comfort zone.
+Cross-platform app (Android + iPhone) that recommends outdoor clothing from weather, route exposure, wardrobe, and personal feedback.
+
+## Source of truth (read these first)
+
+- **[PROJECT_PLAN.md](PROJECT_PLAN.md)** — product vision, MVP scope, roadmap, risks  
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — technical architecture, schema, adapters, engine  
+- [QUICKSTART.md](QUICKSTART.md) — how to run the current spike on Windows  
+- [docs/PLAN.md](docs/PLAN.md) — historical motorcycle scaffold plan (superseded for direction)
 
 ## Start here (Windows)
 
@@ -19,10 +26,14 @@ Cross-platform app (Android + iPhone) that recommends motorcycle clothing from r
 ```
 apps/api      NestJS API (auth, routes, weather, recommendations, feedback)
 apps/mobile   Flutter app (Android + iOS)
-docs/PLAN.md  Product & technical plan
-scripts/      Smoke tests
+PROJECT_PLAN.md   Product + MVP roadmap (source of truth)
+ARCHITECTURE.md   Technical architecture (source of truth)
+docs/PLAN.md      Older motorcycle-first plan (historical)
+scripts/      Smoke tests + start helpers
 docker-compose.yml  Optional Postgres/Redis/API stack
 ```
+
+> **Note:** The running code is still the motorcycle **spike**. New work should follow `PROJECT_PLAN.md` milestones (wardrobe, demand-based engine, gated personalization) rather than extending boolean comfort thresholds.
 
 ## Features (MVP)
 

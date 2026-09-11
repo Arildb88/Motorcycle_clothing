@@ -2,7 +2,9 @@
 
 ## Status
 
-**MVP scaffolding implemented** in `apps/api` (NestJS) and `apps/mobile` (Flutter). See repository README for run instructions. This plan remains the product source of truth for upcoming phases (live MET default, richer maps, store release).
+**Superseded for product direction** by [`PROJECT_PLAN.md`](../PROJECT_PLAN.md) and [`ARCHITECTURE.md`](../ARCHITECTURE.md) (2026-09-11).
+
+This document remains as historical context for the motorcycle-first **RideWear spike** that was scaffolded in-repo. New milestones should not treat boolean comfort thresholds + AdMob + social OAuth as MVP requirements.
 
 ---
 
