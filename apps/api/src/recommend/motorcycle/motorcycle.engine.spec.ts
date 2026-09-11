@@ -181,6 +181,139 @@ describe('duration weighting', () => {
 });
 
 describe('pipeline acceptance', () => {
+  it('rain-A: sustained rain + waterproof worn jacket/pants => no duplicate rain layer', () => {
+    const result = runMotorcycleRecommendationPipeline({
+      weather: weather([
+        point({
+          airTempC: 12,
+          precipitationMm: 2,
+          precipitationProbPct: 80,
+        }),
+        point({
+          airTempC: 11,
+          precipitationMm: 1.5,
+          precipitationProbPct: 75,
+        }),
+      ]),
+      wardrobe: [
+        jacket({ waterResistTier: 5 }),
+        pants(),
+      ],
+      rideDurationMin: 90,
+      cruiseKmh: 70,
+      personalSampleCount: 0,
+    });
+    const torsoWater =
+      result.demand.sustained.find((z) => z.zone === 'torso')?.water ?? 0;
+    expect(torsoWater).toBeGreaterThanOrEqual(3);
+    const wearRain = result.wear.filter((i) => i.slot === 'rain');
+    const packRain = result.pack.filter((i) => i.slot === 'rain');
+    expect(wearRain).toHaveLength(0);
+    expect(packRain).toHaveLength(0);
+    const shell = result.wear.find((i) => i.slot === 'shell');
+    expect(shell?.source).toBe('wardrobe');
+    expect(shell?.garmentId).toBe('j1');
+    expect((shell?.effectiveTiers?.waterResistTier ?? 0)).toBeGreaterThanOrEqual(
+      torsoWater,
+    );
+  });
+  it('rain-B: sustained rain + waterproof liner on worn jacket => same garment, no duplicate', () => {
+    const result = runMotorcycleRecommendationPipeline({
+      weather: weather([
+        point({
+          airTempC: 10,
+          precipitationMm: 2.5,
+          precipitationProbPct: 85,
+        }),
+        point({
+          airTempC: 9,
+          precipitationMm: 2,
+          precipitationProbPct: 80,
+        }),
+      ]),
+      wardrobe: [
+        jacket({ waterResistTier: 2 }), // liner brings water to 4
+        pants(),
+      ],
+      rideDurationMin: 100,
+      cruiseKmh: 70,
+      personalSampleCount: 0,
+    });
+    const torsoWater =
+      result.demand.sustained.find((z) => z.zone === 'torso')?.water ?? 0;
+    expect(torsoWater).toBeGreaterThanOrEqual(3);
+    const wearRain = result.wear.filter((i) => i.slot === 'rain');
+    expect(wearRain).toHaveLength(0);
+    const shellItems = result.wear.filter((i) => i.slot === 'shell');
+    expect(shellItems).toHaveLength(1);
+    expect(shellItems[0].garmentId).toBe('j1');
+    expect(
+      shellItems[0].configuration.some(
+        (c) => c.code === 'INSTALL_WATERPROOF_LINER',
+      ),
+    ).toBe(true);
+    expect((shellItems[0].effectiveTiers?.waterResistTier ?? 0)).toBeGreaterThanOrEqual(
+      torsoWater,
+    );
+    expect(
+      result.reasons.some((r) => r.code === 'WATERPROOF_LINER_RECOMMENDED'),
+    ).toBe(true);
+  });
+  it('rain-C: later/short rain + worn gear below peak waterproof => PACK rain remains', () => {
+    const result = runMotorcycleRecommendationPipeline({
+      weather: weather([
+        point({ airTempC: 16, precipitationMm: 0, precipitationProbPct: 5 }),
+        point({ airTempC: 16, precipitationMm: 0, precipitationProbPct: 5 }),
+        point({ airTempC: 16, precipitationMm: 0, precipitationProbPct: 5 }),
+        point({ airTempC: 16, precipitationMm: 0, precipitationProbPct: 5 }),
+        point({
+          airTempC: 14,
+          precipitationMm: 1.2,
+          precipitationProbPct: 70,
+        }),
+      ]),
+      wardrobe: [
+        jacket({ waterResistTier: 2, components: [] }), // no liner; cannot cover peak
+        pants(),
+        {
+          id: 'rain1',
+          name: 'Rain suit',
+          category: 'rain_layer',
+          layer: 'outer',
+          primaryBodyZone: 'full_body',
+          warmthTier: 1,
+          windResistTier: 4,
+          waterResistTier: 5,
+          breathabilityTier: 2,
+          material: 'textile',
+          hasVentilation: false,
+          isHeated: false,
+          activityTags: ['motorcycle'],
+          components: [],
+        },
+      ],
+      rideDurationMin: 150,
+      cruiseKmh: 70,
+      personalSampleCount: 0,
+    });
+    const sustainedWater =
+      result.demand.sustained.find((z) => z.zone === 'torso')?.water ?? 0;
+    const peakWater =
+      result.demand.peak.find((z) => z.zone === 'torso')?.water ?? 0;
+    expect(peakWater).toBeGreaterThanOrEqual(3);
+    expect(peakWater).toBeGreaterThan(sustainedWater);
+    const wearRain = result.wear.filter((i) => i.slot === 'rain');
+    const packRain = result.pack.filter((i) => i.slot === 'rain');
+    expect(wearRain).toHaveLength(0);
+    expect(packRain.length).toBeGreaterThan(0);
+    expect(packRain.every((i) => i.mode === 'pack')).toBe(true);
+    // Worn shell is still the jacket — rain suit is pack, not a second wear duplicate.
+    const shell = result.wear.find((i) => i.slot === 'shell');
+    expect(shell?.garmentId).toBe('j1');
+    expect(packRain.some((i) => i.garmentId === 'rain1' || i.slot === 'rain')).toBe(
+      true,
+    );
+  });
   it('A: mild dry ride avoids unnecessary insulation', () => {
     const result = runMotorcycleRecommendationPipeline({
       weather: weather([point({ airTempC: 20, windSpeedMs: 2 })]),

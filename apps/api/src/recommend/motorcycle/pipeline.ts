@@ -89,17 +89,19 @@ export function runMotorcycleRecommendationPipeline(
     ...confidence.extra,
   ]);
 
-  // New users: never emit personal claim codes.
+  // M3 personalization boundary:
+  // Shrinkage may bias exposure, but this engine does not emit personal
+  // preference claims (those belong to M5). Below the claim gate, drop any
+  // PERSONAL_* codes if present while keeping BASELINE_NO_PERSONAL_EVIDENCE.
   const filteredReasons = canClaimPersonal
-    ? reasons
-    : reasons.filter(
-        (r) =>
-          r.code !== 'BASELINE_NO_PERSONAL_EVIDENCE' ||
-          true, // keep baseline marker
-      );
+    ? [...reasons]
+    : reasons.filter((r) => !String(r.code).startsWith('PERSONAL_'));
 
   // Ensure baseline marker present when n=0.
-  if (n === 0 && !filteredReasons.some((r) => r.code === 'BASELINE_NO_PERSONAL_EVIDENCE')) {
+  if (
+    n === 0 &&
+    !filteredReasons.some((r) => r.code === 'BASELINE_NO_PERSONAL_EVIDENCE')
+  ) {
     filteredReasons.push({ code: 'BASELINE_NO_PERSONAL_EVIDENCE' });
   }
 

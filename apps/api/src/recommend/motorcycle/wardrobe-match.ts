@@ -341,6 +341,108 @@ function matchSlot(
   };
 }
 
+
+const RAIN_CAPABLE_CATEGORIES = new Set([
+  'shell_jacket',
+  'pants',
+  'one_piece_suit',
+  'rain_layer',
+]);
+
+function waterTierOf(item: KitItem): number {
+  return item.effectiveTiers?.waterResistTier ?? 0;
+}
+
+/** True when an already-selected WEAR item meets waterproof demand. */
+function wornSatisfiesWaterDemand(wear: KitItem[], needWater: number): boolean {
+  return wear.some(
+    (item) =>
+      item.source === 'wardrobe' &&
+      item.slot !== 'mid' &&
+      item.slot !== 'base' &&
+      item.slot !== 'hands' &&
+      item.slot !== 'feet' &&
+      item.slot !== 'head' &&
+      waterTierOf(item) >= needWater,
+  );
+}
+
+function deltasFromConfiguration(
+  garment: GarmentInput,
+  configuration: ConfigInstruction[],
+): ComponentDeltaLike[] {
+  const deltas: ComponentDeltaLike[] = [];
+  for (const instr of configuration) {
+    if (instr.code === 'INSTALL_THERMAL_LINER') {
+      const c = garment.components.find((x) => x.kind === 'thermal_liner');
+      if (c) deltas.push(c);
+    }
+    if (instr.code === 'INSTALL_WATERPROOF_LINER') {
+      const c = garment.components.find((x) => x.kind === 'waterproof_liner');
+      if (c) deltas.push(c);
+    }
+  }
+  return deltas;
+}
+
+type ComponentDeltaLike = {
+  kind?: string;
+  warmthDelta: number;
+  windResistDelta: number;
+  waterResistDelta: number;
+  breathabilityDelta: number;
+};
+
+/**
+ * If a worn outer garment can meet waterproof demand by installing its
+ * waterproof liner, upgrade that same physical garment in place.
+ * Returns true when wear items then satisfy needWater.
+ */
+function upgradeWornWithWaterproofLiner(
+  wear: KitItem[],
+  wardrobe: GarmentInput[],
+  needWater: number,
+  reasons: Reason[],
+): boolean {
+  if (wornSatisfiesWaterDemand(wear, needWater)) return true;
+
+  for (const item of wear) {
+    if (!item.garmentId || item.source !== 'wardrobe') continue;
+    const garment = wardrobe.find((g) => g.id === item.garmentId);
+    if (!garment || !RAIN_CAPABLE_CATEGORIES.has(garment.category)) continue;
+    if (item.configuration.some((c) => c.code === 'INSTALL_WATERPROOF_LINER')) {
+      continue;
+    }
+    const liner = garment.components.find((c) => c.kind === 'waterproof_liner');
+    if (!liner) continue;
+
+    const installed = deltasFromConfiguration(garment, item.configuration);
+    installed.push(liner);
+    const tiers = effectiveGarmentTiers(
+      {
+        warmthTier: garment.warmthTier,
+        windResistTier: garment.windResistTier,
+        waterResistTier: garment.waterResistTier,
+        breathabilityTier: garment.breathabilityTier,
+      },
+      installed,
+    );
+    if (tiers.waterResistTier < needWater) continue;
+
+    item.configuration = [
+      ...item.configuration.filter((c) => c.code !== 'REMOVE_WATERPROOF_LINER'),
+      {
+        code: 'INSTALL_WATERPROOF_LINER',
+        componentKind: 'waterproof_liner',
+      },
+    ];
+    item.effectiveTiers = tiers;
+    reasons.push({ code: 'WATERPROOF_LINER_RECOMMENDED' });
+    return true;
+  }
+  return wornSatisfiesWaterDemand(wear, needWater);
+}
+
 export function matchWardrobe(input: {
   demand: DemandSummary;
   wardrobe: GarmentInput[];
@@ -353,25 +455,9 @@ export function matchWardrobe(input: {
   const reasons: Reason[] = [];
   const used = new Set<string>();
 
+  // 1) Match non-rain WEAR slots first so outer gear is chosen before rain.
   for (const slot of WEAR_SLOTS) {
-    // Skip mid/base on mild sustained demand.
-    if (slot.slot === 'rain') {
-      const water = zoneOf(input.demand.sustained, 'torso').water;
-      if (water >= 3) {
-        const matched = matchSlot(
-          slot,
-          'wear',
-          input.demand.sustained,
-          input.wardrobe,
-          input.sustainedExposureC,
-          used,
-        );
-        if (matched.item) wear.push(matched.item);
-        reasons.push(...matched.reasons);
-      }
-      continue;
-    }
-
+    if (slot.slot === 'rain') continue;
     const matched = matchSlot(
       slot,
       'wear',
@@ -384,7 +470,34 @@ export function matchWardrobe(input: {
     reasons.push(...matched.reasons);
   }
 
-  // PACK: short extremes / later rain — use peak demand, avoid duplicating wear garments.
+  // 2) Sustained rain: credit waterproof worn gear / liner config before
+  //    adding a separate rain-slot item (no duplicate physical garment).
+  const rainSlot = WEAR_SLOTS.find((s) => s.slot === 'rain')!;
+  const sustainedWater = zoneOf(input.demand.sustained, 'torso').water;
+  if (sustainedWater >= 3) {
+    const covered =
+      wornSatisfiesWaterDemand(wear, sustainedWater) ||
+      upgradeWornWithWaterproofLiner(
+        wear,
+        input.wardrobe,
+        sustainedWater,
+        reasons,
+      );
+    if (!covered) {
+      const matched = matchSlot(
+        rainSlot,
+        'wear',
+        input.demand.sustained,
+        input.wardrobe,
+        input.sustainedExposureC,
+        used,
+      );
+      if (matched.item) wear.push(matched.item);
+      reasons.push(...matched.reasons);
+    }
+  }
+
+  // 3) PACK warmth for short extremes — peak demand, avoid duplicating wear.
   if (input.packWarmth || input.demand.shortExtremeInfluencesPackOnly) {
     for (const slot of WEAR_SLOTS.filter((s) =>
       ['mid', 'hands', 'base'].includes(s.slot),
@@ -398,7 +511,6 @@ export function matchWardrobe(input: {
         used,
       );
       if (matched.item) {
-        // Don't pack a duplicate of something already worn in same slot.
         if (
           wear.some(
             (w) =>
@@ -409,20 +521,18 @@ export function matchWardrobe(input: {
         ) {
           continue;
         }
-        if (wear.some((w) => w.slot === matched.item!.slot && w.source === 'wardrobe')) {
-          // Already wearing that slot from wardrobe — only pack if peak need higher
-          // and we found a different item (already ensured by used set).
-        }
         pack.push(matched.item);
         reasons.push(...matched.reasons);
       }
     }
   }
 
+  // 4) PACK rain when peak waterproof demand exceeds what worn config covers.
   if (input.packRain) {
-    const rainSlot = WEAR_SLOTS.find((s) => s.slot === 'rain')!;
+    const peakWater = zoneOf(input.demand.peak, 'torso').water;
     const alreadyWearRain = wear.some((w) => w.slot === 'rain');
-    if (!alreadyWearRain) {
+    const wornCoversPeak = wornSatisfiesWaterDemand(wear, peakWater);
+    if (!alreadyWearRain && !wornCoversPeak && peakWater >= 3) {
       const matched = matchSlot(
         rainSlot,
         'pack',
