@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { MVP_ACTIVITY_TYPE } from '../domain';
+import { isSelectableActivity } from '../domain/oauth-utils';
 
 @Injectable()
 export class UsersService {
@@ -17,7 +19,15 @@ export class UsersService {
         email: input.email,
         displayName: input.displayName,
         passwordHash: input.passwordHash,
-        profile: { create: { coldSensitivity: 0 } },
+        profile: {
+          create: {
+            coldSensitivity: 0,
+            defaultActivity: 'motorcycle',
+            showActivityChooserOnLaunch: true,
+            interestedActivitiesJson: JSON.stringify(['motorcycle']),
+            onboardingCompleted: false,
+          },
+        },
         motorcycleProfile: { create: {} },
         personalOffsets: {
           create: {
@@ -27,10 +37,11 @@ export class UsersService {
             meanResidual: 0,
           },
         },
-        authProviders: {
+        authIdentities: {
           create: {
             provider: 'local',
-            providerUserId: input.email,
+            providerSubjectId: input.email,
+            providerEmail: input.email,
           },
         },
       },
@@ -41,13 +52,23 @@ export class UsersService {
     email: string | null;
     displayName: string;
     provider: string;
-    providerUserId: string;
+    providerSubjectId: string;
+    avatarUrl?: string | null;
   }) {
     return this.prisma.user.create({
       data: {
         email: input.email,
         displayName: input.displayName,
-        profile: { create: { coldSensitivity: 0 } },
+        profile: {
+          create: {
+            coldSensitivity: 0,
+            defaultActivity: 'motorcycle',
+            showActivityChooserOnLaunch: true,
+            interestedActivitiesJson: JSON.stringify(['motorcycle']),
+            onboardingCompleted: false,
+            avatarUrl: input.avatarUrl ?? null,
+          },
+        },
         motorcycleProfile: { create: {} },
         personalOffsets: {
           create: {
@@ -57,10 +78,12 @@ export class UsersService {
             meanResidual: 0,
           },
         },
-        authProviders: {
+        authIdentities: {
           create: {
             provider: input.provider,
-            providerUserId: input.providerUserId,
+            providerSubjectId: input.providerSubjectId,
+            providerEmail: input.email,
+            avatarUrl: input.avatarUrl ?? null,
           },
         },
       },
@@ -73,16 +96,59 @@ export class UsersService {
       include: {
         profile: true,
         motorcycleProfile: true,
-        authProviders: { select: { provider: true } },
+        authIdentities: {
+          select: {
+            id: true,
+            provider: true,
+            providerEmail: true,
+            avatarUrl: true,
+            createdAt: true,
+          },
+        },
+        connectedAccounts: {
+          select: {
+            id: true,
+            provider: true,
+            providerAccountId: true,
+            displayName: true,
+            status: true,
+            scopes: true,
+            updatedAt: true,
+            metadataJson: true,
+          },
+        },
         personalOffsets: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
     const { passwordHash: _, ...safe } = user;
-    return safe;
+    return {
+      ...safe,
+      connectedAccounts: user.connectedAccounts.map((c) => ({
+        ...c,
+        metadata: safeJson(c.metadataJson),
+        metadataJson: undefined,
+      })),
+      profile: user.profile
+        ? {
+            ...user.profile,
+            interestedActivities: safeJsonArray(
+              user.profile.interestedActivitiesJson,
+            ),
+          }
+        : null,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
+    if (dto.defaultActivity && !isSelectableActivity(dto.defaultActivity)) {
+      throw new BadRequestException('Invalid default activity');
+    }
+    const interestedJson =
+      dto.interestedActivities !== undefined
+        ? JSON.stringify(dto.interestedActivities)
+        : undefined;
+
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -95,6 +161,14 @@ export class UsersService {
               units: dto.units ?? 'celsius',
               defaultRouteId: dto.defaultRouteId,
               coldSensitivity: dto.coldSensitivity ?? 0,
+              heatSensitivity: dto.heatSensitivity ?? 0,
+              sweatTendency: dto.sweatTendency,
+              avatarUrl: dto.avatarUrl,
+              defaultActivity: dto.defaultActivity ?? 'motorcycle',
+              showActivityChooserOnLaunch:
+                dto.showActivityChooserOnLaunch ?? true,
+              interestedActivitiesJson:
+                interestedJson ?? JSON.stringify(['motorcycle']),
             },
             update: {
               homeLat: dto.homeLat,
@@ -102,6 +176,12 @@ export class UsersService {
               units: dto.units,
               defaultRouteId: dto.defaultRouteId,
               coldSensitivity: dto.coldSensitivity,
+              heatSensitivity: dto.heatSensitivity,
+              sweatTendency: dto.sweatTendency,
+              avatarUrl: dto.avatarUrl,
+              defaultActivity: dto.defaultActivity,
+              showActivityChooserOnLaunch: dto.showActivityChooserOnLaunch,
+              interestedActivitiesJson: interestedJson,
             },
           },
         },
@@ -124,5 +204,53 @@ export class UsersService {
       },
     });
     return this.getMe(userId);
+  }
+
+  async completeOnboarding(userId: string, dto: CompleteOnboardingDto) {
+    const activities = dto.interestedActivities?.length
+      ? dto.interestedActivities
+      : ['motorcycle'];
+    for (const a of activities) {
+      if (!isSelectableActivity(a)) {
+        throw new BadRequestException(`Invalid activity: ${a}`);
+      }
+    }
+    const defaultActivity = dto.defaultActivity ?? activities[0];
+    if (!isSelectableActivity(defaultActivity)) {
+      throw new BadRequestException('Invalid default activity');
+    }
+    await this.prisma.userProfile.update({
+      where: { userId },
+      data: {
+        interestedActivitiesJson: JSON.stringify(activities),
+        defaultActivity,
+        showActivityChooserOnLaunch: dto.showActivityChooserOnLaunch ?? true,
+        coldSensitivity: dto.coldSensitivity ?? 0,
+        onboardingCompleted: true,
+      },
+    });
+    return this.getMe(userId);
+  }
+
+  async deleteAccount(userId: string) {
+    await this.prisma.user.delete({ where: { id: userId } });
+    return { ok: true };
+  }
+}
+
+function safeJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function safeJsonArray(raw: string): string[] {
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
   }
 }

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
+import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/services/oauth_flow.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _name = TextEditingController();
   bool _registerMode = false;
   bool _busy = false;
+  Map<String, dynamic>? _providers;
   late final AnimationController _fade;
 
   @override
@@ -28,6 +31,17 @@ class _LoginScreenState extends State<LoginScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     )..forward();
+    _loadProviders();
+  }
+
+  Future<void> _loadProviders() async {
+    try {
+      final api = context.read<ApiClient>();
+      final p = await api.get('/auth/providers', auth: false);
+      if (mounted) setState(() => _providers = p);
+    } catch (_) {
+      /* email-only fallback */
+    }
   }
 
   @override
@@ -66,8 +80,44 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  Future<void> _social(String provider) async {
+    setState(() => _busy = true);
+    final auth = context.read<AuthState>();
+    final api = context.read<ApiClient>();
+    final enabled =
+        (_providers?[provider] as Map?)?['enabled'] == true;
+    final demo = _providers?['demoOAuthAllowed'] == true;
+    try {
+      if (enabled) {
+        final res = await OAuthFlow.login(api: api, provider: provider);
+        await auth.acceptAuthResponse(res);
+      } else if (demo) {
+        await auth.oauth(
+          provider: provider,
+          accessToken: 'demo:$provider-rider',
+        );
+      } else {
+        throw ApiException(
+          '$provider login is not configured on the server',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final fbEnabled = (_providers?['facebook'] as Map?)?['enabled'] == true;
+    final msEnabled = (_providers?['microsoft'] as Map?)?['enabled'] == true;
+    final demo = _providers?['demoOAuthAllowed'] == true;
+
     return AtmosphereBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -80,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const BrandMark(),
                 const SizedBox(height: 8),
                 Text(
-                  'Dress for the ride, not the forecast guess.',
+                  'Dress for the ride — personalized across outdoor activities.',
                   style: GoogleFonts.sourceSerif4(
                     fontSize: 18,
                     height: 1.35,
@@ -111,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const SizedBox(height: 20),
                 FilledButton(
                   onPressed: _busy ? null : _submit,
-                  child: Text(_registerMode ? 'Create account' : 'Sign in'),
+                  child: Text(_registerMode ? 'Create account' : 'Continue with email'),
                 ),
                 TextButton(
                   onPressed: _busy
@@ -123,6 +173,36 @@ class _LoginScreenState extends State<LoginScreen>
                         : 'New here? Register',
                   ),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: _busy || !(msEnabled || demo)
+                      ? null
+                      : () => _social('microsoft'),
+                  child: Text(
+                    msEnabled
+                        ? 'Continue with Microsoft'
+                        : 'Continue with Microsoft (dev)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _busy || !(fbEnabled || demo)
+                      ? null
+                      : () => _social('facebook'),
+                  child: Text(
+                    fbEnabled
+                        ? 'Continue with Facebook'
+                        : 'Continue with Facebook (dev)',
+                  ),
+                ),
+                if (!fbEnabled && !msEnabled && !demo)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Social login buttons enable when Facebook/Microsoft apps are configured on the API.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
               ],
             ),
           ),

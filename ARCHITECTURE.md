@@ -20,16 +20,17 @@ Focus: technical structure, adapters, schema, and migration from the current Rid
 
 ```
 Mobile (Flutter)
-    │  JWT
+    │  JWT (+ OAuth redirect via app deep link)
 API (NestJS)
-    ├── RecommendationEngine (pure domain, unit-tested)
-    ├── WeatherPort  → MetWeatherAdapter | MockWeatherAdapter | (later OpenMeteo)
-    ├── RoutingPort  → NullRoutingAdapter | (later ORS/Mapbox)
-    ├── Auth         → LocalEmailAuth (later Apple/Google)
+    ├── RecommendationEngine (pure domain; M3+)
+    ├── WeatherPort  → Met | Mock | (later OpenMeteo)
+    ├── RoutingPort  → Null | (later ORS/Mapbox)
+    ├── Auth         → Email + IdentityProviders (Facebook, Microsoft; Apple/Google later)
+    ├── Connections  → ConnectedServices (Strava; Garmin/Health later)
     └── Persistence  → Prisma (SQLite local → Postgres staging/prod)
 ```
 
-**Rule:** Flutter never calls MET/routing with secrets. All provider credentials and User-Agent strings stay on the server.
+**Rule:** Flutter never holds provider client secrets or refresh tokens for connected services. Identity OAuth uses authorization code + PKCE; token exchange happens on the API.
 
 ---
 
@@ -37,15 +38,64 @@ API (NestJS)
 
 | Module | Responsibility |
 |--------|----------------|
-| `auth` | Register/login, JWT (email). OAuth route retained as deferred hook |
-| `users` | Profile, motorcycle profile, sensitivity |
-| `wardrobe` | Garments CRUD + demo seed (M2) |
+| `auth` | Email register/login; identity provider status; OAuth start/callback (PKCE); link identity; JWT |
+| `users` | UserProfile prefs, motorcycle profile, onboarding, account delete stub |
+| `connections` | Connected services (Strava connect/disconnect/status); encrypted token vault |
+| `wardrobe` | Garments CRUD + demo seed (shared across activities) |
 | `places` / `routes` | Saved locations & simple routes |
 | `plans` | ActivityPlan create/read (**tables ready; API in M4**) |
 | `weather` | Fetch + normalize + cache forecasts |
 | `recommend` | Spike shim until M3; demand engine next |
 | `feedback` | Persist ActivityLog/Feedback; full learning in M5 |
 | `privacy` | Delete activity / account |
+
+---
+
+## 3.1 Identity providers vs connected services (M2.5)
+
+```
+RideWear User
+├── AuthIdentity[]          # how you sign in
+│     ├── local (email/password)
+│     ├── facebook
+│     └── microsoft
+│     └── (future: apple, google)
+│
+├── UserProfile             # preferences (not tokens)
+├── MotorcycleProfile       # motorcycle-specific only
+├── Garment[]               # shared wardrobe
+│
+└── ConnectedAccount[]      # post-login integrations
+      ├── strava
+      └── (future: garmin, health_connect, apple_health)
+```
+
+**Account linking rules**
+
+1. OAuth **login** resolves only by `(provider, providerSubjectId)`.
+2. **Never** silently merge two RideWear users because emails match.
+3. If provider subject is new and email already belongs to another user → `409` with guidance to sign in and **link**.
+4. **Link** requires an authenticated session (`POST /auth/identities/link`).
+5. A provider subject may attach to at most one user (`@@unique([provider, providerSubjectId])`).
+
+**Token security**
+
+| Secret | Where stored |
+|--------|----------------|
+| FB/MS/Strava client secrets | Server env only |
+| RideWear JWT | Flutter secure storage |
+| Strava access/refresh tokens | Server DB, AES-GCM encrypted (`TOKEN_ENCRYPTION_KEY`); never returned to clients |
+| OAuth `state` / PKCE verifier | Short-lived server `OAuthState` rows |
+
+---
+
+## 3.2 Activity context & navigation (M2.5)
+
+- **defaultActivity** (persisted on `UserProfile`) ≠ **currentActivity** (Flutter session state).
+- **showActivityChooserOnLaunch** controls first screen of a fresh app session only.
+- Selectable now: `motorcycle` | `hiking` | `cycling`. Engines: motorcycle spike only; others show “coming next”.
+- Shell tabs: Activity Home | Routes | Wardrobe | Profile. Home content switches by `currentActivity`.
+- No per-sport navigation trees; no cloned wardrobes.
 
 ---
 
@@ -134,53 +184,24 @@ This is the target model to migrate toward. JSON columns are acceptable early; n
 
 ```
 User
-AuthProvider
+AuthIdentity   # login identities (renamed from AuthProvider)
+  provider, providerSubjectId, providerEmail?, avatarUrl?
 UserProfile
-  coldSensitivity Int     // -1, 0, +1
-  units
+  coldSensitivity, heatSensitivity?
+  defaultActivity, showActivityChooserOnLaunch
+  interestedActivitiesJson, avatarUrl?, onboardingCompleted
+  units, home*, defaultRouteId
 MotorcycleProfile
-  category        // naked|sport|touring|adventure|cruiser|scooter
-  windProtection  // none|low|medium|high
+  category, windProtection
 Garment
-  userId, name, category, warmthTier (1-5)
-  windResistTier?, waterResistTier?, breathabilityTier?
-  activityTagsJson          // ["motorcycle"]
-  notes?
-Place
-  userId, name, lat, lon
-Route
-  userId, name, isDefaultCommute
-  startPlaceId?/coords, endPlaceId?/coords
-  waypointsJson             // lightweight
-  typicalDurationMin
-ActivityPlan
-  userId, activityType      // "motorcycle" for MVP
-  routeId?, departureAt, durationMin
-  intensity?                // null for motorcycle MVP
-  snapshotJson              // bike category etc. at plan time
-WeatherSnapshot
-  planId, payloadJson, provider
-Recommendation
-  planId, createdAt, confidence
-  summaryJson, reasonsJson
-RecommendationItem
-  recommendationId
-  slot, mode (wear|pack)
-  garmentId?, genericLabel?
-ActivityLog
-  planId?, userId, startedAt, durationMin
-  wornGarmentIdsJson
-  weatherSummaryJson
-ActivityFeedback
-  activityLogId
-  overallRating             // -2..+2
-  sweatLevel?               // optional
-  notes?
-BodyAreaFeedback
-  feedbackId, zone, rating  // hands|torso|legs|feet|head
-PersonalOffset
-  userId, activityType, zone
-  n, meanResidual, updatedAt
+  … activityTagsJson (multi-activity)
+ConnectedAccount
+  provider (strava|…), encrypted tokens, status, metadata
+OAuthState
+  ephemeral PKCE/state for IdP + Strava
+Place / Route / ActivityPlan / WeatherSnapshot / Recommendation*
+ActivityLog / ActivityFeedback / BodyAreaFeedback / PersonalOffset
+WeatherCache
 ```
 
 ### Migration from current schema

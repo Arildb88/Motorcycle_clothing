@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -57,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const BrandMark(compact: true),
+                  const ActivitySwitcher(),
                   const SizedBox(height: 6),
                   Text(
                     'Today’s ride kit',

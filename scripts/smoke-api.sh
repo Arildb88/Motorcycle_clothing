@@ -60,6 +60,21 @@ curl -sf "http://localhost:${PORT}/api/wardrobe" \
   -H "Authorization: Bearer ${TOKEN}" \
   | grep -q 'Insulated winter gloves'
 
-# OAuth endpoints remain as hooks but are deferred from MVP UX — skip social smoke.
+# M2.5 profile prefs
+curl -sf -X PATCH "http://localhost:${PORT}/api/users/me" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{"defaultActivity":"hiking","showActivityChooserOnLaunch":false,"coldSensitivity":-1}' \
+  | grep -q '"defaultActivity":"hiking"'
+
+curl -sf "http://localhost:${PORT}/api/auth/providers" | grep -q '"email"'
+
+curl -sf "http://localhost:${PORT}/api/connections/status" | grep -q strava
+
+# OAuth endpoints remain as hooks; social smoke uses demo only when ALLOW_DEMO_OAUTH.
+curl -sf -X POST "http://localhost:${PORT}/api/auth/oauth" \
+  -H 'Content-Type: application/json' \
+  -d '{"provider":"facebook","accessToken":"demo:fb-smoke-m25"}' \
+  | grep -q accessToken
 
 echo "API smoke test passed"

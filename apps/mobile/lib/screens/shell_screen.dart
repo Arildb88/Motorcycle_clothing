@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
+import 'package:motorcycle_clothing/features/profile/profile_settings_screen.dart';
 import 'package:motorcycle_clothing/features/wardrobe/wardrobe_screen.dart';
-import 'package:motorcycle_clothing/screens/home_screen.dart';
-import 'package:motorcycle_clothing/screens/profile_screen.dart';
 import 'package:motorcycle_clothing/screens/routes_screen.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -18,10 +18,10 @@ class _ShellScreenState extends State<ShellScreen> {
   int _index = 0;
 
   static const _pages = [
-    HomeScreen(),
+    ActivityHomeScreen(),
     RoutesScreen(),
     WardrobeScreen(),
-    ProfileScreen(),
+    ProfileSettingsScreen(),
   ];
 
   @override
@@ -47,8 +47,8 @@ class _ShellScreenState extends State<ShellScreen> {
               onDestinationSelected: (i) => setState(() => _index = i),
               destinations: const [
                 NavigationDestination(
-                  icon: Icon(Icons.wb_cloudy_outlined),
-                  selectedIcon: Icon(Icons.wb_cloudy),
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
                   label: 'Today',
                 ),
                 NavigationDestination(

@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RoutesModule } from './routes/routes.module';
 import { WardrobeModule } from './wardrobe/wardrobe.module';
+import { ConnectionsModule } from './connections/connections.module';
 import { WeatherModule } from './weather/weather.module';
 import { RecommendModule } from './recommend/recommend.module';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -18,6 +19,7 @@ import { HealthController } from './health.controller';
     UsersModule,
     RoutesModule,
     WardrobeModule,
+    ConnectionsModule,
     WeatherModule,
     RecommendModule,
     FeedbackModule,

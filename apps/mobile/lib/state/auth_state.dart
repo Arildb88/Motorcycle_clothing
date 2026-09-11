@@ -85,6 +85,10 @@ class AuthState extends ChangeNotifier {
     }
   }
 
+  Future<void> acceptAuthResponse(Map<String, dynamic> res) async {
+    await _acceptAuth(res);
+  }
+
   Future<void> logout() async {
     await api.setToken(null);
     isAuthenticated = false;

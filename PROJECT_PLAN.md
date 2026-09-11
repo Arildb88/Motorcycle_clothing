@@ -1,9 +1,8 @@
 # PROJECT PLAN — Personalized Outdoor Clothing Recommendations
 
-**Status:** M1 + M2 implemented (domain foundations + wardrobe). Stopped before M3.  
+**Status:** M1 + M2 + **M2.5 done**. Stopped before M3.  
 **Date:** 2026-09-11  
-**Product decisions locked:** motorcycle-only MVP; defer social OAuth; defer ads.  
-**Supersedes for product direction:** `docs/PLAN.md` (kept as historical motorcycle-first scaffold notes)  
+**Product decisions:** Motorcycle is first *implemented recommendation* activity; app UX is multi-activity. Ads still deferred. Facebook/Microsoft are identity providers (config-gated). Strava is a connected service (not login).  
 **Companion:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`DEVELOPMENT_NOTES.md`](./DEVELOPMENT_NOTES.md)
 
 ---
@@ -298,9 +297,10 @@ Each milestone should be **demoable and verifiable** before the next.
 | # | Milestone | Verify | Status |
 |---|-----------|--------|--------|
 | **M0** | Align docs + freeze MVP scope (this plan) | Stakeholders agree motorcycle-only MVP | Done |
-| **M1** | Domain migration foundations | New Prisma models for ActivityPlan, Garment, Feedback zones; keep app compiling | **Done** |
-| **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics/demo seed | **Done** |
-| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next |
+| **M1** | Domain migration foundations | New Prisma models for ActivityPlan, Garment, Feedback zones; keep app compiling | Done |
+| **M2** | Wardrobe MVP | Add/edit/delete garments in <30s; generics/demo seed | Done |
+| **M2.5** | Profile, auth identities, activity context, connected services | Startup chooser, default activity, FB/MS IdP architecture, Strava connect foundation | **Done** |
+| **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | Next (after M2.5) |
 | **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Pending |
 | **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
 | **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK | Pending |
@@ -345,15 +345,30 @@ Each milestone should be **demoable and verifiable** before the next.
 
 ## 14. Open decisions (only the important ones)
 
-Locked 2026-09-11:
+Locked:
 
-1. **Motorcycle-only MVP** — yes.
-2. **Defer OAuth social logins** — yes (API hooks retained; UI removed).
-3. **Defer ads** — yes (`ADS_ENABLED` defaults false).
-4. **App name:** keep RideWear vs rename for multi-sport future — still open before store listing.
+1. Motorcycle is first *recommendation* activity — yes (engines for hiking/cycling deferred).
+2. Ads deferred — yes.
+3. **Updated M2.5:** Facebook & Microsoft are identity providers (config-gated), not deferred forever.
+4. **Updated M2.5:** App launches as multi-activity product with chooser / default preference.
+5. App name: RideWear — still open to rename before store listing.
 
 ---
 
-## 15. Next step
+## 15. Architecture changes accepted in M2.5
 
-**M3 only:** demand-based recommendation engine (pure domain package), wardrobe matching, explainability + confidence — without starting M4 UI polish beyond what’s required to call the new API.
+| Prior decision | Change | Why |
+|----------------|--------|-----|
+| Motorcycle-only app UX | Multi-activity shell + session `currentActivity` | Product is outdoor platform; motorcycle remains first full engine |
+| Defer social OAuth | Enable FB/MS as **identity providers** behind env config | Required for account UX; secrets stay server-side |
+| Auth = email JWT + demo oauth hook | Auth identities + PKCE authorize/callback; **no silent email merge** | Safe multi-provider accounts |
+| (none) | **Connected services** (`ConnectedAccount`) separate from login | Strava ≠ RideWear identity |
+| Profile = sensitivity/units | + defaultActivity, showChooser, avatarUrl, onboarding | Startup preferences |
+
+**Not changed:** Flutter+Nest+Prisma stack; wardrobe shared across activities; recommendation engine still deferred to M3; ads remain off.
+
+---
+
+## 16. Next step after M2.5
+
+**M3 only:** demand-based motorcycle recommendation engine. Do not build hiking/cycling engines yet.
