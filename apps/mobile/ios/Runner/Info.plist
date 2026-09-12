@@ -56,6 +56,10 @@
 	</dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<!-- Optional Maps SDK key for native tiles only. Leave empty in git; inject via
+	     Xcode build settings / xcconfig locally. Place search uses dart-define. -->
+	<key>GMSApiKey</key>
+	<string></string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

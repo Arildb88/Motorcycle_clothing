@@ -5,9 +5,11 @@ import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
+import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/screens/feedback_sheet.dart';
-import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -386,13 +388,78 @@ class _RecommendationBody extends StatelessWidget {
 
   final Map<String, dynamic> data;
 
+  String _kitLabel(Map<String, dynamic> item) {
+    final name = item['garmentName']?.toString();
+    final generic = item['genericLabel']?.toString();
+    final configs = (item['configuration'] as List?) ?? const [];
+    final configText = configs
+        .map((c) {
+          if (c is Map && c['code'] != null) {
+            return c['code'].toString().toLowerCase().replaceAll('_', ' ');
+          }
+          return '';
+        })
+        .where((s) => s.isNotEmpty)
+        .join(', ');
+    final base = (name != null && name.isNotEmpty)
+        ? name
+        : (generic ?? item['slot']?.toString() ?? 'Item');
+    if (item['source'] == 'generic') {
+      return '$base (not owned)';
+    }
+    return configText.isEmpty ? base : '$base ($configText)';
+  }
+
+  List<Map<String, dynamic>> _asMaps(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+
+  List<String> _reasonCodes(Map<String, dynamic> rec) {
+    final structured = rec['reasons'];
+    if (structured is List && structured.isNotEmpty) {
+      final codes = <String>[];
+      for (final r in structured) {
+        if (r is Map && r['code'] != null) {
+          codes.add(r['code'].toString());
+        } else if (r is String) {
+          codes.add(r);
+        }
+      }
+      if (codes.isNotEmpty) return codes;
+    }
+    final legacy = rec['reasonCodes'];
+    if (legacy is List) {
+      return legacy.map((e) => e.toString()).toList();
+    }
+    return const [];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final reasonL10n = AppLocalizationsReasonLookup(l10n);
     final route = data['route'] as Map<String, dynamic>;
     final weather = data['weather'] as Map<String, dynamic>;
     final rec = data['recommendation'] as Map<String, dynamic>;
-    final items = (rec['items'] as List).cast<String>();
-    final reasons = (rec['reasons'] as List).cast<String>();
+
+    final wear = _asMaps(rec['wear']);
+    final pack = _asMaps(rec['pack']);
+    final legacyItems = (rec['items'] is List)
+        ? (rec['items'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+    final reasonCodes = _reasonCodes(rec);
+    final confidence = rec['confidence'];
+    final confidenceLevel = confidence is Map
+        ? confidence['level']?.toString()
+        : null;
+    final exposureC = rec['effectiveTempC'] ??
+        (rec['exposure'] is Map
+            ? (rec['exposure'] as Map)['motorcycleExposureSustainedC']
+            : null);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -422,8 +489,8 @@ class _RecommendationBody extends StatelessWidget {
                     '${(weather['minTempC'] as num).toStringAsFixed(0)}–${(weather['maxTempC'] as num).toStringAsFixed(0)}°C',
               ),
               _Metric(
-                label: 'Feels',
-                value: '${rec['effectiveTempC']}°C',
+                label: 'Exposure',
+                value: exposureC != null ? '$exposureC°C' : '—',
               ),
               _Metric(
                 label: 'Rain',
@@ -435,37 +502,91 @@ class _RecommendationBody extends StatelessWidget {
                 value:
                     '${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
               ),
+              if (confidenceLevel != null)
+                _Metric(
+                  label: l10n.confidenceLabel,
+                  value: confidenceLevel,
+                ),
             ],
           ),
           const SizedBox(height: 28),
           Text(
-            'Wear',
+            l10n.wearSection,
             style: GoogleFonts.barlowCondensed(
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          ...items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.check_circle_outline, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(item, style: const TextStyle(fontSize: 17)),
+          if (wear.isNotEmpty)
+            ...wear.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _kitLabel(item),
+                        style: const TextStyle(fontSize: 17),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...legacyItems
+                .where((i) => !i.startsWith('Pack:'))
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(item, style: const TextStyle(fontSize: 17)),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
+          if (pack.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text(
+              l10n.packSection,
+              style: GoogleFonts.barlowCondensed(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
+            const SizedBox(height: 8),
+            ...pack.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.backpack_outlined, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _kitLabel(item),
+                        style: const TextStyle(fontSize: 17),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
-          ...reasons.map(
-            (r) => Padding(
+          ...reasonCodes.map(
+            (code) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
-                r,
+                localizeReasonCode(code, reasonL10n),
                 style: TextStyle(
                   color: AppTheme.steel.withValues(alpha: 0.85),
                   fontSize: 13,

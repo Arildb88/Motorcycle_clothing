@@ -45,7 +45,7 @@ API (NestJS)
 | `places` / `routes` | Saved locations & **saved motorcycle routes** (waypoints, favorites, plan-from-route) |
 | `plans` | ActivityPlan create via `POST /routes/:id/plan` (full plans API still M4) |
 | `weather` | Fetch + normalize + cache forecasts |
-| `recommend` | Spike shim until M3; demand engine next |
+| `recommend` | **M3 Motorcycle engine v1** (`recommend/motorcycle/*`); spike `recommendClothing` removed |
 | `feedback` | Persist ActivityLog/Feedback; full learning in M5 |
 | `privacy` | Delete activity / account |
 
@@ -93,9 +93,26 @@ RideWear User
 
 - **defaultActivity** (persisted on `UserProfile`) ≠ **currentActivity** (Flutter session state).
 - **showActivityChooserOnLaunch** controls first screen of a fresh app session only.
-- Selectable now: `motorcycle` | `hiking` | `cycling`. Engines: motorcycle spike only; others show “coming next”.
+- Selectable now: `motorcycle` | `hiking` | `cycling`. Engines: **motorcycle_v1** only; others show “coming next”.
 - Shell tabs: Activity Home | Routes | Wardrobe | Profile. Home content switches by `currentActivity`.
 - No per-sport navigation trees; no cloned wardrobes.
+
+---
+
+## 3.3 Motorcycle recommendation engine (M3)
+
+Pure domain pipeline (no Nest decorators) in `apps/api/src/recommend/motorcycle/`:
+
+1. **segments** — duration-aware weather segments (even split until denser sampling).
+2. **exposure** — `motorcycleExposureC` from air temp, wind, assumed cruise airflow, wet penalty (constants in `constants.ts`; not medical “feels like”).
+3. **demand** — duration-weighted sustained warmth/wind/water tiers (1–5) per body zone; short extremes recorded separately for PACK.
+4. **wardrobe-match** — prefer owned garments + `effectiveGarmentTiers` + liner/vent config instructions; else generic requirement (`source: generic`).
+5. **confidence** — LOW/MEDIUM/HIGH from weather/wardrobe/cruise/evidence coverage.
+6. **pipeline** — assembles structured `wear` / `pack` / `reasons[]` (language-neutral codes) / `confidence`.
+
+`RecommendService` loads the user’s wardrobe, applies shrinkage bias only, and returns a version-compatible `/recommend` payload (`effectiveTempC` alias + structured fields). Flutter localizes reason codes via ARB (`nb`/`en`).
+
+Motorcycle-specific modules must not be reused as Hiking/Cycling engines.
 
 ---
 
@@ -130,6 +147,8 @@ interface RoutingPort {
 MVP: `NullRoutingAdapter` — client/API supplies start, end, optional midpoints, and `durationMin`. Segment ETAs = linear time allocation along points.
 
 Later: OpenRouteService / Mapbox without changing recommend module.
+
+**Client route builder (Flutter):** place search + preview geometry live behind `LocationSearchService` / `RouteGeometryService` so widgets stay provider-neutral. Google Places + Routes are one implementation; coordinates remain the canonical `RouteWaypoint` representation. This is **not** turn-by-turn navigation and does not replace server `RoutingPort`.
 
 ---
 
@@ -237,7 +256,7 @@ WeatherCache
 | `RideFeedback` | `ActivityLog` + `ActivityFeedback` (+ `BodyAreaFeedback`) |
 | `Profile` | `UserProfile` |
 | `Route` | Kept; extended with description, activityType, routeKind, category, isFavorite, lastUsedAt + **RouteWaypoint** children; plan snapshot on ActivityPlan |
-| Boolean recommend items | Spike shim until M3; structured `Recommendation` / `RecommendationItem` tables ready |
+| Boolean recommend items | Replaced by M3 structured wear/pack + reason codes (legacy `items`/`effectiveTempC` kept as compatibility aliases) |
 
 **M1 applied:** migration `20260911084843_m1_domain_foundations`. Wardrobe module owns garment CRUD; category → layer/zone defaults in `apps/api/src/domain`.
 

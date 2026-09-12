@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   RouteWeatherSummary,
   WeatherPoint,
-} from '../recommend/clothing.engine';
+} from '../recommend/weather.types';
 
 @Injectable()
 export class WeatherService {

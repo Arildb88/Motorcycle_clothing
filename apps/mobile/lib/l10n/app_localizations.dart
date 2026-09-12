@@ -206,6 +206,24 @@ abstract class AppLocalizations {
   /// **'Profile saved'**
   String get profileSaved;
 
+  /// No description provided for @wearSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear'**
+  String get wearSection;
+
+  /// No description provided for @packSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack'**
+  String get packSection;
+
+  /// No description provided for @confidenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence'**
+  String get confidenceLabel;
+
   /// No description provided for @reasonColdMountain.
   ///
   /// In en, this message translates to:
@@ -229,6 +247,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Based on your rides, your hands often get cold in similar conditions.'**
   String get reasonPersonalColdHands;
+
+  /// No description provided for @reasonMildConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions are mild — avoid unnecessary insulation.'**
+  String get reasonMildConditions;
+
+  /// No description provided for @reasonLowEffectiveTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle exposure temperature is low for this ride.'**
+  String get reasonLowEffectiveTemperature;
+
+  /// No description provided for @reasonSustainedColdExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Sustained cold exposure increases warmth demand.'**
+  String get reasonSustainedColdExposure;
+
+  /// No description provided for @reasonShortColdSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'A short cold segment may need packable insulation.'**
+  String get reasonShortColdSegment;
+
+  /// No description provided for @reasonRainProtectionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain protection is required for sustained wet exposure.'**
+  String get reasonRainProtectionRequired;
+
+  /// No description provided for @reasonPackRainLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack waterproof protection for later or short rain risk.'**
+  String get reasonPackRainLayer;
+
+  /// No description provided for @reasonHighWindExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'High wind / riding airflow increases protection demand.'**
+  String get reasonHighWindExposure;
+
+  /// No description provided for @reasonTemperatureVariation.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature varies along the route.'**
+  String get reasonTemperatureVariation;
+
+  /// No description provided for @reasonThermalLinerRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the thermal liner for this ride.'**
+  String get reasonThermalLinerRecommended;
+
+  /// No description provided for @reasonWaterproofLinerRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Install the waterproof liner for this ride.'**
+  String get reasonWaterproofLinerRecommended;
+
+  /// No description provided for @reasonVentsClosedRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep vents closed for colder exposure.'**
+  String get reasonVentsClosedRecommended;
+
+  /// No description provided for @reasonVentsOpenRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Open vents for warmer exposure.'**
+  String get reasonVentsOpenRecommended;
+
+  /// No description provided for @reasonPackExtraInsulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack extra insulation for short cold segments.'**
+  String get reasonPackExtraInsulation;
+
+  /// No description provided for @reasonWardrobeGap.
+  ///
+  /// In en, this message translates to:
+  /// **'No suitable owned garment found for this need.'**
+  String get reasonWardrobeGap;
+
+  /// No description provided for @reasonIncompleteWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather coverage is incomplete — lower confidence.'**
+  String get reasonIncompleteWeather;
+
+  /// No description provided for @reasonIncompleteWardrobe.
+  ///
+  /// In en, this message translates to:
+  /// **'Wardrobe coverage is incomplete — lower confidence.'**
+  String get reasonIncompleteWardrobe;
+
+  /// No description provided for @reasonBaselineNoPersonalEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline recommendation — not enough personal ride evidence yet.'**
+  String get reasonBaselineNoPersonalEvidence;
 }
 
 class _AppLocalizationsDelegate
