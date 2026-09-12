@@ -1,17 +1,45 @@
-# motorcycle_clothing
+# RideWear mobile (`apps/mobile`)
 
-A new Flutter project.
+Flutter client for RideWear.
 
-## Getting Started
+## Local configuration
 
-This project is a starting point for a Flutter application.
+### API
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Android emulator → host: `10.0.2.2`. iOS simulator → `localhost`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Google Maps Platform (place search + route preview)
+
+Never commit API keys. Pass a **restricted** key at build/run time:
+
+```bash
+flutter run --dart-define=GOOGLE_MAPS_API_KEY=YOUR_KEY
+# or
+flutter build apk --debug --dart-define=GOOGLE_MAPS_API_KEY=YOUR_KEY
+```
+
+**Enable on the Google Cloud project**
+
+- Places API (New) — autocomplete + place details
+- Routes API — preview geometry (`computeRoutes`)
+
+**Key restrictions (required)**
+
+- Android: application restriction by package name + SHA-1
+- iOS: application restriction by bundle id
+- API restriction: Places API (New) + Routes API only  
+  (add Maps SDK only if you later enable native map tiles)
+
+Without `GOOGLE_MAPS_API_KEY`, debug builds use an in-memory fake catalog so CI and local UI work offline. Production builds must supply a restricted key.
+
+Motorcycle preview requests Google `TWO_WHEELER` when available (beta). If unsupported, the UI falls back to `DRIVE` geometry and shows an explicit warning.
+
+### Ads (optional)
+
+```bash
+flutter run --dart-define=ADS_ENABLED=true
+```

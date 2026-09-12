@@ -73,3 +73,24 @@ If ads are enabled in production:
 ## 6. Language vs units
 
 Language preference (`nb` / `en`) is separate from measurement units. User-entered names (routes, garments) are never auto-translated.
+
+---
+
+## 7. Map / place-search providers (client)
+
+Route creation uses a **provider-neutral** mobile abstraction (`LocationSearchService`, `RouteGeometryService`). The default implementation may call **Google Maps Platform** (Places Autocomplete / Place Details + Routes API) **from the device**.
+
+| Flow | Data sent | Destination | Retention in RideWear |
+|------|-----------|-------------|------------------------|
+| Place autocomplete | Typed search text (+ optional session token) | Google Places | Not stored by RideWear |
+| Place resolve | Selected place id | Google Places | Label/address + lat/lon stored on owned `RouteWaypoint` only after save |
+| Route preview | Ordered waypoint coordinates | Google Routes | Preview polyline is ephemeral in UI; not a permanent GPS trace product |
+| Save route | Waypoints via RideWear API | RideWear backend | Same ownership/privacy rules as §2–3 |
+
+**Rules**
+
+1. Do **not** send route/location payloads to additional third parties beyond the selected map/search provider and the RideWear API.
+2. Do **not** log exact user waypoint coordinates in app or API logs.
+3. API keys stay out of git; use `--dart-define=GOOGLE_MAPS_API_KEY=...` (and platform key restrictions: Places + Routes, app package / bundle id).
+4. Google `TWO_WHEELER` routing is beta — when unavailable, the client must show an explicit driving-geometry fallback warning (never silently claim motorcycle routing).
+5. Saved Route still stores **route definition only** (waypoints/labels), not weather or clothing recommendations.
