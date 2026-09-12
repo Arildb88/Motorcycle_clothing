@@ -148,6 +148,8 @@ MVP: `NullRoutingAdapter` — client/API supplies start, end, optional midpoints
 
 Later: OpenRouteService / Mapbox without changing recommend module.
 
+**Client route builder (Flutter):** place search + preview geometry live behind `LocationSearchService` / `RouteGeometryService` so widgets stay provider-neutral. Google Places + Routes are one implementation; coordinates remain the canonical `RouteWaypoint` representation. This is **not** turn-by-turn navigation and does not replace server `RoutingPort`.
+
 ---
 
 ## 5. Recommendation engine (domain package)

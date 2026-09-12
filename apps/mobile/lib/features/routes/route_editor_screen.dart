@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
+import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
+import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/services/location/location_models.dart';
+import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
-/// Create / edit a saved motorcycle route (ordered waypoints).
-/// Map search / tap-to-place is deferred — coords via form for MVP foundation.
+/// Create / edit a saved motorcycle route via place search + map preview.
+///
+/// Coordinates stay canonical for persistence; the user-facing flow uses
+/// place/address search. Manual lat/lon is a collapsed advanced fallback only.
 class RouteEditorScreen extends StatefulWidget {
   const RouteEditorScreen({super.key, this.existing});
 
@@ -23,7 +30,19 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
   bool _favorite = false;
   bool _saving = false;
   String? _error;
-  final List<_WpDraft> _waypoints = [];
+  List<WaypointDraft> _waypoints = [
+    WaypointDraft.empty(),
+    WaypointDraft.empty(),
+  ];
+
+  bool _mapLoading = false;
+  String? _mapError;
+  RouteGeometry? _geometry;
+  int _geometryEpoch = 0;
+
+  // Advanced fallback controllers (hidden by default).
+  final List<TextEditingController> _advLat = [];
+  final List<TextEditingController> _advLon = [];
 
   @override
   void initState() {
@@ -34,64 +53,173 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       _description.text = e.description ?? '';
       _category = e.category;
       _favorite = e.isFavorite;
-      for (final w in e.waypoints) {
-        _waypoints.add(
-          _WpDraft(
-            label: TextEditingController(text: w.label ?? ''),
-            lat: TextEditingController(text: w.lat.toString()),
-            lon: TextEditingController(text: w.lon.toString()),
-          ),
-        );
+      if (e.waypoints.isNotEmpty) {
+        _waypoints = e.waypoints
+            .map(WaypointDraft.fromRouteWaypoint)
+            .toList();
       }
     }
-    if (_waypoints.isEmpty) {
-      _waypoints.addAll([
-        _WpDraft(
-          label: TextEditingController(text: 'Start'),
-          lat: TextEditingController(text: '58.1467'),
-          lon: TextEditingController(text: '7.9956'),
-        ),
-        _WpDraft(
-          label: TextEditingController(text: 'Destination'),
-          lat: TextEditingController(text: '58.1599'),
-          lon: TextEditingController(text: '8.0180'),
-        ),
-      ]);
-    }
+    _waypoints = WaypointListOps.ensureStartAndEnd(_waypoints);
+    _syncAdvancedControllers();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshGeometry());
   }
 
   @override
   void dispose() {
     _name.dispose();
     _description.dispose();
-    for (final w in _waypoints) {
-      w.dispose();
+    for (final c in _advLat) {
+      c.dispose();
+    }
+    for (final c in _advLon) {
+      c.dispose();
     }
     super.dispose();
   }
 
+  LocationServices get _location => context.read<LocationServices>();
+
+  bool get _canSave => WaypointListOps.canSave(
+        name: _name.text,
+        waypoints: _waypoints,
+      );
+
+  void _syncAdvancedControllers() {
+    while (_advLat.length < _waypoints.length) {
+      _advLat.add(TextEditingController());
+      _advLon.add(TextEditingController());
+    }
+    while (_advLat.length > _waypoints.length) {
+      _advLat.removeLast().dispose();
+      _advLon.removeLast().dispose();
+    }
+    for (var i = 0; i < _waypoints.length; i++) {
+      final w = _waypoints[i];
+      _advLat[i].text = w.lat?.toString() ?? '';
+      _advLon[i].text = w.lon?.toString() ?? '';
+    }
+  }
+
+  Future<void> _refreshGeometry() async {
+    final pts = _waypoints
+        .map((w) => w.geoPoint)
+        .whereType<GeoPoint>()
+        .toList();
+    if (pts.length < 2) {
+      setState(() {
+        _geometry = null;
+        _mapError = null;
+        _mapLoading = false;
+      });
+      return;
+    }
+    final epoch = ++_geometryEpoch;
+    setState(() {
+      _mapLoading = true;
+      _mapError = null;
+    });
+    try {
+      final geometry = await _location.geometry.computeRoute(pts);
+      if (!mounted || epoch != _geometryEpoch) return;
+      setState(() {
+        _geometry = geometry;
+        _mapLoading = false;
+      });
+    } on LocationProviderException catch (e) {
+      if (!mounted || epoch != _geometryEpoch) return;
+      setState(() {
+        _mapLoading = false;
+        _mapError = e.message;
+        _geometry = null;
+      });
+    } catch (_) {
+      if (!mounted || epoch != _geometryEpoch) return;
+      setState(() {
+        _mapLoading = false;
+        _mapError = 'Map preview failed';
+        _geometry = null;
+      });
+    }
+  }
+
+  void _onPlaceSelected(int index, ResolvedPlace place) {
+    setState(() {
+      _waypoints[index].applyResolved(place);
+      _error = null;
+      _syncAdvancedControllers();
+    });
+    _refreshGeometry();
+  }
+
+  void _onPlaceCleared(int index) {
+    setState(() {
+      _waypoints[index].clearPlace();
+      _syncAdvancedControllers();
+    });
+    _refreshGeometry();
+  }
+
+  void _addStop() {
+    setState(() {
+      _waypoints = WaypointListOps.addStop(_waypoints);
+      _syncAdvancedControllers();
+    });
+  }
+
+  void _removeStop(int i) {
+    final next = WaypointListOps.removeAt(_waypoints, i);
+    if (next == null) return;
+    setState(() {
+      _waypoints = next;
+      _syncAdvancedControllers();
+    });
+    _refreshGeometry();
+  }
+
+  void _move(int i, int delta) {
+    final next = WaypointListOps.move(_waypoints, i, delta);
+    if (next == null) return;
+    setState(() {
+      _waypoints = next;
+      _syncAdvancedControllers();
+    });
+    _refreshGeometry();
+  }
+
+  void _applyAdvanced(int index) {
+    final lat = double.tryParse(_advLat[index].text.trim());
+    final lon = double.tryParse(_advLon[index].text.trim());
+    if (lat == null || lon == null) {
+      setState(() => _error = 'Advanced coordinates must be valid numbers');
+      return;
+    }
+    setState(() {
+      _waypoints[index].applyManualCoordinates(
+        latitude: lat,
+        longitude: lon,
+        manualLabel: _waypoints[index].label,
+      );
+      _error = null;
+    });
+    _refreshGeometry();
+  }
+
   Future<void> _save() async {
+    if (!_canSave) {
+      setState(() {
+        _error =
+            'Enter a name and choose a place for start and destination';
+      });
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      final waypoints = <Map<String, dynamic>>[];
-      for (final w in _waypoints) {
-        final lat = double.tryParse(w.lat.text.trim());
-        final lon = double.tryParse(w.lon.text.trim());
-        if (lat == null || lon == null) {
-          throw ApiException('Each stop needs valid latitude and longitude');
-        }
-        waypoints.add({
-          'lat': lat,
-          'lon': lon,
-          if (w.label.text.trim().isNotEmpty) 'label': w.label.text.trim(),
-        });
-      }
-      if (waypoints.length < 2) {
-        throw ApiException('Add at least a start and destination');
-      }
+      final waypoints = WaypointListOps.toApiWaypoints(_waypoints);
+      final duration =
+          _geometry?.durationMin ?? widget.existing?.typicalDurationMin ?? 35;
       final body = {
         'name': _name.text.trim(),
         if (_description.text.trim().isNotEmpty)
@@ -100,7 +228,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
         'isFavorite': _favorite,
         'activityType': 'motorcycle',
         'waypoints': waypoints,
-        'typicalDurationMin': 35,
+        'typicalDurationMin': duration,
       };
       final api = context.read<ApiClient>();
       if (widget.existing == null) {
@@ -118,43 +246,19 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
     }
   }
 
-  void _addStop() {
-    setState(() {
-      _waypoints.add(
-        _WpDraft(
-          label: TextEditingController(text: 'Stop ${_waypoints.length}'),
-          lat: TextEditingController(text: '58.15'),
-          lon: TextEditingController(text: '8.00'),
-        ),
-      );
-    });
-  }
-
-  void _removeStop(int i) {
-    if (_waypoints.length <= 2) return;
-    setState(() {
-      _waypoints[i].dispose();
-      _waypoints.removeAt(i);
-    });
-  }
-
-  void _move(int i, int delta) {
-    final j = i + delta;
-    if (j < 0 || j >= _waypoints.length) return;
-    setState(() {
-      final item = _waypoints.removeAt(i);
-      _waypoints.insert(j, item);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final stopPoints = _waypoints
+        .map((w) => w.geoPoint)
+        .whereType<GeoPoint>()
+        .toList();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.existing == null ? 'New route' : 'Edit route'),
         actions: [
           TextButton(
-            onPressed: _saving ? null : _save,
+            onPressed: (_saving || !_canSave) ? null : _save,
             child: _saving
                 ? const SizedBox(
                     width: 18,
@@ -170,6 +274,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
         children: [
           TextField(
             controller: _name,
+            onChanged: (_) => setState(() {}),
             decoration: const InputDecoration(
               labelText: 'Name',
               hintText: 'Work 1, Sunday Loop…',
@@ -209,90 +314,86 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Stops (ordered)',
+            'Route',
             style: GoogleFonts.barlowCondensed(
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
           ),
           Text(
-            'Coordinates are saved so the route does not need re-geocoding. '
-            'Map search arrives with the routing provider milestone.',
+            'Search for places — you do not need to enter coordinates.',
             style: TextStyle(
               color: AppTheme.steel.withValues(alpha: 0.9),
               fontSize: 13,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          RouteMapPreview(
+            waypoints: stopPoints,
+            geometry: _geometry,
+            loading: _mapLoading,
+            error: _mapError,
+          ),
+          const SizedBox(height: 16),
           ...List.generate(_waypoints.length, (i) {
             final w = _waypoints[i];
+            final role = WaypointListOps.roleLabel(i, _waypoints.length);
             return Card(
-              margin: const EdgeInsets.only(bottom: 10),
+              margin: const EdgeInsets.only(bottom: 12),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       children: [
                         Text(
-                          i == 0
-                              ? 'Start'
-                              : i == _waypoints.length - 1
-                                  ? 'End'
-                                  : 'Stop $i',
+                          role,
                           style: GoogleFonts.barlowCondensed(
                             fontWeight: FontWeight.w700,
+                            fontSize: 18,
                           ),
                         ),
                         const Spacer(),
                         IconButton(
+                          tooltip: 'Move up',
                           onPressed: () => _move(i, -1),
                           icon: const Icon(Icons.arrow_upward),
                         ),
                         IconButton(
+                          tooltip: 'Move down',
                           onPressed: () => _move(i, 1),
                           icon: const Icon(Icons.arrow_downward),
                         ),
                         if (_waypoints.length > 2)
                           IconButton(
+                            tooltip: 'Remove',
                             onPressed: () => _removeStop(i),
                             icon: const Icon(Icons.delete_outline),
                           ),
                       ],
                     ),
-                    TextField(
-                      controller: w.label,
-                      decoration: const InputDecoration(labelText: 'Label'),
+                    PlaceSearchField(
+                      key: ValueKey('place-$i-${w.providerPlaceId ?? w.displayLabel}'),
+                      search: _location.search,
+                      label: role,
+                      initialDisplay: w.displayLabel.isEmpty
+                          ? null
+                          : w.displayLabel,
+                      onSelected: (place) => _onPlaceSelected(i, place),
+                      onCleared: () => _onPlaceCleared(i),
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: w.lat,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                              signed: true,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Latitude',
-                            ),
+                    if (w.isResolved)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          w.address ?? w.displayLabel,
+                          style: TextStyle(
+                            color: AppTheme.steel.withValues(alpha: 0.85),
+                            fontSize: 12,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: w.lon,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                              signed: true,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Longitude',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
               ),
@@ -303,35 +404,62 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
             icon: const Icon(Icons.add),
             label: const Text('Add stop'),
           ),
+          const SizedBox(height: 8),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: const Text('Advanced: coordinates'),
+            subtitle: const Text('Developer / fallback only'),
+            children: [
+              for (var i = 0; i < _waypoints.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _advLat[i],
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                            signed: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText:
+                                '${WaypointListOps.roleLabel(i, _waypoints.length)} lat',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _advLon[i],
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                            signed: true,
+                          ),
+                          decoration: const InputDecoration(labelText: 'lon'),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Apply coordinates',
+                        onPressed: () => _applyAdvanced(i),
+                        icon: const Icon(Icons.check),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(_error!, style: const TextStyle(color: Colors.red)),
           ],
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _saving ? null : _save,
+            onPressed: (_saving || !_canSave) ? null : _save,
             child: const Text('Save route'),
           ),
         ],
       ),
     );
-  }
-}
-
-class _WpDraft {
-  _WpDraft({
-    required this.label,
-    required this.lat,
-    required this.lon,
-  });
-
-  final TextEditingController label;
-  final TextEditingController lat;
-  final TextEditingController lon;
-
-  void dispose() {
-    label.dispose();
-    lat.dispose();
-    lon.dispose();
   }
 }

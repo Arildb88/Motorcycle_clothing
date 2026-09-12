@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
     await MobileAds.instance.initialize();
   }
   final api = ApiClient(baseUrl: AppConfig.apiBaseUrl);
+  final location = LocationServices();
   final auth = AuthState(api);
   final activity = ActivityContext();
   final locale = LocaleController();
@@ -30,6 +32,7 @@ Future<void> main() async {
   runApp(
     MotorcycleClothingApp(
       api: api,
+      location: location,
       auth: auth,
       activity: activity,
       locale: locale,
@@ -41,12 +44,14 @@ class MotorcycleClothingApp extends StatelessWidget {
   const MotorcycleClothingApp({
     super.key,
     required this.api,
+    required this.location,
     required this.auth,
     required this.activity,
     required this.locale,
   });
 
   final ApiClient api;
+  final LocationServices location;
   final AuthState auth;
   final ActivityContext activity;
   final LocaleController locale;
@@ -56,6 +61,7 @@ class MotorcycleClothingApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider.value(value: api),
+        Provider.value(value: location),
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: activity),
         ChangeNotifierProvider.value(value: locale),
