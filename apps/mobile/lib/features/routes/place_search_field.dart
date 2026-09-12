@@ -225,7 +225,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _suggestions.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, i) {
                 final s = _suggestions[i];
                 return ListTile(

@@ -36,13 +36,7 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3349014671"/>
-        <!--
-          Optional Maps SDK key placeholder (native tiles). Place search + Routes
-          preview currently use HTTP APIs with --dart-define=GOOGLE_MAPS_API_KEY.
-          If enabling google_maps_flutter, set this via manifestPlaceholders from
-          local.properties (never commit the real key) and restrict the key to
-          this package + SHA-1.
-        -->
+        <!-- Optional Maps SDK key for native tiles. Place search uses dart-define. -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${GOOGLE_MAPS_API_KEY}"/>
