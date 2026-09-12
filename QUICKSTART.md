@@ -1,5 +1,7 @@
 # Idiot-proof start guide (Windows + Git Bash + Android Studio)
 
+> **Prefer the root [README.md](README.md)** for current onboarding (PowerShell + verified commands on `dev`). This QUICKSTART may lag behind (branch names, script names, milestone status).
+
 Do these steps **in order**. Keep **two Git Bash windows** open when running.
 
 ---
