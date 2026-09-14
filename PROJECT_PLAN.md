@@ -304,7 +304,7 @@ Each milestone should be **demoable and verifiable** before the next.
 | **M2.6** | Saved motorcycle routes | CRUD routes + waypoints; favorites; plan-from-route; Motorcycle quick-launch UX; ownership tests | **Done** |
 | **M2.7** | Motorcycle garment configuration | Material, liners as components, vent capability, presets; worn-config shape documented for M5 | **Done** |
 | **M3** | Recommendation engine v1 | Unit tests for demand, weighting, shrinkage; explainable API response | **Done** |
-| **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Partially started via saved-route launch; full plan UI still pending |
+| **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Motorcycle planner v1: place search, multi-stop, departure/arrival, leave now, avoid motorways, map preview, analyze ride → kit (nav handoff / Find My Best Time still out) |
 | **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
 | **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK | Pending |
 | **M7** | Segment weather v1 | 3–5 samples along route with ETA; duration weighting visible in “why” | Pending |
@@ -405,7 +405,7 @@ Language-neutral planning types live under `apps/api/src/domain/ride-planning.ts
 
 ## 17. Next step after M3
 
-**M4:** Plan Ride UX — departure/duration planning surface that consumes the M3 structured recommendation (wear/pack/why/confidence). Do not build hiking/cycling engines yet.
+**M4:** Plan Ride UX — motorcycle planner consumes M3 structured recommendation (wear/pack/why/confidence). Departure/arrival modes, multi-stop saved routes, avoid-motorways preference, and Analyze ride are in progress on the planner surface. Do not build hiking/cycling engines yet. Find My Best Time and turn-by-turn remain out of scope.
 
 ---
 

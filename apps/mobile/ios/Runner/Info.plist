@@ -90,5 +90,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>RideWear uses your location only when you choose “Use current location” as the ride start.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>RideWear uses your location only when you choose “Use current location” as the ride start.</string>
 </dict>
 </plist>

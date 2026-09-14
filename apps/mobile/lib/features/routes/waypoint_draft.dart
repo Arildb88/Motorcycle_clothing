@@ -175,4 +175,55 @@ class WaypointListOps {
     if (index == length - 1) return 'Destination';
     return 'Stop $index';
   }
+
+  /// Reverse start ↔ destination (and intermediate order).
+  static List<WaypointDraft> reverse(List<WaypointDraft> list) {
+    final base = ensureStartAndEnd(list);
+    return base.reversed
+        .map(
+          (w) => WaypointDraft(
+            providerPlaceId: w.providerPlaceId,
+            label: w.label,
+            address: w.address,
+            lat: w.lat,
+            lon: w.lon,
+          ),
+        )
+        .toList();
+  }
+
+  /// When enabled, destination becomes a copy of start (loop / return).
+  /// Intermediate stops are preserved. Does not add a second destination field.
+  static List<WaypointDraft> applyRoundTrip(
+    List<WaypointDraft> list, {
+    required bool enabled,
+  }) {
+    final base = ensureStartAndEnd(list);
+    if (!enabled) return base;
+    final start = base.first;
+    if (!start.isResolved) return base;
+    final ret = WaypointDraft(
+      providerPlaceId: start.providerPlaceId,
+      label: start.label,
+      address: start.address,
+      lat: start.lat,
+      lon: start.lon,
+    );
+    return [...base.sublist(0, base.length - 1), ret];
+  }
+
+  /// True when first and last share coordinates (round-trip / loop).
+  static bool looksLikeRoundTrip(List<WaypointDraft> list) {
+    if (list.length < 2) return false;
+    final a = list.first;
+    final b = list.last;
+    if (!a.isResolved || !b.isResolved) return false;
+    return (a.lat! - b.lat!).abs() < 1e-5 && (a.lon! - b.lon!).abs() < 1e-5;
+  }
+
+  /// Ready to analyze (coordinates only — name optional until save).
+  static bool canAnalyze(List<WaypointDraft> waypoints) {
+    if (waypoints.length < 2) return false;
+    return waypoints.every((w) => w.isResolved);
+  }
 }

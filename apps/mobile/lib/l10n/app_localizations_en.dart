@@ -198,4 +198,139 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unitsSaved => 'Units saved';
+
+  @override
+  String get plannerTitle => 'Plan ride';
+
+  @override
+  String get plannerSubtitle =>
+      'Choose where you ride, when you leave or arrive, then analyze weather and kit.';
+
+  @override
+  String get plannerSavedRoutes => 'Saved';
+
+  @override
+  String get plannerChooseSavedRoute => 'Use a saved route';
+
+  @override
+  String get plannerNoSavedRoutes =>
+      'No saved routes yet. Build one here, then save it.';
+
+  @override
+  String get plannerUseCurrentLocation => 'Use current location';
+
+  @override
+  String get plannerLocationPermissionDenied =>
+      'Location permission was denied. You can still search for a start place.';
+
+  @override
+  String get plannerLocationPermissionDeniedForever =>
+      'Location permission is blocked. Enable it in system settings, or search for a start place.';
+
+  @override
+  String get plannerLocationServicesDisabled =>
+      'Location services are off. Turn them on, or search for a start place.';
+
+  @override
+  String get plannerLocationTemporaryFailure =>
+      'Could not read your location right now. Try again or search for a place.';
+
+  @override
+  String get plannerMoveUp => 'Move up';
+
+  @override
+  String get plannerMoveDown => 'Move down';
+
+  @override
+  String get plannerRemoveStop => 'Remove stop';
+
+  @override
+  String get plannerAddStop => 'Add stop';
+
+  @override
+  String get plannerReverse => 'Reverse';
+
+  @override
+  String get plannerRoundTrip => 'Return to start';
+
+  @override
+  String get plannerWhenSection => 'When';
+
+  @override
+  String get plannerDeparture => 'Departure';
+
+  @override
+  String get plannerArrival => 'Arrival';
+
+  @override
+  String get plannerDepartureHint => 'The time is when you leave.';
+
+  @override
+  String get plannerArrivalHint =>
+      'The time is when you want to arrive. Departure is estimated from ride duration.';
+
+  @override
+  String get plannerDepartureTime => 'Departure time';
+
+  @override
+  String get plannerArrivalTime => 'Arrival time';
+
+  @override
+  String get plannerOptionsSection => 'Route options';
+
+  @override
+  String get plannerAvoidMotorways => 'Avoid motorways';
+
+  @override
+  String get plannerAvoidMotorwaysHint =>
+      'Prefer non-motorway roads when the provider supports it.';
+
+  @override
+  String get plannerRouteName => 'Route name';
+
+  @override
+  String get plannerRouteNameHint => 'e.g. Work commute';
+
+  @override
+  String get plannerAnalyzeRide => 'Analyze ride';
+
+  @override
+  String get plannerSaveRoute => 'Save route';
+
+  @override
+  String get plannerPrimaryActionHint =>
+      'Analyze ride checks weather and clothing. It does not start navigation.';
+
+  @override
+  String get plannerSaveDisabledHint =>
+      'Add a name and choose start and destination before saving.';
+
+  @override
+  String get plannerIncompleteRoute =>
+      'Choose a start and destination before analyzing.';
+
+  @override
+  String get plannerDefaultRouteName => 'Ride plan';
+
+  @override
+  String get plannerRouteSaved => 'Route saved';
+
+  @override
+  String get plannerMapFailed => 'Map preview failed';
+
+  @override
+  String get plannerAnalysisTitle => 'Ride analysis';
+
+  @override
+  String get plannerAnalysisSubtitle =>
+      'Weather, exposure, and kit for this plan';
+
+  @override
+  String get plannerNoWearItems => 'No wear items returned.';
+
+  @override
+  String get plannerNoPackItems => 'No pack items returned.';
+
+  @override
+  String get plannerBackToPlanner => 'Back to planner';
 }

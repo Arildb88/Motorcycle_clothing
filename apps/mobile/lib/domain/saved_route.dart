@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Saved motorcycle route (API `Route` model). Template ≠ ActivityPlan.
 class SavedRoute {
   SavedRoute({
@@ -13,6 +15,7 @@ class SavedRoute {
     this.endLabel,
     required this.typicalDurationMin,
     required this.waypoints,
+    this.avoidMotorways = false,
   });
 
   final String id;
@@ -27,9 +30,11 @@ class SavedRoute {
   final String? endLabel;
   final int typicalDurationMin;
   final List<RouteWaypoint> waypoints;
+  final bool avoidMotorways;
 
   factory SavedRoute.fromJson(Map<String, dynamic> json) {
     final wps = (json['waypoints'] as List?) ?? const [];
+    final prefs = _parsePreferences(json['preferencesJson'] ?? json['preferences']);
     return SavedRoute(
       id: json['id'] as String,
       name: json['name'] as String? ?? 'Route',
@@ -46,7 +51,19 @@ class SavedRoute {
           .whereType<Map<String, dynamic>>()
           .map(RouteWaypoint.fromJson)
           .toList(),
+      avoidMotorways: prefs['avoidMotorways'] == true,
     );
+  }
+
+  static Map<String, dynamic> _parsePreferences(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) return decoded;
+      } catch (_) {}
+    }
+    return const {};
   }
 
   String get summaryLabel {
