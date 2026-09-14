@@ -153,4 +153,49 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reasonBaselineNoPersonalEvidence =>
       'Baseline recommendation — not enough personal ride evidence yet.';
+
+  @override
+  String get unitsSection => 'Units';
+
+  @override
+  String get unitsPresetMetric => 'Metric';
+
+  @override
+  String get unitsPresetImperial => 'Imperial';
+
+  @override
+  String get unitsTemperature => 'Temperature';
+
+  @override
+  String get unitsDistance => 'Distance';
+
+  @override
+  String get unitsRidingSpeed => 'Riding speed';
+
+  @override
+  String get unitsWindSpeed => 'Wind speed';
+
+  @override
+  String get unitCelsius => 'Celsius (°C)';
+
+  @override
+  String get unitFahrenheit => 'Fahrenheit (°F)';
+
+  @override
+  String get unitKilometers => 'Kilometres (km)';
+
+  @override
+  String get unitMiles => 'Miles (mi)';
+
+  @override
+  String get unitKmh => 'km/h';
+
+  @override
+  String get unitMph => 'mph';
+
+  @override
+  String get unitMs => 'm/s';
+
+  @override
+  String get unitsSaved => 'Units saved';
 }

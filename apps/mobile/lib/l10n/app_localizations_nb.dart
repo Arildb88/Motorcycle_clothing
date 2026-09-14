@@ -154,4 +154,49 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get reasonBaselineNoPersonalEvidence =>
       'Basisanbefaling — ikke nok personlig turhistorikk ennå.';
+
+  @override
+  String get unitsSection => 'Enheter';
+
+  @override
+  String get unitsPresetMetric => 'Metersystem';
+
+  @override
+  String get unitsPresetImperial => 'Britiske/amerikanske';
+
+  @override
+  String get unitsTemperature => 'Temperatur';
+
+  @override
+  String get unitsDistance => 'Avstand';
+
+  @override
+  String get unitsRidingSpeed => 'Kjørehastighet';
+
+  @override
+  String get unitsWindSpeed => 'Vindhastighet';
+
+  @override
+  String get unitCelsius => 'Celsius (°C)';
+
+  @override
+  String get unitFahrenheit => 'Fahrenheit (°F)';
+
+  @override
+  String get unitKilometers => 'Kilometer (km)';
+
+  @override
+  String get unitMiles => 'Miles (mi)';
+
+  @override
+  String get unitKmh => 'km/t';
+
+  @override
+  String get unitMph => 'mph';
+
+  @override
+  String get unitMs => 'm/s';
+
+  @override
+  String get unitsSaved => 'Enheter lagret';
 }

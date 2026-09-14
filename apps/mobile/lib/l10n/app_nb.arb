@@ -41,5 +41,20 @@
   "reasonWardrobeGap": "Fant ingen egnet eid plagg for dette behovet.",
   "reasonIncompleteWeather": "Værdekningen er ufullstendig — lavere sikkerhet.",
   "reasonIncompleteWardrobe": "Garderobedekningen er ufullstendig — lavere sikkerhet.",
-  "reasonBaselineNoPersonalEvidence": "Basisanbefaling — ikke nok personlig turhistorikk ennå."
+  "reasonBaselineNoPersonalEvidence": "Basisanbefaling — ikke nok personlig turhistorikk ennå.",
+  "unitsSection": "Enheter",
+  "unitsPresetMetric": "Metersystem",
+  "unitsPresetImperial": "Britiske/amerikanske",
+  "unitsTemperature": "Temperatur",
+  "unitsDistance": "Avstand",
+  "unitsRidingSpeed": "Kjørehastighet",
+  "unitsWindSpeed": "Vindhastighet",
+  "unitCelsius": "Celsius (°C)",
+  "unitFahrenheit": "Fahrenheit (°F)",
+  "unitKilometers": "Kilometer (km)",
+  "unitMiles": "Miles (mi)",
+  "unitKmh": "km/t",
+  "unitMph": "mph",
+  "unitMs": "m/s",
+  "unitsSaved": "Enheter lagret"
 }

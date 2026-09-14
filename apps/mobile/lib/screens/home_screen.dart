@@ -8,6 +8,7 @@ import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
+import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/screens/feedback_sheet.dart';
 
@@ -442,6 +443,8 @@ class _RecommendationBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final reasonL10n = AppLocalizationsReasonLookup(l10n);
+    final units = context.watch<UnitPreferencesController>();
+    final fmt = units.formatter(localeName: Localizations.localeOf(context).toString());
     final route = data['route'] as Map<String, dynamic>;
     final weather = data['weather'] as Map<String, dynamic>;
     final rec = data['recommendation'] as Map<String, dynamic>;
@@ -485,12 +488,16 @@ class _RecommendationBody extends StatelessWidget {
             children: [
               _Metric(
                 label: 'Temp',
-                value:
-                    '${(weather['minTempC'] as num).toStringAsFixed(0)}–${(weather['maxTempC'] as num).toStringAsFixed(0)}°C',
+                value: fmt.temperatureRangeFromC(
+                  weather['minTempC'] as num,
+                  weather['maxTempC'] as num,
+                ),
               ),
               _Metric(
                 label: 'Exposure',
-                value: exposureC != null ? '$exposureC°C' : '—',
+                value: exposureC != null
+                    ? fmt.temperatureFromC(exposureC as num)
+                    : '—',
               ),
               _Metric(
                 label: 'Rain',
@@ -499,8 +506,7 @@ class _RecommendationBody extends StatelessWidget {
               ),
               _Metric(
                 label: 'Wind',
-                value:
-                    '${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
+                value: fmt.windFromMs(weather['maxWindMs'] as num),
               ),
               if (confidenceLevel != null)
                 _Metric(

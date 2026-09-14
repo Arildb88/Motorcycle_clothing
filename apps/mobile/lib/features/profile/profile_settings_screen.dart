@@ -7,6 +7,7 @@ import 'package:motorcycle_clothing/services/oauth_flow.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
+import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 
@@ -47,11 +48,14 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       _name.text = me['displayName']?.toString() ?? '';
       final profile = me['profile'] as Map<String, dynamic>?;
       final activity = context.read<ActivityContext>();
+      final unitsCtrl = context.read<UnitPreferencesController>();
       await activity.applyProfile(
         defaultActivity: profile?['defaultActivity']?.toString(),
         showChooserOnLaunch: profile?['showActivityChooserOnLaunch'] as bool?,
         onboardingCompleted: profile?['onboardingCompleted'] as bool?,
       );
+      await unitsCtrl.applyFromProfile(profile);
+      if (!mounted) return;
       setState(() {
         _me = me;
         _providers = providers;
@@ -71,19 +75,38 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   Future<void> _saveBasics() async {
     final api = context.read<ApiClient>();
     final activity = context.read<ActivityContext>();
+    final units = context.read<UnitPreferencesController>();
     await api.patch('/users/me', {
       'displayName': _name.text.trim(),
       'defaultActivity': activity.defaultActivity.apiValue,
       'showActivityChooserOnLaunch': activity.showChooserOnLaunch,
       'coldSensitivity':
           (_me?['profile'] as Map?)?['coldSensitivity'] ?? 0,
-      'units': (_me?['profile'] as Map?)?['units'] ?? 'celsius',
+      ...units.toApiBody(),
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile saved')),
+        SnackBar(content: Text(AppLocalizations.of(context).profileSaved)),
       );
       await _load();
+    }
+  }
+
+  Future<void> _saveUnits() async {
+    final api = context.read<ApiClient>();
+    final units = context.read<UnitPreferencesController>();
+    final l10n = AppLocalizations.of(context);
+    try {
+      await api.patch('/users/me', units.toApiBody());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.unitsSaved)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
     }
   }
 
@@ -238,14 +261,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               disabledHint: 'Configure STRAVA_* and TOKEN_ENCRYPTION_KEY',
             ),
           const SizedBox(height: 12),
-          Text('APP', style: _sectionStyle),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Units'),
-            subtitle: Text(
-              ((_me!['profile'] as Map?)?['units'] ?? 'celsius').toString(),
-            ),
-          ),
+          Text(AppLocalizations.of(context).unitsSection, style: _sectionStyle),
+          _UnitsSection(onChanged: _saveUnits),
           FilledButton(onPressed: _saveBasics, child: const Text('Save profile')),
           const SizedBox(height: 16),
           Text('ACCOUNT', style: _sectionStyle),
@@ -396,5 +413,117 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final auth = context.read<AuthState>();
     await api.delete('/users/me');
     await auth.logout();
+  }
+}
+
+class _UnitsSection extends StatelessWidget {
+  const _UnitsSection({required this.onChanged});
+
+  final Future<void> Function() onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final units = context.watch<UnitPreferencesController>();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: 8,
+          children: [
+            ChoiceChip(
+              label: Text(l10n.unitsPresetMetric),
+              selected:
+                  units.temperatureUnit == 'celsius' &&
+                  units.distanceUnit == 'kilometer' &&
+                  units.speedUnit == 'kmh' &&
+                  units.windSpeedUnit == 'ms',
+              onSelected: (_) async {
+                await units.applyPreset('metric');
+                await onChanged();
+              },
+            ),
+            ChoiceChip(
+              label: Text(l10n.unitsPresetImperial),
+              selected:
+                  units.temperatureUnit == 'fahrenheit' &&
+                  units.distanceUnit == 'mile' &&
+                  units.speedUnit == 'mph' &&
+                  units.windSpeedUnit == 'mph',
+              onSelected: (_) async {
+                await units.applyPreset('imperial');
+                await onChanged();
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          // ignore: deprecated_member_use
+          value: units.temperatureUnit,
+          decoration: InputDecoration(labelText: l10n.unitsTemperature),
+          items: [
+            DropdownMenuItem(value: 'celsius', child: Text(l10n.unitCelsius)),
+            DropdownMenuItem(
+              value: 'fahrenheit',
+              child: Text(l10n.unitFahrenheit),
+            ),
+          ],
+          onChanged: (v) async {
+            if (v == null) return;
+            await units.setAll(temperatureUnit: v);
+            await onChanged();
+          },
+        ),
+        DropdownButtonFormField<String>(
+          // ignore: deprecated_member_use
+          value: units.distanceUnit,
+          decoration: InputDecoration(labelText: l10n.unitsDistance),
+          items: [
+            DropdownMenuItem(
+              value: 'kilometer',
+              child: Text(l10n.unitKilometers),
+            ),
+            DropdownMenuItem(value: 'mile', child: Text(l10n.unitMiles)),
+          ],
+          onChanged: (v) async {
+            if (v == null) return;
+            await units.setAll(distanceUnit: v);
+            await onChanged();
+          },
+        ),
+        DropdownButtonFormField<String>(
+          // ignore: deprecated_member_use
+          value: units.speedUnit,
+          decoration: InputDecoration(labelText: l10n.unitsRidingSpeed),
+          items: [
+            DropdownMenuItem(value: 'kmh', child: Text(l10n.unitKmh)),
+            DropdownMenuItem(value: 'mph', child: Text(l10n.unitMph)),
+          ],
+          onChanged: (v) async {
+            if (v == null) return;
+            await units.setAll(speedUnit: v);
+            await onChanged();
+          },
+        ),
+        DropdownButtonFormField<String>(
+          // ignore: deprecated_member_use
+          value: units.windSpeedUnit,
+          decoration: InputDecoration(labelText: l10n.unitsWindSpeed),
+          items: [
+            DropdownMenuItem(value: 'ms', child: Text(l10n.unitMs)),
+            DropdownMenuItem(value: 'kmh', child: Text(l10n.unitKmh)),
+            DropdownMenuItem(value: 'mph', child: Text(l10n.unitMph)),
+          ],
+          onChanged: (v) async {
+            if (v == null) return;
+            await units.setAll(windSpeedUnit: v);
+            await onChanged();
+          },
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
   }
 }
