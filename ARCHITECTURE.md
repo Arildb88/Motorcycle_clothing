@@ -103,12 +103,14 @@ RideWear User
 
 Pure domain pipeline (no Nest decorators) in `apps/api/src/recommend/motorcycle/`:
 
-1. **segments** — duration-aware weather segments (even split until denser sampling).
-2. **exposure** — `motorcycleExposureC` from air temp, wind, assumed cruise airflow, wet penalty (constants in `constants.ts`; not medical “feels like”).
+1. **route-travel / segments** — optional provider-neutral `RouteTravelSegment[]` (expectedSpeedKmh per segment) associated with weather samples; without a profile, even duration split + cruise/default speed.
+2. **airflow + exposure** — shared apparent-airflow proxy (vector when heading + `windFromDeg` exist; otherwise scalar sum fallback) → `motorcycleExposureC` (constants in `constants.ts`; not medical “feels like”). Future `windProtectionFactor` (fairing/windshield) can scale met wind without rewriting callers.
 3. **demand** — duration-weighted sustained warmth/wind/water tiers (1–5) per body zone; short extremes recorded separately for PACK.
 4. **wardrobe-match** — prefer owned garments + `effectiveGarmentTiers` + liner/vent config instructions; else generic requirement (`source: generic`).
-5. **confidence** — LOW/MEDIUM/HIGH from weather/wardrobe/cruise/evidence coverage.
-6. **pipeline** — assembles structured `wear` / `pack` / `reasons[]` (language-neutral codes) / `confidence`.
+5. **confidence** — LOW/MEDIUM/HIGH from weather/wardrobe/**speed source** (route profile > explicit cruise > assumed default)/evidence coverage.
+6. **pipeline** — assembles structured `wear` / `pack` / `reasons[]` (language-neutral codes) / `confidence` + exposure diagnostics (`speedSource`, duration-weighted speed, per-segment airflow).
+
+Speed fallback order: route segment expected speed → explicit `cruiseKmh` → `MOTORCYCLE_EXPOSURE.defaultCruiseKmh`. Production `/recommend` still uses assumed default until a RoutingPort adapter supplies travel segments; overview duration×distance may yield a single-segment profile via `routeTravelFromDurationDistance`.
 
 `RecommendService` loads the user’s wardrobe, applies shrinkage bias only, and returns a version-compatible `/recommend` payload (`effectiveTempC` alias + structured fields). Flutter localizes reason codes via ARB (`nb`/`en`).
 
@@ -240,15 +242,25 @@ WeatherCache
 
 | Model | Meaning |
 |-------|---------|
-| **Route** | Reusable saved route template (private to user). Ordered `RouteWaypoint` coords are canonical. Optional `category`, `isFavorite`, `routeKind`. **Never stores weather or clothing recommendations.** |
-| **ActivityPlan** | A specific planned ride (`departureAt`, `durationMin`, optional `routeId`). `snapshotJson` freezes the route definition used at plan time so later edits/deletes do not rewrite history. |
+| **Route** | Reusable saved route template (private to user). Ordered `RouteWaypoint` coords are canonical. Optional `category`, `isFavorite`, `routeKind`, `preferencesJson` (`avoidMotorways` / tolls / ferries). **Never stores weather or clothing recommendations.** |
+| **ActivityPlan** | A specific planned ride (`planningMode` departure\|arrival, `departureAt`, optional `arrivalAt`, `durationMin`, optional `routeId`). `snapshotJson` freezes the route definition (waypoints + preferences) used at plan time so later edits/deletes do not rewrite history. Optional `routeAnalysisJson` holds provider-neutral distance/duration/travel-segment summaries. |
 | **ActivityLog** | What the user actually did. May keep `routeId` (SetNull on route delete) plus weather/recommendation summary JSON for learning. |
 
-**Route kinds** (`point_to_point` | `multi_stop` | `loop`) are conceptual labels over the same ordered-waypoint model — no separate route engines.
+**Route kinds** (`point_to_point` | `multi_stop` | `loop`) are conceptual labels over the same ordered-waypoint model — no separate route engines. Multi-stop = ordered start → stops → end. Round trip / loop = last waypoint near first (both coords kept; no phantom return node).
 
-**Geometry compromise:** store ordered waypoints (and denormalized start/end). Do **not** permanently store full provider polylines in MVP. Future M7 samples weather along provider geometry at recommendation time; waypoints remain the saved definition.
+**Planning modes (language-neutral):** `departure` (“leave at 07:00”) and `arrival` (“arrive by 08:00”; departure = arrival − duration). UI strings stay in Flutter.
 
-**Privacy:** saved routes reveal home/work habits. Private by default; no public sharing; ownership checks on every API; avoid logging exact coordinates in app logs; account deletion cascades routes.
+**RoutingPort / RouteAnalysis:** server adapters (Null today; Google/Mapbox/ORS later) emit provider-neutral `RouteAnalysis` (distance, duration, travel segments with `expectedSpeedKmh`). Motorcycle exposure consumes analysis segments — never provider SDKs. Client place-search/preview geometry remains Flutter-side and is not turn-by-turn navigation.
+
+**Find My Best Time (boundary only):** future port evaluates nearby candidate departure/arrival times with explainable RideWear comfort criteria (rain, temp, wind/gusts, route-aware airflow, duration). Not implemented in this foundation.
+
+**Navigation handoff (boundary only):** after the rider accepts a plan, the client may open an external navigator (Google Maps / Apple Maps / system default). RideWear is not a turn-by-turn navigation product.
+
+**Geometry compromise:** store ordered waypoints (and denormalized start/end). Do **not** permanently store full provider polylines in MVP. Future denser weather sampling uses analysis segments at recommendation time; waypoints remain the saved definition.
+
+**Current location:** “Use current location” is a plan-time origin choice only — never continuous tracking; never auto-saved as home/work unless the user explicitly saves a Place/Route.
+
+**Privacy:** saved routes reveal home/work habits. Private by default; no public sharing; ownership checks on every API; avoid logging exact coordinates in app logs; account deletion cascades routes; prefer duration-weighted speed summaries over dense GPS.
 
 ### Migration from current schema
 

@@ -40,6 +40,21 @@ export class RouteWaypointInputDto {
   waypointType?: string;
 }
 
+/** Language-neutral route preference flags. */
+export class RoutePreferencesInputDto {
+  @IsOptional()
+  @IsBoolean()
+  avoidMotorways?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  avoidTolls?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  avoidFerries?: boolean;
+}
+
 export class CreateRouteDto {
   @IsString()
   @MaxLength(80)
@@ -120,4 +135,13 @@ export class CreateRouteDto {
   @IsNumber()
   @Min(1)
   typicalDurationMin?: number;
+
+  /**
+   * Provider-neutral routing preferences (avoidMotorways, …).
+   * Stored on the reusable Route template — never weather/clothing.
+   */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RoutePreferencesInputDto)
+  preferences?: RoutePreferencesInputDto;
 }

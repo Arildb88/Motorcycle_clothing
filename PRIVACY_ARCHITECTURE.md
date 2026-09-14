@@ -23,7 +23,7 @@ Store **evidence useful for clothing personalization**, not raw sensor dumps.
 - clothing actually worn **including configuration** (liners, vents)
 - body-zone feedback
 - recommendation reference + saved route id/snapshot
-- aggregated speed where useful
+- aggregated / duration-weighted speed summaries where useful (not raw GPS traces)
 
 ---
 
@@ -33,7 +33,9 @@ Store **evidence useful for clothing personalization**, not raw sensor dumps.
 |------|------------|--------|
 | Home lat/lon (optional) | Default start suggestions | Optional; user-deletable |
 | Saved Route waypoints | Reusable commute/tour templates | **Private by default**; ownership on every API |
-| ActivityPlan `snapshotJson` | Preserve planned geometry after route edit/delete | Minimal waypoint snapshot, not full GPS |
+| ActivityPlan `snapshotJson` | Preserve planned geometry + preferences after route edit/delete | Minimal waypoint snapshot (+ preference flags), not full GPS |
+| ActivityPlan `routeAnalysisJson` | Optional distance/duration/segment speed summary for exposure/weather | Derived summary; not dense polylines |
+| Route `preferencesJson` | Reusable avoidMotorways / tolls / ferries flags | Non-location; still private with the route |
 | Weather cache (coarse keys) | Performance | Short TTL; not a location history product |
 | Exact historical GPS | Not required for MVP clothing advice | **Do not retain** unless a future feature justifies it |
 

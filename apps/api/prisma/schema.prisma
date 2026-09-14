@@ -170,6 +170,10 @@ model Route {
   /// Mirror of ordered waypoints for legacy readers; RouteWaypoint is canonical
   waypointsJson      String    @default("[]")
   typicalDurationMin Int       @default(30)
+    /// Provider-neutral RoutePreferences JSON:
+  /// { avoidMotorways?, avoidTolls?, avoidFerries? }
+  /// Never store clothing/weather on Route.
+  preferencesJson    String    @default("{}")
   lastUsedAt         DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -206,10 +210,19 @@ model ActivityPlan {
   userId       String
   activityType String   @default("motorcycle")
   routeId      String?
+  /// Language-neutral: departure | arrival
+  planningMode String   @default("departure")
   departureAt  DateTime
+  /// Populated when planningMode=arrival or when duration yields an ETA.
+  arrivalAt    DateTime?
   durationMin  Int
   intensity    String?
+    /// Frozen route definition at plan time (waypoints, preferences, …).
+  /// Survives later Route edits/deletes. Never treat as live template.
   snapshotJson String   @default("{}")
+    /// Optional provider-neutral RouteAnalysis JSON (distance, duration,
+  /// travel segments / expected speeds). Prefer derived summaries over dense GPS.
+  routeAnalysisJson String?
   createdAt    DateTime @default(now())
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)

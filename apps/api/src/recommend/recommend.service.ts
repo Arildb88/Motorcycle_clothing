@@ -78,7 +78,11 @@ export class RecommendService {
       weather,
       wardrobe,
       rideDurationMin: route.typicalDurationMin ?? 30,
-      cruiseKmh: null, // telemetry not yet available — assumed cruise
+      // Production path: no provider step-speed profile on the API yet.
+      // Engine falls back to assumed default cruise (speedSource=assumed_default).
+      // When RoutingPort adapters emit RouteTravelSegment[], pass routeTravelSegments.
+      cruiseKmh: null,
+      routeTravelSegments: undefined,
       personalColdBiasC,
       personalSampleCount: n,
       shrinkageK: k,

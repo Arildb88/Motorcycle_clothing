@@ -380,20 +380,26 @@ Locked:
 
 | Concept | Role |
 |---------|------|
-| **Route** (saved) | Reusable template: name, waypoints, category/favorite |
-| **ActivityPlan** | One planned ride at a date/time; `routeId` + `snapshotJson` |
+| **Route** (saved) | Reusable template: name, ordered waypoints, category/favorite, optional `preferencesJson` (`avoidMotorways`, …) |
+| **ActivityPlan** | One planned ride at a date/time; `planningMode` (departure\|arrival), `routeId` + `snapshotJson` (+ optional `routeAnalysisJson`) |
 | **ActivityLog** | What happened; may reference `routeId` (nullable) |
 
 **Rules**
 
 - Weather and clothing recommendations are **never** stored on `Route`.
-- Launch = create plan (snapshot) → fresh `/recommend?routeId=…`.
+- Launch = create plan (snapshot of waypoints + preferences) → fresh `/recommend?routeId=…`.
 - Edit route = future plans use new geometry; past plans keep `snapshotJson`.
 - Delete route = `routeId` SetNull on plans/logs; history remains via snapshot/summaries.
 - Ownership enforced on every route API; routes are private by default.
-- Map search / routing-provider geometry deferred (form + lat/lon foundation now).
+- Multi-stop and loop/round-trip are ordered waypoints (loop = end near start).
+- Provider-neutral `RoutingPort` / `RouteAnalysis` feed weather sampling + motorcycle speed exposure; RideWear is **not** a turn-by-turn navigation app (external handoff later).
+- Map search / live provider routing deferred beyond Null fallback + client preview.
 
-**API:** `GET/POST /routes`, `GET/PATCH/DELETE /routes/:id`, `POST /routes/:id/plan`.
+**API:** `GET/POST /routes`, `GET/PATCH/DELETE /routes/:id`, `POST /routes/:id/plan` (supports `planningMode`, `departureAt` / `arrivalAt`, optional preference override).
+
+### Ride planning foundation (domain)
+
+Language-neutral planning types live under `apps/api/src/domain/ride-planning.ts` and `apps/api/src/routing/*` (RoutingPort, NullRoutingAdapter, Find My Best Time boundary, navigation handoff boundary). Compatible with separate motorcycle route-speed exposure work: analysis `expectedSpeedKmh` + duration feed exposure; do not duplicate that engine here.
 
 ---
 
@@ -413,7 +419,9 @@ Weather/route segments → motorcycle exposure → duration-weighted demand → 
 
 **Unchanged boundaries:** Nest authz, Route never stores recommendations, no Hiking/Cycling engines, no M5 learning claims, no dense GPS/weather persistence.
 
-**Known limits:** assumed cruise speed when telemetry absent; even split of duration across weather samples until denser route sampling (M7); personalization voice stays baseline until M5.
+**Route-aware speed (evolved):** exposure can duration-weight per-segment `expectedSpeedKmh` via provider-neutral `RouteTravelSegment[]`. Without a profile, fallback is explicit cruise then assumed default (`assumed_default`). Apparent airflow is shared by exposure and wind demand; wind direction is used only when the weather contract supplies `windFromDeg` (never invented).
+
+**Known limits:** production `/recommend` does not yet receive step-level route speed profiles from a routing provider (assumed cruise remains the live fallback); weather↔travel association is duration-fraction mapping until denser geometry sampling (M7); personalization voice stays baseline until M5.
 
 ---
 

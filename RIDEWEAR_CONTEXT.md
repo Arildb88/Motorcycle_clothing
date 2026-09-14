@@ -40,7 +40,7 @@ The platform baseline through **M3** includes:
 - Motorcycle garment configuration foundation separating physical garments from removable components and ride-time configuration such as liners and vents.
 - Security and privacy architecture documentation.
 - CI smoke diagnostics.
-- **M3 Motorcycle Recommendation Engine v1** — duration-weighted exposure/demand pipeline with wardrobe matching, garment configuration instructions, structured wear vs pack, language-neutral reason codes, and LOW/MEDIUM/HIGH confidence.
+- **M3 Motorcycle Recommendation Engine v1** — duration-weighted exposure/demand pipeline with optional route speed profiles, wardrobe matching, garment configuration instructions, structured wear vs pack, language-neutral reason codes, and LOW/MEDIUM/HIGH confidence.
 
 ## Recommendation principles
 
@@ -80,11 +80,13 @@ Canonical enums and domain values remain language-neutral. User-created garment/
 
 ## Routes and activity history
 
-A `Route` is a reusable private route definition. An `ActivityPlan` is a date/time-specific planned activity. An `ActivityLog` represents an actual activity.
+A `Route` is a reusable private route definition (ordered waypoints, optional routing preferences such as `avoidMotorways`). An `ActivityPlan` is a date/time-specific planned activity (`planningMode` departure or arrival). An `ActivityLog` represents an actual activity.
 
-Routes do not store recommendation or weather results. Plans/logs retain sufficient snapshots/derived evidence so historical activity does not become misleading if a route is edited or deleted.
+Routes do not store recommendation or weather results. Plans/logs retain sufficient snapshots/derived evidence (including optional provider-neutral route analysis summaries) so historical activity does not become misleading if a route is edited or deleted.
 
-Exact route coordinates can reveal home/work patterns and are sensitive user data. Scope all user-owned resources to the authenticated user and avoid unnecessary location logging/storage.
+RideWear analyzes routes for weather, exposure, and clothing. It is not a turn-by-turn navigation product — external apps handle navigation after handoff.
+
+Exact route coordinates can reveal home/work patterns and are sensitive user data. Scope all user-owned resources to the authenticated user and avoid unnecessary location logging/storage. “Use current location” is plan-time only, not continuous tracking.
 
 ## Authentication and security
 
@@ -124,7 +126,7 @@ Alpine skiing and Snowboarding may eventually share an alpine exposure engine wh
 
 `UserProfile.defaultRouteId` and `Route.isDefaultCommute` currently represent overlapping default-route state. Treat this as known technical debt. Do not casually refactor it during unrelated work; resolve it deliberately when required.
 
-M3 assumes a default cruise speed when telemetry is absent and evenly distributes ride duration across weather samples until denser route sampling (M7).
+M3 supports route-aware, duration-weighted speed exposure when a provider-neutral speed profile is supplied. Without it, the engine falls back to an explicit cruise speed or the documented assumed default. Production recommend currently uses the assumed-default path until routing adapters emit travel segments. Weather↔travel mapping is still a deterministic duration-fraction association until denser route sampling (M7).
 
 ## Current milestone boundary
 
