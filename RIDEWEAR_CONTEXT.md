@@ -126,12 +126,12 @@ Alpine skiing and Snowboarding may eventually share an alpine exposure engine wh
 
 `UserProfile.defaultRouteId` and `Route.isDefaultCommute` currently represent overlapping default-route state. Treat this as known technical debt. Do not casually refactor it during unrelated work; resolve it deliberately when required.
 
-M3 supports route-aware, duration-weighted speed exposure when a provider-neutral speed profile is supplied. Without it, the engine falls back to an explicit cruise speed or the documented assumed default. Production recommend currently uses the assumed-default path until routing adapters emit travel segments. Weather↔travel mapping is still a deterministic duration-fraction association until denser route sampling (M7).
+M3 supports route-aware, duration-weighted speed exposure when a provider-neutral speed profile is supplied. Without it, the engine falls back to an explicit cruise speed or the documented assumed default.
+
+**Route weather timeline v1 (M7):** production `/recommend` builds a bounded ETA-stamped weather timeline from `RouteAnalysis` + `WeatherPort`, then maps it into motorcycle travel segments for duration-weighted exposure. Origin-only departure weather is no longer treated as representative of the whole ride. Arrival planning walks forward from resolved departure. Wind direction is never invented. Persist only compact timeline summaries. Find My Best Time must reuse `analyzeRideAt` — not a separate engine (ranking not built yet).
 
 ## Current milestone boundary
 
-**M3 is complete.** Next planned milestone is **M4: Plan Ride UX**.
-
-Do not silently expand into M5 feedback/personalization completion, additional sport engines, production Supabase migration, historical Strava import, advertising SDK integration, or unrelated platform rewrites.
+**M3 is complete.** Motorcycle planner UX and route weather timeline v1 are on `dev` integration. Do not silently expand into Find My Best Time ranking, weather charts, M5 personalization completion, additional sport engines, production Supabase migration, historical Strava import, advertising SDK integration, or unrelated platform rewrites.
 
 At the end of each milestone, run verification, report results and remaining risks, and STOP before the next milestone.
