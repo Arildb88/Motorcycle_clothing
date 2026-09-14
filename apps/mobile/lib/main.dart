@@ -9,6 +9,7 @@ import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
+import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/screens/login_screen.dart';
 import 'package:motorcycle_clothing/screens/shell_screen.dart';
@@ -26,7 +27,9 @@ Future<void> main() async {
   final auth = AuthState(api);
   final activity = ActivityContext();
   final locale = LocaleController();
+  final units = UnitPreferencesController();
   await locale.hydrate();
+  await units.hydrate();
   await activity.hydrateLocal();
   await auth.hydrate();
   runApp(
@@ -36,6 +39,7 @@ Future<void> main() async {
       auth: auth,
       activity: activity,
       locale: locale,
+      units: units,
     ),
   );
 }
@@ -48,6 +52,7 @@ class MotorcycleClothingApp extends StatelessWidget {
     required this.auth,
     required this.activity,
     required this.locale,
+    required this.units,
   });
 
   final ApiClient api;
@@ -55,6 +60,7 @@ class MotorcycleClothingApp extends StatelessWidget {
   final AuthState auth;
   final ActivityContext activity;
   final LocaleController locale;
+  final UnitPreferencesController units;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +71,7 @@ class MotorcycleClothingApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: activity),
         ChangeNotifierProvider.value(value: locale),
+        ChangeNotifierProvider.value(value: units),
       ],
       child: Consumer<LocaleController>(
         builder: (context, localeCtrl, _) {
@@ -112,6 +119,7 @@ class _AppGateState extends State<_AppGate> {
     final api = context.read<ApiClient>();
     final activity = context.read<ActivityContext>();
     final locale = context.read<LocaleController>();
+    final units = context.read<UnitPreferencesController>();
     try {
       final me = await api.get('/users/me');
       final profile = me['profile'] as Map<String, dynamic>?;
@@ -121,6 +129,7 @@ class _AppGateState extends State<_AppGate> {
         onboardingCompleted: profile?['onboardingCompleted'] as bool?,
       );
       await locale.applyFromProfile(profile?['preferredLanguage']?.toString());
+      await units.applyFromProfile(profile);
     } catch (_) {
       /* keep local prefs */
     } finally {

@@ -50,7 +50,14 @@ model UserProfile {
   userId                     String  @unique
   homeLat                    Float?
   homeLon                    Float?
+  /// Temperature display: celsius | fahrenheit (canonical engine values stay °C)
   units                      String  @default("celsius")
+  /// Distance display: kilometer | mile
+  distanceUnit               String  @default("kilometer")
+  /// Riding speed display: kmh | mph
+  speedUnit                  String  @default("kmh")
+  /// Wind display: ms | kmh | mph (canonical weather wind stays m/s)
+  windSpeedUnit              String  @default("ms")
   /// UI language: en | nb — null means client uses device fallback
   preferredLanguage          String?
   defaultRouteId             String?

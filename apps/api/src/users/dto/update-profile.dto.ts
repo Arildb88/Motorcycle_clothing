@@ -11,8 +11,12 @@ import {
   Min,
 } from 'class-validator';
 import {
+  DISTANCE_UNITS,
   MOTORCYCLE_CATEGORIES,
+  SPEED_UNITS,
+  TEMPERATURE_UNITS,
   WIND_PROTECTION_LEVELS,
+  WIND_SPEED_UNITS,
 } from '../../domain';
 import { SELECTABLE_ACTIVITIES } from '../../domain/oauth-utils';
 
@@ -30,9 +34,22 @@ export class UpdateProfileDto {
   @IsNumber()
   homeLon?: number;
 
+  /** Temperature display (legacy field). Engine stays Celsius. */
   @IsOptional()
-  @IsIn(['celsius', 'fahrenheit'])
+  @IsIn([...TEMPERATURE_UNITS])
   units?: string;
+
+  @IsOptional()
+  @IsIn([...DISTANCE_UNITS])
+  distanceUnit?: string;
+
+  @IsOptional()
+  @IsIn([...SPEED_UNITS])
+  speedUnit?: string;
+
+  @IsOptional()
+  @IsIn([...WIND_SPEED_UNITS])
+  windSpeedUnit?: string;
 
   @IsOptional()
   @IsIn(['en', 'nb'])

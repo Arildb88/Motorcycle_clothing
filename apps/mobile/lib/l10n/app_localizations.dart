@@ -349,6 +349,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Baseline recommendation — not enough personal ride evidence yet.'**
   String get reasonBaselineNoPersonalEvidence;
+
+  /// No description provided for @unitsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Units'**
+  String get unitsSection;
+
+  /// No description provided for @unitsPresetMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'Metric'**
+  String get unitsPresetMetric;
+
+  /// No description provided for @unitsPresetImperial.
+  ///
+  /// In en, this message translates to:
+  /// **'Imperial'**
+  String get unitsPresetImperial;
+
+  /// No description provided for @unitsTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get unitsTemperature;
+
+  /// No description provided for @unitsDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get unitsDistance;
+
+  /// No description provided for @unitsRidingSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Riding speed'**
+  String get unitsRidingSpeed;
+
+  /// No description provided for @unitsWindSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind speed'**
+  String get unitsWindSpeed;
+
+  /// No description provided for @unitCelsius.
+  ///
+  /// In en, this message translates to:
+  /// **'Celsius (°C)'**
+  String get unitCelsius;
+
+  /// No description provided for @unitFahrenheit.
+  ///
+  /// In en, this message translates to:
+  /// **'Fahrenheit (°F)'**
+  String get unitFahrenheit;
+
+  /// No description provided for @unitKilometers.
+  ///
+  /// In en, this message translates to:
+  /// **'Kilometres (km)'**
+  String get unitKilometers;
+
+  /// No description provided for @unitMiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Miles (mi)'**
+  String get unitMiles;
+
+  /// No description provided for @unitKmh.
+  ///
+  /// In en, this message translates to:
+  /// **'km/h'**
+  String get unitKmh;
+
+  /// No description provided for @unitMph.
+  ///
+  /// In en, this message translates to:
+  /// **'mph'**
+  String get unitMph;
+
+  /// No description provided for @unitMs.
+  ///
+  /// In en, this message translates to:
+  /// **'m/s'**
+  String get unitMs;
+
+  /// No description provided for @unitsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Units saved'**
+  String get unitsSaved;
 }
 
 class _AppLocalizationsDelegate

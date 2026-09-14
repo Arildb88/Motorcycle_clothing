@@ -211,7 +211,10 @@ UserProfile
   coldSensitivity, heatSensitivity?
   defaultActivity, showActivityChooserOnLaunch
   interestedActivitiesJson, avatarUrl?, onboardingCompleted
-  units, home*, defaultRouteId
+  units (temperature display: celsius|fahrenheit),
+  distanceUnit (kilometer|mile), speedUnit (kmh|mph),
+  windSpeedUnit (ms|kmh|mph), home*, defaultRouteId
+  # Display prefs only — engine/weather stay °C, m/s, km/h, metres
 MotorcycleProfile
   category, windProtection
 Garment
@@ -434,8 +437,10 @@ Supported UI languages: **Norwegian Bokmål (`nb`)**, **English (`en`)**.
 - Flutter gen-l10n / ARB — no `if (lang == …)` forks.
 - `UserProfile.preferredLanguage` syncs across devices; local cache for startup + pre-login.
 - First launch: device Norwegian → `nb`, else `en`; explicit choice wins.
-- Language ≠ units.
-- Domain enums stay language-neutral (`motorcycle`, reason codes).
+- Language ≠ units. A `nb` user may choose Fahrenheit/miles; an `en` user may keep Celsius/km/m/s.
+- Unit preferences are account-level enums on `UserProfile` (not display strings). Defaults: Celsius, kilometre, km/h, m/s. Explicit choice overrides any automatic default. Local SharedPreferences cache is a startup fallback; API profile is source of truth after login.
+- Conversion/formatting lives in shared Flutter utilities (`unit_conversions` / `unit_format`) and optional API presentation helpers — never inside the motorcycle engine and not duplicated per widget.
+- Domain enums stay language-neutral (`motorcycle`, reason codes, unit codes).
 - Engine emits structured reason codes; UI localizes presentation.
 - User-entered names never auto-translated.
 - New screens must use l10n; legacy hard-coded English tracked as debt.

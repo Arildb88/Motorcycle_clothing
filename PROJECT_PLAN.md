@@ -192,7 +192,7 @@ Simplified vs the long entity list in the prompt — enough for personalization,
 **Core**
 
 - `User`, `AuthProvider`
-- `UserProfile` — units, coldSensitivity (−1/0/+1), sweatTendency optional later
+- `UserProfile` — display units (`units` temperature, `distanceUnit`, `speedUnit`, `windSpeedUnit`), coldSensitivity (−1/0/+1), sweatTendency optional later. Language ≠ units; engine stays SI/metric.
 - `MotorcycleProfile` — category (naked/sport/touring/…), windProtection (none/low/med/high)
 - `Garment` — name, category, warmthTier, optional wind/water scores, activity tags
 - `Place` / `Route` — **saved route templates** with ordered `RouteWaypoint` (coords canonical); optional category/favorite; **no weather or recommendations stored on Route**

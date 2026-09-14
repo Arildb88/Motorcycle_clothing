@@ -41,5 +41,20 @@
   "reasonWardrobeGap": "No suitable owned garment found for this need.",
   "reasonIncompleteWeather": "Weather coverage is incomplete — lower confidence.",
   "reasonIncompleteWardrobe": "Wardrobe coverage is incomplete — lower confidence.",
-  "reasonBaselineNoPersonalEvidence": "Baseline recommendation — not enough personal ride evidence yet."
+  "reasonBaselineNoPersonalEvidence": "Baseline recommendation — not enough personal ride evidence yet.",
+  "unitsSection": "Units",
+  "unitsPresetMetric": "Metric",
+  "unitsPresetImperial": "Imperial",
+  "unitsTemperature": "Temperature",
+  "unitsDistance": "Distance",
+  "unitsRidingSpeed": "Riding speed",
+  "unitsWindSpeed": "Wind speed",
+  "unitCelsius": "Celsius (°C)",
+  "unitFahrenheit": "Fahrenheit (°F)",
+  "unitKilometers": "Kilometres (km)",
+  "unitMiles": "Miles (mi)",
+  "unitKmh": "km/h",
+  "unitMph": "mph",
+  "unitMs": "m/s",
+  "unitsSaved": "Units saved"
 }

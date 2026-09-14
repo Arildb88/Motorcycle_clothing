@@ -108,7 +108,7 @@ Prefer derived evidence needed for recommendations and learning: temperature/exp
 
 RideWear supports Norwegian Bokmål and English. Use Flutter localization resources rather than scattered language conditionals.
 
-Recommendation engines emit structured reason codes/data rather than hard-coded final English sentences. Language and measurement units are separate concerns. Explicit user language preference overrides device-language fallback.
+Recommendation engines emit structured reason codes/data rather than hard-coded final English sentences. Language and measurement units are separate concerns. Explicit user language preference overrides device-language fallback. Unit preferences (temperature / distance / riding speed / wind) are account-level enums with SI-oriented engine defaults; conversion is presentation-only.
 
 ## Advertising
 
