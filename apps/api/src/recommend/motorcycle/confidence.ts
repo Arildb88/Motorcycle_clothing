@@ -1,11 +1,14 @@
-import type { ConfidenceLevel, Reason, ReasonCode } from './types';
+import type { ConfidenceLevel, Reason, ReasonCode, SpeedSource } from './types';
 import type { RouteWeatherSummary } from '../weather.types';
 import type { GarmentInput } from './types';
 
 export function computeConfidence(input: {
   weather: RouteWeatherSummary;
   wardrobe: GarmentInput[];
-  cruiseKmhKnown: boolean;
+  /** @deprecated Prefer speedSource */
+  cruiseKmhKnown?: boolean;
+  speedSource?: SpeedSource;
+  windDirectionUsed?: boolean;
   sampleCount: number;
 }): { level: ConfidenceLevel; reasons: ReasonCode[]; extra: Reason[] } {
   const reasons: ReasonCode[] = [];
@@ -19,8 +22,24 @@ export function computeConfidence(input: {
     reasons.push('INCOMPLETE_WEATHER');
   }
 
-  if (input.cruiseKmhKnown) score += 1;
-  else score -= 0; // assumed cruise is OK but not ideal
+  const speedSource: SpeedSource =
+    input.speedSource ??
+    (input.cruiseKmhKnown ? 'explicit_cruise' : 'assumed_default');
+
+  if (speedSource === 'route_profile') {
+    score += 2;
+    reasons.push('ROUTE_SPEED_PROFILE_USED');
+  } else if (speedSource === 'explicit_cruise') {
+    score += 1;
+    reasons.push('ROUTE_SPEED_PROFILE_UNAVAILABLE');
+  } else {
+    reasons.push('ASSUMED_CRUISE_SPEED');
+    reasons.push('ROUTE_SPEED_PROFILE_UNAVAILABLE');
+  }
+
+  if (input.windDirectionUsed === false) {
+    reasons.push('WIND_DIRECTION_UNAVAILABLE');
+  }
 
   const tagged = input.wardrobe.filter((g) =>
     g.activityTags.includes('motorcycle'),
@@ -54,8 +73,10 @@ export function computeConfidence(input: {
 
   let level: ConfidenceLevel = 'MEDIUM';
   if (score <= 1) level = 'LOW';
+  else if (score >= 5) level = 'HIGH';
   else if (score >= 4) level = 'HIGH';
 
-  const extra: Reason[] = reasons.map((code) => ({ code }));
-  return { level, reasons: [...new Set(reasons)], extra };
+  const unique = [...new Set(reasons)];
+  const extra: Reason[] = unique.map((code) => ({ code }));
+  return { level, reasons: unique, extra };
 }

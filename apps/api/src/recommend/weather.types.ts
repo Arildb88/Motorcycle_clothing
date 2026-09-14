@@ -7,6 +7,11 @@ export type WeatherPoint = {
   precipitationProbPct: number;
   precipitationMm: number;
   windSpeedMs: number;
+  /**
+   * Optional meteorological wind FROM direction (degrees clockwise from north).
+   * Never invent this — omit when the weather provider does not supply it.
+   */
+  windFromDeg?: number | null;
   symbol?: string;
 };
 

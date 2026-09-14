@@ -23,7 +23,7 @@ Store **evidence useful for clothing personalization**, not raw sensor dumps.
 - clothing actually worn **including configuration** (liners, vents)
 - body-zone feedback
 - recommendation reference + saved route id/snapshot
-- aggregated speed where useful
+- aggregated / duration-weighted speed summaries where useful (not raw GPS traces)
 
 ---
 

@@ -103,12 +103,14 @@ RideWear User
 
 Pure domain pipeline (no Nest decorators) in `apps/api/src/recommend/motorcycle/`:
 
-1. **segments** — duration-aware weather segments (even split until denser sampling).
-2. **exposure** — `motorcycleExposureC` from air temp, wind, assumed cruise airflow, wet penalty (constants in `constants.ts`; not medical “feels like”).
+1. **route-travel / segments** — optional provider-neutral `RouteTravelSegment[]` (expectedSpeedKmh per segment) associated with weather samples; without a profile, even duration split + cruise/default speed.
+2. **airflow + exposure** — shared apparent-airflow proxy (vector when heading + `windFromDeg` exist; otherwise scalar sum fallback) → `motorcycleExposureC` (constants in `constants.ts`; not medical “feels like”). Future `windProtectionFactor` (fairing/windshield) can scale met wind without rewriting callers.
 3. **demand** — duration-weighted sustained warmth/wind/water tiers (1–5) per body zone; short extremes recorded separately for PACK.
 4. **wardrobe-match** — prefer owned garments + `effectiveGarmentTiers` + liner/vent config instructions; else generic requirement (`source: generic`).
-5. **confidence** — LOW/MEDIUM/HIGH from weather/wardrobe/cruise/evidence coverage.
-6. **pipeline** — assembles structured `wear` / `pack` / `reasons[]` (language-neutral codes) / `confidence`.
+5. **confidence** — LOW/MEDIUM/HIGH from weather/wardrobe/**speed source** (route profile > explicit cruise > assumed default)/evidence coverage.
+6. **pipeline** — assembles structured `wear` / `pack` / `reasons[]` (language-neutral codes) / `confidence` + exposure diagnostics (`speedSource`, duration-weighted speed, per-segment airflow).
+
+Speed fallback order: route segment expected speed → explicit `cruiseKmh` → `MOTORCYCLE_EXPOSURE.defaultCruiseKmh`. Production `/recommend` still uses assumed default until a RoutingPort adapter supplies travel segments; overview duration×distance may yield a single-segment profile via `routeTravelFromDurationDistance`.
 
 `RecommendService` loads the user’s wardrobe, applies shrinkage bias only, and returns a version-compatible `/recommend` payload (`effectiveTempC` alias + structured fields). Flutter localizes reason codes via ARB (`nb`/`en`).
 

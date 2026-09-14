@@ -1,11 +1,14 @@
 import {
   buildRideSegments,
+  computeApparentAirflow,
   computeConfidence,
   computeDemand,
+  durationWeightedSpeedKmh,
   matchWardrobe,
   motorcycleExposureC,
   runMotorcycleRecommendationPipeline,
   type GarmentInput,
+  type RouteTravelSegment,
 } from './index';
 import type { RouteWeatherSummary, WeatherPoint } from '../weather.types';
 
@@ -625,5 +628,212 @@ describe('matchWardrobe helpers', () => {
     });
     expect(wear.every((i) => i.source === 'generic')).toBe(true);
     expect(wear.every((i) => !i.garmentId)).toBe(true);
+  });
+});
+
+describe('route-aware duration-weighted speed exposure', () => {
+  const ambient = weather([point({ airTempC: 12, windSpeedMs: 3 })]);
+  const wardrobe = [jacket(), pants(), gloves()];
+
+  const commuteHigh: RouteTravelSegment[] = [
+    { index: 0, durationMin: 5, expectedSpeedKmh: 40 },
+    { index: 1, durationMin: 40, expectedSpeedKmh: 100 },
+    { index: 2, durationMin: 5, expectedSpeedKmh: 40 },
+  ];
+
+  const commuteLow: RouteTravelSegment[] = [
+    { index: 0, durationMin: 5, expectedSpeedKmh: 100 },
+    { index: 1, durationMin: 40, expectedSpeedKmh: 40 },
+    { index: 2, durationMin: 5, expectedSpeedKmh: 100 },
+  ];
+
+  const allForty: RouteTravelSegment[] = [
+    { index: 0, durationMin: 50, expectedSpeedKmh: 40 },
+  ];
+
+  it('durationWeightedSpeedKmh matches duration weighting, not arithmetic mean', () => {
+    // (5*40 + 40*100 + 5*40) / 50 = 88
+    expect(durationWeightedSpeedKmh(commuteHigh)).toBeCloseTo(88, 5);
+    // arithmetic mean of speeds would be (40+100+40)/3 ≈ 60
+    expect(durationWeightedSpeedKmh(commuteHigh)).not.toBeCloseTo(60, 0);
+    // inverse: (5*100 + 40*40 + 5*100) / 50 = 52
+    expect(durationWeightedSpeedKmh(commuteLow)).toBeCloseTo(52, 5);
+  });
+
+  it('long high-speed section dominates sustained exposure vs all-40 ride', () => {
+    const high = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      routeTravelSegments: commuteHigh,
+      personalSampleCount: 0,
+    });
+    const slow = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      routeTravelSegments: allForty,
+      personalSampleCount: 0,
+    });
+
+    expect(high.exposure.speedSource).toBe('route_profile');
+    expect(high.exposure.durationWeightedSpeedKmh).toBeCloseTo(88, 0);
+    expect(high.exposure.speedMinKmh).toBe(40);
+    expect(high.exposure.speedMaxKmh).toBe(100);
+    expect(high.exposure.motorcycleExposureSustainedC).toBeLessThan(
+      slow.exposure.motorcycleExposureSustainedC,
+    );
+    expect(
+      high.confidence.reasons.includes('ROUTE_SPEED_PROFILE_USED'),
+    ).toBe(true);
+  });
+
+  it('short motorway bursts do not dominate a mostly-urban ride', () => {
+    const low = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      routeTravelSegments: commuteLow,
+      personalSampleCount: 0,
+    });
+    const high = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      routeTravelSegments: commuteHigh,
+      personalSampleCount: 0,
+    });
+
+    expect(low.exposure.durationWeightedSpeedKmh).toBeCloseTo(52, 0);
+    expect(low.exposure.motorcycleExposureSustainedC).toBeGreaterThan(
+      high.exposure.motorcycleExposureSustainedC,
+    );
+    // Not treated like an all-100 ride
+    const allHundred = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      routeTravelSegments: [
+        { index: 0, durationMin: 50, expectedSpeedKmh: 100 },
+      ],
+      personalSampleCount: 0,
+    });
+    expect(low.exposure.motorcycleExposureSustainedC).toBeGreaterThan(
+      allHundred.exposure.motorcycleExposureSustainedC,
+    );
+  });
+
+  it('speedSource fallback order: profile > explicit cruise > assumed default', () => {
+    const profile = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      routeTravelSegments: commuteHigh,
+      cruiseKmh: 55,
+      personalSampleCount: 0,
+    });
+    const explicit = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      cruiseKmh: 55,
+      personalSampleCount: 0,
+    });
+    const assumed = runMotorcycleRecommendationPipeline({
+      weather: ambient,
+      wardrobe,
+      rideDurationMin: 50,
+      cruiseKmh: null,
+      personalSampleCount: 0,
+    });
+
+    expect(profile.exposure.speedSource).toBe('route_profile');
+    expect(explicit.exposure.speedSource).toBe('explicit_cruise');
+    expect(assumed.exposure.speedSource).toBe('assumed_default');
+    expect(assumed.exposure.durationWeightedSpeedKmh).toBe(70);
+
+    const rank = { LOW: 0, MEDIUM: 1, HIGH: 2 };
+    // Profile should not score worse than explicit; explicit not worse than assumed
+    // (other factors equal — same weather/wardrobe).
+    expect(rank[profile.confidence.level]).toBeGreaterThanOrEqual(
+      rank[explicit.confidence.level],
+    );
+    expect(rank[explicit.confidence.level]).toBeGreaterThanOrEqual(
+      rank[assumed.confidence.level],
+    );
+    expect(
+      assumed.confidence.reasons.includes('ASSUMED_CRUISE_SPEED'),
+    ).toBe(true);
+  });
+});
+
+describe('apparent airflow wind direction', () => {
+  it('headwind > tailwind > and crosswind is intermediate at same speeds', () => {
+    const base = {
+      expectedSpeedKmh: 72, // 20 m/s
+      windSpeedMs: 5,
+      headingDeg: 0,
+    };
+    const head = computeApparentAirflow({
+      ...base,
+      windFromDeg: 0,
+    });
+    const tail = computeApparentAirflow({
+      ...base,
+      windFromDeg: 180,
+    });
+    const cross = computeApparentAirflow({
+      ...base,
+      windFromDeg: 90,
+    });
+
+    expect(head.mode).toBe('vector');
+    expect(tail.mode).toBe('vector');
+    expect(head.apparentAirflowMs).toBeGreaterThan(tail.apparentAirflowMs);
+    expect(cross.apparentAirflowMs).toBeLessThan(head.apparentAirflowMs);
+    expect(cross.apparentAirflowMs).toBeGreaterThan(tail.apparentAirflowMs);
+  });
+
+  it('missing wind direction uses scalar_sum fallback (never invents direction)', () => {
+    const fallback = computeApparentAirflow({
+      expectedSpeedKmh: 72,
+      windSpeedMs: 5,
+      headingDeg: 0,
+      // windFromDeg omitted
+    });
+    expect(fallback.mode).toBe('scalar_sum');
+    expect(fallback.windDirectionUsed).toBe(false);
+    expect(fallback.apparentAirflowMs).toBeCloseTo(20 + 5, 5);
+  });
+
+  it('exposure vector path: headwind cooler than tailwind', () => {
+    const p = point({
+      airTempC: 10,
+      windSpeedMs: 8,
+      windFromDeg: 0,
+    });
+    const head = motorcycleExposureC(p, {
+      expectedSpeedKmh: 80,
+      headingDeg: 0,
+    });
+    const tail = motorcycleExposureC(
+      { ...p, windFromDeg: 180 },
+      { expectedSpeedKmh: 80, headingDeg: 0 },
+    );
+    expect(head).toBeLessThan(tail);
+  });
+
+  it('pipeline records WIND_DIRECTION_UNAVAILABLE when only scalar airflow', () => {
+    const result = runMotorcycleRecommendationPipeline({
+      weather: weather([point({ airTempC: 10, windSpeedMs: 4 })]),
+      wardrobe: [jacket(), pants(), gloves()],
+      rideDurationMin: 40,
+      cruiseKmh: 70,
+      personalSampleCount: 0,
+    });
+    expect(result.exposure.windDirectionUsed).toBe(false);
+    expect(
+      result.confidence.reasons.includes('WIND_DIRECTION_UNAVAILABLE'),
+    ).toBe(true);
   });
 });

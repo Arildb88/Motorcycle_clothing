@@ -40,7 +40,7 @@ The platform baseline through **M3** includes:
 - Motorcycle garment configuration foundation separating physical garments from removable components and ride-time configuration such as liners and vents.
 - Security and privacy architecture documentation.
 - CI smoke diagnostics.
-- **M3 Motorcycle Recommendation Engine v1** — duration-weighted exposure/demand pipeline with wardrobe matching, garment configuration instructions, structured wear vs pack, language-neutral reason codes, and LOW/MEDIUM/HIGH confidence.
+- **M3 Motorcycle Recommendation Engine v1** — duration-weighted exposure/demand pipeline with optional route speed profiles, wardrobe matching, garment configuration instructions, structured wear vs pack, language-neutral reason codes, and LOW/MEDIUM/HIGH confidence.
 
 ## Recommendation principles
 
@@ -124,7 +124,7 @@ Alpine skiing and Snowboarding may eventually share an alpine exposure engine wh
 
 `UserProfile.defaultRouteId` and `Route.isDefaultCommute` currently represent overlapping default-route state. Treat this as known technical debt. Do not casually refactor it during unrelated work; resolve it deliberately when required.
 
-M3 assumes a default cruise speed when telemetry is absent and evenly distributes ride duration across weather samples until denser route sampling (M7).
+M3 supports route-aware, duration-weighted speed exposure when a provider-neutral speed profile is supplied. Without it, the engine falls back to an explicit cruise speed or the documented assumed default. Production recommend currently uses the assumed-default path until routing adapters emit travel segments. Weather↔travel mapping is still a deterministic duration-fraction association until denser route sampling (M7).
 
 ## Current milestone boundary
 
