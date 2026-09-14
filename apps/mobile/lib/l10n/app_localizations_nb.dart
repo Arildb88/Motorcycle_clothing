@@ -199,4 +199,138 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get unitsSaved => 'Enheter lagret';
+
+  @override
+  String get plannerTitle => 'Planlegg tur';
+
+  @override
+  String get plannerSubtitle =>
+      'Velg hvor du skal, når du drar eller ankommer, og analyser vær og antrekk.';
+
+  @override
+  String get plannerSavedRoutes => 'Lagrede';
+
+  @override
+  String get plannerChooseSavedRoute => 'Bruk en lagret rute';
+
+  @override
+  String get plannerNoSavedRoutes =>
+      'Ingen lagrede ruter ennå. Bygg en her, og lagre den.';
+
+  @override
+  String get plannerUseCurrentLocation => 'Bruk nåværende posisjon';
+
+  @override
+  String get plannerLocationPermissionDenied =>
+      'Posisjonstillatelse ble avslått. Du kan fortsatt søke etter startsted.';
+
+  @override
+  String get plannerLocationPermissionDeniedForever =>
+      'Posisjonstillatelse er blokkert. Skru den på i innstillinger, eller søk etter startsted.';
+
+  @override
+  String get plannerLocationServicesDisabled =>
+      'Posisjonstjenester er av. Skru dem på, eller søk etter et sted.';
+
+  @override
+  String get plannerLocationTemporaryFailure =>
+      'Klarte ikke å hente posisjonen nå. Prøv igjen eller søk etter et sted.';
+
+  @override
+  String get plannerMoveUp => 'Flytt opp';
+
+  @override
+  String get plannerMoveDown => 'Flytt ned';
+
+  @override
+  String get plannerRemoveStop => 'Fjern stopp';
+
+  @override
+  String get plannerAddStop => 'Legg til stopp';
+
+  @override
+  String get plannerReverse => 'Bytt om';
+
+  @override
+  String get plannerRoundTrip => 'Tilbake til start';
+
+  @override
+  String get plannerWhenSection => 'Når';
+
+  @override
+  String get plannerDeparture => 'Avreise';
+
+  @override
+  String get plannerArrival => 'Ankomst';
+
+  @override
+  String get plannerDepartureHint => 'Tidspunktet er når du drar.';
+
+  @override
+  String get plannerArrivalHint =>
+      'Tidspunktet er når du vil ankomme. Avreise beregnes fra turens varighet.';
+
+  @override
+  String get plannerDepartureTime => 'Avreisetid';
+
+  @override
+  String get plannerArrivalTime => 'Ankomsttid';
+
+  @override
+  String get plannerOptionsSection => 'Rutevalg';
+
+  @override
+  String get plannerAvoidMotorways => 'Unngå motorvei';
+
+  @override
+  String get plannerAvoidMotorwaysHint =>
+      'Foretrekk veier uten motorvei når tilbyderen støtter det.';
+
+  @override
+  String get plannerRouteName => 'Rutenavn';
+
+  @override
+  String get plannerRouteNameHint => 'f.eks. Jobbpendling';
+
+  @override
+  String get plannerAnalyzeRide => 'Analyser tur';
+
+  @override
+  String get plannerSaveRoute => 'Lagre rute';
+
+  @override
+  String get plannerPrimaryActionHint =>
+      'Analyser tur sjekker vær og antrekk. Den starter ikke navigasjon.';
+
+  @override
+  String get plannerSaveDisabledHint =>
+      'Legg til navn og velg start og destinasjon før lagring.';
+
+  @override
+  String get plannerIncompleteRoute => 'Velg start og destinasjon før analyse.';
+
+  @override
+  String get plannerDefaultRouteName => 'Turplan';
+
+  @override
+  String get plannerRouteSaved => 'Rute lagret';
+
+  @override
+  String get plannerMapFailed => 'Kartforhåndsvisning feilet';
+
+  @override
+  String get plannerAnalysisTitle => 'Turanalyse';
+
+  @override
+  String get plannerAnalysisSubtitle =>
+      'Vær, eksponering og antrekk for denne planen';
+
+  @override
+  String get plannerNoWearItems => 'Ingen plagg å bruke ble returnert.';
+
+  @override
+  String get plannerNoPackItems => 'Ingen pakkeelementer ble returnert.';
+
+  @override
+  String get plannerBackToPlanner => 'Tilbake til planlegger';
 }

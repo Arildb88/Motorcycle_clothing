@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
+import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
 class RoutesScreen extends StatefulWidget {
@@ -54,6 +56,18 @@ class _RoutesScreenState extends State<RoutesScreen> {
       ),
     );
     if (saved == true) await _load();
+  }
+
+  Future<void> _openPlanner({SavedRoute? existing}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RidePlannerScreen(
+          initialRoute: existing,
+          savedRoutes: _routes,
+        ),
+      ),
+    );
+    await _load();
   }
 
   Future<void> _toggleFavorite(SavedRoute r) async {
@@ -108,9 +122,14 @@ class _RoutesScreenState extends State<RoutesScreen> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => _openEditor(),
-                  tooltip: 'Plan new ride',
+                  onPressed: () => _openPlanner(),
+                  tooltip: AppLocalizations.of(context).plannerTitle,
                   icon: const Icon(Icons.add),
+                ),
+                IconButton(
+                  onPressed: () => _openEditor(),
+                  tooltip: 'Edit route template',
+                  icon: const Icon(Icons.edit_road),
                 ),
               ],
             ),
@@ -132,9 +151,11 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     : _routes.isEmpty
                         ? Center(
                             child: FilledButton.icon(
-                              onPressed: () => _openEditor(),
+                              onPressed: () => _openPlanner(),
                               icon: const Icon(Icons.add),
-                              label: const Text('Plan new ride'),
+                              label: Text(
+                                AppLocalizations.of(context).plannerTitle,
+                              ),
                             ),
                           )
                         : RefreshIndicator(
@@ -166,7 +187,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                                     '${r.category != null ? ' · ${r.category}' : ''}',
                                   ),
                                   isThreeLine: true,
-                                  onTap: () => _openEditor(existing: r),
+                                  onTap: () => _openPlanner(existing: r),
                                   trailing: PopupMenuButton<String>(
                                     onSelected: (v) async {
                                       if (v == 'favorite') {
@@ -175,9 +196,18 @@ class _RoutesScreenState extends State<RoutesScreen> {
                                         await _delete(r);
                                       } else if (v == 'edit') {
                                         await _openEditor(existing: r);
+                                      } else if (v == 'plan') {
+                                        await _openPlanner(existing: r);
                                       }
                                     },
                                     itemBuilder: (_) => [
+                                      PopupMenuItem(
+                                        value: 'plan',
+                                        child: Text(
+                                          AppLocalizations.of(context)
+                                              .plannerTitle,
+                                        ),
+                                      ),
                                       PopupMenuItem(
                                         value: 'favorite',
                                         child: Text(

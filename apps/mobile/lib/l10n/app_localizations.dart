@@ -439,6 +439,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Units saved'**
   String get unitsSaved;
+
+  /// No description provided for @plannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan ride'**
+  String get plannerTitle;
+
+  /// No description provided for @plannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where you ride, when you leave or arrive, then analyze weather and kit.'**
+  String get plannerSubtitle;
+
+  /// No description provided for @plannerSavedRoutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get plannerSavedRoutes;
+
+  /// No description provided for @plannerChooseSavedRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a saved route'**
+  String get plannerChooseSavedRoute;
+
+  /// No description provided for @plannerNoSavedRoutes.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved routes yet. Build one here, then save it.'**
+  String get plannerNoSavedRoutes;
+
+  /// No description provided for @plannerUseCurrentLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use current location'**
+  String get plannerUseCurrentLocation;
+
+  /// No description provided for @plannerLocationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission was denied. You can still search for a start place.'**
+  String get plannerLocationPermissionDenied;
+
+  /// No description provided for @plannerLocationPermissionDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Enable it in system settings, or search for a start place.'**
+  String get plannerLocationPermissionDeniedForever;
+
+  /// No description provided for @plannerLocationServicesDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off. Turn them on, or search for a start place.'**
+  String get plannerLocationServicesDisabled;
+
+  /// No description provided for @plannerLocationTemporaryFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read your location right now. Try again or search for a place.'**
+  String get plannerLocationTemporaryFailure;
+
+  /// No description provided for @plannerMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get plannerMoveUp;
+
+  /// No description provided for @plannerMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get plannerMoveDown;
+
+  /// No description provided for @plannerRemoveStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove stop'**
+  String get plannerRemoveStop;
+
+  /// No description provided for @plannerAddStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stop'**
+  String get plannerAddStop;
+
+  /// No description provided for @plannerReverse.
+  ///
+  /// In en, this message translates to:
+  /// **'Reverse'**
+  String get plannerReverse;
+
+  /// No description provided for @plannerRoundTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to start'**
+  String get plannerRoundTrip;
+
+  /// No description provided for @plannerWhenSection.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get plannerWhenSection;
+
+  /// No description provided for @plannerDeparture.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure'**
+  String get plannerDeparture;
+
+  /// No description provided for @plannerArrival.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival'**
+  String get plannerArrival;
+
+  /// No description provided for @plannerDepartureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The time is when you leave.'**
+  String get plannerDepartureHint;
+
+  /// No description provided for @plannerArrivalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The time is when you want to arrive. Departure is estimated from ride duration.'**
+  String get plannerArrivalHint;
+
+  /// No description provided for @plannerDepartureTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure time'**
+  String get plannerDepartureTime;
+
+  /// No description provided for @plannerArrivalTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival time'**
+  String get plannerArrivalTime;
+
+  /// No description provided for @plannerOptionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Route options'**
+  String get plannerOptionsSection;
+
+  /// No description provided for @plannerAvoidMotorways.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid motorways'**
+  String get plannerAvoidMotorways;
+
+  /// No description provided for @plannerAvoidMotorwaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefer non-motorway roads when the provider supports it.'**
+  String get plannerAvoidMotorwaysHint;
+
+  /// No description provided for @plannerRouteName.
+  ///
+  /// In en, this message translates to:
+  /// **'Route name'**
+  String get plannerRouteName;
+
+  /// No description provided for @plannerRouteNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Work commute'**
+  String get plannerRouteNameHint;
+
+  /// No description provided for @plannerAnalyzeRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze ride'**
+  String get plannerAnalyzeRide;
+
+  /// No description provided for @plannerSaveRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Save route'**
+  String get plannerSaveRoute;
+
+  /// No description provided for @plannerPrimaryActionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze ride checks weather and clothing. It does not start navigation.'**
+  String get plannerPrimaryActionHint;
+
+  /// No description provided for @plannerSaveDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a name and choose start and destination before saving.'**
+  String get plannerSaveDisabledHint;
+
+  /// No description provided for @plannerIncompleteRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a start and destination before analyzing.'**
+  String get plannerIncompleteRoute;
+
+  /// No description provided for @plannerDefaultRouteName.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride plan'**
+  String get plannerDefaultRouteName;
+
+  /// No description provided for @plannerRouteSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Route saved'**
+  String get plannerRouteSaved;
+
+  /// No description provided for @plannerMapFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Map preview failed'**
+  String get plannerMapFailed;
+
+  /// No description provided for @plannerAnalysisTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride analysis'**
+  String get plannerAnalysisTitle;
+
+  /// No description provided for @plannerAnalysisSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather, exposure, and kit for this plan'**
+  String get plannerAnalysisSubtitle;
+
+  /// No description provided for @plannerNoWearItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No wear items returned.'**
+  String get plannerNoWearItems;
+
+  /// No description provided for @plannerNoPackItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No pack items returned.'**
+  String get plannerNoPackItems;
+
+  /// No description provided for @plannerBackToPlanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to planner'**
+  String get plannerBackToPlanner;
 }
 
 class _AppLocalizationsDelegate

@@ -6,6 +6,7 @@ import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
+import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
   }
   final api = ApiClient(baseUrl: AppConfig.apiBaseUrl);
   final location = LocationServices();
+  final deviceLocation = GeolocatorDeviceLocationService();
   final auth = AuthState(api);
   final activity = ActivityContext();
   final locale = LocaleController();
@@ -36,6 +38,7 @@ Future<void> main() async {
     MotorcycleClothingApp(
       api: api,
       location: location,
+      deviceLocation: deviceLocation,
       auth: auth,
       activity: activity,
       locale: locale,
@@ -49,6 +52,7 @@ class MotorcycleClothingApp extends StatelessWidget {
     super.key,
     required this.api,
     required this.location,
+    required this.deviceLocation,
     required this.auth,
     required this.activity,
     required this.locale,
@@ -57,6 +61,7 @@ class MotorcycleClothingApp extends StatelessWidget {
 
   final ApiClient api;
   final LocationServices location;
+  final DeviceLocationService deviceLocation;
   final AuthState auth;
   final ActivityContext activity;
   final LocaleController locale;
@@ -68,6 +73,7 @@ class MotorcycleClothingApp extends StatelessWidget {
       providers: [
         Provider.value(value: api),
         Provider.value(value: location),
+        Provider<DeviceLocationService>.value(value: deviceLocation),
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: activity),
         ChangeNotifierProvider.value(value: locale),

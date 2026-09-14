@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
-import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
+import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
@@ -201,7 +201,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _addRoute() async {
     final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const RouteEditorScreen()),
+      MaterialPageRoute(
+        builder: (_) => RidePlannerScreen(savedRoutes: _routes),
+      ),
     );
     if (saved == true) await _loadRoutes();
   }
