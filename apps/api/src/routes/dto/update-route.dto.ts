@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ROUTE_CATEGORIES, ROUTE_KINDS, WAYPOINT_TYPES } from '../../domain';
+import { RoutePreferencesInputDto } from './create-route.dto';
 
 class RouteWaypointInputDto {
   @IsNumber()
@@ -116,4 +117,9 @@ export class UpdateRouteDto {
   @IsNumber()
   @Min(1)
   typicalDurationMin?: number;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RoutePreferencesInputDto)
+  preferences?: RoutePreferencesInputDto;
 }

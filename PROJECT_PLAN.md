@@ -380,20 +380,26 @@ Locked:
 
 | Concept | Role |
 |---------|------|
-| **Route** (saved) | Reusable template: name, waypoints, category/favorite |
-| **ActivityPlan** | One planned ride at a date/time; `routeId` + `snapshotJson` |
+| **Route** (saved) | Reusable template: name, ordered waypoints, category/favorite, optional `preferencesJson` (`avoidMotorways`, …) |
+| **ActivityPlan** | One planned ride at a date/time; `planningMode` (departure\|arrival), `routeId` + `snapshotJson` (+ optional `routeAnalysisJson`) |
 | **ActivityLog** | What happened; may reference `routeId` (nullable) |
 
 **Rules**
 
 - Weather and clothing recommendations are **never** stored on `Route`.
-- Launch = create plan (snapshot) → fresh `/recommend?routeId=…`.
+- Launch = create plan (snapshot of waypoints + preferences) → fresh `/recommend?routeId=…`.
 - Edit route = future plans use new geometry; past plans keep `snapshotJson`.
 - Delete route = `routeId` SetNull on plans/logs; history remains via snapshot/summaries.
 - Ownership enforced on every route API; routes are private by default.
-- Map search / routing-provider geometry deferred (form + lat/lon foundation now).
+- Multi-stop and loop/round-trip are ordered waypoints (loop = end near start).
+- Provider-neutral `RoutingPort` / `RouteAnalysis` feed weather sampling + motorcycle speed exposure; RideWear is **not** a turn-by-turn navigation app (external handoff later).
+- Map search / live provider routing deferred beyond Null fallback + client preview.
 
-**API:** `GET/POST /routes`, `GET/PATCH/DELETE /routes/:id`, `POST /routes/:id/plan`.
+**API:** `GET/POST /routes`, `GET/PATCH/DELETE /routes/:id`, `POST /routes/:id/plan` (supports `planningMode`, `departureAt` / `arrivalAt`, optional preference override).
+
+### Ride planning foundation (domain)
+
+Language-neutral planning types live under `apps/api/src/domain/ride-planning.ts` and `apps/api/src/routing/*` (RoutingPort, NullRoutingAdapter, Find My Best Time boundary, navigation handoff boundary). Compatible with separate motorcycle route-speed exposure work: analysis `expectedSpeedKmh` + duration feed exposure; do not duplicate that engine here.
 
 ---
 

@@ -37,6 +37,7 @@ type RouteRow = {
   endLabel: string | null;
   waypointsJson: string;
   typicalDurationMin: number;
+  preferencesJson: string;
   lastUsedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -122,6 +123,7 @@ describe('RoutesService', () => {
             endLabel: (data.endLabel as string | null) ?? null,
             waypointsJson: (data.waypointsJson as string) ?? '[]',
             typicalDurationMin: (data.typicalDurationMin as number) ?? 30,
+            preferencesJson: (data.preferencesJson as string) ?? '{}',
             lastUsedAt: null,
             createdAt: now,
             updatedAt: now,
@@ -431,5 +433,65 @@ describe('RoutesService', () => {
     expect(
       ((result.plan as { departureAt: Date }).departureAt as Date).toISOString(),
     ).toBe('2026-09-11T07:30:00.000Z');
+    expect((result.plan as { planningMode: string }).planningMode).toBe(
+      'departure',
+    );
+    expect(
+      ((result.plan as { arrivalAt: Date }).arrivalAt as Date).toISOString(),
+    ).toBe('2026-09-11T08:15:00.000Z');
+  });
+
+  it('plans with arrival mode and derives departure', async () => {
+    const r = await service.create('u1', {
+      name: 'Meeting',
+      typicalDurationMin: 50,
+      preferences: { avoidMotorways: true },
+      waypoints: [
+        { lat: 58.15, lon: 8.0, label: 'Home' },
+        { lat: 58.16, lon: 8.05, label: 'Café' },
+        { lat: 58.17, lon: 8.1, label: 'Office' },
+      ],
+    });
+    expect(JSON.parse(r.preferencesJson).avoidMotorways).toBe(true);
+
+    const result = await service.planFromRoute('u1', r.id, {
+      planningMode: 'arrival',
+      arrivalAt: '2026-09-14T08:00:00.000Z',
+      durationMin: 50,
+    });
+    const plan = result.plan as {
+      planningMode: string;
+      departureAt: Date;
+      arrivalAt: Date;
+      snapshotJson: string;
+      routeAnalysisJson: string | null;
+    };
+    expect(plan.planningMode).toBe('arrival');
+    expect(plan.arrivalAt.toISOString()).toBe('2026-09-14T08:00:00.000Z');
+    expect(plan.departureAt.toISOString()).toBe('2026-09-14T07:10:00.000Z');
+
+    const snap = JSON.parse(plan.snapshotJson);
+    expect(snap.version).toBe(2);
+    expect(snap.preferences.avoidMotorways).toBe(true);
+    expect(snap.waypoints).toHaveLength(3);
+    expect(plan.routeAnalysisJson).toBeTruthy();
+    expect(result.analysis?.travelSegments.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('keeps existing saved routes working without preferences', async () => {
+    const r = await service.create('u1', {
+      name: 'Legacy shape',
+      waypoints: [
+        { lat: 58.1, lon: 8.0 },
+        { lat: 58.2, lon: 8.1 },
+      ],
+    });
+    expect(r.preferencesJson).toBe(
+      '{"avoidMotorways":false,"avoidTolls":false,"avoidFerries":false}',
+    );
+    const result = await service.planFromRoute('u1', r.id, {});
+    expect((result.plan as { planningMode: string }).planningMode).toBe(
+      'departure',
+    );
   });
 });
