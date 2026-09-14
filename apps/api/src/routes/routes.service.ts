@@ -10,11 +10,18 @@ import { UpdateRouteDto } from './dto/update-route.dto';
 import { PlanFromRouteDto } from './dto/plan-from-route.dto';
 import {
   isActivityType,
+  isPlanningMode,
   isRouteCategory,
   isRouteKind,
   MVP_ACTIVITY_TYPE,
+  parseRoutePreferences,
+  resolvePlanSchedule,
+  serializeRoutePreferences,
+  type PlanningMode,
   type RouteKind,
+  type RoutePreferences,
 } from '../domain';
+import { NullRoutingAdapter } from '../routing';
 
 export type WaypointInput = {
   lat: number;
@@ -88,6 +95,7 @@ export class RoutesService {
         ...ends,
         waypointsJson: JSON.stringify(waypoints),
         typicalDurationMin: dto.typicalDurationMin ?? 30,
+        preferencesJson: serializeRoutePreferences(dto.preferences),
         waypoints: {
           create: waypoints.map((w, i) => ({
             sortOrder: i,
@@ -145,6 +153,10 @@ export class RoutesService {
       isFavorite: dto.isFavorite,
       isDefaultCommute: dto.isDefaultCommute,
       typicalDurationMin: dto.typicalDurationMin,
+      preferencesJson:
+        dto.preferences !== undefined
+          ? serializeRoutePreferences(dto.preferences)
+          : undefined,
     };
 
     if (dto.waypoints !== undefined) {
@@ -243,21 +255,45 @@ export class RoutesService {
 
   /**
    * Creates an ActivityPlan from a saved Route.
-   * Snapshot preserves geometry for history if the Route is later edited/deleted.
-   * Does NOT store weather or clothing recommendations on the Route.
+   * Snapshot preserves geometry + preferences for history if the Route is later
+   * edited/deleted. Does NOT store weather or clothing recommendations on Route.
+   *
+   * planningMode=departure → rider leaves at departureAt
+   * planningMode=arrival   → rider must arrive at arrivalAt; departure is derived
    */
   async planFromRoute(userId: string, id: string, dto: PlanFromRouteDto) {
     const route = await this.get(userId, id);
-    const departureAt = dto.departureAt
-      ? new Date(dto.departureAt)
-      : new Date();
-    if (Number.isNaN(departureAt.getTime())) {
+
+    const planningMode: PlanningMode = isPlanningMode(dto.planningMode)
+      ? dto.planningMode
+      : 'departure';
+
+    if (dto.planningMode != null && !isPlanningMode(dto.planningMode)) {
+      throw new BadRequestException(`Invalid planningMode: ${dto.planningMode}`);
+    }
+
+    const durationMin = dto.durationMin ?? route.typicalDurationMin;
+    const schedule = resolvePlanSchedule({
+      planningMode,
+      departureAt: dto.departureAt ? new Date(dto.departureAt) : null,
+      arrivalAt: dto.arrivalAt ? new Date(dto.arrivalAt) : null,
+      durationMin,
+    });
+
+    if (Number.isNaN(schedule.departureAt.getTime())) {
       throw new BadRequestException('Invalid departureAt');
     }
-    const durationMin = dto.durationMin ?? route.typicalDurationMin;
+    if (Number.isNaN(schedule.arrivalAt.getTime())) {
+      throw new BadRequestException('Invalid arrivalAt');
+    }
+
+    const preferences: RoutePreferences =
+      dto.preferences !== undefined
+        ? parseRoutePreferences(dto.preferences)
+        : parseRoutePreferences(route.preferencesJson);
 
     const snapshot = {
-      version: 1,
+      version: 2,
       source: 'saved_route',
       savedRouteId: route.id,
       name: route.name,
@@ -266,6 +302,10 @@ export class RoutesService {
       routeKind: route.routeKind,
       category: route.category,
       typicalDurationMin: route.typicalDurationMin,
+      preferences,
+      planningMode: schedule.planningMode,
+      arrivalAt: schedule.arrivalAt.toISOString(),
+      originSource: 'saved_waypoint' as const,
       waypoints: route.waypoints.map((w) => ({
         sortOrder: w.sortOrder,
         lat: w.lat,
@@ -283,14 +323,26 @@ export class RoutesService {
       snappedAt: new Date().toISOString(),
     };
 
+    // Provider-neutral analysis (Null adapter until a real RoutingPort is wired).
+    const analysis = await new NullRoutingAdapter().analyze({
+      waypoints: route.waypoints.map((w) => ({ lat: w.lat, lon: w.lon })),
+      preferences,
+      departAt: schedule.departureAt,
+      durationMin: schedule.durationMin,
+      travelProfile: 'motorcycle',
+    });
+
     const plan = await this.prisma.activityPlan.create({
       data: {
         userId,
         activityType: route.activityType,
         routeId: route.id,
-        departureAt,
-        durationMin,
+        planningMode: schedule.planningMode,
+        departureAt: schedule.departureAt,
+        arrivalAt: schedule.arrivalAt,
+        durationMin: schedule.durationMin,
         snapshotJson: JSON.stringify(snapshot),
+        routeAnalysisJson: analysis ? JSON.stringify(analysis) : null,
       },
     });
 
@@ -306,7 +358,9 @@ export class RoutesService {
         name: route.name,
         routeKind: route.routeKind,
         typicalDurationMin: route.typicalDurationMin,
+        preferences,
       },
+      analysis,
       note: 'Weather and clothing must be recalculated for this departure; do not reuse prior recommendations.',
     };
   }

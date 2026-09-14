@@ -80,11 +80,13 @@ Canonical enums and domain values remain language-neutral. User-created garment/
 
 ## Routes and activity history
 
-A `Route` is a reusable private route definition. An `ActivityPlan` is a date/time-specific planned activity. An `ActivityLog` represents an actual activity.
+A `Route` is a reusable private route definition (ordered waypoints, optional routing preferences such as `avoidMotorways`). An `ActivityPlan` is a date/time-specific planned activity (`planningMode` departure or arrival). An `ActivityLog` represents an actual activity.
 
-Routes do not store recommendation or weather results. Plans/logs retain sufficient snapshots/derived evidence so historical activity does not become misleading if a route is edited or deleted.
+Routes do not store recommendation or weather results. Plans/logs retain sufficient snapshots/derived evidence (including optional provider-neutral route analysis summaries) so historical activity does not become misleading if a route is edited or deleted.
 
-Exact route coordinates can reveal home/work patterns and are sensitive user data. Scope all user-owned resources to the authenticated user and avoid unnecessary location logging/storage.
+RideWear analyzes routes for weather, exposure, and clothing. It is not a turn-by-turn navigation product — external apps handle navigation after handoff.
+
+Exact route coordinates can reveal home/work patterns and are sensitive user data. Scope all user-owned resources to the authenticated user and avoid unnecessary location logging/storage. “Use current location” is plan-time only, not continuous tracking.
 
 ## Authentication and security
 
