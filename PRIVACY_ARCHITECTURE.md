@@ -35,6 +35,7 @@ Store **evidence useful for clothing personalization**, not raw sensor dumps.
 | Saved Route waypoints | Reusable commute/tour templates | **Private by default**; ownership on every API |
 | ActivityPlan `snapshotJson` | Preserve planned geometry + preferences after route edit/delete | Minimal waypoint snapshot (+ preference flags), not full GPS |
 | ActivityPlan `routeAnalysisJson` | Optional distance/duration/segment speed summary for exposure/weather | Derived summary; not dense polylines |
+| Route weather timeline summary | Bounded ETA-stamped weather samples for recommendation history / charts later | Coarse samples only (≤8); no dense GPS, no raw third-party weather payloads; avoid logging precise coordinates |
 | Route `preferencesJson` | Reusable avoidMotorways / tolls / ferries flags | Non-location; still private with the route |
 | Weather cache (coarse keys) | Performance | Short TTL; not a location history product |
 | Exact historical GPS | Not required for MVP clothing advice | **Do not retain** unless a future feature justifies it |

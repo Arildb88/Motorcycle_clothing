@@ -307,7 +307,7 @@ Each milestone should be **demoable and verifiable** before the next.
 | **M4** | Plan ride UX | Departure + duration + start/end → recommendation screen (wear/pack/why/confidence) | Motorcycle planner v1: place search, multi-stop, departure/arrival, leave now, avoid motorways, map preview, analyze ride → kit (nav handoff / Find My Best Time still out) |
 | **M5** | Feedback loop v1 | Overall + optional hands/torso; priors update; personal copy gated | Pending |
 | **M6** | Live MET default in staging | Side-by-side mock vs MET; cache OK | Pending |
-| **M7** | Segment weather v1 | 3–5 samples along route with ETA; duration weighting visible in “why” | Pending |
+| **M7** | Segment weather v1 | Bounded route samples with ETA; duration-weighted timeline → motorcycle pipeline; `analyzeRideAt` reusable for Find My Best Time | **Done (timeline v1)** |
 | **M8** | Privacy + delete | Delete activity; export/delete account basics | Pending |
 | **M9** | Hardening | Postgres staging, CI coverage for engine, QUICKSTART update | Pending |
 
@@ -421,7 +421,24 @@ Weather/route segments → motorcycle exposure → duration-weighted demand → 
 
 **Route-aware speed (evolved):** exposure can duration-weight per-segment `expectedSpeedKmh` via provider-neutral `RouteTravelSegment[]`. Without a profile, fallback is explicit cruise then assumed default (`assumed_default`). Apparent airflow is shared by exposure and wind demand; wind direction is used only when the weather contract supplies `windFromDeg` (never invented).
 
-**Known limits:** production `/recommend` does not yet receive step-level route speed profiles from a routing provider (assumed cruise remains the live fallback); weather↔travel association is duration-fraction mapping until denser geometry sampling (M7); personalization voice stays baseline until M5.
+**Known limits:** production `/recommend` now builds a bounded time-aware route weather timeline (Null routing + WeatherPort) and feeds duration-weighted travel segments into M3. Real provider geometry/traffic still pending; denser sampling can refine `bounded_v1` without changing the sample contract. Personalization voice stays baseline until M5. Find My Best Time and charts are out of scope for this PR.
+
+### Route weather timeline v1 (done)
+
+```
+planned ride → route timing (RouteAnalysis)
+            → route weather timeline (ETA-stamped samples)
+            → motorcycle exposure / duration-weighted demand
+            → recommendation (wear/pack/reasons/confidence)
+```
+
+**Sampling (`bounded_v1`):** start + end + intermediate stops + distance/time intervals + meaningful speed-change boundaries; hard-cap 8 samples; min separation ~2 km. Not every geometry point.
+
+**Timestamps:** cumulative travel-segment durations from effective departure (arrival mode resolves departure = arrival − duration first). Fallbacks are explicit (`ROUTE_TIMING_FALLBACK_USED`).
+
+**Persistence:** compact `RouteWeatherTimelineSummaryV1` only — no dense GPS, no raw provider payloads.
+
+**Reuse:** Find My Best Time must call `analyzeRideAt` for each candidate time.
 
 ---
 

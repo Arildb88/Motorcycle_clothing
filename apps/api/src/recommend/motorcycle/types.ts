@@ -28,6 +28,14 @@ export const REASON_CODES = [
   'ROUTE_SPEED_PROFILE_UNAVAILABLE',
   'ASSUMED_CRUISE_SPEED',
   'WIND_DIRECTION_UNAVAILABLE',
+  /** Time-aware weather timeline was used for this recommendation. */
+  'ROUTE_WEATHER_TIMELINE_USED',
+  /** One or more timeline samples failed weather lookup. */
+  'ROUTE_WEATHER_PARTIAL',
+  /** Provider returned a nearby time step rather than an exact match. */
+  'WEATHER_TIME_INTERPOLATED',
+  /** Travel timing used linear/even fallback (incomplete segment ETAs). */
+  'ROUTE_TIMING_FALLBACK_USED',
 ] as const;
 export type ReasonCode = (typeof REASON_CODES)[number];
 
