@@ -1,5 +1,9 @@
 import type { WeatherPoint } from '../weather.types';
 import type { VentState } from '../../domain';
+import type { ApparentAirflowMode } from './airflow';
+import type { SpeedSource } from './route-travel';
+
+export type { SpeedSource } from './route-travel';
 
 /** Language-neutral reason codes for Flutter localization. */
 export const REASON_CODES = [
@@ -20,6 +24,10 @@ export const REASON_CODES = [
   'INCOMPLETE_WEATHER',
   'INCOMPLETE_WARDROBE',
   'BASELINE_NO_PERSONAL_EVIDENCE',
+  'ROUTE_SPEED_PROFILE_USED',
+  'ROUTE_SPEED_PROFILE_UNAVAILABLE',
+  'ASSUMED_CRUISE_SPEED',
+  'WIND_DIRECTION_UNAVAILABLE',
 ] as const;
 export type ReasonCode = (typeof REASON_CODES)[number];
 
@@ -51,6 +59,10 @@ export type RideSegment = {
   durationMin: number;
   fraction: number;
   weather: WeatherPoint;
+  expectedSpeedKmh: number;
+  speedSource: SpeedSource;
+  apparentAirflowMs: number;
+  airflowMode: ApparentAirflowMode;
   motorcycleExposureC: number;
   warmthDemand: number;
   windDemand: number;
@@ -126,12 +138,23 @@ export type ExposureSummary = {
   motorcycleExposureMinC: number;
   motorcycleExposureMaxC: number;
   motorcycleExposureSustainedC: number;
+  /**
+   * Duration-weighted effective speed used for exposure.
+   * Retained name for older clients; equals durationWeightedSpeedKmh.
+   */
   assumedCruiseKmh: number;
+  speedSource: SpeedSource;
+  durationWeightedSpeedKmh: number;
+  speedMinKmh: number;
+  speedMaxKmh: number;
+  windDirectionUsed: boolean;
   segments: Array<{
     index: number;
     durationMin: number;
     airTempC: number;
     windSpeedMs: number;
+    expectedSpeedKmh: number;
+    apparentAirflowMs: number;
     motorcycleExposureC: number;
     isShortExtreme: boolean;
   }>;

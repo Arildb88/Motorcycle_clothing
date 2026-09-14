@@ -413,7 +413,9 @@ Weather/route segments → motorcycle exposure → duration-weighted demand → 
 
 **Unchanged boundaries:** Nest authz, Route never stores recommendations, no Hiking/Cycling engines, no M5 learning claims, no dense GPS/weather persistence.
 
-**Known limits:** assumed cruise speed when telemetry absent; even split of duration across weather samples until denser route sampling (M7); personalization voice stays baseline until M5.
+**Route-aware speed (evolved):** exposure can duration-weight per-segment `expectedSpeedKmh` via provider-neutral `RouteTravelSegment[]`. Without a profile, fallback is explicit cruise then assumed default (`assumed_default`). Apparent airflow is shared by exposure and wind demand; wind direction is used only when the weather contract supplies `windFromDeg` (never invented).
+
+**Known limits:** production `/recommend` does not yet receive step-level route speed profiles from a routing provider (assumed cruise remains the live fallback); weather↔travel association is duration-fraction mapping until denser geometry sampling (M7); personalization voice stays baseline until M5.
 
 ---
 

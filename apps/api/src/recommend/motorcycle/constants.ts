@@ -6,6 +6,8 @@
  * - Wind above a mild threshold cools roughly linearly.
  * - Light rain / high precip probability adds a small wet-exposure penalty.
  * - Values are ordinal engineering constants for clothing demand, not clo science.
+ * - Apparent airflow may use heading + wind direction when both are known;
+ *   otherwise a documented scalar sum fallback is used (never invents direction).
  */
 
 export const MOTORCYCLE_EXPOSURE = {
@@ -14,8 +16,8 @@ export const MOTORCYCLE_EXPOSURE = {
   /** °C penalty per m/s of wind above threshold. */
   windChillPerMs: 0.55,
   /**
-   * Default assumed cruising speed contribution when no telemetry (km/h).
-   * Used only to derive a modest airflow chill — not GPS-derived.
+   * Default assumed cruising speed contribution when no route profile /
+   * explicit cruise is available (km/h). Not GPS-derived.
    */
   defaultCruiseKmh: 70,
   /** °C penalty per 10 km/h of assumed airflow above 30 km/h. */
