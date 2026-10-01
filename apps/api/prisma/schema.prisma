@@ -15,16 +15,31 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  authIdentities    AuthIdentity[]
-  profile           UserProfile?
-  motorcycleProfile MotorcycleProfile?
-  garments          Garment[]
-  places            Place[]
-  routes            Route[]
-  activityPlans     ActivityPlan[]
-  activityLogs      ActivityLog[]
-  personalOffsets   PersonalOffset[]
-  connectedAccounts ConnectedAccount[]
+  authIdentities       AuthIdentity[]
+  passwordResetTokens  PasswordResetToken[]
+  profile              UserProfile?
+  motorcycleProfile    MotorcycleProfile?
+  garments             Garment[]
+  places               Place[]
+  routes               Route[]
+  activityPlans        ActivityPlan[]
+  activityLogs         ActivityLog[]
+  personalOffsets      PersonalOffset[]
+  connectedAccounts    ConnectedAccount[]
+}
+
+/// Single-use password reset token (store only the hash of the secret).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Login identity (email/local, facebook, microsoft, …). Not a connected service.

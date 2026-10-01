@@ -685,6 +685,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to planner'**
   String get plannerBackToPlanner;
+
+  /// No description provided for @authTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Dress for the ride — personalized across outdoor activities.'**
+  String get authTagline;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authDisplayNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get authDisplayNameLabel;
+
+  /// No description provided for @authContinueWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with email'**
+  String get authContinueWithEmail;
+
+  /// No description provided for @authCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authCreateAccount;
+
+  /// No description provided for @authHaveAccountSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Have an account? Sign in'**
+  String get authHaveAccountSignIn;
+
+  /// No description provided for @authNewHereRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'New here? Register'**
+  String get authNewHereRegister;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotPassword;
+
+  /// No description provided for @authContinueMicrosoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Microsoft'**
+  String get authContinueMicrosoft;
+
+  /// No description provided for @authContinueMicrosoftDev.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Microsoft (dev)'**
+  String get authContinueMicrosoftDev;
+
+  /// No description provided for @authContinueFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Facebook'**
+  String get authContinueFacebook;
+
+  /// No description provided for @authContinueFacebookDev.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Facebook (dev)'**
+  String get authContinueFacebookDev;
+
+  /// No description provided for @authSocialLoginHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Social login buttons enable when Facebook/Microsoft apps are configured on the API.'**
+  String get authSocialLoginHint;
+
+  /// No description provided for @authEmailAlreadyRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists.'**
+  String get authEmailAlreadyRegistered;
+
+  /// No description provided for @authInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email or password.'**
+  String get authInvalidCredentials;
+
+  /// No description provided for @authInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get authInvalidEmail;
+
+  /// No description provided for @authPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password.'**
+  String get authPasswordRequired;
+
+  /// No description provided for @authPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters.'**
+  String get authPasswordTooShort;
+
+  /// No description provided for @authDisplayNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a display name.'**
+  String get authDisplayNameRequired;
+
+  /// No description provided for @authNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the server. Check your connection and try again.'**
+  String get authNetworkError;
+
+  /// No description provided for @authGenericFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get authGenericFailure;
+
+  /// No description provided for @authForgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password'**
+  String get authForgotPasswordTitle;
+
+  /// No description provided for @authForgotPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email and we will send a reset link if an account exists.'**
+  String get authForgotPasswordSubtitle;
+
+  /// No description provided for @authSendResetLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reset link'**
+  String get authSendResetLink;
+
+  /// No description provided for @authForgotPasswordSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'If an account exists for this email, a password reset link has been sent.'**
+  String get authForgotPasswordSuccess;
+
+  /// No description provided for @authHaveResetToken.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have a reset token'**
+  String get authHaveResetToken;
+
+  /// No description provided for @authResetPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get authResetPasswordTitle;
+
+  /// No description provided for @authResetPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste your reset token and choose a new password.'**
+  String get authResetPasswordSubtitle;
+
+  /// No description provided for @authResetTokenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset token'**
+  String get authResetTokenLabel;
+
+  /// No description provided for @authNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get authNewPasswordLabel;
+
+  /// No description provided for @authConfirmPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get authConfirmPasswordLabel;
+
+  /// No description provided for @authSetNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set new password'**
+  String get authSetNewPassword;
+
+  /// No description provided for @authPasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get authPasswordMismatch;
+
+  /// No description provided for @authPasswordResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated. You can sign in now.'**
+  String get authPasswordResetSuccess;
+
+  /// No description provided for @authInvalidResetToken.
+  ///
+  /// In en, this message translates to:
+  /// **'This password reset link is invalid or has expired.'**
+  String get authInvalidResetToken;
 }
 
 class _AppLocalizationsDelegate
