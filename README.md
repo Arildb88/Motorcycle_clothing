@@ -30,6 +30,8 @@ cd Motorcycle_clothing
 git checkout dev
 git pull origin dev
 
+https://nodejs.org/en/download
+føl
 # Terminal A — API
 cd apps\api
 npm install
