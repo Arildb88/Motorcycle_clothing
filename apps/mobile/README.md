@@ -12,31 +12,20 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
 
 Android emulator → host: `10.0.2.2`. iOS simulator → `localhost`.
 
-### Google Maps Platform (place search + route preview)
+### Place search and route preview
 
-Never commit API keys. Pass a **restricted** key at build/run time:
+Both go through the RideWear API. Do **not** put an OpenRouteService key in the Flutter app.
+
+On the API host set:
 
 ```bash
-flutter run --dart-define=GOOGLE_MAPS_API_KEY=YOUR_KEY
-# or
-flutter build apk --debug --dart-define=GOOGLE_MAPS_API_KEY=YOUR_KEY
+ROUTING_PROVIDER=ors
+ORS_API_KEY=your-heigit-key
 ```
 
-**Enable on the Google Cloud project**
+Directions use `https://api.heigit.org/openrouteservice/`. Geocoding uses `https://api.heigit.org/pelias/v1`. The preview is road-following **driving** geometry and is not motorcycle-optimized. There is no basemap yet; the screen draws the returned line schematically.
 
-- Places API (New) — autocomplete + place details
-- Routes API — preview geometry (`computeRoutes`)
-
-**Key restrictions (required)**
-
-- Android: application restriction by package name + SHA-1
-- iOS: application restriction by bundle id
-- API restriction: Places API (New) + Routes API only  
-  (add Maps SDK only if you later enable native map tiles)
-
-Without `GOOGLE_MAPS_API_KEY`, debug builds use an in-memory fake catalog so CI and local UI work offline. Production builds must supply a restricted key.
-
-Motorcycle preview requests Google `TWO_WHEELER` when available (beta). If unsupported, the UI falls back to `DRIVE` geometry and shows an explicit warning.
+`GOOGLE_MAPS_API_KEY` is not required for normal RideWear routing or place search.
 
 ### Ads (optional)
 

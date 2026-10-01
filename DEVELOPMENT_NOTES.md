@@ -103,7 +103,7 @@ Copy `apps/api/.env.example` → `apps/api/.env`.
 | Strava connect/sync API | **ARCHITECTURE READY** — needs Strava + encryption key |
 | Demo social login (`demo:` tokens) | **WORKING in non-prod** when IdPs unset |
 | Hiking/cycling recommendation engines | **DEFERRED** (placeholder homes) |
-| Map search / routing provider geometry | **DEFERRED** (lat/lon form foundation in M2.6) |
+| Map search / routing provider geometry | **WORKING** via server ORS/Pelias when `ORS_API_KEY` is set (schematic preview, no basemap) |
 | M3 demand engine | **DEFERRED** |
 
 ## Spike leftovers

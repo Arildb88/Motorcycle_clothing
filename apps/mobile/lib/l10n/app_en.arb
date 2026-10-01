@@ -93,6 +93,8 @@
   "plannerDefaultRouteName": "Ride plan",
   "plannerRouteSaved": "Route saved",
   "plannerMapFailed": "Map preview failed",
+  "routeDrivingGeometryNotice": "Road-following driving geometry. This route is not motorcycle-optimized.",
+  "routeRoutingUnavailable": "Road routing is temporarily unavailable.",
   "plannerAnalysisTitle": "Ride analysis",
   "plannerAnalysisSubtitle": "Weather, exposure, and kit for this plan",
   "plannerNoWearItems": "No wear items returned.",

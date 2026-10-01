@@ -16,9 +16,8 @@ class AppConfig {
     defaultValue: 'ca-app-pub-3940256099942544/6300974551',
   );
 
-  /// Google Maps Platform key for Places autocomplete + Routes preview.
-  /// Pass via `--dart-define=GOOGLE_MAPS_API_KEY=...` (never commit secrets).
-  /// Restrict the key to Places API + Routes API (+ Maps SDK if tiles enabled).
+  /// Unused by normal RideWear place search and route preview.
+  /// Those calls go through the API (`ORS_API_KEY` stays on the server).
   static const String googleMapsApiKey = String.fromEnvironment(
     'GOOGLE_MAPS_API_KEY',
     defaultValue: '',

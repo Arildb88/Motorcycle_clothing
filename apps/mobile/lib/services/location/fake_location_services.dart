@@ -96,7 +96,10 @@ class FakeRouteGeometryService implements RouteGeometryService {
   final bool fail;
 
   @override
-  Future<RouteGeometry?> computeRoute(List<GeoPoint> waypoints) async {
+  Future<RouteGeometry?> computeRoute(
+    List<GeoPoint> waypoints, {
+    bool avoidMotorways = false,
+  }) async {
     if (fail) {
       throw LocationProviderException('Route preview failed', isNetwork: true);
     }

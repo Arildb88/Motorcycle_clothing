@@ -319,6 +319,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plannerMapFailed => 'Map preview failed';
 
   @override
+  String get routeDrivingGeometryNotice =>
+      'Road-following driving geometry. This route is not motorcycle-optimized.';
+
+  @override
+  String get routeRoutingUnavailable =>
+      'Road routing is temporarily unavailable.';
+
+  @override
   String get plannerAnalysisTitle => 'Ride analysis';
 
   @override

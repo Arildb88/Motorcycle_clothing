@@ -3,9 +3,9 @@ import type { RouteAnalysis, RoutingRequest } from './routing.types';
 /**
  * Server-side routing port.
  *
- * MVP: NullRoutingAdapter synthesizes duration-weighted segments from
- * waypoints + duration without calling an external provider.
- * Later: Google / Mapbox / ORS adapters implement the same contract.
+ * NullRoutingAdapter synthesizes duration-weighted segments when no provider
+ * is configured or the provider call fails.
+ * OpenRouteServiceRoutingAdapter (HeiGIT, driving-car) is the v1 road adapter.
  *
  * Motorcycle recommend must depend on RouteAnalysis, not on this port's
  * provider identity.

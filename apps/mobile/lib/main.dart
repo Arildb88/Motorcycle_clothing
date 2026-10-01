@@ -25,7 +25,7 @@ Future<void> main() async {
     await MobileAds.instance.initialize();
   }
   final api = ApiClient(baseUrl: AppConfig.apiBaseUrl);
-  final location = LocationServices();
+  final location = LocationServices(api: api);
   final deviceLocation = GeolocatorDeviceLocationService();
   final auth = AuthState(api);
   final activity = ActivityContext();

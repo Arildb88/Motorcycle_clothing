@@ -24,7 +24,7 @@ Mobile (Flutter)
 API (NestJS)
     ├── RecommendationEngine (pure domain; M3+)
     ├── WeatherPort  → Met | Mock | (later OpenMeteo)
-    ├── RoutingPort  → Null | (later ORS/Mapbox)
+    ├── RoutingPort  → Null | OpenRouteService (HeiGIT)
     ├── Auth         → Email + IdentityProviders (Facebook, Microsoft; Apple/Google later)
     ├── Connections  → ConnectedServices (Strava; Garmin/Health later)
     └── Persistence  → Prisma (SQLite local → Postgres staging/prod)
@@ -142,15 +142,15 @@ Cache by geohash + hour bucket (Redis later; Prisma `WeatherCache` is fine early
 
 ```ts
 interface RoutingPort {
-  route(input: { start; end; waypoints?; departAt }): Promise<RouteGeometry | null>;
+  analyze(request: RoutingRequest): Promise<RouteAnalysis | null>;
 }
 ```
 
-MVP: `NullRoutingAdapter` — client/API supplies start, end, optional midpoints, and `durationMin`. Segment ETAs = linear time allocation along points.
+`NullRoutingAdapter` remains the fallback and test implementation: haversine legs plus an explicit `durationMin` hint.
 
-Later: OpenRouteService / Mapbox without changing recommend module.
+`OpenRouteServiceRoutingAdapter` is the v1 road adapter (`ROUTING_PROVIDER=ors`, `ORS_API_KEY`). It calls HeiGIT `https://api.heigit.org/openrouteservice/v2/directions/driving-car` and returns provider distance, duration, and travel segments. `avoidMotorways` maps to ORS `avoid_features: ["highways"]`. The profile is driving geometry, not motorcycle-optimized routing. Place search uses HeiGIT Pelias (`https://api.heigit.org/pelias/v1`) behind `GET /location/places` and `POST /location/places/resolve`. Preview geometry is `POST /location/route-preview` and is not stored.
 
-**Client route builder (Flutter):** place search + preview geometry live behind `LocationSearchService` / `RouteGeometryService` so widgets stay provider-neutral. Google Places + Routes are one implementation; coordinates remain the canonical `RouteWaypoint` representation. This is **not** turn-by-turn navigation and does not replace server `RoutingPort`.
+**Client route builder (Flutter):** place search and preview geometry stay behind `LocationSearchService` / `RouteGeometryService`. The default implementations call the RideWear API. The schematic `CustomPaint` preview draws returned road points and does not add a basemap. Coordinates remain the canonical `RouteWaypoint` representation. This is **not** turn-by-turn navigation.
 
 ---
 
@@ -250,7 +250,7 @@ WeatherCache
 
 **Planning modes (language-neutral):** `departure` (“leave at 07:00”) and `arrival` (“arrive by 08:00”; departure = arrival − duration). UI strings stay in Flutter.
 
-**RoutingPort / RouteAnalysis:** server adapters (Null today; Google/Mapbox/ORS later) emit provider-neutral `RouteAnalysis` (distance, duration, travel segments with `expectedSpeedKmh`). Motorcycle exposure consumes analysis segments — never provider SDKs. Client place-search/preview geometry remains Flutter-side and is not turn-by-turn navigation.
+**RoutingPort / RouteAnalysis:** server adapters (Null fallback, or OpenRouteService on HeiGIT) emit provider-neutral `RouteAnalysis` (distance, duration, travel segments with `expectedSpeedKmh`). Motorcycle exposure consumes analysis segments — never provider SDKs. Activity plans persist that summary with waypoint endpoints only. The client draws ephemeral road preview geometry from the API and does not call the routing provider directly.
 
 **Find My Best Time (boundary only):** future port evaluates nearby candidate departure/arrival times with explainable RideWear comfort criteria (rain, temp, wind/gusts, route-aware airflow, duration). Not implemented in this foundation.
 

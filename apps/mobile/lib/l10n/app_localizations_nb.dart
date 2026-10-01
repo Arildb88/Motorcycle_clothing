@@ -319,6 +319,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String get plannerMapFailed => 'Kartforhåndsvisning feilet';
 
   @override
+  String get routeDrivingGeometryNotice =>
+      'Veifølgende kjøregeometri. Denne ruten er ikke motorsykkeloptimalisert.';
+
+  @override
+  String get routeRoutingUnavailable =>
+      'Veiruting er midlertidig utilgjengelig.';
+
+  @override
   String get plannerAnalysisTitle => 'Turanalyse';
 
   @override

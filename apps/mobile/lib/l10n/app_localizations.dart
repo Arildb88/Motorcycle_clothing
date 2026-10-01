@@ -656,6 +656,18 @@ abstract class AppLocalizations {
   /// **'Map preview failed'**
   String get plannerMapFailed;
 
+  /// No description provided for @routeDrivingGeometryNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Road-following driving geometry. This route is not motorcycle-optimized.'**
+  String get routeDrivingGeometryNotice;
+
+  /// No description provided for @routeRoutingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Road routing is temporarily unavailable.'**
+  String get routeRoutingUnavailable;
+
   /// No description provided for @plannerAnalysisTitle.
   ///
   /// In en, this message translates to:

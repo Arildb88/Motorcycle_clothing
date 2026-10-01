@@ -1,15 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
+import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
-/// Schematic map preview of waypoints + route geometry.
+/// Schematic preview of stops and road geometry.
 ///
-/// Uses provider route geometry when available; falls back to straight
-/// segments between stops. Does not require the Google Maps SDK (tiles),
-/// so CI/local builds work without a native Maps key. Geometry still comes
-/// from [RouteGeometryService] (Google Routes when configured).
+/// Draws [RouteGeometry.points] when the RideWear API returns a road line.
+/// Falls back to straight segments between stops when geometry is missing.
+/// No basemap or tile package.
 class RouteMapPreview extends StatelessWidget {
   const RouteMapPreview({
     super.key,
@@ -29,6 +30,7 @@ class RouteMapPreview extends StatelessWidget {
     final points = (geometry?.points.isNotEmpty ?? false)
         ? geometry!.points
         : waypoints;
+    final notice = localizedRouteNotice(AppLocalizations.of(context), geometry);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -85,7 +87,7 @@ class RouteMapPreview extends StatelessWidget {
                   ),
                 ),
               ),
-            if (geometry?.providerWarning != null && error == null)
+            if (notice != null && error == null)
               Positioned(
                 left: 8,
                 right: 8,
@@ -96,7 +98,7 @@ class RouteMapPreview extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Text(
-                      geometry!.providerWarning!,
+                      notice,
                       style: const TextStyle(
                         color: AppTheme.steel,
                         fontSize: 11,

@@ -29,7 +29,10 @@ class GoogleRoutesGeometryService implements RouteGeometryService {
       'unavailable or incomplete in some regions.';
 
   @override
-  Future<RouteGeometry?> computeRoute(List<GeoPoint> waypoints) async {
+  Future<RouteGeometry?> computeRoute(
+    List<GeoPoint> waypoints, {
+    bool avoidMotorways = false,
+  }) async {
     if (waypoints.length < 2) return null;
     if (apiKey.isEmpty) {
       throw LocationProviderException('Maps/Routes API key is not configured');

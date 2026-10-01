@@ -5,7 +5,9 @@ import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -119,7 +121,10 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       _mapError = null;
     });
     try {
-      final geometry = await _location.geometry.computeRoute(pts);
+      final geometry = await _location.geometry.computeRoute(
+        pts,
+        avoidMotorways: widget.existing?.avoidMotorways ?? false,
+      );
       if (!mounted || epoch != _geometryEpoch) return;
       setState(() {
         _geometry = geometry;
@@ -129,7 +134,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       if (!mounted || epoch != _geometryEpoch) return;
       setState(() {
         _mapLoading = false;
-        _mapError = e.message;
+        _mapError = localizedRoutePreviewError(AppLocalizations.of(context), e);
         _geometry = null;
       });
     } catch (_) {

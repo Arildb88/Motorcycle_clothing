@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRouteDto } from './dto/create-route.dto';
@@ -21,7 +23,12 @@ import {
   type RouteKind,
   type RoutePreferences,
 } from '../domain';
-import { NullRoutingAdapter } from '../routing';
+import {
+  analyzePlanRoute,
+  NullRoutingAdapter,
+  ROUTING_PORT,
+  type RoutingPort,
+} from '../routing';
 
 export type WaypointInput = {
   lat: number;
@@ -33,7 +40,14 @@ export type WaypointInput = {
 
 @Injectable()
 export class RoutesService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly routing: RoutingPort;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() @Inject(ROUTING_PORT) routing?: RoutingPort,
+  ) {
+    this.routing = routing ?? new NullRoutingAdapter();
+  }
 
   list(userId: string, activityType?: string) {
     return this.prisma.route.findMany({
@@ -273,7 +287,7 @@ export class RoutesService {
     }
 
     const durationMin = dto.durationMin ?? route.typicalDurationMin;
-    const schedule = resolvePlanSchedule({
+    let schedule = resolvePlanSchedule({
       planningMode,
       departureAt: dto.departureAt ? new Date(dto.departureAt) : null,
       arrivalAt: dto.arrivalAt ? new Date(dto.arrivalAt) : null,
@@ -291,6 +305,23 @@ export class RoutesService {
       dto.preferences !== undefined
         ? parseRoutePreferences(dto.preferences)
         : parseRoutePreferences(route.preferencesJson);
+
+    const analysis = await analyzePlanRoute({
+      port: this.routing,
+      waypoints: route.waypoints.map((w) => ({ lat: w.lat, lon: w.lon })),
+      preferences,
+      departAt: schedule.departureAt,
+      durationHintMin: schedule.durationMin,
+    });
+
+    if (analysis?.meta.fromProvider && !analysis.meta.fallback) {
+      schedule = resolvePlanSchedule({
+        planningMode,
+        departureAt: dto.departureAt ? new Date(dto.departureAt) : schedule.departureAt,
+        arrivalAt: dto.arrivalAt ? new Date(dto.arrivalAt) : schedule.arrivalAt,
+        durationMin: analysis.durationMin,
+      });
+    }
 
     const snapshot = {
       version: 2,
@@ -322,15 +353,6 @@ export class RoutesService {
       endLabel: route.endLabel,
       snappedAt: new Date().toISOString(),
     };
-
-    // Provider-neutral analysis (Null adapter until a real RoutingPort is wired).
-    const analysis = await new NullRoutingAdapter().analyze({
-      waypoints: route.waypoints.map((w) => ({ lat: w.lat, lon: w.lon })),
-      preferences,
-      departAt: schedule.departureAt,
-      durationMin: schedule.durationMin,
-      travelProfile: 'motorcycle',
-    });
 
     const plan = await this.prisma.activityPlan.create({
       data: {

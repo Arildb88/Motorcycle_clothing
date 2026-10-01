@@ -12,6 +12,7 @@ import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
+import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
@@ -103,7 +104,10 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       _mapError = null;
     });
     try {
-      final geometry = await _location.geometry.computeRoute(pts);
+      final geometry = await _location.geometry.computeRoute(
+        pts,
+        avoidMotorways: _state.avoidMotorways,
+      );
       if (!mounted || epoch != _geometryEpoch) return;
       setState(() {
         _geometry = geometry;
@@ -116,7 +120,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       if (!mounted || epoch != _geometryEpoch) return;
       setState(() {
         _mapLoading = false;
-        _mapError = e.message;
+        _mapError = localizedRoutePreviewError(AppLocalizations.of(context), e);
         _geometry = null;
       });
     } catch (_) {
@@ -375,10 +379,10 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
             loading: _mapLoading,
             error: _mapError,
           ),
-          if (_geometry?.providerWarning != null) ...[
+          if (localizedRouteNotice(l10n, _geometry) != null) ...[
             const SizedBox(height: 8),
             Text(
-              _geometry!.providerWarning!,
+              localizedRouteNotice(l10n, _geometry)!,
               style: TextStyle(
                 fontSize: 12,
                 color: AppTheme.steel.withValues(alpha: 0.85),

@@ -393,7 +393,7 @@ Locked:
 - Ownership enforced on every route API; routes are private by default.
 - Multi-stop and loop/round-trip are ordered waypoints (loop = end near start).
 - Provider-neutral `RoutingPort` / `RouteAnalysis` feed weather sampling + motorcycle speed exposure; RideWear is **not** a turn-by-turn navigation app (external handoff later).
-- Map search / live provider routing deferred beyond Null fallback + client preview.
+- Road routing v1 uses OpenRouteService on HeiGIT behind NestJS (`ROUTING_PROVIDER=ors`). Preview polylines are ephemeral. `NullRoutingAdapter` remains the fallback. The route is driving geometry, not motorcycle-optimized, and not turn-by-turn.
 
 **API:** `GET/POST /routes`, `GET/PATCH/DELETE /routes/:id`, `POST /routes/:id/plan` (supports `planningMode`, `departureAt` / `arrivalAt`, optional preference override).
 

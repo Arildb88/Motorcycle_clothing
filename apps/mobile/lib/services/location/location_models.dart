@@ -61,6 +61,7 @@ class RouteGeometry {
     this.durationMin,
     this.distanceMeters,
     this.providerWarning,
+    this.noticeCode,
   });
 
   final String encodedPolyline;
@@ -70,14 +71,19 @@ class RouteGeometry {
   final int? durationMin;
   final int? distanceMeters;
 
-  /// e.g. Google TWO_WHEELER beta notice, or fallback explanation.
+  /// e.g. driving-geometry notice, or a fallback explanation.
   final String? providerWarning;
+
+  /// Stable code for localized copy. `DRIVING_GEOMETRY` is road-following
+  /// driving geometry and is not motorcycle-optimized.
+  final String? noticeCode;
 }
 
 class LocationProviderException implements Exception {
-  LocationProviderException(this.message, {this.isNetwork = false});
+  LocationProviderException(this.message, {this.isNetwork = false, this.code});
   final String message;
   final bool isNetwork;
+  final String? code;
 
   @override
   String toString() => message;

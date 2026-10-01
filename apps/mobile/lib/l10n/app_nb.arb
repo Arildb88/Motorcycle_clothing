@@ -93,6 +93,8 @@
   "plannerDefaultRouteName": "Turplan",
   "plannerRouteSaved": "Rute lagret",
   "plannerMapFailed": "Kartforhåndsvisning feilet",
+  "routeDrivingGeometryNotice": "Veifølgende kjøregeometri. Denne ruten er ikke motorsykkeloptimalisert.",
+  "routeRoutingUnavailable": "Veiruting er midlertidig utilgjengelig.",
   "plannerAnalysisTitle": "Turanalyse",
   "plannerAnalysisSubtitle": "Vær, eksponering og antrekk for denne planen",
   "plannerNoWearItems": "Ingen plagg å bruke ble returnert.",
