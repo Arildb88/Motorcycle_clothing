@@ -9,6 +9,7 @@ import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+import 'package:motorcycle_clothing/theme/outline_form_field.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/screens/change_password_screen.dart';
 
@@ -476,72 +477,76 @@ class _UnitsSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          // ignore: deprecated_member_use
-          value: units.temperatureUnit,
-          decoration: InputDecoration(labelText: l10n.unitsTemperature),
-          items: [
-            DropdownMenuItem(value: 'celsius', child: Text(l10n.unitCelsius)),
-            DropdownMenuItem(
-              value: 'fahrenheit',
-              child: Text(l10n.unitFahrenheit),
-            ),
-          ],
-          onChanged: (v) async {
-            if (v == null) return;
-            await units.setAll(temperatureUnit: v);
-            await onChanged();
-          },
+        OutlineFormField(
+          child: DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: units.temperatureUnit,
+            decoration: InputDecoration(labelText: l10n.unitsTemperature),
+            items: [
+              DropdownMenuItem(value: 'celsius', child: Text(l10n.unitCelsius)),
+              DropdownMenuItem(
+                value: 'fahrenheit',
+                child: Text(l10n.unitFahrenheit),
+              ),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              await units.setAll(temperatureUnit: v);
+              await onChanged();
+            },
+          ),
         ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          // ignore: deprecated_member_use
-          value: units.distanceUnit,
-          decoration: InputDecoration(labelText: l10n.unitsDistance),
-          items: [
-            DropdownMenuItem(
-              value: 'kilometer',
-              child: Text(l10n.unitKilometers),
-            ),
-            DropdownMenuItem(value: 'mile', child: Text(l10n.unitMiles)),
-          ],
-          onChanged: (v) async {
-            if (v == null) return;
-            await units.setAll(distanceUnit: v);
-            await onChanged();
-          },
+        OutlineFormField(
+          child: DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: units.distanceUnit,
+            decoration: InputDecoration(labelText: l10n.unitsDistance),
+            items: [
+              DropdownMenuItem(
+                value: 'kilometer',
+                child: Text(l10n.unitKilometers),
+              ),
+              DropdownMenuItem(value: 'mile', child: Text(l10n.unitMiles)),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              await units.setAll(distanceUnit: v);
+              await onChanged();
+            },
+          ),
         ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          // ignore: deprecated_member_use
-          value: units.speedUnit,
-          decoration: InputDecoration(labelText: l10n.unitsRidingSpeed),
-          items: [
-            DropdownMenuItem(value: 'kmh', child: Text(l10n.unitKmh)),
-            DropdownMenuItem(value: 'mph', child: Text(l10n.unitMph)),
-          ],
-          onChanged: (v) async {
-            if (v == null) return;
-            await units.setAll(speedUnit: v);
-            await onChanged();
-          },
+        OutlineFormField(
+          child: DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: units.speedUnit,
+            decoration: InputDecoration(labelText: l10n.unitsRidingSpeed),
+            items: [
+              DropdownMenuItem(value: 'kmh', child: Text(l10n.unitKmh)),
+              DropdownMenuItem(value: 'mph', child: Text(l10n.unitMph)),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              await units.setAll(speedUnit: v);
+              await onChanged();
+            },
+          ),
         ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          // ignore: deprecated_member_use
-          value: units.windSpeedUnit,
-          decoration: InputDecoration(labelText: l10n.unitsWindSpeed),
-          items: [
-            DropdownMenuItem(value: 'ms', child: Text(l10n.unitMs)),
-            DropdownMenuItem(value: 'kmh', child: Text(l10n.unitKmh)),
-            DropdownMenuItem(value: 'mph', child: Text(l10n.unitMph)),
-          ],
-          onChanged: (v) async {
-            if (v == null) return;
-            await units.setAll(windSpeedUnit: v);
-            await onChanged();
-          },
+        OutlineFormField(
+          child: DropdownButtonFormField<String>(
+            // ignore: deprecated_member_use
+            value: units.windSpeedUnit,
+            decoration: InputDecoration(labelText: l10n.unitsWindSpeed),
+            items: [
+              DropdownMenuItem(value: 'ms', child: Text(l10n.unitMs)),
+              DropdownMenuItem(value: 'kmh', child: Text(l10n.unitKmh)),
+              DropdownMenuItem(value: 'mph', child: Text(l10n.unitMph)),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              await units.setAll(windSpeedUnit: v);
+              await onChanged();
+            },
+          ),
         ),
         const SizedBox(height: 12),
       ],
