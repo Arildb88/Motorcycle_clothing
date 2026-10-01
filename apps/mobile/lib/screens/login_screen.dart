@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/screens/forgot_password_screen.dart';
+import 'package:motorcycle_clothing/services/auth_errors.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -53,7 +56,35 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  String? _validate(AppLocalizations l10n) {
+    final email = _email.text.trim();
+    final password = _password.text;
+    if (email.isEmpty || !email.contains('@')) {
+      return l10n.authInvalidEmail;
+    }
+    if (_registerMode) {
+      if (_name.text.trim().isEmpty) {
+        return l10n.authDisplayNameRequired;
+      }
+      if (password.length < 8) {
+        return l10n.authPasswordTooShort;
+      }
+    } else if (password.isEmpty) {
+      return l10n.authPasswordRequired;
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
+    final validationError = _validate(l10n);
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationError)),
+      );
+      return;
+    }
+
     setState(() => _busy = true);
     final auth = context.read<AuthState>();
     try {
@@ -69,10 +100,11 @@ class _LoginScreenState extends State<LoginScreen>
           password: _password.text,
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        final message = localizeAuthError(auth.lastError ?? e, l10n);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(auth.error ?? 'Login failed')),
+          SnackBar(content: Text(message)),
         );
       }
     } finally {
@@ -82,6 +114,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _social(String provider) async {
     setState(() => _busy = true);
+    final l10n = AppLocalizations.of(context);
     final auth = context.read<AuthState>();
     final api = context.read<ApiClient>();
     final enabled =
@@ -104,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(localizeAuthError(e, l10n))),
         );
       }
     } finally {
@@ -114,6 +147,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final fbEnabled = (_providers?['facebook'] as Map?)?['enabled'] == true;
     final msEnabled = (_providers?['microsoft'] as Map?)?['enabled'] == true;
     final demo = _providers?['demoOAuthAllowed'] == true;
@@ -130,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const BrandMark(),
                 const SizedBox(height: 8),
                 Text(
-                  'Dress for the ride — personalized across outdoor activities.',
+                  l10n.authTagline,
                   style: GoogleFonts.sourceSerif4(
                     fontSize: 18,
                     height: 1.35,
@@ -141,27 +175,49 @@ class _LoginScreenState extends State<LoginScreen>
                 if (_registerMode) ...[
                   TextField(
                     controller: _name,
-                    decoration: const InputDecoration(labelText: 'Display name'),
+                    decoration:
+                        InputDecoration(labelText: l10n.authDisplayNameLabel),
                     textCapitalization: TextCapitalization.words,
                   ),
                   const SizedBox(height: 12),
                 ],
                 TextField(
                   controller: _email,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(labelText: l10n.authEmailLabel),
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _password,
-                  decoration: const InputDecoration(labelText: 'Password'),
+                  decoration: InputDecoration(labelText: l10n.authPasswordLabel),
                   obscureText: true,
                 ),
-                const SizedBox(height: 20),
+                if (!_registerMode)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const ForgotPasswordScreen(),
+                                ),
+                              );
+                            },
+                      child: Text(l10n.authForgotPassword),
+                    ),
+                  ),
+                const SizedBox(height: 12),
                 FilledButton(
                   onPressed: _busy ? null : _submit,
-                  child: Text(_registerMode ? 'Create account' : 'Continue with email'),
+                  child: Text(
+                    _registerMode
+                        ? l10n.authCreateAccount
+                        : l10n.authContinueWithEmail,
+                  ),
                 ),
                 TextButton(
                   onPressed: _busy
@@ -169,8 +225,8 @@ class _LoginScreenState extends State<LoginScreen>
                       : () => setState(() => _registerMode = !_registerMode),
                   child: Text(
                     _registerMode
-                        ? 'Have an account? Sign in'
-                        : 'New here? Register',
+                        ? l10n.authHaveAccountSignIn
+                        : l10n.authNewHereRegister,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -180,8 +236,8 @@ class _LoginScreenState extends State<LoginScreen>
                       : () => _social('microsoft'),
                   child: Text(
                     msEnabled
-                        ? 'Continue with Microsoft'
-                        : 'Continue with Microsoft (dev)',
+                        ? l10n.authContinueMicrosoft
+                        : l10n.authContinueMicrosoftDev,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -191,16 +247,16 @@ class _LoginScreenState extends State<LoginScreen>
                       : () => _social('facebook'),
                   child: Text(
                     fbEnabled
-                        ? 'Continue with Facebook'
-                        : 'Continue with Facebook (dev)',
+                        ? l10n.authContinueFacebook
+                        : l10n.authContinueFacebookDev,
                   ),
                 ),
                 if (!fbEnabled && !msEnabled && !demo)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Social login buttons enable when Facebook/Microsoft apps are configured on the API.',
-                      style: TextStyle(fontSize: 12),
+                      l10n.authSocialLoginHint,
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
               ],

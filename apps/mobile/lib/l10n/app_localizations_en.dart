@@ -333,4 +333,121 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get plannerBackToPlanner => 'Back to planner';
+
+  @override
+  String get authTagline =>
+      'Dress for the ride — personalized across outdoor activities.';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authDisplayNameLabel => 'Display name';
+
+  @override
+  String get authContinueWithEmail => 'Continue with email';
+
+  @override
+  String get authCreateAccount => 'Create account';
+
+  @override
+  String get authHaveAccountSignIn => 'Have an account? Sign in';
+
+  @override
+  String get authNewHereRegister => 'New here? Register';
+
+  @override
+  String get authForgotPassword => 'Forgot password?';
+
+  @override
+  String get authContinueMicrosoft => 'Continue with Microsoft';
+
+  @override
+  String get authContinueMicrosoftDev => 'Continue with Microsoft (dev)';
+
+  @override
+  String get authContinueFacebook => 'Continue with Facebook';
+
+  @override
+  String get authContinueFacebookDev => 'Continue with Facebook (dev)';
+
+  @override
+  String get authSocialLoginHint =>
+      'Social login buttons enable when Facebook/Microsoft apps are configured on the API.';
+
+  @override
+  String get authEmailAlreadyRegistered =>
+      'An account with this email already exists.';
+
+  @override
+  String get authInvalidCredentials => 'Invalid email or password.';
+
+  @override
+  String get authInvalidEmail => 'Enter a valid email address.';
+
+  @override
+  String get authPasswordRequired => 'Enter your password.';
+
+  @override
+  String get authPasswordTooShort => 'Password must be at least 8 characters.';
+
+  @override
+  String get authDisplayNameRequired => 'Enter a display name.';
+
+  @override
+  String get authNetworkError =>
+      'Could not reach the server. Check your connection and try again.';
+
+  @override
+  String get authGenericFailure => 'Something went wrong. Please try again.';
+
+  @override
+  String get authForgotPasswordTitle => 'Forgot password';
+
+  @override
+  String get authForgotPasswordSubtitle =>
+      'Enter your email and we will send a reset link if an account exists.';
+
+  @override
+  String get authSendResetLink => 'Send reset link';
+
+  @override
+  String get authForgotPasswordSuccess =>
+      'If an account exists for this email, a password reset link has been sent.';
+
+  @override
+  String get authHaveResetToken => 'I already have a reset token';
+
+  @override
+  String get authResetPasswordTitle => 'Reset password';
+
+  @override
+  String get authResetPasswordSubtitle =>
+      'Paste your reset token and choose a new password.';
+
+  @override
+  String get authResetTokenLabel => 'Reset token';
+
+  @override
+  String get authNewPasswordLabel => 'New password';
+
+  @override
+  String get authConfirmPasswordLabel => 'Confirm password';
+
+  @override
+  String get authSetNewPassword => 'Set new password';
+
+  @override
+  String get authPasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get authPasswordResetSuccess =>
+      'Password updated. You can sign in now.';
+
+  @override
+  String get authInvalidResetToken =>
+      'This password reset link is invalid or has expired.';
 }

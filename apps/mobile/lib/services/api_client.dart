@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiException implements Exception {
-  ApiException(this.message, {this.statusCode});
+  ApiException(this.message, {this.statusCode, this.code});
   final String message;
   final int? statusCode;
+  final String? code;
 
   @override
   String toString() => message;
@@ -105,13 +106,38 @@ class ApiClient {
     final body = res.body.isEmpty ? '{}' : res.body;
     final decoded = jsonDecode(body);
     if (res.statusCode >= 400) {
-      final message = decoded is Map && decoded['message'] != null
-          ? (decoded['message'] is List
-                ? (decoded['message'] as List).join(', ')
-                : decoded['message'].toString())
-          : 'Request failed (${res.statusCode})';
-      throw ApiException(message, statusCode: res.statusCode);
+      final parsed = _parseError(decoded, res.statusCode);
+      throw ApiException(
+        parsed.message,
+        statusCode: res.statusCode,
+        code: parsed.code,
+      );
     }
     return decoded;
+  }
+
+  ({String message, String? code}) _parseError(dynamic decoded, int status) {
+    if (decoded is! Map) {
+      return (message: 'Request failed ($status)', code: null);
+    }
+    final map = Map<String, dynamic>.from(decoded);
+    String? code = map['code']?.toString();
+    dynamic rawMessage = map['message'];
+
+    if (rawMessage is Map) {
+      final nested = Map<String, dynamic>.from(rawMessage);
+      code ??= nested['code']?.toString();
+      rawMessage = nested['message'] ?? nested;
+    }
+
+    String message;
+    if (rawMessage is List) {
+      message = rawMessage.map((e) => e.toString()).join(', ');
+    } else if (rawMessage != null) {
+      message = rawMessage.toString();
+    } else {
+      message = 'Request failed ($status)';
+    }
+    return (message: message, code: code);
   }
 }

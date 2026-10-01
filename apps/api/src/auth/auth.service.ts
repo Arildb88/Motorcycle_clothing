@@ -2,25 +2,36 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import axios from 'axios';
+import { createHash } from 'crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { OAuthDto } from './dto/oauth.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { pkceChallenge, randomUrlSafe } from '../domain/oauth-utils';
 
 type IdentityProvider = 'facebook' | 'microsoft';
 
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+const FORGOT_PASSWORD_MESSAGE =
+  'If an account exists for this email, a password reset link has been sent.';
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
@@ -29,33 +40,201 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    const email = dto.email.toLowerCase().trim();
     const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+      where: { email },
     });
     if (existing) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException({
+        code: 'EMAIL_ALREADY_REGISTERED',
+        message: 'An account with this email already exists.',
+      });
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.users.createLocalUser({
-      email: dto.email.toLowerCase(),
-      displayName: dto.displayName,
-      passwordHash,
-    });
-    return this.tokenResponse(user.id, user.email, user.displayName);
+    try {
+      const user = await this.users.createLocalUser({
+        email,
+        displayName: dto.displayName.trim(),
+        passwordHash,
+      });
+      return this.tokenResponse(user.id, user.email, user.displayName);
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'EMAIL_ALREADY_REGISTERED',
+          message: 'An account with this email already exists.',
+        });
+      }
+      throw err;
+    }
   }
 
   async login(dto: LoginDto) {
+    const email = dto.email.toLowerCase().trim();
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase() },
+      where: { email },
     });
     if (!user?.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password.',
+      });
     }
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password.',
+      });
     }
     return this.tokenResponse(user.id, user.email, user.displayName);
+  }
+
+  /**
+   * Always returns the same generic success payload (anti-enumeration).
+   * In non-production when SMTP is not configured, includes `devResetToken`
+   * only when a reset was actually issued — never in production.
+   */
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const email = dto.email.toLowerCase().trim();
+    const generic = {
+      ok: true as const,
+      message: FORGOT_PASSWORD_MESSAGE,
+    };
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // OAuth-only accounts (no password) get the same generic response.
+    if (!user?.passwordHash) {
+      this.logger.log('Password reset requested');
+      return generic;
+    }
+
+    const rawToken = randomUrlSafe(32);
+    const tokenHash = this.hashResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id, usedAt: null },
+    });
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    let mailed = false;
+    try {
+      mailed = await this.trySendPasswordResetEmail(email, rawToken);
+    } catch {
+      // Do not reveal delivery failures or account existence to the client.
+      this.logger.warn('Password reset email delivery failed');
+      mailed = false;
+    }
+    this.logger.log(
+      mailed
+        ? 'Password reset email dispatched'
+        : 'Password reset requested (email delivery not configured)',
+    );
+
+    if (!mailed && this.allowDevResetToken()) {
+      return { ...generic, devResetToken: rawToken };
+    }
+    return generic;
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const tokenHash = this.hashResetToken(dto.token.trim());
+    const row = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+    if (!row || row.usedAt || row.expiresAt < new Date()) {
+      throw new BadRequestException({
+        code: 'INVALID_RESET_TOKEN',
+        message: 'This password reset link is invalid or has expired.',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: row.userId },
+        data: { passwordHash },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: row.id },
+        data: { usedAt: new Date() },
+      }),
+      // Invalidate any other outstanding tokens for this user.
+      this.prisma.passwordResetToken.updateMany({
+        where: { userId: row.userId, usedAt: null, id: { not: row.id } },
+        data: { usedAt: new Date() },
+      }),
+    ]);
+
+    return { ok: true as const, message: 'Password has been reset.' };
+  }
+
+  private hashResetToken(rawToken: string) {
+    return createHash('sha256').update(rawToken).digest('hex');
+  }
+
+  private allowDevResetToken() {
+    return this.config.get('NODE_ENV') !== 'production';
+  }
+
+  /** Returns true when a reset email was handed to the SMTP transport. */
+  private async trySendPasswordResetEmail(
+    email: string,
+    rawToken: string,
+  ): Promise<boolean> {
+    const smtpHost = this.config.get<string>('SMTP_HOST');
+    const mailFrom = this.config.get<string>('MAIL_FROM');
+    if (!smtpHost || !mailFrom) {
+      return false;
+    }
+
+    const nodemailer = await import('nodemailer');
+    const port = Number(this.config.get('SMTP_PORT', '587'));
+    const secure =
+      this.config.get('SMTP_SECURE') === 'true' || port === 465;
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port,
+      secure,
+      auth: this.config.get<string>('SMTP_USER')
+        ? {
+            user: this.config.get<string>('SMTP_USER'),
+            pass: this.config.get<string>('SMTP_PASS'),
+          }
+        : undefined,
+    });
+
+    const publicBase = this.config.get(
+      'PASSWORD_RESET_PUBLIC_URL',
+      'ridewear://reset-password',
+    );
+    const resetUrl = `${publicBase}?token=${encodeURIComponent(rawToken)}`;
+
+    await transporter.sendMail({
+      from: mailFrom,
+      to: email,
+      subject: 'Reset your RideWear password',
+      text: [
+        'We received a request to reset your RideWear password.',
+        '',
+        `Open this link to choose a new password (expires in 1 hour):`,
+        resetUrl,
+        '',
+        'If you did not request this, you can ignore this email.',
+      ].join('\n'),
+    });
+    return true;
   }
 
   /** Public provider capability map for Flutter login UI. */

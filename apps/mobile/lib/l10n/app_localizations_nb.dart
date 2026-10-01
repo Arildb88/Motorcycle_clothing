@@ -333,4 +333,121 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get plannerBackToPlanner => 'Tilbake til planlegger';
+
+  @override
+  String get authTagline =>
+      'Kle deg for turen — tilpasset på tvers av utendørsaktiviteter.';
+
+  @override
+  String get authEmailLabel => 'E-post';
+
+  @override
+  String get authPasswordLabel => 'Passord';
+
+  @override
+  String get authDisplayNameLabel => 'Visningsnavn';
+
+  @override
+  String get authContinueWithEmail => 'Fortsett med e-post';
+
+  @override
+  String get authCreateAccount => 'Opprett konto';
+
+  @override
+  String get authHaveAccountSignIn => 'Har du en konto? Logg inn';
+
+  @override
+  String get authNewHereRegister => 'Ny her? Registrer deg';
+
+  @override
+  String get authForgotPassword => 'Glemt passord?';
+
+  @override
+  String get authContinueMicrosoft => 'Fortsett med Microsoft';
+
+  @override
+  String get authContinueMicrosoftDev => 'Fortsett med Microsoft (dev)';
+
+  @override
+  String get authContinueFacebook => 'Fortsett med Facebook';
+
+  @override
+  String get authContinueFacebookDev => 'Fortsett med Facebook (dev)';
+
+  @override
+  String get authSocialLoginHint =>
+      'Sosiale innloggingsknapper aktiveres når Facebook/Microsoft er konfigurert på API-et.';
+
+  @override
+  String get authEmailAlreadyRegistered =>
+      'En konto med denne e-postadressen finnes allerede.';
+
+  @override
+  String get authInvalidCredentials => 'Ugyldig e-post eller passord.';
+
+  @override
+  String get authInvalidEmail => 'Skriv inn en gyldig e-postadresse.';
+
+  @override
+  String get authPasswordRequired => 'Skriv inn passordet ditt.';
+
+  @override
+  String get authPasswordTooShort => 'Passordet må være minst 8 tegn.';
+
+  @override
+  String get authDisplayNameRequired => 'Skriv inn et visningsnavn.';
+
+  @override
+  String get authNetworkError =>
+      'Kunne ikke nå serveren. Sjekk tilkoblingen og prøv igjen.';
+
+  @override
+  String get authGenericFailure => 'Noe gikk galt. Prøv igjen.';
+
+  @override
+  String get authForgotPasswordTitle => 'Glemt passord';
+
+  @override
+  String get authForgotPasswordSubtitle =>
+      'Skriv inn e-postadressen din, så sender vi en tilbakestillingslenke hvis kontoen finnes.';
+
+  @override
+  String get authSendResetLink => 'Send tilbakestillingslenke';
+
+  @override
+  String get authForgotPasswordSuccess =>
+      'Hvis det finnes en konto for denne e-postadressen, er en tilbakestillingslenke sendt.';
+
+  @override
+  String get authHaveResetToken => 'Jeg har allerede en tilbakestillingskode';
+
+  @override
+  String get authResetPasswordTitle => 'Tilbakestill passord';
+
+  @override
+  String get authResetPasswordSubtitle =>
+      'Lim inn tilbakestillingskoden og velg et nytt passord.';
+
+  @override
+  String get authResetTokenLabel => 'Tilbakestillingskode';
+
+  @override
+  String get authNewPasswordLabel => 'Nytt passord';
+
+  @override
+  String get authConfirmPasswordLabel => 'Bekreft passord';
+
+  @override
+  String get authSetNewPassword => 'Sett nytt passord';
+
+  @override
+  String get authPasswordMismatch => 'Passordene er ikke like.';
+
+  @override
+  String get authPasswordResetSuccess =>
+      'Passordet er oppdatert. Du kan logge inn nå.';
+
+  @override
+  String get authInvalidResetToken =>
+      'Denne tilbakestillingslenken er ugyldig eller har utløpt.';
 }
