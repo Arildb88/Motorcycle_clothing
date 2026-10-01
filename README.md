@@ -144,6 +144,12 @@ Generated folders you can ignore: `node_modules/`, `build/`, `.dart_tool/`, `app
 5. In the same **SDK Manager → SDK Tools** screen, note that **NDK (Side by side) → Installed** only means that *an* NDK version is installed; it does **not** guarantee RideWear's required version is present. Check **Show Package Details** at the bottom-right, expand **NDK (Side by side)**, select **28.2.13676358**, then click **Apply → OK** and let Android Studio finish. RideWear's Android build currently requires this exact NDK version. Verify it in PowerShell with `Test-Path "$env:LOCALAPPDATA\\Android\\Sdk\\ndk\\28.2.13676358"` — it should return `True`.
 6. Create an Android Virtual Device in **Device Manager** and start it before running the Flutter app.
 7. Run `flutter doctor`. Resolve Android-toolchain errors before continuing. With newer Android CLI versions, `flutter doctor --android-licenses` may report that `--licenses` is no longer needed; that message is informational.
+8. If Android builds fail with Kotlin errors such as `Could not close incremental caches`, add the following to `apps/mobile/android/gradle.properties`, then run `flutter clean`, `flutter pub get`, and `flutter run` again:
+
+```properties
+kotlin.incremental=false
+kotlin.compiler.execution.strategy=in-process
+```
 
 Expected NDK location with the default Windows Android SDK path:
 
@@ -165,6 +171,8 @@ flutter devices
 `flutter doctor` should report **No issues found** (or at minimum a healthy Android toolchain), and `flutter devices` should list your running Android emulator before you try the mobile app.
 
 > **Note:** `npm WARN deprecated ...` during `npm install` and Flutter messages such as `packages have newer versions incompatible with dependency constraints` are warnings, not installation failures. Do not force-upgrade dependencies during first-time setup.
+>
+> **Java / `gradlew` on Windows:** Flutter/Android Studio can use Android Studio's bundled JDK even when PowerShell has no `JAVA_HOME`. If you run `apps/mobile/android/gradlew` directly and get `JAVA_HOME is not set and no 'java' command could be found in your PATH`, configure `JAVA_HOME`/PATH to a compatible JDK (the project currently targets Java 17), or use the normal Flutter commands instead.
 
 ---
 
@@ -443,6 +451,8 @@ flutter build apk --debug
 | `DATABASE_URL` / env missing | `npm run setup:env` in `apps/api` |
 | Port 3000 in use | Stop the other process, or set `PORT=3001` in `.env` and point Flutter `API_BASE_URL` at that port |
 | `flutter_secure_storage` / Android SDK 37 | Current `dev` bumps the plugin for SDK 37 lookup — pull latest `dev` rather than renaming SDK folders |
+| Kotlin incremental-cache build failure (`Could not close incremental caches`) | In `apps/mobile/android/gradle.properties`, set `kotlin.incremental=false` and `kotlin.compiler.execution.strategy=in-process`; then `flutter clean`, `flutter pub get`, `flutter run` |
+| Direct `gradlew` says `JAVA_HOME is not set` | Flutter may still build via Android Studio's bundled JDK. Configure `JAVA_HOME`/PATH to a compatible JDK if direct Gradle commands are needed |
 | Kotlin / `flutter_web_auth_2` warnings | Often non-blocking; fix only if the build fails |
 | Duplicate Android emulator path warning | An `emulator` backup/copy can confuse the SDK; investigate before deleting |
 | “RideWear isn’t responding” on first launch | First emulator/Gradle run can be slow; persistent ANR should be reported, not ignored |
