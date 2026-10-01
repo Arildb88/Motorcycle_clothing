@@ -450,4 +450,29 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get authInvalidResetToken =>
       'Denne tilbakestillingslenken er ugyldig eller har utløpt.';
+
+  @override
+  String get authChangePassword => 'Endre passord';
+
+  @override
+  String get authChangePasswordTitle => 'Endre passord';
+
+  @override
+  String get authChangePasswordSubtitle =>
+      'Skriv inn nåværende passord, og velg deretter et nytt.';
+
+  @override
+  String get authCurrentPasswordLabel => 'Nåværende passord';
+
+  @override
+  String get authCurrentPasswordRequired => 'Skriv inn nåværende passord.';
+
+  @override
+  String get authInvalidCurrentPassword => 'Nåværende passord er feil.';
+
+  @override
+  String get authNoLocalPassword => 'Denne kontoen bruker ikke passord.';
+
+  @override
+  String get authPasswordChanged => 'Passordet er oppdatert.';
 }

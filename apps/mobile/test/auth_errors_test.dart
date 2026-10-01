@@ -50,6 +50,31 @@ void main() {
     );
   });
 
+  test('maps change-password errors', () {
+    expect(
+      localizeAuthError(
+        ApiException(
+          'Current password is incorrect.',
+          statusCode: 401,
+          code: 'INVALID_CURRENT_PASSWORD',
+        ),
+        en,
+      ),
+      'Current password is incorrect.',
+    );
+    expect(
+      localizeAuthError(
+        ApiException(
+          'This account does not use a password.',
+          statusCode: 400,
+          code: 'NO_LOCAL_PASSWORD',
+        ),
+        nb,
+      ),
+      'Denne kontoen bruker ikke passord.',
+    );
+  });
+
   test('maps invalid reset token', () {
     expect(
       localizeAuthError(

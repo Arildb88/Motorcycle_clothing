@@ -133,5 +133,13 @@
   "authSetNewPassword": "Sett nytt passord",
   "authPasswordMismatch": "Passordene er ikke like.",
   "authPasswordResetSuccess": "Passordet er oppdatert. Du kan logge inn nå.",
-  "authInvalidResetToken": "Denne tilbakestillingslenken er ugyldig eller har utløpt."
+  "authInvalidResetToken": "Denne tilbakestillingslenken er ugyldig eller har utløpt.",
+  "authChangePassword": "Endre passord",
+  "authChangePasswordTitle": "Endre passord",
+  "authChangePasswordSubtitle": "Skriv inn nåværende passord, og velg deretter et nytt.",
+  "authCurrentPasswordLabel": "Nåværende passord",
+  "authCurrentPasswordRequired": "Skriv inn nåværende passord.",
+  "authInvalidCurrentPassword": "Nåværende passord er feil.",
+  "authNoLocalPassword": "Denne kontoen bruker ikke passord.",
+  "authPasswordChanged": "Passordet er oppdatert."
 }

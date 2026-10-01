@@ -901,6 +901,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This password reset link is invalid or has expired.'**
   String get authInvalidResetToken;
+
+  /// No description provided for @authChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get authChangePassword;
+
+  /// No description provided for @authChangePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get authChangePasswordTitle;
+
+  /// No description provided for @authChangePasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current password, then choose a new one.'**
+  String get authChangePasswordSubtitle;
+
+  /// No description provided for @authCurrentPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get authCurrentPasswordLabel;
+
+  /// No description provided for @authCurrentPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current password.'**
+  String get authCurrentPasswordRequired;
+
+  /// No description provided for @authInvalidCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password is incorrect.'**
+  String get authInvalidCurrentPassword;
+
+  /// No description provided for @authNoLocalPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'This account does not use a password.'**
+  String get authNoLocalPassword;
+
+  /// No description provided for @authPasswordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated.'**
+  String get authPasswordChanged;
 }
 
 class _AppLocalizationsDelegate

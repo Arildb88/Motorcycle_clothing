@@ -450,4 +450,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authInvalidResetToken =>
       'This password reset link is invalid or has expired.';
+
+  @override
+  String get authChangePassword => 'Change password';
+
+  @override
+  String get authChangePasswordTitle => 'Change password';
+
+  @override
+  String get authChangePasswordSubtitle =>
+      'Enter your current password, then choose a new one.';
+
+  @override
+  String get authCurrentPasswordLabel => 'Current password';
+
+  @override
+  String get authCurrentPasswordRequired => 'Enter your current password.';
+
+  @override
+  String get authInvalidCurrentPassword => 'Current password is incorrect.';
+
+  @override
+  String get authNoLocalPassword => 'This account does not use a password.';
+
+  @override
+  String get authPasswordChanged => 'Password updated.';
 }

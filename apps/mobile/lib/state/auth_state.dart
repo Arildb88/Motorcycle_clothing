@@ -110,6 +110,20 @@ class AuthState extends ChangeNotifier {
     });
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await api.post(
+      '/auth/change-password',
+      {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+      auth: true,
+    );
+  }
+
   Future<void> acceptAuthResponse(Map<String, dynamic> res) async {
     await _acceptAuth(res);
   }

@@ -10,6 +10,7 @@ import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/screens/change_password_screen.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -266,6 +267,23 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           FilledButton(onPressed: _saveBasics, child: const Text('Save profile')),
           const SizedBox(height: 16),
           Text('ACCOUNT', style: _sectionStyle),
+          if (identities.any(
+            (raw) =>
+                raw is Map && raw['provider']?.toString() == 'local',
+          ))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
+                    ),
+                  );
+                },
+                child: Text(AppLocalizations.of(context).authChangePassword),
+              ),
+            ),
           FilledButton.tonal(
             onPressed: () async => auth.logout(),
             child: const Text('Sign out'),
@@ -476,6 +494,7 @@ class _UnitsSection extends StatelessWidget {
             await onChanged();
           },
         ),
+        const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           // ignore: deprecated_member_use
           value: units.distanceUnit,
@@ -493,6 +512,7 @@ class _UnitsSection extends StatelessWidget {
             await onChanged();
           },
         ),
+        const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           // ignore: deprecated_member_use
           value: units.speedUnit,
@@ -507,6 +527,7 @@ class _UnitsSection extends StatelessWidget {
             await onChanged();
           },
         ),
+        const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           // ignore: deprecated_member_use
           value: units.windSpeedUnit,

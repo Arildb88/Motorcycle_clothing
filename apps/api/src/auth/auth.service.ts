@@ -18,6 +18,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { OAuthDto } from './dto/oauth.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { pkceChallenge, randomUrlSafe } from '../domain/oauth-utils';
@@ -178,6 +179,30 @@ export class AuthService {
     ]);
 
     return { ok: true as const, message: 'Password has been reset.' };
+  }
+
+  /** Authenticated password change. Does not use reset tokens. */
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.passwordHash) {
+      throw new BadRequestException({
+        code: 'NO_LOCAL_PASSWORD',
+        message: 'This account does not use a password.',
+      });
+    }
+    const matches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedException({
+        code: 'INVALID_CURRENT_PASSWORD',
+        message: 'Current password is incorrect.',
+      });
+    }
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+    return { ok: true as const, message: 'Password has been changed.' };
   }
 
   private hashResetToken(rawToken: string) {
