@@ -141,7 +141,7 @@ Generated folders you can ignore: `node_modules/`, `build/`, `.dart_tool/`, `app
 2. **Install Flutter SDK** and add `<flutter-sdk>\bin` to your user PATH. Close/reopen the terminal/IDE.
 3. **Install Android Studio** with the Android SDK and Android Emulator.
 4. In Android Studio open **SDK Manager → SDK Tools** and install **Android SDK Command-line Tools (latest)**.
-5. In the same SDK Tools screen enable **Show Package Details**, expand **NDK (Side by side)**, and install **NDK 28.2.13676358**. RideWear's Android build currently requires this exact NDK version.
+5. In the same **SDK Manager → SDK Tools** screen, note that **NDK (Side by side) → Installed** only means that *an* NDK version is installed; it does **not** guarantee RideWear's required version is present. Check **Show Package Details** at the bottom-right, expand **NDK (Side by side)**, select **28.2.13676358**, then click **Apply → OK** and let Android Studio finish. RideWear's Android build currently requires this exact NDK version. Verify it in PowerShell with `Test-Path "$env:LOCALAPPDATA\\Android\\Sdk\\ndk\\28.2.13676358"` — it should return `True`.
 6. Create an Android Virtual Device in **Device Manager** and start it before running the Flutter app.
 7. Run `flutter doctor`. Resolve Android-toolchain errors before continuing. With newer Android CLI versions, `flutter doctor --android-licenses` may report that `--licenses` is no longer needed; that message is informational.
 
