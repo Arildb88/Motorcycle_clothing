@@ -31,8 +31,8 @@ The route is **driving-car geometry**. It is not motorcycle-optimized, not turn-
 ## PR / commit
 
 - Branch: `feature/ors-routing-v1` from `dev_test` (`310dc77`)
-- Commit: recorded in git history on this branch
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- Commit: `883bb55` — feat(routing): add HeiGIT road-following routes behind the API
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/21 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Required manual configuration
 
