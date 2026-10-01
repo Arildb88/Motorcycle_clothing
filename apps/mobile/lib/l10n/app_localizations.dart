@@ -961,6 +961,1206 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password updated.'**
   String get authPasswordChanged;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commonCancel;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @commonSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get commonSave;
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get commonContinue;
+
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @commonRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get commonRemove;
+
+  /// No description provided for @commonNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get commonNone;
+
+  /// No description provided for @commonCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get commonCustom;
+
+  /// No description provided for @commonName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get commonName;
+
+  /// No description provided for @commonCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get commonCategory;
+
+  /// No description provided for @commonFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get commonFavorite;
+
+  /// No description provided for @commonUnfavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfavorite'**
+  String get commonUnfavorite;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorGeneric;
+
+  /// No description provided for @errorCouldNotLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this. Try again.'**
+  String get errorCouldNotLoad;
+
+  /// No description provided for @currentLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Current location'**
+  String get currentLocation;
+
+  /// No description provided for @labelStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get labelStart;
+
+  /// No description provided for @labelDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination'**
+  String get labelDestination;
+
+  /// No description provided for @labelEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get labelEnd;
+
+  /// No description provided for @waypointStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop {index}'**
+  String waypointStop(int index);
+
+  /// No description provided for @routeLoopSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} · loop · {count} stops'**
+  String routeLoopSummary(String start, int count);
+
+  /// No description provided for @routeViaSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} → … → {end} ({count})'**
+  String routeViaSummary(String start, String end, int count);
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'~{minutes} min'**
+  String durationMinutes(int minutes);
+
+  /// No description provided for @durationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'~{hours} h'**
+  String durationHours(int hours);
+
+  /// No description provided for @durationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'~{hours} h {minutes} m'**
+  String durationHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @homePlanNewChip.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Plan new'**
+  String get homePlanNewChip;
+
+  /// No description provided for @homeSaveRouteChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a route'**
+  String get homeSaveRouteChip;
+
+  /// No description provided for @homeHowWasTheRide.
+  ///
+  /// In en, this message translates to:
+  /// **'How was the ride?'**
+  String get homeHowWasTheRide;
+
+  /// No description provided for @homeFallbackRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride'**
+  String get homeFallbackRide;
+
+  /// No description provided for @metricTemp.
+  ///
+  /// In en, this message translates to:
+  /// **'Temp'**
+  String get metricTemp;
+
+  /// No description provided for @metricExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Exposure'**
+  String get metricExposure;
+
+  /// No description provided for @metricRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain'**
+  String get metricRain;
+
+  /// No description provided for @metricWind.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind'**
+  String get metricWind;
+
+  /// No description provided for @kitNotOwned.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (not owned)'**
+  String kitNotOwned(String name);
+
+  /// No description provided for @kitFallbackItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get kitFallbackItem;
+
+  /// No description provided for @confidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get confidenceHigh;
+
+  /// No description provided for @confidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get confidenceMedium;
+
+  /// No description provided for @confidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get confidenceLow;
+
+  /// No description provided for @configInstallThermalLiner.
+  ///
+  /// In en, this message translates to:
+  /// **'install thermal liner'**
+  String get configInstallThermalLiner;
+
+  /// No description provided for @configInstallWaterproofLiner.
+  ///
+  /// In en, this message translates to:
+  /// **'install waterproof liner'**
+  String get configInstallWaterproofLiner;
+
+  /// No description provided for @configRemoveThermalLiner.
+  ///
+  /// In en, this message translates to:
+  /// **'remove thermal liner'**
+  String get configRemoveThermalLiner;
+
+  /// No description provided for @configVentsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'vents open'**
+  String get configVentsOpen;
+
+  /// No description provided for @configVentsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'vents closed'**
+  String get configVentsClosed;
+
+  /// No description provided for @routesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved routes'**
+  String get routesTitle;
+
+  /// No description provided for @routesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reusable templates for motorcycle. Weather and kit are always recalculated when you launch a ride.'**
+  String get routesSubtitle;
+
+  /// No description provided for @routesEditTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit route template'**
+  String get routesEditTemplate;
+
+  /// No description provided for @routesDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete route?'**
+  String get routesDeleteTitle;
+
+  /// No description provided for @routesDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” will be removed. Past rides keep their route snapshot.'**
+  String routesDeleteBody(String name);
+
+  /// No description provided for @profileSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileSection;
+
+  /// No description provided for @profileDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get profileDisplayName;
+
+  /// No description provided for @profileAvatarInitials.
+  ///
+  /// In en, this message translates to:
+  /// **'Avatar: initials for now'**
+  String get profileAvatarInitials;
+
+  /// No description provided for @profileAvatarProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'provider image available'**
+  String get profileAvatarProvider;
+
+  /// No description provided for @profileActivitySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get profileActivitySection;
+
+  /// No description provided for @profileDefaultActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Default activity'**
+  String get profileDefaultActivity;
+
+  /// No description provided for @profileShowChooser.
+  ///
+  /// In en, this message translates to:
+  /// **'Show activity chooser at startup'**
+  String get profileShowChooser;
+
+  /// No description provided for @profileLoginMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected login methods'**
+  String get profileLoginMethods;
+
+  /// No description provided for @profileLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get profileLinked;
+
+  /// No description provided for @profileConnectFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Facebook login'**
+  String get profileConnectFacebook;
+
+  /// No description provided for @profileConnectMicrosoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Microsoft login'**
+  String get profileConnectMicrosoft;
+
+  /// No description provided for @profileServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected services'**
+  String get profileServices;
+
+  /// No description provided for @profileConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get profileConnected;
+
+  /// No description provided for @profileSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get profileSync;
+
+  /// No description provided for @profileDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get profileDisconnect;
+
+  /// No description provided for @profileConnectStrava.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Strava'**
+  String get profileConnectStrava;
+
+  /// No description provided for @profileStravaNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Strava is not set up on the server yet.'**
+  String get profileStravaNotConfigured;
+
+  /// No description provided for @profileSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save profile'**
+  String get profileSave;
+
+  /// No description provided for @profileAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileAccount;
+
+  /// No description provided for @profileSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get profileSignOut;
+
+  /// No description provided for @profileDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get profileDeleteAccount;
+
+  /// No description provided for @profileDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account?'**
+  String get profileDeleteTitle;
+
+  /// No description provided for @profileDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your RideWear account, wardrobe, and history.'**
+  String get profileDeleteBody;
+
+  /// No description provided for @profileDemoLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up Facebook or Microsoft on the server to link them to this account.'**
+  String get profileDemoLinkHint;
+
+  /// No description provided for @profileLoginFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get profileLoginFallback;
+
+  /// No description provided for @activityMotorcycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle'**
+  String get activityMotorcycle;
+
+  /// No description provided for @activityHiking.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiking'**
+  String get activityHiking;
+
+  /// No description provided for @activityCycling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycling'**
+  String get activityCycling;
+
+  /// No description provided for @activityWhatToday.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you doing today?'**
+  String get activityWhatToday;
+
+  /// No description provided for @activityDefaultLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {activity}'**
+  String activityDefaultLine(String activity);
+
+  /// No description provided for @activityDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'DEFAULT'**
+  String get activityDefaultBadge;
+
+  /// No description provided for @activitySoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Soon'**
+  String get activitySoon;
+
+  /// No description provided for @activityChooserHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing today’s activity does not change your saved default.'**
+  String get activityChooserHint;
+
+  /// No description provided for @onboardingInterests.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you ride or move for?'**
+  String get onboardingInterests;
+
+  /// No description provided for @onboardingOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'How should RideWear open?'**
+  String get onboardingOpen;
+
+  /// No description provided for @onboardingTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'How do you feel temperature?'**
+  String get onboardingTemperature;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start RideWear'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingComingLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommendations coming later'**
+  String get onboardingComingLater;
+
+  /// No description provided for @onboardingShowChooser.
+  ///
+  /// In en, this message translates to:
+  /// **'Show activity chooser when I open RideWear'**
+  String get onboardingShowChooser;
+
+  /// No description provided for @onboardingCold.
+  ///
+  /// In en, this message translates to:
+  /// **'I get cold easily'**
+  String get onboardingCold;
+
+  /// No description provided for @onboardingAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get onboardingAverage;
+
+  /// No description provided for @onboardingWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'I usually run warm'**
+  String get onboardingWarm;
+
+  /// No description provided for @activityComingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'{activity} recommendations are coming next.'**
+  String activityComingNext(String activity);
+
+  /// No description provided for @activitySharedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile and wardrobe are already shared across activities. Motorcycle recommendations are available today.'**
+  String get activitySharedBody;
+
+  /// No description provided for @activityOpenMotorcycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Motorcycle today'**
+  String get activityOpenMotorcycle;
+
+  /// No description provided for @activityMakeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Make {activity} my default'**
+  String activityMakeDefault(String activity);
+
+  /// No description provided for @activityNowDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'{activity} set as default'**
+  String activityNowDefault(String activity);
+
+  /// No description provided for @wardrobeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Add what you actually own. Category sets sensible defaults — refine later.'**
+  String get wardrobeIntro;
+
+  /// No description provided for @wardrobeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No garments yet'**
+  String get wardrobeEmptyTitle;
+
+  /// No description provided for @wardrobeEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a few pieces you ride in, or load a demo kit for testing.'**
+  String get wardrobeEmptyBody;
+
+  /// No description provided for @wardrobeAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add garment'**
+  String get wardrobeAdd;
+
+  /// No description provided for @wardrobeLoadDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Load demo motorcycle wardrobe'**
+  String get wardrobeLoadDemo;
+
+  /// No description provided for @wardrobeDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete garment?'**
+  String get wardrobeDeleteTitle;
+
+  /// No description provided for @wardrobeDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove “{name}” from your wardrobe.'**
+  String wardrobeDeleteBody(String name);
+
+  /// No description provided for @garmentEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit garment'**
+  String get garmentEditTitle;
+
+  /// No description provided for @garmentUpdatePiece.
+  ///
+  /// In en, this message translates to:
+  /// **'Update kit piece'**
+  String get garmentUpdatePiece;
+
+  /// No description provided for @garmentKeepSimple.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it simple'**
+  String get garmentKeepSimple;
+
+  /// No description provided for @garmentNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Dainese Carve Master'**
+  String get garmentNameHint;
+
+  /// No description provided for @garmentQuickType.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick type (optional)'**
+  String get garmentQuickType;
+
+  /// No description provided for @garmentMaterial.
+  ///
+  /// In en, this message translates to:
+  /// **'Material'**
+  String get garmentMaterial;
+
+  /// No description provided for @garmentUnspecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Unspecified'**
+  String get garmentUnspecified;
+
+  /// No description provided for @garmentVentilation.
+  ///
+  /// In en, this message translates to:
+  /// **'Has ventilation'**
+  String get garmentVentilation;
+
+  /// No description provided for @garmentVentilationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Open or closed is chosen per ride later'**
+  String get garmentVentilationHint;
+
+  /// No description provided for @garmentHeated.
+  ///
+  /// In en, this message translates to:
+  /// **'Heated'**
+  String get garmentHeated;
+
+  /// No description provided for @garmentThermalLiner.
+  ///
+  /// In en, this message translates to:
+  /// **'Thermal liner included'**
+  String get garmentThermalLiner;
+
+  /// No description provided for @garmentThermalLinerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Same jacket — the liner can be installed, it is not a second item'**
+  String get garmentThermalLinerHint;
+
+  /// No description provided for @garmentWaterproofLiner.
+  ///
+  /// In en, this message translates to:
+  /// **'Waterproof liner included'**
+  String get garmentWaterproofLiner;
+
+  /// No description provided for @garmentBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand (optional)'**
+  String get garmentBrand;
+
+  /// No description provided for @garmentModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model (optional)'**
+  String get garmentModel;
+
+  /// No description provided for @garmentMoreDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'More details'**
+  String get garmentMoreDetails;
+
+  /// No description provided for @garmentMoreDetailsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust warmth and weather properties'**
+  String get garmentMoreDetailsHint;
+
+  /// No description provided for @garmentNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get garmentNotes;
+
+  /// No description provided for @garmentSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get garmentSaveChanges;
+
+  /// No description provided for @garmentAddToWardrobe.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to wardrobe'**
+  String get garmentAddToWardrobe;
+
+  /// No description provided for @garmentNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get garmentNameRequired;
+
+  /// No description provided for @tierWarmth.
+  ///
+  /// In en, this message translates to:
+  /// **'Warmth'**
+  String get tierWarmth;
+
+  /// No description provided for @tierWind.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind resistance'**
+  String get tierWind;
+
+  /// No description provided for @tierWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Waterproofness'**
+  String get tierWater;
+
+  /// No description provided for @tierBreath.
+  ///
+  /// In en, this message translates to:
+  /// **'Breathability'**
+  String get tierBreath;
+
+  /// No description provided for @garmentLiners.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} liner(s)'**
+  String garmentLiners(int count);
+
+  /// No description provided for @garmentVents.
+  ///
+  /// In en, this message translates to:
+  /// **'vents'**
+  String get garmentVents;
+
+  /// No description provided for @garmentHeatedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'heated'**
+  String get garmentHeatedShort;
+
+  /// No description provided for @catBaseLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Base layer'**
+  String get catBaseLayer;
+
+  /// No description provided for @catMidLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Mid layer'**
+  String get catMidLayer;
+
+  /// No description provided for @catShellJacket.
+  ///
+  /// In en, this message translates to:
+  /// **'Shell jacket'**
+  String get catShellJacket;
+
+  /// No description provided for @catPants.
+  ///
+  /// In en, this message translates to:
+  /// **'Pants'**
+  String get catPants;
+
+  /// No description provided for @catOnePieceSuit.
+  ///
+  /// In en, this message translates to:
+  /// **'One-piece suit'**
+  String get catOnePieceSuit;
+
+  /// No description provided for @catGloves.
+  ///
+  /// In en, this message translates to:
+  /// **'Gloves'**
+  String get catGloves;
+
+  /// No description provided for @catBoots.
+  ///
+  /// In en, this message translates to:
+  /// **'Boots'**
+  String get catBoots;
+
+  /// No description provided for @catSocks.
+  ///
+  /// In en, this message translates to:
+  /// **'Socks'**
+  String get catSocks;
+
+  /// No description provided for @catHeadwear.
+  ///
+  /// In en, this message translates to:
+  /// **'Headwear'**
+  String get catHeadwear;
+
+  /// No description provided for @catNeckwear.
+  ///
+  /// In en, this message translates to:
+  /// **'Neckwear'**
+  String get catNeckwear;
+
+  /// No description provided for @catHeatedVest.
+  ///
+  /// In en, this message translates to:
+  /// **'Heated vest'**
+  String get catHeatedVest;
+
+  /// No description provided for @catRainLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain layer'**
+  String get catRainLayer;
+
+  /// No description provided for @matTextile.
+  ///
+  /// In en, this message translates to:
+  /// **'Textile'**
+  String get matTextile;
+
+  /// No description provided for @matLeather.
+  ///
+  /// In en, this message translates to:
+  /// **'Leather'**
+  String get matLeather;
+
+  /// No description provided for @matMesh.
+  ///
+  /// In en, this message translates to:
+  /// **'Mesh'**
+  String get matMesh;
+
+  /// No description provided for @matDenim.
+  ///
+  /// In en, this message translates to:
+  /// **'Denim'**
+  String get matDenim;
+
+  /// No description provided for @matSynthetic.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthetic'**
+  String get matSynthetic;
+
+  /// No description provided for @matMerino.
+  ///
+  /// In en, this message translates to:
+  /// **'Merino'**
+  String get matMerino;
+
+  /// No description provided for @matMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed'**
+  String get matMixed;
+
+  /// No description provided for @matOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get matOther;
+
+  /// No description provided for @presetTextileJacket.
+  ///
+  /// In en, this message translates to:
+  /// **'Textile motorcycle jacket'**
+  String get presetTextileJacket;
+
+  /// No description provided for @presetMeshJacket.
+  ///
+  /// In en, this message translates to:
+  /// **'Mesh / summer jacket'**
+  String get presetMeshJacket;
+
+  /// No description provided for @presetLeatherJacket.
+  ///
+  /// In en, this message translates to:
+  /// **'Leather motorcycle jacket'**
+  String get presetLeatherJacket;
+
+  /// No description provided for @presetTextilePants.
+  ///
+  /// In en, this message translates to:
+  /// **'Textile motorcycle pants'**
+  String get presetTextilePants;
+
+  /// No description provided for @presetMotorcycleJeans.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle jeans'**
+  String get presetMotorcycleJeans;
+
+  /// No description provided for @presetOnePieceSuit.
+  ///
+  /// In en, this message translates to:
+  /// **'One-piece suit'**
+  String get presetOnePieceSuit;
+
+  /// No description provided for @presetSummerGloves.
+  ///
+  /// In en, this message translates to:
+  /// **'Summer gloves'**
+  String get presetSummerGloves;
+
+  /// No description provided for @presetWinterGloves.
+  ///
+  /// In en, this message translates to:
+  /// **'Winter gloves'**
+  String get presetWinterGloves;
+
+  /// No description provided for @presetHeatedGloves.
+  ///
+  /// In en, this message translates to:
+  /// **'Heated gloves'**
+  String get presetHeatedGloves;
+
+  /// No description provided for @routeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New route'**
+  String get routeNew;
+
+  /// No description provided for @routeEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit route'**
+  String get routeEdit;
+
+  /// No description provided for @routeNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Work 1, Sunday loop…'**
+  String get routeNameHint;
+
+  /// No description provided for @routeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get routeDescription;
+
+  /// No description provided for @routeFavoriteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows first on the motorcycle home screen'**
+  String get routeFavoriteHint;
+
+  /// No description provided for @routeSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get routeSection;
+
+  /// No description provided for @routeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for places — you do not need to enter coordinates.'**
+  String get routeSearchHint;
+
+  /// No description provided for @routeAdvancedCoords.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced: coordinates'**
+  String get routeAdvancedCoords;
+
+  /// No description provided for @routeAdvancedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer / fallback only'**
+  String get routeAdvancedHint;
+
+  /// No description provided for @coordLatitude.
+  ///
+  /// In en, this message translates to:
+  /// **'{role} latitude'**
+  String coordLatitude(String role);
+
+  /// No description provided for @coordLongitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get coordLongitude;
+
+  /// No description provided for @coordApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply coordinates'**
+  String get coordApply;
+
+  /// No description provided for @routeCatWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get routeCatWork;
+
+  /// No description provided for @routeCatCommute.
+  ///
+  /// In en, this message translates to:
+  /// **'Commute'**
+  String get routeCatCommute;
+
+  /// No description provided for @routeCatHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get routeCatHome;
+
+  /// No description provided for @routeCatWeekend.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekend'**
+  String get routeCatWeekend;
+
+  /// No description provided for @routeCatTouring.
+  ///
+  /// In en, this message translates to:
+  /// **'Touring'**
+  String get routeCatTouring;
+
+  /// No description provided for @routeCatFavourite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite'**
+  String get routeCatFavourite;
+
+  /// No description provided for @routeCatCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get routeCatCustom;
+
+  /// No description provided for @mapSelectEndpoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Select start and destination to preview the route'**
+  String get mapSelectEndpoints;
+
+  /// No description provided for @placeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search place or address'**
+  String get placeSearchHint;
+
+  /// No description provided for @placeNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No places found'**
+  String get placeNoResults;
+
+  /// No description provided for @placeSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Place search failed'**
+  String get placeSearchFailed;
+
+  /// No description provided for @placeSearchUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Place search is temporarily unavailable.'**
+  String get placeSearchUnavailable;
+
+  /// No description provided for @routeStraightSegmentsNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview uses straight segments because road routing is not available.'**
+  String get routeStraightSegmentsNotice;
+
+  /// No description provided for @plannerCouldNotSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the route for analysis.'**
+  String get plannerCouldNotSave;
+
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How did the kit feel?'**
+  String get feedbackTitle;
+
+  /// No description provided for @feedbackTooCold.
+  ///
+  /// In en, this message translates to:
+  /// **'Too cold'**
+  String get feedbackTooCold;
+
+  /// No description provided for @feedbackSlightlyCold.
+  ///
+  /// In en, this message translates to:
+  /// **'Slightly cold'**
+  String get feedbackSlightlyCold;
+
+  /// No description provided for @feedbackJustRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Just right'**
+  String get feedbackJustRight;
+
+  /// No description provided for @feedbackSlightlyWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Slightly warm'**
+  String get feedbackSlightlyWarm;
+
+  /// No description provided for @feedbackTooWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Too warm'**
+  String get feedbackTooWarm;
+
+  /// No description provided for @feedbackSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit feedback'**
+  String get feedbackSubmit;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — comfort profile updated'**
+  String get feedbackThanks;
+
+  /// No description provided for @analysisTempChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Temp {value}'**
+  String analysisTempChip(String value);
+
+  /// No description provided for @analysisRainChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain {value}'**
+  String analysisRainChip(String value);
+
+  /// No description provided for @analysisWindChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind {value}'**
+  String analysisWindChip(String value);
+
+  /// No description provided for @routeCoordsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates must be valid numbers.'**
+  String get routeCoordsInvalid;
+
+  /// No description provided for @routeEditorIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name and choose a place for start and destination.'**
+  String get routeEditorIncomplete;
+
+  /// No description provided for @coordCustomPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom point'**
+  String get coordCustomPoint;
 }
 
 class _AppLocalizationsDelegate

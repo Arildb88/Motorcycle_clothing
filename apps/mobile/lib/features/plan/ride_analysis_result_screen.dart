@@ -53,19 +53,25 @@ class RideAnalysisResultScreen extends StatelessWidget {
               if (weather['minTempC'] != null && weather['maxTempC'] != null)
                 Chip(
                   label: Text(
-                    'Temp ${(weather['minTempC'] as num).toStringAsFixed(0)}–${(weather['maxTempC'] as num).toStringAsFixed(0)}°C',
+                    l10n.analysisTempChip(
+                      '${(weather['minTempC'] as num).toStringAsFixed(0)}–${(weather['maxTempC'] as num).toStringAsFixed(0)}°C',
+                    ),
                   ),
                 ),
               if (weather['maxRainProbPct'] != null)
                 Chip(
                   label: Text(
-                    'Rain ${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
+                    l10n.analysisRainChip(
+                      '${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
+                    ),
                   ),
                 ),
               if (weather['maxWindMs'] != null)
                 Chip(
                   label: Text(
-                    'Wind ${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
+                    l10n.analysisWindChip(
+                      '${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
+                    ),
                   ),
                 ),
             ],

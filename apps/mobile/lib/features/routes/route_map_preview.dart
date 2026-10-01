@@ -30,7 +30,8 @@ class RouteMapPreview extends StatelessWidget {
     final points = (geometry?.points.isNotEmpty ?? false)
         ? geometry!.points
         : waypoints;
-    final notice = localizedRouteNotice(AppLocalizations.of(context), geometry);
+    final l10n = AppLocalizations.of(context);
+    final notice = localizedRouteNotice(l10n, geometry);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -45,7 +46,7 @@ class RouteMapPreview extends StatelessWidget {
                 child: points.length < 2
                     ? Center(
                         child: Text(
-                          'Select start and destination to preview the route',
+                          l10n.mapSelectEndpoints,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppTheme.steel.withValues(alpha: 0.9),

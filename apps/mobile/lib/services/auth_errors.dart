@@ -43,11 +43,6 @@ String localizeAuthError(Object error, AppLocalizations l10n) {
             lower.contains('least'))) {
       return l10n.authPasswordTooShort;
     }
-    // Preserve useful, non-sensitive API messages.
-    if (error.message.trim().isNotEmpty &&
-        !error.message.startsWith('Request failed')) {
-      return error.message;
-    }
     return l10n.authGenericFailure;
   }
 

@@ -97,9 +97,14 @@ class RidePlannerState {
   }
 }
 
-ResolvedPlace currentLocationPlace(double lat, double lon) => ResolvedPlace(
+ResolvedPlace currentLocationPlace(
+  double lat,
+  double lon, {
+  String label = 'Current location',
+}) =>
+    ResolvedPlace(
       providerPlaceId: 'device:$lat,$lon',
-      label: 'Current location',
+      label: label,
       lat: lat,
       lon: lon,
     );

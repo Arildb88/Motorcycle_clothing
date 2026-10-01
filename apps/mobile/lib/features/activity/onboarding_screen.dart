@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/activity.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -43,7 +45,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(
+            content: Text(
+              localizeUserError(e, AppLocalizations.of(context)),
+            ),
+          ),
         );
       }
     } finally {
@@ -53,6 +59,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AtmosphereBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -66,17 +73,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _step == 0
-                      ? 'What do you ride or move for?'
+                      ? l10n.onboardingInterests
                       : _step == 1
-                          ? 'How should RideWear open?'
-                          : 'How do you feel temperature?',
+                          ? l10n.onboardingOpen
+                          : l10n.onboardingTemperature,
                   style: GoogleFonts.sourceSerif4(
                     fontSize: 22,
                     color: AppTheme.steel,
                   ),
                 ),
                 const SizedBox(height: 20),
-                Expanded(child: _stepBody()),
+                Expanded(child: _stepBody(l10n)),
                 FilledButton(
                   onPressed: _busy
                       ? null
@@ -87,7 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             _finish();
                           }
                         },
-                  child: Text(_step < 2 ? 'Continue' : 'Start RideWear'),
+                  child: Text(_step < 2 ? l10n.commonContinue : l10n.onboardingStart),
                 ),
               ],
             ),
@@ -97,17 +104,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _stepBody() {
+  Widget _stepBody(AppLocalizations l10n) {
     if (_step == 0) {
       return ListView(
         children: AppActivity.selectable.map((a) {
           final on = _selected.contains(a);
           return CheckboxListTile(
             value: on,
-            title: Text(a.label),
+            title: Text(activityLabel(l10n, a)),
             subtitle: a.hasRecommendationEngine
                 ? null
-                : const Text('Recommendations coming later'),
+                : Text(l10n.onboardingComingLater),
             onChanged: (v) {
               setState(() {
                 if (v == true) {
@@ -127,17 +134,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_step == 1) {
       return ListView(
         children: [
-          Text('Default activity', style: GoogleFonts.barlowCondensed(fontSize: 18)),
+          Text(l10n.profileDefaultActivity, style: GoogleFonts.barlowCondensed(fontSize: 18)),
           ..._selected.map(
             (a) => ListTile(
-              title: Text(a.label),
+              title: Text(activityLabel(l10n, a)),
               selected: _default == a,
               trailing: _default == a ? const Icon(Icons.check) : null,
               onTap: () => setState(() => _default = a),
             ),
           ),
           SwitchListTile(
-            title: const Text('Show activity chooser when I open RideWear'),
+            title: Text(l10n.onboardingShowChooser),
             value: _showChooser,
             onChanged: (v) => setState(() => _showChooser = v),
           ),
@@ -147,19 +154,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       children: [
         ListTile(
-          title: const Text('I get cold easily'),
+          title: Text(l10n.onboardingCold),
           selected: _cold == -1,
           trailing: _cold == -1 ? const Icon(Icons.check) : null,
           onTap: () => setState(() => _cold = -1),
         ),
         ListTile(
-          title: const Text('Average'),
+          title: Text(l10n.onboardingAverage),
           selected: _cold == 0,
           trailing: _cold == 0 ? const Icon(Icons.check) : null,
           onTap: () => setState(() => _cold = 0),
         ),
         ListTile(
-          title: const Text('I usually run warm'),
+          title: Text(l10n.onboardingWarm),
           selected: _cold == 1,
           trailing: _cold == 1 ? const Icon(Icons.check) : null,
           onTap: () => setState(() => _cold = 1),

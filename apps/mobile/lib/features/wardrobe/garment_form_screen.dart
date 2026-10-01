@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/garment.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 
 class GarmentFormScreen extends StatefulWidget {
@@ -138,7 +140,7 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name is required')),
+        SnackBar(content: Text(AppLocalizations.of(context).garmentNameRequired)),
       );
       return;
     }
@@ -177,7 +179,9 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(
+            content: Text(localizeUserError(e, AppLocalizations.of(context))),
+          ),
         );
       }
     } finally {
@@ -187,15 +191,16 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit garment' : 'Add garment'),
+        title: Text(_isEdit ? l10n.garmentEditTitle : l10n.wardrobeAdd),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            _isEdit ? 'Update kit piece' : 'Keep it simple',
+            _isEdit ? l10n.garmentUpdatePiece : l10n.garmentKeepSimple,
             style: GoogleFonts.barlowCondensed(
               fontSize: 22,
               fontWeight: FontWeight.w600,
@@ -204,9 +209,9 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              hintText: 'e.g. Dainese Carve Master',
+            decoration: InputDecoration(
+              labelText: l10n.commonName,
+              hintText: l10n.garmentNameHint,
             ),
             textCapitalization: TextCapitalization.sentences,
           ),
@@ -215,15 +220,15 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             DropdownButtonFormField<String?>(
               // ignore: deprecated_member_use
               value: _preset,
-              decoration: const InputDecoration(
-                labelText: 'Quick type (optional)',
+              decoration: InputDecoration(
+                labelText: l10n.garmentQuickType,
               ),
               items: [
-                const DropdownMenuItem(value: null, child: Text('Custom')),
+                DropdownMenuItem(value: null, child: Text(l10n.commonCustom)),
                 ...garmentPresets.map(
                   (p) => DropdownMenuItem(
                     value: p['id'],
-                    child: Text(p['label']!),
+                    child: Text(garmentPresetLabel(l10n, p['id']!)),
                   ),
                 ),
               ],
@@ -234,12 +239,12 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
           DropdownButtonFormField<String>(
             // ignore: deprecated_member_use
             value: _category,
-            decoration: const InputDecoration(labelText: 'Category'),
+            decoration: InputDecoration(labelText: l10n.commonCategory),
             items: garmentCategories
                 .map(
                   (c) => DropdownMenuItem(
                     value: c,
-                    child: Text(c.replaceAll('_', ' ')),
+                    child: Text(garmentCategoryLabel(l10n, c)),
                   ),
                 )
                 .toList(),
@@ -251,78 +256,81 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
           DropdownButtonFormField<String?>(
             // ignore: deprecated_member_use
             value: _material,
-            decoration: const InputDecoration(labelText: 'Material'),
+            decoration: InputDecoration(labelText: l10n.garmentMaterial),
             items: [
-              const DropdownMenuItem(value: null, child: Text('Unspecified')),
+              DropdownMenuItem(value: null, child: Text(l10n.garmentUnspecified)),
               ...garmentMaterials.map(
-                (m) => DropdownMenuItem(value: m, child: Text(m)),
+                (m) => DropdownMenuItem(
+                  value: m,
+                  child: Text(garmentMaterialLabel(l10n, m)),
+                ),
               ),
             ],
             onChanged: (v) => setState(() => _material = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Has ventilation'),
-            subtitle: const Text('Open/closed is chosen per ride later'),
+            title: Text(l10n.garmentVentilation),
+            subtitle: Text(l10n.garmentVentilationHint),
             value: _hasVentilation,
             onChanged: (v) => setState(() => _hasVentilation = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Heated'),
+            title: Text(l10n.garmentHeated),
             value: _isHeated,
             onChanged: (v) => setState(() => _isHeated = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Thermal liner included'),
-            subtitle: const Text('Same jacket — liner installable, not a second item'),
+            title: Text(l10n.garmentThermalLiner),
+            subtitle: Text(l10n.garmentThermalLinerHint),
             value: _thermalLiner,
             onChanged: (v) => setState(() => _thermalLiner = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Waterproof liner included'),
+            title: Text(l10n.garmentWaterproofLiner),
             value: _waterproofLiner,
             onChanged: (v) => setState(() => _waterproofLiner = v),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _brand,
-            decoration: const InputDecoration(labelText: 'Brand (optional)'),
+            decoration: InputDecoration(labelText: l10n.garmentBrand),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _model,
-            decoration: const InputDecoration(labelText: 'Model (optional)'),
+            decoration: InputDecoration(labelText: l10n.garmentModel),
           ),
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('More details'),
-            subtitle: const Text('Adjust warmth / weather properties'),
+            title: Text(l10n.garmentMoreDetails),
+            subtitle: Text(l10n.garmentMoreDetailsHint),
             value: _advanced || _isEdit,
             onChanged: (v) => setState(() => _advanced = v),
           ),
           if (_advanced || _isEdit) ...[
-            _tier('Warmth', _warmth, (v) => setState(() => _warmth = v)),
-            _tier('Wind resistance', _wind, (v) => setState(() => _wind = v)),
-            _tier('Waterproofness', _water, (v) => setState(() => _water = v)),
+            _tier(l10n.tierWarmth, _warmth, (v) => setState(() => _warmth = v)),
+            _tier(l10n.tierWind, _wind, (v) => setState(() => _wind = v)),
+            _tier(l10n.tierWater, _water, (v) => setState(() => _water = v)),
             _tier(
-              'Breathability',
+              l10n.tierBreath,
               _breath,
               (v) => setState(() => _breath = v),
             ),
           ],
           TextField(
             controller: _notes,
-            decoration: const InputDecoration(labelText: 'Notes (optional)'),
+            decoration: InputDecoration(labelText: l10n.garmentNotes),
             maxLines: 2,
           ),
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _busy ? null : _save,
-            child: Text(_isEdit ? 'Save changes' : 'Add to wardrobe'),
+            child: Text(_isEdit ? l10n.garmentSaveChanges : l10n.garmentAddToWardrobe),
           ),
         ],
       ),

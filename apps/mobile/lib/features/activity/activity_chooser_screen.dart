@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/activity.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -14,6 +16,7 @@ class ActivityChooserScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activity = context.watch<ActivityContext>();
+    final l10n = AppLocalizations.of(context);
     return AtmosphereBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -26,7 +29,7 @@ class ActivityChooserScreen extends StatelessWidget {
                 const BrandMark(compact: true),
                 const SizedBox(height: 12),
                 Text(
-                  'What are you doing today?',
+                  l10n.activityWhatToday,
                   style: GoogleFonts.sourceSerif4(
                     fontSize: 26,
                     color: AppTheme.asphalt,
@@ -34,7 +37,9 @@ class ActivityChooserScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Default: ${activity.defaultActivity.label}',
+                  l10n.activityDefaultLine(
+                    activityLabel(l10n, activity.defaultActivity),
+                  ),
                   style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
                 ),
                 const SizedBox(height: 24),
@@ -50,22 +55,25 @@ class ActivityChooserScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                a.label,
+                                activityLabel(l10n, a),
                                 style: const TextStyle(fontSize: 18),
                               ),
                             ),
                             if (isDefault)
                               Text(
-                                'DEFAULT',
+                                l10n.activityDefaultBadge,
                                 style: GoogleFonts.barlowCondensed(
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.amber,
                                 ),
                               ),
                             if (!a.hasRecommendationEngine)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 8),
-                                child: Text('Soon', style: TextStyle(fontSize: 12)),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Text(
+                                  l10n.activitySoon,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
                               ),
                           ],
                         ),
@@ -75,7 +83,7 @@ class ActivityChooserScreen extends StatelessWidget {
                 }),
                 const Spacer(),
                 Text(
-                  'Changing today’s activity does not change your saved default.',
+                  l10n.activityChooserHint,
                   style: TextStyle(
                     color: AppTheme.steel.withValues(alpha: 0.8),
                     fontSize: 13,

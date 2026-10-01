@@ -7,6 +7,7 @@ import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -62,10 +63,10 @@ class _HomeScreenState extends State<HomeScreen> {
             .toList();
         _loadingRoutes = false;
       });
-    } on ApiException catch (e) {
+      } on ApiException catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.message;
+          _error = localizeUserError(e, AppLocalizations.of(context));
           _loadingRoutes = false;
         });
       }
@@ -101,8 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = await api.get(q.toString());
       if (mounted) setState(() => _data = data);
     } on ApiException catch (e) {
-      if (mounted && !silent) setState(() => _error = e.message);
-      if (mounted && silent) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } finally {
       if (mounted) setState(() => _loadingRec = false);
     }
@@ -275,8 +277,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemBuilder: (context, i) {
                           if (i == _routes.length) {
                             return _QuickChip(
-                              title: '+ Plan new',
-                              subtitle: 'Save a route',
+                              title: AppLocalizations.of(context).homePlanNewChip,
+                              subtitle: AppLocalizations.of(context).homeSaveRouteChip,
                               selected: false,
                               onTap: _addRoute,
                             );
@@ -284,7 +286,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           final r = _routes[i];
                           return _QuickChip(
                             title: r.name,
-                            subtitle: '${r.durationLabel}'
+                            subtitle:
+                                '${routeDuration(AppLocalizations.of(context), r.typicalDurationMin)}'
                                 '${r.isFavorite ? ' · ★' : ''}',
                             selected: r.id == _selectedRouteId,
                             onTap: () => _pickDeparture(r),
@@ -304,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: _bootstrap,
-                      child: const Text('Retry'),
+                      child: Text(AppLocalizations.of(context).commonRetry),
                     ),
                   ],
                 ),
@@ -391,26 +394,8 @@ class _RecommendationBody extends StatelessWidget {
 
   final Map<String, dynamic> data;
 
-  String _kitLabel(Map<String, dynamic> item) {
-    final name = item['garmentName']?.toString();
-    final generic = item['genericLabel']?.toString();
-    final configs = (item['configuration'] as List?) ?? const [];
-    final configText = configs
-        .map((c) {
-          if (c is Map && c['code'] != null) {
-            return c['code'].toString().toLowerCase().replaceAll('_', ' ');
-          }
-          return '';
-        })
-        .where((s) => s.isNotEmpty)
-        .join(', ');
-    final base = (name != null && name.isNotEmpty)
-        ? name
-        : (generic ?? item['slot']?.toString() ?? 'Item');
-    if (item['source'] == 'generic') {
-      return '$base (not owned)';
-    }
-    return configText.isEmpty ? base : '$base ($configText)';
+  String _kitLabel(AppLocalizations l10n, Map<String, dynamic> item) {
+    return kitLine(l10n, item);
   }
 
   List<Map<String, dynamic>> _asMaps(dynamic raw) {
@@ -472,7 +457,7 @@ class _RecommendationBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            route['name']?.toString() ?? 'Ride',
+            route['name']?.toString() ?? l10n.homeFallbackRide,
             style: GoogleFonts.barlowCondensed(
               fontSize: 34,
               fontWeight: FontWeight.w600,
@@ -480,7 +465,7 @@ class _RecommendationBody extends StatelessWidget {
             ),
           ),
           Text(
-            '${route['startLabel'] ?? 'Start'} → ${route['endLabel'] ?? 'End'}',
+            '${route['startLabel'] ?? l10n.labelStart} → ${route['endLabel'] ?? l10n.labelEnd}',
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 20),
@@ -489,31 +474,31 @@ class _RecommendationBody extends StatelessWidget {
             runSpacing: 8,
             children: [
               _Metric(
-                label: 'Temp',
+                label: l10n.metricTemp,
                 value: fmt.temperatureRangeFromC(
                   weather['minTempC'] as num,
                   weather['maxTempC'] as num,
                 ),
               ),
               _Metric(
-                label: 'Exposure',
+                label: l10n.metricExposure,
                 value: exposureC != null
                     ? fmt.temperatureFromC(exposureC as num)
                     : '—',
               ),
               _Metric(
-                label: 'Rain',
+                label: l10n.metricRain,
                 value:
                     '${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
               ),
               _Metric(
-                label: 'Wind',
+                label: l10n.metricWind,
                 value: fmt.windFromMs(weather['maxWindMs'] as num),
               ),
               if (confidenceLevel != null)
                 _Metric(
                   label: l10n.confidenceLabel,
-                  value: confidenceLevel,
+                  value: confidenceValue(l10n, confidenceLevel),
                 ),
             ],
           ),
@@ -536,7 +521,7 @@ class _RecommendationBody extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        _kitLabel(item),
+                        _kitLabel(l10n, item),
                         style: const TextStyle(fontSize: 17),
                       ),
                     ),
@@ -580,7 +565,7 @@ class _RecommendationBody extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        _kitLabel(item),
+                        _kitLabel(l10n, item),
                         style: const TextStyle(fontSize: 17),
                       ),
                     ),
@@ -605,7 +590,7 @@ class _RecommendationBody extends StatelessWidget {
           const SizedBox(height: 24),
           FilledButton.tonal(
             onPressed: () => showFeedbackSheet(context, data),
-            child: const Text('How was the ride?'),
+            child: Text(l10n.homeHowWasTheRide),
           ),
           // Recommendation card stays ad-free (trust / safety surface).
         ],

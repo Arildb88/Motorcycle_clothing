@@ -1,53 +1,63 @@
-# RideWear real routing v1
+# Norwegian localization completion
 
-## Feature
+## Task
 
-Road-following route preview and place search go through the NestJS API to HeiGIT OpenRouteService (`https://api.heigit.org/openrouteservice/`) and Pelias (`https://api.heigit.org/pelias/v1`). The schematic Flutter preview draws that driving geometry. Activity plans use provider road distance and duration when ORS succeeds.
+Norwegian localization completion. When the user selects Norwegian (`nb`), normal user-facing RideWear UI text uses Norwegian Bokmål through the existing Flutter gen-l10n setup (`apps/mobile/lib/l10n`, `app_en.arb` / `app_nb.arb`). English remains the template locale. No localization package was added.
 
-The route is **driving-car geometry**. It is not motorcycle-optimized, not turn-by-turn, and not live rerouting.
+Language switching uses the existing `LocaleController` (`preferred_language` in SharedPreferences, profile `preferredLanguage`). Changing English ↔ Norwegian updates `MaterialApp.locale` without creating a new account.
+
+## Commit / PR
+
+- Branch: `feature/nb-localization-completion` from `dev_test` (`24cc7f4`)
+- Commit: recorded in the follow-up docs commit on this branch
+- PR: against `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
-- API: `apps/api/src/routing/ors-routing.adapter.ts`, `ors-geocoding.service.ts`, `ors.http.ts`, `ors.constants.ts`, `plan-with-routing.ts`, `routing.module.ts`, `location.controller.ts`, `dto/location.dto.ts`, plus specs
-- Planning: `apps/api/src/routes/routes.service.ts`, `routes.module.ts`, `routes-provider-plan.spec.ts`
-- Config: `apps/api/.env.example` (`ROUTING_PROVIDER=ors`, `ORS_API_KEY=`)
-- Flutter: `api_route_geometry_service.dart`, `api_location_search_service.dart`, `location_services.dart`, `main.dart`, planner / route editor / `RouteMapPreview`, en/nb copy
-- Docs: `PRIVACY_ARCHITECTURE.md`, `ARCHITECTURE.md`, `PROJECT_PLAN.md`, `DEVELOPMENT_NOTES.md`, `apps/mobile/README.md`
+- `apps/mobile/lib/l10n/app_en.arb`, `app_nb.arb`, generated `app_localizations*.dart`
+- `apps/mobile/lib/l10n/ui_labels.dart` (activity, waypoint, route, garment, kit, and error helpers)
+- Screens: home, routes, profile, wardrobe, garment form, route editor, planner, analysis, onboarding, activity chooser, activity home, feedback sheet, place search, map preview, forgot-password success copy
+- `apps/mobile/lib/services/auth_errors.dart`, `services/location/route_preview_copy.dart`, `fake_location_services.dart`
+- `apps/mobile/test/nb_localization_test.dart`
 
-## Architecture decisions
+## Areas audited
 
-- Flutter → RideWear API → HeiGIT. `ORS_API_KEY` stays on the server. The deprecated `api.openrouteservice.org` host is rejected.
-- `RoutingPort` / `RouteAnalysis` stay provider-neutral. `OpenRouteServiceRoutingAdapter` is used when `ROUTING_PROVIDER=ors` and the key is set. `NullRoutingAdapter` remains the fallback for tests and outages.
-- `avoidMotorways` maps to ORS `avoid_features: ["highways"]`. Profile is always `driving-car`.
-- Full road polylines are returned only from `POST /location/route-preview`. `ActivityPlan.routeAnalysisJson` stores waypoint endpoints, distance, duration, and travel segments. No database migration.
-- Place search: `GET /location/places` and `POST /location/places/resolve`. Flutter no longer needs `GOOGLE_MAPS_API_KEY` for normal search or preview. No basemap package.
-- Unavailable routing returns `503` `ROUTING_UNAVAILABLE`. Planning then keeps the existing duration hint. Logs record status only (no API key, search text, or coordinates).
+- Navigation (Today, Routes, Wardrobe, Profile)
+- Home recommendations, kit lines, confidence, feedback
+- Profile / settings, units, login methods, account actions
+- Authentication (login, register, forgot/reset/change password) — already localized; unknown API text no longer passes through in English
+- Wardrobe and garment form (categories, materials, presets, tiers)
+- Recommendations and ride analysis chips
+- Route planner, route editor, saved routes
+- Activity chooser, activity home, onboarding
+- Validation, dialogs, buttons, empty states, loading/error/success
+- Place search and route-preview notices
+- Units and preferences
+- Tooltips and field labels used as accessibility text
 
-## Tests / build
+## Remaining intentionally untranslated text
 
-- `apps/api`: `npm test` — 15 suites, 102 tests, passed. `npm run build` — passed.
-- `apps/mobile`: `flutter analyze` — no issues. `flutter test` — 54 tests, passed.
+- Product and provider names: RideWear, Facebook, Microsoft, Strava, HeiGIT, OpenRouteService
+- Place names returned by search (for example Kristiansand)
+- Brand example in the garment name hint: Dainese Carve Master
+- Established material words: Mesh, Denim, Merino
+- Unit symbols: °C, °F, km, mi, km/h, mph, m/s, and the short label “Temp”
+- Domain helpers kept in English for existing tests: `AppActivity.label`, `WaypointListOps.roleLabel`. Widgets use `ui_labels.dart` instead
+- Internal identifiers, API codes, logs, URLs, and test descriptions
+- Unknown reason codes, garment categories, and configuration codes fall back to the identifier
+- Model fallback route name `Ride plan` only if a save body is built with an empty name. The planner fills `Turplan` / `Ride plan` from l10n before saving
+- Device-location default parameter `Current location` when a caller omits a label. The planner passes the localized label
 
-## PR / commit
+## flutter analyze
 
-- Branch: `feature/ors-routing-v1` from `dev_test` (`310dc77`)
-- Commit: `883bb55` — feat(routing): add HeiGIT road-following routes behind the API
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/21 into `dev_test` only. Not merged to `dev` or `main`.
+`apps/mobile`: `flutter analyze` — no issues.
 
-## Required manual configuration
+## flutter test
 
-On the API host:
+`apps/mobile`: `flutter test` — 57 tests passed, including `nb_localization_test.dart` (Norwegian strings, error mapping, and locale switch without a new account).
 
-```bash
-ROUTING_PROVIDER=ors
-ORS_API_KEY=<HeiGIT key>
-```
+## Manual checks recommended
 
-Restart the API. Sign in on the app and preview a route with at least two places. Confirm the line follows roads and the notice says the geometry is driving, not motorcycle-optimized.
-
-## Still needs attention
-
-- No live HeiGIT call was made in CI; mapping is covered with fixtures. Confirm a real Norway route after the key is set.
-- Weather is still sampled at saved waypoints, not along the polyline.
-- Turn-by-turn navigation and live rerouting are not implemented.
-- The old Google Routes client remains in the tree for polyline-decode tests. It is not the default path.
+- Sign in, open Profile, switch Language from English to Norsk and back. Confirm Home, Routes, Wardrobe, Profile, planner, and wardrobe update immediately without creating a new account.
+- Walk onboarding, the activity chooser, an empty wardrobe, the garment form, a saved-route delete dialog, place search with no results, and the ride-feedback sheet in Norwegian.
+- Trigger a failed route preview and a failed save and confirm the message is Norwegian rather than a raw API sentence.

@@ -6,6 +6,7 @@ import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
@@ -141,7 +142,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       if (!mounted || epoch != _geometryEpoch) return;
       setState(() {
         _mapLoading = false;
-        _mapError = 'Map preview failed';
+        _mapError = AppLocalizations.of(context).plannerMapFailed;
         _geometry = null;
       });
     }
@@ -195,14 +196,17 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
     final lat = double.tryParse(_advLat[index].text.trim());
     final lon = double.tryParse(_advLon[index].text.trim());
     if (lat == null || lon == null) {
-      setState(() => _error = 'Advanced coordinates must be valid numbers');
+      setState(
+        () => _error = AppLocalizations.of(context).routeCoordsInvalid,
+      );
       return;
     }
     setState(() {
       _waypoints[index].applyManualCoordinates(
         latitude: lat,
         longitude: lon,
-        manualLabel: _waypoints[index].label,
+        manualLabel: _waypoints[index].label ??
+            AppLocalizations.of(context).coordCustomPoint,
       );
       _error = null;
     });
@@ -212,8 +216,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
   Future<void> _save() async {
     if (!_canSave) {
       setState(() {
-        _error =
-            'Enter a name and choose a place for start and destination';
+        _error = AppLocalizations.of(context).routeEditorIncomplete;
       });
       return;
     }
@@ -243,9 +246,13 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       }
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -258,9 +265,10 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
         .whereType<GeoPoint>()
         .toList();
 
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existing == null ? 'New route' : 'Edit route'),
+        title: Text(widget.existing == null ? l10n.routeNew : l10n.routeEdit),
         actions: [
           TextButton(
             onPressed: (_saving || !_canSave) ? null : _save,
@@ -270,7 +278,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Save'),
+                : Text(l10n.commonSave),
           ),
         ],
       ),
@@ -280,16 +288,16 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           TextField(
             controller: _name,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              hintText: 'Work 1, Sunday Loop…',
+            decoration: InputDecoration(
+              labelText: l10n.commonName,
+              hintText: l10n.routeNameHint,
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _description,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
+            decoration: InputDecoration(
+              labelText: l10n.routeDescription,
             ),
             maxLines: 2,
           ),
@@ -297,36 +305,39 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           DropdownButtonFormField<String?>(
             // ignore: deprecated_member_use
             value: _category,
-            decoration: const InputDecoration(labelText: 'Category'),
-            items: const [
-              DropdownMenuItem(value: null, child: Text('None')),
-              DropdownMenuItem(value: 'work', child: Text('Work')),
-              DropdownMenuItem(value: 'commute', child: Text('Commute')),
-              DropdownMenuItem(value: 'home', child: Text('Home')),
-              DropdownMenuItem(value: 'weekend', child: Text('Weekend')),
-              DropdownMenuItem(value: 'touring', child: Text('Touring')),
-              DropdownMenuItem(value: 'favourite', child: Text('Favourite')),
-              DropdownMenuItem(value: 'custom', child: Text('Custom')),
+            decoration: InputDecoration(labelText: l10n.commonCategory),
+            items: [
+              DropdownMenuItem(value: null, child: Text(l10n.commonNone)),
+              DropdownMenuItem(value: 'work', child: Text(l10n.routeCatWork)),
+              DropdownMenuItem(value: 'commute', child: Text(l10n.routeCatCommute)),
+              DropdownMenuItem(value: 'home', child: Text(l10n.routeCatHome)),
+              DropdownMenuItem(value: 'weekend', child: Text(l10n.routeCatWeekend)),
+              DropdownMenuItem(value: 'touring', child: Text(l10n.routeCatTouring)),
+              DropdownMenuItem(
+                value: 'favourite',
+                child: Text(l10n.routeCatFavourite),
+              ),
+              DropdownMenuItem(value: 'custom', child: Text(l10n.routeCatCustom)),
             ],
             onChanged: (v) => setState(() => _category = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Favorite'),
-            subtitle: const Text('Shows first on Motorcycle home'),
+            title: Text(l10n.commonFavorite),
+            subtitle: Text(l10n.routeFavoriteHint),
             value: _favorite,
             onChanged: (v) => setState(() => _favorite = v),
           ),
           const SizedBox(height: 8),
           Text(
-            'Route',
+            l10n.routeSection,
             style: GoogleFonts.barlowCondensed(
               fontSize: 22,
               fontWeight: FontWeight.w600,
             ),
           ),
           Text(
-            'Search for places — you do not need to enter coordinates.',
+            l10n.routeSearchHint,
             style: TextStyle(
               color: AppTheme.steel.withValues(alpha: 0.9),
               fontSize: 13,
@@ -342,7 +353,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           const SizedBox(height: 16),
           ...List.generate(_waypoints.length, (i) {
             final w = _waypoints[i];
-            final role = WaypointListOps.roleLabel(i, _waypoints.length);
+            final role = waypointRole(l10n, i, _waypoints.length);
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               child: Padding(
@@ -361,18 +372,18 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
                         ),
                         const Spacer(),
                         IconButton(
-                          tooltip: 'Move up',
+                          tooltip: l10n.plannerMoveUp,
                           onPressed: () => _move(i, -1),
                           icon: const Icon(Icons.arrow_upward),
                         ),
                         IconButton(
-                          tooltip: 'Move down',
+                          tooltip: l10n.plannerMoveDown,
                           onPressed: () => _move(i, 1),
                           icon: const Icon(Icons.arrow_downward),
                         ),
                         if (_waypoints.length > 2)
                           IconButton(
-                            tooltip: 'Remove',
+                            tooltip: l10n.commonRemove,
                             onPressed: () => _removeStop(i),
                             icon: const Icon(Icons.delete_outline),
                           ),
@@ -407,13 +418,13 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           OutlinedButton.icon(
             onPressed: _addStop,
             icon: const Icon(Icons.add),
-            label: const Text('Add stop'),
+            label: Text(l10n.plannerAddStop),
           ),
           const SizedBox(height: 8),
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
-            title: const Text('Advanced: coordinates'),
-            subtitle: const Text('Developer / fallback only'),
+            title: Text(l10n.routeAdvancedCoords),
+            subtitle: Text(l10n.routeAdvancedHint),
             children: [
               for (var i = 0; i < _waypoints.length; i++)
                 Padding(
@@ -428,8 +439,9 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
                             signed: true,
                           ),
                           decoration: InputDecoration(
-                            labelText:
-                                '${WaypointListOps.roleLabel(i, _waypoints.length)} lat',
+                            labelText: l10n.coordLatitude(
+                              waypointRole(l10n, i, _waypoints.length),
+                            ),
                           ),
                         ),
                       ),
@@ -441,11 +453,11 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
                             decimal: true,
                             signed: true,
                           ),
-                          decoration: const InputDecoration(labelText: 'lon'),
+                          decoration: InputDecoration(labelText: l10n.coordLongitude),
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Apply coordinates',
+                        tooltip: l10n.coordApply,
                         onPressed: () => _applyAdvanced(i),
                         icon: const Icon(Icons.check),
                       ),
@@ -461,7 +473,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: (_saving || !_canSave) ? null : _save,
-            child: const Text('Save route'),
+            child: Text(l10n.plannerSaveRoute),
           ),
         ],
       ),

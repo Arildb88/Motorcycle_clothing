@@ -143,5 +143,343 @@
   "authCurrentPasswordRequired": "Skriv inn nåværende passord.",
   "authInvalidCurrentPassword": "Nåværende passord er feil.",
   "authNoLocalPassword": "Denne kontoen bruker ikke passord.",
-  "authPasswordChanged": "Passordet er oppdatert."
+  "authPasswordChanged": "Passordet er oppdatert.",
+  "commonCancel": "Avbryt",
+  "commonDelete": "Slett",
+  "commonSave": "Lagre",
+  "commonEdit": "Rediger",
+  "commonRetry": "Prøv igjen",
+  "commonContinue": "Fortsett",
+  "commonClear": "Tøm",
+  "commonRemove": "Fjern",
+  "commonNone": "Ingen",
+  "commonCustom": "Egendefinert",
+  "commonName": "Navn",
+  "commonCategory": "Kategori",
+  "commonFavorite": "Favoritt",
+  "commonUnfavorite": "Fjern favoritt",
+  "errorGeneric": "Noe gikk galt. Prøv igjen.",
+  "errorCouldNotLoad": "Kunne ikke laste inn. Prøv igjen.",
+  "currentLocation": "Nåværende posisjon",
+  "labelStart": "Start",
+  "labelDestination": "Destinasjon",
+  "labelEnd": "Slutt",
+  "waypointStop": "Stopp {index}",
+  "@waypointStop": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "routeLoopSummary": "{start} · runde · {count} stopp",
+  "@routeLoopSummary": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "routeViaSummary": "{start} → … → {end} ({count})",
+  "@routeViaSummary": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "~{minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHours": "~{hours} t",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "~{hours} t {minutes} min",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "homePlanNewChip": "+ Planlegg ny",
+  "homeSaveRouteChip": "Lagre en rute",
+  "homeHowWasTheRide": "Hvordan var turen?",
+  "homeFallbackRide": "Tur",
+  "metricTemp": "Temp",
+  "metricExposure": "Eksponering",
+  "metricRain": "Regn",
+  "metricWind": "Vind",
+  "kitNotOwned": "{name} (ikke i garderoben)",
+  "@kitNotOwned": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kitFallbackItem": "Plagg",
+  "confidenceHigh": "Høy",
+  "confidenceMedium": "Middels",
+  "confidenceLow": "Lav",
+  "configInstallThermalLiner": "sett i termofôr",
+  "configInstallWaterproofLiner": "sett i vanntett fôr",
+  "configRemoveThermalLiner": "ta ut termofôr",
+  "configVentsOpen": "ventiler åpne",
+  "configVentsClosed": "ventiler lukket",
+  "routesTitle": "Lagrede ruter",
+  "routesSubtitle": "Gjenbrukbare maler for motorsykkel. Vær og antrekk beregnes på nytt hver gang du starter en tur.",
+  "routesEditTemplate": "Rediger rutemal",
+  "routesDeleteTitle": "Slette ruten?",
+  "routesDeleteBody": "«{name}» fjernes. Tidligere turer beholder et øyeblikksbilde av ruten.",
+  "@routesDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileSection": "Profil",
+  "profileDisplayName": "Visningsnavn",
+  "profileAvatarInitials": "Avatar: initialer inntil videre",
+  "profileAvatarProvider": "profilbilde fra innloggingen er tilgjengelig",
+  "profileActivitySection": "Aktivitet",
+  "profileDefaultActivity": "Standardaktivitet",
+  "profileShowChooser": "Vis aktivitetsvalg ved oppstart",
+  "profileLoginMethods": "Tilknyttede innloggingsmåter",
+  "profileLinked": "Tilknyttet",
+  "profileConnectFacebook": "Koble til Facebook-innlogging",
+  "profileConnectMicrosoft": "Koble til Microsoft-innlogging",
+  "profileServices": "Tilknyttede tjenester",
+  "profileConnected": "Tilkoblet",
+  "profileSync": "Synkroniser",
+  "profileDisconnect": "Koble fra",
+  "profileConnectStrava": "Koble til Strava",
+  "profileStravaNotConfigured": "Strava er ikke satt opp på serveren ennå.",
+  "profileSave": "Lagre profil",
+  "profileAccount": "Konto",
+  "profileSignOut": "Logg ut",
+  "profileDeleteAccount": "Slett konto",
+  "profileDeleteTitle": "Slette kontoen?",
+  "profileDeleteBody": "Dette sletter RideWear-kontoen, garderoben og historikken permanent.",
+  "profileDemoLinkHint": "Sett opp Facebook eller Microsoft på serveren for å knytte dem til denne kontoen.",
+  "profileLoginFallback": "Innlogging",
+  "activityMotorcycle": "Motorsykkel",
+  "activityHiking": "Fottur",
+  "activityCycling": "Sykling",
+  "activityWhatToday": "Hva skal du gjøre i dag?",
+  "activityDefaultLine": "Standard: {activity}",
+  "@activityDefaultLine": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "activityDefaultBadge": "STANDARD",
+  "activitySoon": "Snart",
+  "activityChooserHint": "Å bytte dagens aktivitet endrer ikke den lagrede standarden.",
+  "onboardingInterests": "Hva vil du bruke RideWear til?",
+  "onboardingOpen": "Hvordan skal RideWear åpnes?",
+  "onboardingTemperature": "Hvordan opplever du temperatur?",
+  "onboardingStart": "Start RideWear",
+  "onboardingComingLater": "Anbefalinger kommer senere",
+  "onboardingShowChooser": "Vis aktivitetsvalg når jeg åpner RideWear",
+  "onboardingCold": "Jeg fryser lett",
+  "onboardingAverage": "Vanlig",
+  "onboardingWarm": "Jeg blir vanligvis fort varm",
+  "activityComingNext": "Anbefalinger for {activity} kommer senere.",
+  "@activityComingNext": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "activitySharedBody": "Profilen og garderoben din deles allerede på tvers av aktiviteter. Motorsykkelanbefalinger er tilgjengelige i dag.",
+  "activityOpenMotorcycle": "Åpne Motorsykkel i dag",
+  "activityMakeDefault": "Gjør {activity} til standard",
+  "@activityMakeDefault": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "activityNowDefault": "{activity} er satt som standard",
+  "@activityNowDefault": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "wardrobeIntro": "Legg inn det du faktisk eier. Kategori gir fornuftige standarder — du kan finjustere senere.",
+  "wardrobeEmptyTitle": "Ingen plagg ennå",
+  "wardrobeEmptyBody": "Legg til noen plagg du kjører med, eller last inn et demosett for testing.",
+  "wardrobeAdd": "Legg til plagg",
+  "wardrobeLoadDemo": "Last inn demogarderobe for motorsykkel",
+  "wardrobeDeleteTitle": "Slette plagg?",
+  "wardrobeDeleteBody": "Fjern «{name}» fra garderoben.",
+  "@wardrobeDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "garmentEditTitle": "Rediger plagg",
+  "garmentUpdatePiece": "Oppdater plagget",
+  "garmentKeepSimple": "Hold det enkelt",
+  "garmentNameHint": "f.eks. Dainese Carve Master",
+  "garmentQuickType": "Hurtigtype (valgfritt)",
+  "garmentMaterial": "Materiale",
+  "garmentUnspecified": "Ikke oppgitt",
+  "garmentVentilation": "Har ventilasjon",
+  "garmentVentilationHint": "Åpen eller lukket velges senere for hver tur",
+  "garmentHeated": "Oppvarmet",
+  "garmentThermalLiner": "Termofôr følger med",
+  "garmentThermalLinerHint": "Samme jakke — fôret kan settes i, det er ikke et eget plagg",
+  "garmentWaterproofLiner": "Vanntett fôr følger med",
+  "garmentBrand": "Merke (valgfritt)",
+  "garmentModel": "Modell (valgfritt)",
+  "garmentMoreDetails": "Flere detaljer",
+  "garmentMoreDetailsHint": "Juster varme- og væreegenskaper",
+  "garmentNotes": "Notater (valgfritt)",
+  "garmentSaveChanges": "Lagre endringer",
+  "garmentAddToWardrobe": "Legg i garderoben",
+  "garmentNameRequired": "Navn er påkrevd",
+  "tierWarmth": "Varme",
+  "tierWind": "Vindtetthet",
+  "tierWater": "Vanntetthet",
+  "tierBreath": "Pusteevne",
+  "garmentLiners": "{count} fôr",
+  "@garmentLiners": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "garmentVents": "ventilasjon",
+  "garmentHeatedShort": "oppvarmet",
+  "catBaseLayer": "Basislag",
+  "catMidLayer": "Mellomlag",
+  "catShellJacket": "Skalljakke",
+  "catPants": "Bukse",
+  "catOnePieceSuit": "Hel dress",
+  "catGloves": "Hansker",
+  "catBoots": "Støvler",
+  "catSocks": "Sokker",
+  "catHeadwear": "Hodeplagg",
+  "catNeckwear": "Hals",
+  "catHeatedVest": "Varmevest",
+  "catRainLayer": "Regnlag",
+  "matTextile": "Tekstil",
+  "matLeather": "Skinn",
+  "matMesh": "Mesh",
+  "matDenim": "Denim",
+  "matSynthetic": "Syntetisk",
+  "matMerino": "Merino",
+  "matMixed": "Blandet",
+  "matOther": "Annet",
+  "presetTextileJacket": "Tekstiljakke for motorsykkel",
+  "presetMeshJacket": "Mesh- / sommerjakke",
+  "presetLeatherJacket": "Skinnjakke for motorsykkel",
+  "presetTextilePants": "Tekstilbukse for motorsykkel",
+  "presetMotorcycleJeans": "Mc-jeans",
+  "presetOnePieceSuit": "Hel dress",
+  "presetSummerGloves": "Sommerhansker",
+  "presetWinterGloves": "Vinterhansker",
+  "presetHeatedGloves": "Oppvarmede hansker",
+  "routeNew": "Ny rute",
+  "routeEdit": "Rediger rute",
+  "routeNameHint": "Jobb 1, søndagsrunde…",
+  "routeDescription": "Beskrivelse (valgfritt)",
+  "routeFavoriteHint": "Vises først på motorsykkelforsiden",
+  "routeSection": "Rute",
+  "routeSearchHint": "Søk etter steder — du trenger ikke skrive inn koordinater.",
+  "routeAdvancedCoords": "Avansert: koordinater",
+  "routeAdvancedHint": "Kun som reserve",
+  "coordLatitude": "{role} breddegrad",
+  "@coordLatitude": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "coordLongitude": "Lengdegrad",
+  "coordApply": "Bruk koordinater",
+  "routeCatWork": "Jobb",
+  "routeCatCommute": "Pendling",
+  "routeCatHome": "Hjem",
+  "routeCatWeekend": "Helg",
+  "routeCatTouring": "Langtur",
+  "routeCatFavourite": "Favoritt",
+  "routeCatCustom": "Egendefinert",
+  "mapSelectEndpoints": "Velg start og destinasjon for å forhåndsvise ruten",
+  "placeSearchHint": "Søk etter sted eller adresse",
+  "placeNoResults": "Ingen steder funnet",
+  "placeSearchFailed": "Stedsøket mislyktes",
+  "placeSearchUnavailable": "Stedsøk er midlertidig utilgjengelig.",
+  "routeStraightSegmentsNotice": "Forhåndsvisningen bruker rette streker fordi veiruting ikke er tilgjengelig.",
+  "plannerCouldNotSave": "Kunne ikke lagre ruten for analyse.",
+  "feedbackTitle": "Hvordan kjentes antrekket?",
+  "feedbackTooCold": "For kaldt",
+  "feedbackSlightlyCold": "Litt kaldt",
+  "feedbackJustRight": "Passe",
+  "feedbackSlightlyWarm": "Litt varmt",
+  "feedbackTooWarm": "For varmt",
+  "feedbackSubmit": "Send tilbakemelding",
+  "feedbackThanks": "Takk — komfortprofilen er oppdatert",
+  "analysisTempChip": "Temp {value}",
+  "@analysisTempChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "analysisRainChip": "Regn {value}",
+  "@analysisRainChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "analysisWindChip": "Vind {value}",
+  "@analysisWindChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "routeCoordsInvalid": "Koordinatene må være gyldige tall.",
+  "routeEditorIncomplete": "Skriv inn et navn og velg sted for start og destinasjon.",
+  "coordCustomPoint": "Egendefinert punkt"
 }

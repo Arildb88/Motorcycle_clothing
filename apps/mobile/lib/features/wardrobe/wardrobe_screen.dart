@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/garment.dart';
 import 'package:motorcycle_clothing/features/wardrobe/garment_form_screen.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
@@ -39,7 +41,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             .toList();
       });
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -54,20 +58,23 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   Future<void> _delete(Garment g) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete garment?'),
-        content: Text('Remove “${g.name}” from your wardrobe.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(l10n.wardrobeDeleteTitle),
+          content: Text(l10n.wardrobeDeleteBody(g.name)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.commonDelete),
+            ),
+          ],
+        );
+      },
     );
     if (ok != true || !mounted) return;
     final api = context.read<ApiClient>();
@@ -86,6 +93,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -96,7 +104,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Wardrobe',
+                    l10n.navWardrobe,
                     style: GoogleFonts.barlowCondensed(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
@@ -104,7 +112,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Add garment',
+                  tooltip: l10n.wardrobeAdd,
                   onPressed: () => _openForm(),
                   icon: const Icon(Icons.add),
                 ),
@@ -114,7 +122,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Add what you actually own. Category sets sensible defaults — refine later.',
+              l10n.wardrobeIntro,
               style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
             ),
           ),
@@ -144,8 +152,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                   child: ListTile(
                                     onTap: () => _openForm(existing: g),
                                     title: Text(g.name),
-                                    subtitle: Text(g.subtitleBits),
+                                    subtitle: Text(garmentSubtitle(l10n, g)),
                                     trailing: IconButton(
+                                      tooltip: l10n.commonDelete,
                                       icon: const Icon(Icons.delete_outline),
                                       onPressed: () => _delete(g),
                                     ),
@@ -169,6 +178,7 @@ class _EmptyWardrobe extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -176,23 +186,23 @@ class _EmptyWardrobe extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'No garments yet',
+              l10n.wardrobeEmptyTitle,
               style: GoogleFonts.barlowCondensed(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Add a few pieces you ride in, or load a demo kit for testing.',
+            Text(
+              l10n.wardrobeEmptyBody,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            FilledButton(onPressed: onAdd, child: const Text('Add garment')),
+            FilledButton(onPressed: onAdd, child: Text(l10n.wardrobeAdd)),
             const SizedBox(height: 8),
             TextButton(
               onPressed: onSeed,
-              child: const Text('Load demo motorcycle wardrobe'),
+              child: Text(l10n.wardrobeLoadDemo),
             ),
           ],
         ),

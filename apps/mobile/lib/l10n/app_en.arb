@@ -143,5 +143,343 @@
   "authCurrentPasswordRequired": "Enter your current password.",
   "authInvalidCurrentPassword": "Current password is incorrect.",
   "authNoLocalPassword": "This account does not use a password.",
-  "authPasswordChanged": "Password updated."
+  "authPasswordChanged": "Password updated.",
+  "commonCancel": "Cancel",
+  "commonDelete": "Delete",
+  "commonSave": "Save",
+  "commonEdit": "Edit",
+  "commonRetry": "Retry",
+  "commonContinue": "Continue",
+  "commonClear": "Clear",
+  "commonRemove": "Remove",
+  "commonNone": "None",
+  "commonCustom": "Custom",
+  "commonName": "Name",
+  "commonCategory": "Category",
+  "commonFavorite": "Favorite",
+  "commonUnfavorite": "Unfavorite",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorCouldNotLoad": "Could not load this. Try again.",
+  "currentLocation": "Current location",
+  "labelStart": "Start",
+  "labelDestination": "Destination",
+  "labelEnd": "End",
+  "waypointStop": "Stop {index}",
+  "@waypointStop": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "routeLoopSummary": "{start} · loop · {count} stops",
+  "@routeLoopSummary": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "routeViaSummary": "{start} → … → {end} ({count})",
+  "@routeViaSummary": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "~{minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHours": "~{hours} h",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "~{hours} h {minutes} m",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "homePlanNewChip": "+ Plan new",
+  "homeSaveRouteChip": "Save a route",
+  "homeHowWasTheRide": "How was the ride?",
+  "homeFallbackRide": "Ride",
+  "metricTemp": "Temp",
+  "metricExposure": "Exposure",
+  "metricRain": "Rain",
+  "metricWind": "Wind",
+  "kitNotOwned": "{name} (not owned)",
+  "@kitNotOwned": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kitFallbackItem": "Item",
+  "confidenceHigh": "High",
+  "confidenceMedium": "Medium",
+  "confidenceLow": "Low",
+  "configInstallThermalLiner": "install thermal liner",
+  "configInstallWaterproofLiner": "install waterproof liner",
+  "configRemoveThermalLiner": "remove thermal liner",
+  "configVentsOpen": "vents open",
+  "configVentsClosed": "vents closed",
+  "routesTitle": "Saved routes",
+  "routesSubtitle": "Reusable templates for motorcycle. Weather and kit are always recalculated when you launch a ride.",
+  "routesEditTemplate": "Edit route template",
+  "routesDeleteTitle": "Delete route?",
+  "routesDeleteBody": "“{name}” will be removed. Past rides keep their route snapshot.",
+  "@routesDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileSection": "Profile",
+  "profileDisplayName": "Display name",
+  "profileAvatarInitials": "Avatar: initials for now",
+  "profileAvatarProvider": "provider image available",
+  "profileActivitySection": "Activity",
+  "profileDefaultActivity": "Default activity",
+  "profileShowChooser": "Show activity chooser at startup",
+  "profileLoginMethods": "Connected login methods",
+  "profileLinked": "Linked",
+  "profileConnectFacebook": "Connect Facebook login",
+  "profileConnectMicrosoft": "Connect Microsoft login",
+  "profileServices": "Connected services",
+  "profileConnected": "Connected",
+  "profileSync": "Sync",
+  "profileDisconnect": "Disconnect",
+  "profileConnectStrava": "Connect Strava",
+  "profileStravaNotConfigured": "Strava is not set up on the server yet.",
+  "profileSave": "Save profile",
+  "profileAccount": "Account",
+  "profileSignOut": "Sign out",
+  "profileDeleteAccount": "Delete account",
+  "profileDeleteTitle": "Delete account?",
+  "profileDeleteBody": "This permanently deletes your RideWear account, wardrobe, and history.",
+  "profileDemoLinkHint": "Set up Facebook or Microsoft on the server to link them to this account.",
+  "profileLoginFallback": "Login",
+  "activityMotorcycle": "Motorcycle",
+  "activityHiking": "Hiking",
+  "activityCycling": "Cycling",
+  "activityWhatToday": "What are you doing today?",
+  "activityDefaultLine": "Default: {activity}",
+  "@activityDefaultLine": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "activityDefaultBadge": "DEFAULT",
+  "activitySoon": "Soon",
+  "activityChooserHint": "Changing today’s activity does not change your saved default.",
+  "onboardingInterests": "What do you ride or move for?",
+  "onboardingOpen": "How should RideWear open?",
+  "onboardingTemperature": "How do you feel temperature?",
+  "onboardingStart": "Start RideWear",
+  "onboardingComingLater": "Recommendations coming later",
+  "onboardingShowChooser": "Show activity chooser when I open RideWear",
+  "onboardingCold": "I get cold easily",
+  "onboardingAverage": "Average",
+  "onboardingWarm": "I usually run warm",
+  "activityComingNext": "{activity} recommendations are coming next.",
+  "@activityComingNext": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "activitySharedBody": "Your profile and wardrobe are already shared across activities. Motorcycle recommendations are available today.",
+  "activityOpenMotorcycle": "Open Motorcycle today",
+  "activityMakeDefault": "Make {activity} my default",
+  "@activityMakeDefault": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "activityNowDefault": "{activity} set as default",
+  "@activityNowDefault": {
+    "placeholders": {
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "wardrobeIntro": "Add what you actually own. Category sets sensible defaults — refine later.",
+  "wardrobeEmptyTitle": "No garments yet",
+  "wardrobeEmptyBody": "Add a few pieces you ride in, or load a demo kit for testing.",
+  "wardrobeAdd": "Add garment",
+  "wardrobeLoadDemo": "Load demo motorcycle wardrobe",
+  "wardrobeDeleteTitle": "Delete garment?",
+  "wardrobeDeleteBody": "Remove “{name}” from your wardrobe.",
+  "@wardrobeDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "garmentEditTitle": "Edit garment",
+  "garmentUpdatePiece": "Update kit piece",
+  "garmentKeepSimple": "Keep it simple",
+  "garmentNameHint": "e.g. Dainese Carve Master",
+  "garmentQuickType": "Quick type (optional)",
+  "garmentMaterial": "Material",
+  "garmentUnspecified": "Unspecified",
+  "garmentVentilation": "Has ventilation",
+  "garmentVentilationHint": "Open or closed is chosen per ride later",
+  "garmentHeated": "Heated",
+  "garmentThermalLiner": "Thermal liner included",
+  "garmentThermalLinerHint": "Same jacket — the liner can be installed, it is not a second item",
+  "garmentWaterproofLiner": "Waterproof liner included",
+  "garmentBrand": "Brand (optional)",
+  "garmentModel": "Model (optional)",
+  "garmentMoreDetails": "More details",
+  "garmentMoreDetailsHint": "Adjust warmth and weather properties",
+  "garmentNotes": "Notes (optional)",
+  "garmentSaveChanges": "Save changes",
+  "garmentAddToWardrobe": "Add to wardrobe",
+  "garmentNameRequired": "Name is required",
+  "tierWarmth": "Warmth",
+  "tierWind": "Wind resistance",
+  "tierWater": "Waterproofness",
+  "tierBreath": "Breathability",
+  "garmentLiners": "{count} liner(s)",
+  "@garmentLiners": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "garmentVents": "vents",
+  "garmentHeatedShort": "heated",
+  "catBaseLayer": "Base layer",
+  "catMidLayer": "Mid layer",
+  "catShellJacket": "Shell jacket",
+  "catPants": "Pants",
+  "catOnePieceSuit": "One-piece suit",
+  "catGloves": "Gloves",
+  "catBoots": "Boots",
+  "catSocks": "Socks",
+  "catHeadwear": "Headwear",
+  "catNeckwear": "Neckwear",
+  "catHeatedVest": "Heated vest",
+  "catRainLayer": "Rain layer",
+  "matTextile": "Textile",
+  "matLeather": "Leather",
+  "matMesh": "Mesh",
+  "matDenim": "Denim",
+  "matSynthetic": "Synthetic",
+  "matMerino": "Merino",
+  "matMixed": "Mixed",
+  "matOther": "Other",
+  "presetTextileJacket": "Textile motorcycle jacket",
+  "presetMeshJacket": "Mesh / summer jacket",
+  "presetLeatherJacket": "Leather motorcycle jacket",
+  "presetTextilePants": "Textile motorcycle pants",
+  "presetMotorcycleJeans": "Motorcycle jeans",
+  "presetOnePieceSuit": "One-piece suit",
+  "presetSummerGloves": "Summer gloves",
+  "presetWinterGloves": "Winter gloves",
+  "presetHeatedGloves": "Heated gloves",
+  "routeNew": "New route",
+  "routeEdit": "Edit route",
+  "routeNameHint": "Work 1, Sunday loop…",
+  "routeDescription": "Description (optional)",
+  "routeFavoriteHint": "Shows first on the motorcycle home screen",
+  "routeSection": "Route",
+  "routeSearchHint": "Search for places — you do not need to enter coordinates.",
+  "routeAdvancedCoords": "Advanced: coordinates",
+  "routeAdvancedHint": "Developer / fallback only",
+  "coordLatitude": "{role} latitude",
+  "@coordLatitude": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "coordLongitude": "Longitude",
+  "coordApply": "Apply coordinates",
+  "routeCatWork": "Work",
+  "routeCatCommute": "Commute",
+  "routeCatHome": "Home",
+  "routeCatWeekend": "Weekend",
+  "routeCatTouring": "Touring",
+  "routeCatFavourite": "Favourite",
+  "routeCatCustom": "Custom",
+  "mapSelectEndpoints": "Select start and destination to preview the route",
+  "placeSearchHint": "Search place or address",
+  "placeNoResults": "No places found",
+  "placeSearchFailed": "Place search failed",
+  "placeSearchUnavailable": "Place search is temporarily unavailable.",
+  "routeStraightSegmentsNotice": "Preview uses straight segments because road routing is not available.",
+  "plannerCouldNotSave": "Could not save the route for analysis.",
+  "feedbackTitle": "How did the kit feel?",
+  "feedbackTooCold": "Too cold",
+  "feedbackSlightlyCold": "Slightly cold",
+  "feedbackJustRight": "Just right",
+  "feedbackSlightlyWarm": "Slightly warm",
+  "feedbackTooWarm": "Too warm",
+  "feedbackSubmit": "Submit feedback",
+  "feedbackThanks": "Thanks — comfort profile updated",
+  "analysisTempChip": "Temp {value}",
+  "@analysisTempChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "analysisRainChip": "Rain {value}",
+  "@analysisRainChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "analysisWindChip": "Wind {value}",
+  "@analysisWindChip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "routeCoordsInvalid": "Coordinates must be valid numbers.",
+  "routeEditorIncomplete": "Enter a name and choose a place for start and destination.",
+  "coordCustomPoint": "Custom point"
 }

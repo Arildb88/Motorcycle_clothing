@@ -26,12 +26,16 @@ class DeviceLocationResult {
 
 /// Abstraction so planner UI never calls Geolocator directly in tests.
 abstract class DeviceLocationService {
-  Future<DeviceLocationResult> getCurrentPlace();
+  Future<DeviceLocationResult> getCurrentPlace({
+    String label = 'Current location',
+  });
 }
 
 class GeolocatorDeviceLocationService implements DeviceLocationService {
   @override
-  Future<DeviceLocationResult> getCurrentPlace() async {
+  Future<DeviceLocationResult> getCurrentPlace({
+    String label = 'Current location',
+  }) async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -60,7 +64,7 @@ class GeolocatorDeviceLocationService implements DeviceLocationService {
       return DeviceLocationResult.ok(
         ResolvedPlace(
           providerPlaceId: 'device:${pos.latitude},${pos.longitude}',
-          label: 'Current location',
+          label: label,
           lat: pos.latitude,
           lon: pos.longitude,
         ),
@@ -79,7 +83,9 @@ class FakeDeviceLocationService implements DeviceLocationService {
   DeviceLocationFailure? failure;
 
   @override
-  Future<DeviceLocationResult> getCurrentPlace() async {
+  Future<DeviceLocationResult> getCurrentPlace({
+    String label = 'Current location',
+  }) async {
     if (failure != null) return DeviceLocationResult.err(failure!);
     if (place != null) return DeviceLocationResult.ok(place!);
     return DeviceLocationResult.err(DeviceLocationFailure.temporaryFailure);

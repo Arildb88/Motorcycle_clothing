@@ -483,4 +483,656 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authPasswordChanged => 'Password updated.';
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
+  String get commonSave => 'Save';
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get commonContinue => 'Continue';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get commonRemove => 'Remove';
+
+  @override
+  String get commonNone => 'None';
+
+  @override
+  String get commonCustom => 'Custom';
+
+  @override
+  String get commonName => 'Name';
+
+  @override
+  String get commonCategory => 'Category';
+
+  @override
+  String get commonFavorite => 'Favorite';
+
+  @override
+  String get commonUnfavorite => 'Unfavorite';
+
+  @override
+  String get errorGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get errorCouldNotLoad => 'Could not load this. Try again.';
+
+  @override
+  String get currentLocation => 'Current location';
+
+  @override
+  String get labelStart => 'Start';
+
+  @override
+  String get labelDestination => 'Destination';
+
+  @override
+  String get labelEnd => 'End';
+
+  @override
+  String waypointStop(int index) {
+    return 'Stop $index';
+  }
+
+  @override
+  String routeLoopSummary(String start, int count) {
+    return '$start · loop · $count stops';
+  }
+
+  @override
+  String routeViaSummary(String start, String end, int count) {
+    return '$start → … → $end ($count)';
+  }
+
+  @override
+  String durationMinutes(int minutes) {
+    return '~$minutes min';
+  }
+
+  @override
+  String durationHours(int hours) {
+    return '~$hours h';
+  }
+
+  @override
+  String durationHoursMinutes(int hours, int minutes) {
+    return '~$hours h $minutes m';
+  }
+
+  @override
+  String get homePlanNewChip => '+ Plan new';
+
+  @override
+  String get homeSaveRouteChip => 'Save a route';
+
+  @override
+  String get homeHowWasTheRide => 'How was the ride?';
+
+  @override
+  String get homeFallbackRide => 'Ride';
+
+  @override
+  String get metricTemp => 'Temp';
+
+  @override
+  String get metricExposure => 'Exposure';
+
+  @override
+  String get metricRain => 'Rain';
+
+  @override
+  String get metricWind => 'Wind';
+
+  @override
+  String kitNotOwned(String name) {
+    return '$name (not owned)';
+  }
+
+  @override
+  String get kitFallbackItem => 'Item';
+
+  @override
+  String get confidenceHigh => 'High';
+
+  @override
+  String get confidenceMedium => 'Medium';
+
+  @override
+  String get confidenceLow => 'Low';
+
+  @override
+  String get configInstallThermalLiner => 'install thermal liner';
+
+  @override
+  String get configInstallWaterproofLiner => 'install waterproof liner';
+
+  @override
+  String get configRemoveThermalLiner => 'remove thermal liner';
+
+  @override
+  String get configVentsOpen => 'vents open';
+
+  @override
+  String get configVentsClosed => 'vents closed';
+
+  @override
+  String get routesTitle => 'Saved routes';
+
+  @override
+  String get routesSubtitle =>
+      'Reusable templates for motorcycle. Weather and kit are always recalculated when you launch a ride.';
+
+  @override
+  String get routesEditTemplate => 'Edit route template';
+
+  @override
+  String get routesDeleteTitle => 'Delete route?';
+
+  @override
+  String routesDeleteBody(String name) {
+    return '“$name” will be removed. Past rides keep their route snapshot.';
+  }
+
+  @override
+  String get profileSection => 'Profile';
+
+  @override
+  String get profileDisplayName => 'Display name';
+
+  @override
+  String get profileAvatarInitials => 'Avatar: initials for now';
+
+  @override
+  String get profileAvatarProvider => 'provider image available';
+
+  @override
+  String get profileActivitySection => 'Activity';
+
+  @override
+  String get profileDefaultActivity => 'Default activity';
+
+  @override
+  String get profileShowChooser => 'Show activity chooser at startup';
+
+  @override
+  String get profileLoginMethods => 'Connected login methods';
+
+  @override
+  String get profileLinked => 'Linked';
+
+  @override
+  String get profileConnectFacebook => 'Connect Facebook login';
+
+  @override
+  String get profileConnectMicrosoft => 'Connect Microsoft login';
+
+  @override
+  String get profileServices => 'Connected services';
+
+  @override
+  String get profileConnected => 'Connected';
+
+  @override
+  String get profileSync => 'Sync';
+
+  @override
+  String get profileDisconnect => 'Disconnect';
+
+  @override
+  String get profileConnectStrava => 'Connect Strava';
+
+  @override
+  String get profileStravaNotConfigured =>
+      'Strava is not set up on the server yet.';
+
+  @override
+  String get profileSave => 'Save profile';
+
+  @override
+  String get profileAccount => 'Account';
+
+  @override
+  String get profileSignOut => 'Sign out';
+
+  @override
+  String get profileDeleteAccount => 'Delete account';
+
+  @override
+  String get profileDeleteTitle => 'Delete account?';
+
+  @override
+  String get profileDeleteBody =>
+      'This permanently deletes your RideWear account, wardrobe, and history.';
+
+  @override
+  String get profileDemoLinkHint =>
+      'Set up Facebook or Microsoft on the server to link them to this account.';
+
+  @override
+  String get profileLoginFallback => 'Login';
+
+  @override
+  String get activityMotorcycle => 'Motorcycle';
+
+  @override
+  String get activityHiking => 'Hiking';
+
+  @override
+  String get activityCycling => 'Cycling';
+
+  @override
+  String get activityWhatToday => 'What are you doing today?';
+
+  @override
+  String activityDefaultLine(String activity) {
+    return 'Default: $activity';
+  }
+
+  @override
+  String get activityDefaultBadge => 'DEFAULT';
+
+  @override
+  String get activitySoon => 'Soon';
+
+  @override
+  String get activityChooserHint =>
+      'Changing today’s activity does not change your saved default.';
+
+  @override
+  String get onboardingInterests => 'What do you ride or move for?';
+
+  @override
+  String get onboardingOpen => 'How should RideWear open?';
+
+  @override
+  String get onboardingTemperature => 'How do you feel temperature?';
+
+  @override
+  String get onboardingStart => 'Start RideWear';
+
+  @override
+  String get onboardingComingLater => 'Recommendations coming later';
+
+  @override
+  String get onboardingShowChooser =>
+      'Show activity chooser when I open RideWear';
+
+  @override
+  String get onboardingCold => 'I get cold easily';
+
+  @override
+  String get onboardingAverage => 'Average';
+
+  @override
+  String get onboardingWarm => 'I usually run warm';
+
+  @override
+  String activityComingNext(String activity) {
+    return '$activity recommendations are coming next.';
+  }
+
+  @override
+  String get activitySharedBody =>
+      'Your profile and wardrobe are already shared across activities. Motorcycle recommendations are available today.';
+
+  @override
+  String get activityOpenMotorcycle => 'Open Motorcycle today';
+
+  @override
+  String activityMakeDefault(String activity) {
+    return 'Make $activity my default';
+  }
+
+  @override
+  String activityNowDefault(String activity) {
+    return '$activity set as default';
+  }
+
+  @override
+  String get wardrobeIntro =>
+      'Add what you actually own. Category sets sensible defaults — refine later.';
+
+  @override
+  String get wardrobeEmptyTitle => 'No garments yet';
+
+  @override
+  String get wardrobeEmptyBody =>
+      'Add a few pieces you ride in, or load a demo kit for testing.';
+
+  @override
+  String get wardrobeAdd => 'Add garment';
+
+  @override
+  String get wardrobeLoadDemo => 'Load demo motorcycle wardrobe';
+
+  @override
+  String get wardrobeDeleteTitle => 'Delete garment?';
+
+  @override
+  String wardrobeDeleteBody(String name) {
+    return 'Remove “$name” from your wardrobe.';
+  }
+
+  @override
+  String get garmentEditTitle => 'Edit garment';
+
+  @override
+  String get garmentUpdatePiece => 'Update kit piece';
+
+  @override
+  String get garmentKeepSimple => 'Keep it simple';
+
+  @override
+  String get garmentNameHint => 'e.g. Dainese Carve Master';
+
+  @override
+  String get garmentQuickType => 'Quick type (optional)';
+
+  @override
+  String get garmentMaterial => 'Material';
+
+  @override
+  String get garmentUnspecified => 'Unspecified';
+
+  @override
+  String get garmentVentilation => 'Has ventilation';
+
+  @override
+  String get garmentVentilationHint =>
+      'Open or closed is chosen per ride later';
+
+  @override
+  String get garmentHeated => 'Heated';
+
+  @override
+  String get garmentThermalLiner => 'Thermal liner included';
+
+  @override
+  String get garmentThermalLinerHint =>
+      'Same jacket — the liner can be installed, it is not a second item';
+
+  @override
+  String get garmentWaterproofLiner => 'Waterproof liner included';
+
+  @override
+  String get garmentBrand => 'Brand (optional)';
+
+  @override
+  String get garmentModel => 'Model (optional)';
+
+  @override
+  String get garmentMoreDetails => 'More details';
+
+  @override
+  String get garmentMoreDetailsHint => 'Adjust warmth and weather properties';
+
+  @override
+  String get garmentNotes => 'Notes (optional)';
+
+  @override
+  String get garmentSaveChanges => 'Save changes';
+
+  @override
+  String get garmentAddToWardrobe => 'Add to wardrobe';
+
+  @override
+  String get garmentNameRequired => 'Name is required';
+
+  @override
+  String get tierWarmth => 'Warmth';
+
+  @override
+  String get tierWind => 'Wind resistance';
+
+  @override
+  String get tierWater => 'Waterproofness';
+
+  @override
+  String get tierBreath => 'Breathability';
+
+  @override
+  String garmentLiners(int count) {
+    return '$count liner(s)';
+  }
+
+  @override
+  String get garmentVents => 'vents';
+
+  @override
+  String get garmentHeatedShort => 'heated';
+
+  @override
+  String get catBaseLayer => 'Base layer';
+
+  @override
+  String get catMidLayer => 'Mid layer';
+
+  @override
+  String get catShellJacket => 'Shell jacket';
+
+  @override
+  String get catPants => 'Pants';
+
+  @override
+  String get catOnePieceSuit => 'One-piece suit';
+
+  @override
+  String get catGloves => 'Gloves';
+
+  @override
+  String get catBoots => 'Boots';
+
+  @override
+  String get catSocks => 'Socks';
+
+  @override
+  String get catHeadwear => 'Headwear';
+
+  @override
+  String get catNeckwear => 'Neckwear';
+
+  @override
+  String get catHeatedVest => 'Heated vest';
+
+  @override
+  String get catRainLayer => 'Rain layer';
+
+  @override
+  String get matTextile => 'Textile';
+
+  @override
+  String get matLeather => 'Leather';
+
+  @override
+  String get matMesh => 'Mesh';
+
+  @override
+  String get matDenim => 'Denim';
+
+  @override
+  String get matSynthetic => 'Synthetic';
+
+  @override
+  String get matMerino => 'Merino';
+
+  @override
+  String get matMixed => 'Mixed';
+
+  @override
+  String get matOther => 'Other';
+
+  @override
+  String get presetTextileJacket => 'Textile motorcycle jacket';
+
+  @override
+  String get presetMeshJacket => 'Mesh / summer jacket';
+
+  @override
+  String get presetLeatherJacket => 'Leather motorcycle jacket';
+
+  @override
+  String get presetTextilePants => 'Textile motorcycle pants';
+
+  @override
+  String get presetMotorcycleJeans => 'Motorcycle jeans';
+
+  @override
+  String get presetOnePieceSuit => 'One-piece suit';
+
+  @override
+  String get presetSummerGloves => 'Summer gloves';
+
+  @override
+  String get presetWinterGloves => 'Winter gloves';
+
+  @override
+  String get presetHeatedGloves => 'Heated gloves';
+
+  @override
+  String get routeNew => 'New route';
+
+  @override
+  String get routeEdit => 'Edit route';
+
+  @override
+  String get routeNameHint => 'Work 1, Sunday loop…';
+
+  @override
+  String get routeDescription => 'Description (optional)';
+
+  @override
+  String get routeFavoriteHint => 'Shows first on the motorcycle home screen';
+
+  @override
+  String get routeSection => 'Route';
+
+  @override
+  String get routeSearchHint =>
+      'Search for places — you do not need to enter coordinates.';
+
+  @override
+  String get routeAdvancedCoords => 'Advanced: coordinates';
+
+  @override
+  String get routeAdvancedHint => 'Developer / fallback only';
+
+  @override
+  String coordLatitude(String role) {
+    return '$role latitude';
+  }
+
+  @override
+  String get coordLongitude => 'Longitude';
+
+  @override
+  String get coordApply => 'Apply coordinates';
+
+  @override
+  String get routeCatWork => 'Work';
+
+  @override
+  String get routeCatCommute => 'Commute';
+
+  @override
+  String get routeCatHome => 'Home';
+
+  @override
+  String get routeCatWeekend => 'Weekend';
+
+  @override
+  String get routeCatTouring => 'Touring';
+
+  @override
+  String get routeCatFavourite => 'Favourite';
+
+  @override
+  String get routeCatCustom => 'Custom';
+
+  @override
+  String get mapSelectEndpoints =>
+      'Select start and destination to preview the route';
+
+  @override
+  String get placeSearchHint => 'Search place or address';
+
+  @override
+  String get placeNoResults => 'No places found';
+
+  @override
+  String get placeSearchFailed => 'Place search failed';
+
+  @override
+  String get placeSearchUnavailable =>
+      'Place search is temporarily unavailable.';
+
+  @override
+  String get routeStraightSegmentsNotice =>
+      'Preview uses straight segments because road routing is not available.';
+
+  @override
+  String get plannerCouldNotSave => 'Could not save the route for analysis.';
+
+  @override
+  String get feedbackTitle => 'How did the kit feel?';
+
+  @override
+  String get feedbackTooCold => 'Too cold';
+
+  @override
+  String get feedbackSlightlyCold => 'Slightly cold';
+
+  @override
+  String get feedbackJustRight => 'Just right';
+
+  @override
+  String get feedbackSlightlyWarm => 'Slightly warm';
+
+  @override
+  String get feedbackTooWarm => 'Too warm';
+
+  @override
+  String get feedbackSubmit => 'Submit feedback';
+
+  @override
+  String get feedbackThanks => 'Thanks — comfort profile updated';
+
+  @override
+  String analysisTempChip(String value) {
+    return 'Temp $value';
+  }
+
+  @override
+  String analysisRainChip(String value) {
+    return 'Rain $value';
+  }
+
+  @override
+  String analysisWindChip(String value) {
+    return 'Wind $value';
+  }
+
+  @override
+  String get routeCoordsInvalid => 'Coordinates must be valid numbers.';
+
+  @override
+  String get routeEditorIncomplete =>
+      'Enter a name and choose a place for start and destination.';
+
+  @override
+  String get coordCustomPoint => 'Custom point';
 }

@@ -11,6 +11,7 @@ import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/theme/outline_form_field.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/screens/change_password_screen.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
@@ -68,7 +69,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load profile: $e')),
+          SnackBar(
+            content: Text(
+              localizeUserError(e, AppLocalizations.of(context)),
+            ),
+          ),
         );
       }
     }
@@ -107,7 +112,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
+        SnackBar(content: Text(localizeUserError(e, l10n))),
       );
     }
   }
@@ -116,6 +121,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
     final activity = context.watch<ActivityContext>();
+    final l10n = AppLocalizations.of(context);
     if (_loading || _me == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -137,44 +143,44 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
         children: [
           Text(
-            'Profile',
+            l10n.navProfile,
             style: GoogleFonts.barlowCondensed(
               fontSize: 32,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
-          Text('PROFILE', style: _sectionStyle),
+          Text(l10n.profileSection.toUpperCase(), style: _sectionStyle),
           OutlineFormField(
             child: TextField(
               controller: _name,
-              decoration: const InputDecoration(labelText: 'Display name'),
+              decoration: InputDecoration(labelText: l10n.profileDisplayName),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Avatar: initials for now'
-            '${(_me!['profile'] as Map?)?['avatarUrl'] != null ? ' · provider image available' : ''}',
+            '${l10n.profileAvatarInitials}'
+            '${(_me!['profile'] as Map?)?['avatarUrl'] != null ? ' · ${l10n.profileAvatarProvider}' : ''}',
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 16),
-          Text(AppLocalizations.of(context).language.toUpperCase(), style: _sectionStyle),
+          Text(l10n.language.toUpperCase(), style: _sectionStyle),
           OutlineFormField(
             child: DropdownButtonFormField<String>(
               // ignore: deprecated_member_use
               value: context.watch<LocaleController>().preferredCode ??
                   context.watch<LocaleController>().locale.languageCode,
               decoration: InputDecoration(
-                labelText: AppLocalizations.of(context).language,
+                labelText: l10n.language,
               ),
               items: [
                 DropdownMenuItem(
                   value: 'nb',
-                  child: Text(AppLocalizations.of(context).languageNorwegian),
+                  child: Text(l10n.languageNorwegian),
                 ),
                 DropdownMenuItem(
                   value: 'en',
-                  child: Text(AppLocalizations.of(context).languageEnglish),
+                  child: Text(l10n.languageEnglish),
                 ),
               ],
               onChanged: (code) async {
@@ -182,7 +188,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 final locale = context.read<LocaleController>();
                 final api = context.read<ApiClient>();
                 final messenger = ScaffoldMessenger.of(context);
-                final savedMsg = AppLocalizations.of(context).languageSaved;
+                final savedMsg = l10n.languageSaved;
                 await locale.setPreferred(code);
                 try {
                   await api.patch('/users/me', {'preferredLanguage': code});
@@ -195,15 +201,18 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text('ACTIVITY', style: _sectionStyle),
+          Text(l10n.profileActivitySection.toUpperCase(), style: _sectionStyle),
           OutlineFormField(
             child: DropdownButtonFormField<AppActivity>(
               // ignore: deprecated_member_use
               value: activity.defaultActivity,
-              decoration: const InputDecoration(labelText: 'Default activity'),
+              decoration: InputDecoration(labelText: l10n.profileDefaultActivity),
               items: AppActivity.selectable
                   .map(
-                    (a) => DropdownMenuItem(value: a, child: Text(a.label)),
+                    (a) => DropdownMenuItem(
+                      value: a,
+                      child: Text(activityLabel(l10n, a)),
+                    ),
                   )
                   .toList(),
               onChanged: (v) async {
@@ -213,67 +222,67 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Show activity chooser at startup'),
+            title: Text(l10n.profileShowChooser),
             value: activity.showChooserOnLaunch,
             onChanged: (v) => activity.setShowChooserOnLaunch(v),
           ),
           const SizedBox(height: 8),
-          Text('CONNECTED LOGIN METHODS', style: _sectionStyle),
+          Text(l10n.profileLoginMethods.toUpperCase(), style: _sectionStyle),
           ...identities.map((raw) {
             final i = Map<String, dynamic>.from(raw as Map);
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(_providerLabel(i['provider']?.toString())),
-              subtitle: Text(i['providerEmail']?.toString() ?? 'Linked'),
+              title: Text(_providerLabel(l10n, i['provider']?.toString())),
+              subtitle: Text(i['providerEmail']?.toString() ?? l10n.profileLinked),
               leading: const Icon(Icons.check_circle_outline),
             );
           }),
           _linkButton(
-            label: 'Connect Facebook login',
+            label: l10n.profileConnectFacebook,
             enabled: fbEnabled || demo,
             onPressed: () => _linkIdentity('facebook', demo && !fbEnabled),
           ),
           _linkButton(
-            label: 'Connect Microsoft login',
+            label: l10n.profileConnectMicrosoft,
             enabled: msEnabled || demo,
             onPressed: () => _linkIdentity('microsoft', demo && !msEnabled),
           ),
           const SizedBox(height: 12),
-          Text('CONNECTED SERVICES', style: _sectionStyle),
+          Text(l10n.profileServices.toUpperCase(), style: _sectionStyle),
           if (stravaConnected)
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'Strava · ${strava.first['displayName'] ?? 'Connected'}',
+                'Strava · ${strava.first['displayName'] ?? l10n.profileConnected}',
               ),
-              subtitle: const Text('Connected'),
+              subtitle: Text(l10n.profileConnected),
               trailing: Wrap(
                 spacing: 4,
                 children: [
                   TextButton(
                     onPressed: stravaCfg ? _syncStrava : null,
-                    child: const Text('Sync'),
+                    child: Text(l10n.profileSync),
                   ),
                   TextButton(
                     onPressed: () => _disconnect('strava'),
-                    child: const Text('Disconnect'),
+                    child: Text(l10n.profileDisconnect),
                   ),
                 ],
               ),
             )
           else
             _linkButton(
-              label: 'Connect Strava',
+              label: l10n.profileConnectStrava,
               enabled: stravaCfg,
               onPressed: _connectStrava,
-              disabledHint: 'Configure STRAVA_* and TOKEN_ENCRYPTION_KEY',
+              disabledHint: l10n.profileStravaNotConfigured,
             ),
           const SizedBox(height: 12),
-          Text(AppLocalizations.of(context).unitsSection, style: _sectionStyle),
+          Text(l10n.unitsSection, style: _sectionStyle),
           _UnitsSection(onChanged: _saveUnits),
-          FilledButton(onPressed: _saveBasics, child: const Text('Save profile')),
+          FilledButton(onPressed: _saveBasics, child: Text(l10n.profileSave)),
           const SizedBox(height: 16),
-          Text('ACCOUNT', style: _sectionStyle),
+          Text(l10n.profileAccount.toUpperCase(), style: _sectionStyle),
           if (identities.any(
             (raw) =>
                 raw is Map && raw['provider']?.toString() == 'local',
@@ -288,16 +297,16 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     ),
                   );
                 },
-                child: Text(AppLocalizations.of(context).authChangePassword),
+                child: Text(l10n.authChangePassword),
               ),
             ),
           FilledButton.tonal(
             onPressed: () async => auth.logout(),
-            child: const Text('Sign out'),
+            child: Text(l10n.profileSignOut),
           ),
           TextButton(
             onPressed: _deleteAccount,
-            child: const Text('Delete account'),
+            child: Text(l10n.profileDeleteAccount),
           ),
         ],
       ),
@@ -311,16 +320,16 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         fontWeight: FontWeight.w600,
       );
 
-  String _providerLabel(String? p) {
+  String _providerLabel(AppLocalizations l10n, String? p) {
     switch (p) {
       case 'local':
-        return 'Email';
+        return l10n.authEmailLabel;
       case 'facebook':
         return 'Facebook';
       case 'microsoft':
         return 'Microsoft';
       default:
-        return p ?? 'Login';
+        return p ?? l10n.profileLoginFallback;
     }
   }
 
@@ -361,10 +370,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         // When only demo is available, show guidance:
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Configure real Facebook/Microsoft apps to link to this account. Demo tokens cannot safely attach to an existing email user.',
-              ),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).profileDemoLinkHint),
             ),
           );
         }
@@ -375,13 +382,15 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+          SnackBar(content: Text(localizeUserError(e, AppLocalizations.of(context)))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(
+            content: Text(localizeUserError(e, AppLocalizations.of(context))),
+          ),
         );
       }
     }
@@ -395,7 +404,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(
+            content: Text(localizeUserError(e, AppLocalizations.of(context))),
+          ),
         );
       }
     }
@@ -417,18 +428,16 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: const Text(
-          'This permanently deletes your RideWear account, wardrobe, and history.',
-        ),
+        title: Text(AppLocalizations.of(ctx).profileDeleteTitle),
+        content: Text(AppLocalizations.of(ctx).profileDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(ctx).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(ctx).commonDelete),
           ),
         ],
       ),

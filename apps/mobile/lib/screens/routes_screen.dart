@@ -6,6 +6,7 @@ import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
 class RoutesScreen extends StatefulWidget {
@@ -43,7 +44,9 @@ class _RoutesScreenState extends State<RoutesScreen> {
         });
       }
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -79,22 +82,23 @@ class _RoutesScreenState extends State<RoutesScreen> {
   Future<void> _delete(SavedRoute r) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete route?'),
-        content: Text(
-          '“${r.name}” will be removed. Past rides keep their route snapshot.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(l10n.routesDeleteTitle),
+          content: Text(l10n.routesDeleteBody(r.name)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.commonDelete),
+            ),
+          ],
+        );
+      },
     );
     if (ok != true || !mounted) return;
     final api = context.read<ApiClient>();
@@ -104,6 +108,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,7 +119,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Saved routes',
+                    l10n.routesTitle,
                     style: GoogleFonts.barlowCondensed(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
@@ -123,12 +128,12 @@ class _RoutesScreenState extends State<RoutesScreen> {
                 ),
                 IconButton(
                   onPressed: () => _openPlanner(),
-                  tooltip: AppLocalizations.of(context).plannerTitle,
+                  tooltip: l10n.plannerTitle,
                   icon: const Icon(Icons.add),
                 ),
                 IconButton(
                   onPressed: () => _openEditor(),
-                  tooltip: 'Edit route template',
+                  tooltip: l10n.routesEditTemplate,
                   icon: const Icon(Icons.edit_road),
                 ),
               ],
@@ -137,8 +142,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Reusable templates for motorcycle. Weather and kit are always '
-              'recalculated when you launch a ride.',
+              l10n.routesSubtitle,
               style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
             ),
           ),
@@ -153,9 +157,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                             child: FilledButton.icon(
                               onPressed: () => _openPlanner(),
                               icon: const Icon(Icons.add),
-                              label: Text(
-                                AppLocalizations.of(context).plannerTitle,
-                              ),
+                              label: Text(l10n.plannerTitle),
                             ),
                           )
                         : RefreshIndicator(
@@ -183,8 +185,8 @@ class _RoutesScreenState extends State<RoutesScreen> {
                                   ),
                                   title: Text(r.name),
                                   subtitle: Text(
-                                    '${r.summaryLabel}\n${r.durationLabel}'
-                                    '${r.category != null ? ' · ${r.category}' : ''}',
+                                    '${routeSummary(l10n, r)}\n${routeDuration(l10n, r.typicalDurationMin)}'
+                                    '${r.category != null ? ' · ${routeCategoryLabel(l10n, r.category)}' : ''}',
                                   ),
                                   isThreeLine: true,
                                   onTap: () => _openPlanner(existing: r),
@@ -203,26 +205,23 @@ class _RoutesScreenState extends State<RoutesScreen> {
                                     itemBuilder: (_) => [
                                       PopupMenuItem(
                                         value: 'plan',
-                                        child: Text(
-                                          AppLocalizations.of(context)
-                                              .plannerTitle,
-                                        ),
+                                        child: Text(l10n.plannerTitle),
                                       ),
                                       PopupMenuItem(
                                         value: 'favorite',
                                         child: Text(
                                           r.isFavorite
-                                              ? 'Unfavorite'
-                                              : 'Favorite',
+                                              ? l10n.commonUnfavorite
+                                              : l10n.commonFavorite,
                                         ),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'edit',
-                                        child: Text('Edit'),
+                                        child: Text(l10n.commonEdit),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'delete',
-                                        child: Text('Delete'),
+                                        child: Text(l10n.commonDelete),
                                       ),
                                     ],
                                   ),

@@ -42,8 +42,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final auth = context.read<AuthState>();
     try {
       final res = await auth.requestPasswordReset(email: email);
-      final message =
-          (res['message'] as String?) ?? l10n.authForgotPasswordSuccess;
+      final message = l10n.authForgotPasswordSuccess;
       final devToken = res['devResetToken'] as String?;
       if (!mounted) return;
       setState(() => _info = message);

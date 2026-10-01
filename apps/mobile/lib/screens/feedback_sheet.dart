@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 
 Future<void> showFeedbackSheet(
   BuildContext context,
   Map<String, dynamic> recommendPayload,
 ) async {
-  final ratings = <String, String>{
-    'too_cold': 'Too cold',
-    'slightly_cold': 'Slightly cold',
-    'ok': 'Just right',
-    'slightly_warm': 'Slightly warm',
-    'too_warm': 'Too warm',
-  };
-
   String? selected;
 
   await showModalBottomSheet<void>(
@@ -22,15 +15,23 @@ Future<void> showFeedbackSheet(
     builder: (ctx) {
       return StatefulBuilder(
         builder: (ctx, setModal) {
+          final l10n = AppLocalizations.of(ctx);
+          final ratings = <String, String>{
+            'too_cold': l10n.feedbackTooCold,
+            'slightly_cold': l10n.feedbackSlightlyCold,
+            'ok': l10n.feedbackJustRight,
+            'slightly_warm': l10n.feedbackSlightlyWarm,
+            'too_warm': l10n.feedbackTooWarm,
+          };
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'How did the kit feel?',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                Text(
+                  l10n.feedbackTitle,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -63,13 +64,13 @@ Future<void> showFeedbackSheet(
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Thanks — comfort profile updated'),
+                              SnackBar(
+                                content: Text(l10n.feedbackThanks),
                               ),
                             );
                           }
                         },
-                  child: const Text('Submit feedback'),
+                  child: Text(l10n.feedbackSubmit),
                 ),
               ],
             ),

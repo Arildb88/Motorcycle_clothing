@@ -111,6 +111,7 @@ class FakeRouteGeometryService implements RouteGeometryService {
       usedFallbackTravelMode: true,
       durationMin: 20,
       distanceMeters: 5000,
+      noticeCode: 'STRAIGHT_SEGMENTS',
       providerWarning:
           'Preview uses straight segments (routing provider not configured).',
     );

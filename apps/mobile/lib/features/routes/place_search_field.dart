@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -115,7 +117,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
         _suggestions = results;
         _loading = false;
         if (results.isEmpty) {
-          _error = 'No places found';
+          _error = AppLocalizations.of(context).placeNoResults;
         }
       });
     } on LocationProviderException catch (e) {
@@ -123,14 +125,14 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
       setState(() {
         _loading = false;
         _suggestions = const [];
-        _error = e.message;
+        _error = localizeLocationError(e, AppLocalizations.of(context));
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _suggestions = const [];
-        _error = 'Place search failed';
+        _error = AppLocalizations.of(context).placeSearchFailed;
       });
     }
   }
@@ -151,7 +153,11 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
       _focus.unfocus();
       widget.onSelected?.call(place);
     } on LocationProviderException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(
+          () => _error = localizeLocationError(e, AppLocalizations.of(context)),
+        );
+      }
     } finally {
       if (mounted) setState(() => _resolving = false);
     }
@@ -171,6 +177,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -181,7 +188,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
           onChanged: _onChanged,
           decoration: InputDecoration(
             labelText: widget.label,
-            hintText: 'Search place or address',
+            hintText: l10n.placeSearchHint,
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -196,7 +203,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
                   ),
                 if (_controller.text.isNotEmpty)
                   IconButton(
-                    tooltip: 'Clear',
+                    tooltip: l10n.commonClear,
                     onPressed: widget.enabled ? _clear : null,
                     icon: const Icon(Icons.clear),
                   ),
@@ -210,7 +217,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
             child: Text(
               _error!,
               style: TextStyle(
-                color: _error == 'No places found'
+                color: _error == l10n.placeNoResults
                     ? AppTheme.steel
                     : Colors.red.shade700,
                 fontSize: 13,

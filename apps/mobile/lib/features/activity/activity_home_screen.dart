@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/activity.dart';
+import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/screens/home_screen.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -27,6 +29,8 @@ class _ComingSoonHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activityCtx = context.read<ActivityContext>();
+    final l10n = AppLocalizations.of(context);
+    final name = activityLabel(l10n, activity);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
@@ -36,13 +40,12 @@ class _ComingSoonHome extends StatelessWidget {
             _ActivitySwitcher(),
             const SizedBox(height: 24),
             Text(
-              '${activity.label} recommendations are coming next.',
+              l10n.activityComingNext(name),
               style: GoogleFonts.sourceSerif4(fontSize: 26),
             ),
             const SizedBox(height: 12),
             Text(
-              'Your profile and wardrobe are already shared across activities. '
-              'Motorcycle recommendations are available today.',
+              l10n.activitySharedBody,
               style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
             ),
             const SizedBox(height: 24),
@@ -50,7 +53,7 @@ class _ComingSoonHome extends StatelessWidget {
               onPressed: () {
                 activityCtx.setCurrentActivity(AppActivity.motorcycle);
               },
-              child: const Text('Open Motorcycle today'),
+              child: Text(l10n.activityOpenMotorcycle),
             ),
             TextButton(
               onPressed: () async {
@@ -58,12 +61,12 @@ class _ComingSoonHome extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${activity.label} set as default'),
+                      content: Text(l10n.activityNowDefault(name)),
                     ),
                   );
                 }
               },
-              child: Text('Make ${activity.label} my default'),
+              child: Text(l10n.activityMakeDefault(name)),
             ),
           ],
         ),
@@ -85,6 +88,7 @@ class _ActivitySwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctx = context.watch<ActivityContext>();
+    final l10n = AppLocalizations.of(context);
     return PopupMenuButton<AppActivity>(
       onSelected: (a) => ctx.setCurrentActivity(a),
       itemBuilder: (context) => AppActivity.selectable
@@ -93,10 +97,10 @@ class _ActivitySwitcher extends StatelessWidget {
               value: a,
               child: Row(
                 children: [
-                  Expanded(child: Text(a.label)),
+                  Expanded(child: Text(activityLabel(l10n, a))),
                   if (a == ctx.defaultActivity)
                     Text(
-                      'DEFAULT',
+                      l10n.activityDefaultBadge,
                       style: GoogleFonts.barlowCondensed(
                         color: AppTheme.amber,
                         fontWeight: FontWeight.w700,
@@ -111,7 +115,7 @@ class _ActivitySwitcher extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            ctx.currentActivity.label,
+            activityLabel(l10n, ctx.currentActivity),
             style: GoogleFonts.barlowCondensed(
               fontSize: 28,
               fontWeight: FontWeight.w600,

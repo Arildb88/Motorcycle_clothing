@@ -10,6 +10,7 @@ import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
@@ -139,7 +140,9 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       _locating = true;
       _error = null;
     });
-    final result = await _deviceLocation.getCurrentPlace();
+    final result = await _deviceLocation.getCurrentPlace(
+      label: l10n.currentLocation,
+    );
     if (!mounted) return;
     setState(() => _locating = false);
     if (!result.isOk) {
@@ -226,7 +229,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
                     color: AppTheme.amber,
                   ),
                   title: Text(r.name),
-                  subtitle: Text(r.summaryLabel),
+                  subtitle: Text(routeSummary(l10n, r)),
                   onTap: () => Navigator.pop(ctx, r),
                 ),
             ],
@@ -284,9 +287,13 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         SnackBar(content: Text(l10n.plannerRouteSaved)),
       );
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) {
+        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -310,7 +317,8 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       }
       final routeId = await _ensureRouteId(api);
       if (routeId == null) {
-        throw ApiException('Could not save route for analysis');
+        setState(() => _error = l10n.plannerCouldNotSave);
+        return;
       }
       final planBody = _state.planRequestBody();
       await api.post('/routes/$routeId/plan', planBody, auth: true);
@@ -332,9 +340,9 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         ),
       );
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = localizeUserError(e, l10n));
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = localizeUserError(e, l10n));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -350,7 +358,9 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     final timeLabel =
         _state.leaveNow && _state.planningMode == PlanningMode.departure
             ? l10n.leaveNow
-            : DateFormat.yMMMd().add_Hm().format(_state.anchorAt);
+            : DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
+                .add_Hm()
+                .format(_state.anchorAt);
 
     return Scaffold(
       appBar: AppBar(
@@ -392,7 +402,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
           const SizedBox(height: 16),
           ...List.generate(_state.waypoints.length, (i) {
             final w = _state.waypoints[i];
-            final role = WaypointListOps.roleLabel(i, _state.waypoints.length);
+            final role = waypointRole(l10n, i, _state.waypoints.length);
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(

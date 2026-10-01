@@ -483,4 +483,656 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get authPasswordChanged => 'Passordet er oppdatert.';
+
+  @override
+  String get commonCancel => 'Avbryt';
+
+  @override
+  String get commonDelete => 'Slett';
+
+  @override
+  String get commonSave => 'Lagre';
+
+  @override
+  String get commonEdit => 'Rediger';
+
+  @override
+  String get commonRetry => 'Prøv igjen';
+
+  @override
+  String get commonContinue => 'Fortsett';
+
+  @override
+  String get commonClear => 'Tøm';
+
+  @override
+  String get commonRemove => 'Fjern';
+
+  @override
+  String get commonNone => 'Ingen';
+
+  @override
+  String get commonCustom => 'Egendefinert';
+
+  @override
+  String get commonName => 'Navn';
+
+  @override
+  String get commonCategory => 'Kategori';
+
+  @override
+  String get commonFavorite => 'Favoritt';
+
+  @override
+  String get commonUnfavorite => 'Fjern favoritt';
+
+  @override
+  String get errorGeneric => 'Noe gikk galt. Prøv igjen.';
+
+  @override
+  String get errorCouldNotLoad => 'Kunne ikke laste inn. Prøv igjen.';
+
+  @override
+  String get currentLocation => 'Nåværende posisjon';
+
+  @override
+  String get labelStart => 'Start';
+
+  @override
+  String get labelDestination => 'Destinasjon';
+
+  @override
+  String get labelEnd => 'Slutt';
+
+  @override
+  String waypointStop(int index) {
+    return 'Stopp $index';
+  }
+
+  @override
+  String routeLoopSummary(String start, int count) {
+    return '$start · runde · $count stopp';
+  }
+
+  @override
+  String routeViaSummary(String start, String end, int count) {
+    return '$start → … → $end ($count)';
+  }
+
+  @override
+  String durationMinutes(int minutes) {
+    return '~$minutes min';
+  }
+
+  @override
+  String durationHours(int hours) {
+    return '~$hours t';
+  }
+
+  @override
+  String durationHoursMinutes(int hours, int minutes) {
+    return '~$hours t $minutes min';
+  }
+
+  @override
+  String get homePlanNewChip => '+ Planlegg ny';
+
+  @override
+  String get homeSaveRouteChip => 'Lagre en rute';
+
+  @override
+  String get homeHowWasTheRide => 'Hvordan var turen?';
+
+  @override
+  String get homeFallbackRide => 'Tur';
+
+  @override
+  String get metricTemp => 'Temp';
+
+  @override
+  String get metricExposure => 'Eksponering';
+
+  @override
+  String get metricRain => 'Regn';
+
+  @override
+  String get metricWind => 'Vind';
+
+  @override
+  String kitNotOwned(String name) {
+    return '$name (ikke i garderoben)';
+  }
+
+  @override
+  String get kitFallbackItem => 'Plagg';
+
+  @override
+  String get confidenceHigh => 'Høy';
+
+  @override
+  String get confidenceMedium => 'Middels';
+
+  @override
+  String get confidenceLow => 'Lav';
+
+  @override
+  String get configInstallThermalLiner => 'sett i termofôr';
+
+  @override
+  String get configInstallWaterproofLiner => 'sett i vanntett fôr';
+
+  @override
+  String get configRemoveThermalLiner => 'ta ut termofôr';
+
+  @override
+  String get configVentsOpen => 'ventiler åpne';
+
+  @override
+  String get configVentsClosed => 'ventiler lukket';
+
+  @override
+  String get routesTitle => 'Lagrede ruter';
+
+  @override
+  String get routesSubtitle =>
+      'Gjenbrukbare maler for motorsykkel. Vær og antrekk beregnes på nytt hver gang du starter en tur.';
+
+  @override
+  String get routesEditTemplate => 'Rediger rutemal';
+
+  @override
+  String get routesDeleteTitle => 'Slette ruten?';
+
+  @override
+  String routesDeleteBody(String name) {
+    return '«$name» fjernes. Tidligere turer beholder et øyeblikksbilde av ruten.';
+  }
+
+  @override
+  String get profileSection => 'Profil';
+
+  @override
+  String get profileDisplayName => 'Visningsnavn';
+
+  @override
+  String get profileAvatarInitials => 'Avatar: initialer inntil videre';
+
+  @override
+  String get profileAvatarProvider =>
+      'profilbilde fra innloggingen er tilgjengelig';
+
+  @override
+  String get profileActivitySection => 'Aktivitet';
+
+  @override
+  String get profileDefaultActivity => 'Standardaktivitet';
+
+  @override
+  String get profileShowChooser => 'Vis aktivitetsvalg ved oppstart';
+
+  @override
+  String get profileLoginMethods => 'Tilknyttede innloggingsmåter';
+
+  @override
+  String get profileLinked => 'Tilknyttet';
+
+  @override
+  String get profileConnectFacebook => 'Koble til Facebook-innlogging';
+
+  @override
+  String get profileConnectMicrosoft => 'Koble til Microsoft-innlogging';
+
+  @override
+  String get profileServices => 'Tilknyttede tjenester';
+
+  @override
+  String get profileConnected => 'Tilkoblet';
+
+  @override
+  String get profileSync => 'Synkroniser';
+
+  @override
+  String get profileDisconnect => 'Koble fra';
+
+  @override
+  String get profileConnectStrava => 'Koble til Strava';
+
+  @override
+  String get profileStravaNotConfigured =>
+      'Strava er ikke satt opp på serveren ennå.';
+
+  @override
+  String get profileSave => 'Lagre profil';
+
+  @override
+  String get profileAccount => 'Konto';
+
+  @override
+  String get profileSignOut => 'Logg ut';
+
+  @override
+  String get profileDeleteAccount => 'Slett konto';
+
+  @override
+  String get profileDeleteTitle => 'Slette kontoen?';
+
+  @override
+  String get profileDeleteBody =>
+      'Dette sletter RideWear-kontoen, garderoben og historikken permanent.';
+
+  @override
+  String get profileDemoLinkHint =>
+      'Sett opp Facebook eller Microsoft på serveren for å knytte dem til denne kontoen.';
+
+  @override
+  String get profileLoginFallback => 'Innlogging';
+
+  @override
+  String get activityMotorcycle => 'Motorsykkel';
+
+  @override
+  String get activityHiking => 'Fottur';
+
+  @override
+  String get activityCycling => 'Sykling';
+
+  @override
+  String get activityWhatToday => 'Hva skal du gjøre i dag?';
+
+  @override
+  String activityDefaultLine(String activity) {
+    return 'Standard: $activity';
+  }
+
+  @override
+  String get activityDefaultBadge => 'STANDARD';
+
+  @override
+  String get activitySoon => 'Snart';
+
+  @override
+  String get activityChooserHint =>
+      'Å bytte dagens aktivitet endrer ikke den lagrede standarden.';
+
+  @override
+  String get onboardingInterests => 'Hva vil du bruke RideWear til?';
+
+  @override
+  String get onboardingOpen => 'Hvordan skal RideWear åpnes?';
+
+  @override
+  String get onboardingTemperature => 'Hvordan opplever du temperatur?';
+
+  @override
+  String get onboardingStart => 'Start RideWear';
+
+  @override
+  String get onboardingComingLater => 'Anbefalinger kommer senere';
+
+  @override
+  String get onboardingShowChooser =>
+      'Vis aktivitetsvalg når jeg åpner RideWear';
+
+  @override
+  String get onboardingCold => 'Jeg fryser lett';
+
+  @override
+  String get onboardingAverage => 'Vanlig';
+
+  @override
+  String get onboardingWarm => 'Jeg blir vanligvis fort varm';
+
+  @override
+  String activityComingNext(String activity) {
+    return 'Anbefalinger for $activity kommer senere.';
+  }
+
+  @override
+  String get activitySharedBody =>
+      'Profilen og garderoben din deles allerede på tvers av aktiviteter. Motorsykkelanbefalinger er tilgjengelige i dag.';
+
+  @override
+  String get activityOpenMotorcycle => 'Åpne Motorsykkel i dag';
+
+  @override
+  String activityMakeDefault(String activity) {
+    return 'Gjør $activity til standard';
+  }
+
+  @override
+  String activityNowDefault(String activity) {
+    return '$activity er satt som standard';
+  }
+
+  @override
+  String get wardrobeIntro =>
+      'Legg inn det du faktisk eier. Kategori gir fornuftige standarder — du kan finjustere senere.';
+
+  @override
+  String get wardrobeEmptyTitle => 'Ingen plagg ennå';
+
+  @override
+  String get wardrobeEmptyBody =>
+      'Legg til noen plagg du kjører med, eller last inn et demosett for testing.';
+
+  @override
+  String get wardrobeAdd => 'Legg til plagg';
+
+  @override
+  String get wardrobeLoadDemo => 'Last inn demogarderobe for motorsykkel';
+
+  @override
+  String get wardrobeDeleteTitle => 'Slette plagg?';
+
+  @override
+  String wardrobeDeleteBody(String name) {
+    return 'Fjern «$name» fra garderoben.';
+  }
+
+  @override
+  String get garmentEditTitle => 'Rediger plagg';
+
+  @override
+  String get garmentUpdatePiece => 'Oppdater plagget';
+
+  @override
+  String get garmentKeepSimple => 'Hold det enkelt';
+
+  @override
+  String get garmentNameHint => 'f.eks. Dainese Carve Master';
+
+  @override
+  String get garmentQuickType => 'Hurtigtype (valgfritt)';
+
+  @override
+  String get garmentMaterial => 'Materiale';
+
+  @override
+  String get garmentUnspecified => 'Ikke oppgitt';
+
+  @override
+  String get garmentVentilation => 'Har ventilasjon';
+
+  @override
+  String get garmentVentilationHint =>
+      'Åpen eller lukket velges senere for hver tur';
+
+  @override
+  String get garmentHeated => 'Oppvarmet';
+
+  @override
+  String get garmentThermalLiner => 'Termofôr følger med';
+
+  @override
+  String get garmentThermalLinerHint =>
+      'Samme jakke — fôret kan settes i, det er ikke et eget plagg';
+
+  @override
+  String get garmentWaterproofLiner => 'Vanntett fôr følger med';
+
+  @override
+  String get garmentBrand => 'Merke (valgfritt)';
+
+  @override
+  String get garmentModel => 'Modell (valgfritt)';
+
+  @override
+  String get garmentMoreDetails => 'Flere detaljer';
+
+  @override
+  String get garmentMoreDetailsHint => 'Juster varme- og væreegenskaper';
+
+  @override
+  String get garmentNotes => 'Notater (valgfritt)';
+
+  @override
+  String get garmentSaveChanges => 'Lagre endringer';
+
+  @override
+  String get garmentAddToWardrobe => 'Legg i garderoben';
+
+  @override
+  String get garmentNameRequired => 'Navn er påkrevd';
+
+  @override
+  String get tierWarmth => 'Varme';
+
+  @override
+  String get tierWind => 'Vindtetthet';
+
+  @override
+  String get tierWater => 'Vanntetthet';
+
+  @override
+  String get tierBreath => 'Pusteevne';
+
+  @override
+  String garmentLiners(int count) {
+    return '$count fôr';
+  }
+
+  @override
+  String get garmentVents => 'ventilasjon';
+
+  @override
+  String get garmentHeatedShort => 'oppvarmet';
+
+  @override
+  String get catBaseLayer => 'Basislag';
+
+  @override
+  String get catMidLayer => 'Mellomlag';
+
+  @override
+  String get catShellJacket => 'Skalljakke';
+
+  @override
+  String get catPants => 'Bukse';
+
+  @override
+  String get catOnePieceSuit => 'Hel dress';
+
+  @override
+  String get catGloves => 'Hansker';
+
+  @override
+  String get catBoots => 'Støvler';
+
+  @override
+  String get catSocks => 'Sokker';
+
+  @override
+  String get catHeadwear => 'Hodeplagg';
+
+  @override
+  String get catNeckwear => 'Hals';
+
+  @override
+  String get catHeatedVest => 'Varmevest';
+
+  @override
+  String get catRainLayer => 'Regnlag';
+
+  @override
+  String get matTextile => 'Tekstil';
+
+  @override
+  String get matLeather => 'Skinn';
+
+  @override
+  String get matMesh => 'Mesh';
+
+  @override
+  String get matDenim => 'Denim';
+
+  @override
+  String get matSynthetic => 'Syntetisk';
+
+  @override
+  String get matMerino => 'Merino';
+
+  @override
+  String get matMixed => 'Blandet';
+
+  @override
+  String get matOther => 'Annet';
+
+  @override
+  String get presetTextileJacket => 'Tekstiljakke for motorsykkel';
+
+  @override
+  String get presetMeshJacket => 'Mesh- / sommerjakke';
+
+  @override
+  String get presetLeatherJacket => 'Skinnjakke for motorsykkel';
+
+  @override
+  String get presetTextilePants => 'Tekstilbukse for motorsykkel';
+
+  @override
+  String get presetMotorcycleJeans => 'Mc-jeans';
+
+  @override
+  String get presetOnePieceSuit => 'Hel dress';
+
+  @override
+  String get presetSummerGloves => 'Sommerhansker';
+
+  @override
+  String get presetWinterGloves => 'Vinterhansker';
+
+  @override
+  String get presetHeatedGloves => 'Oppvarmede hansker';
+
+  @override
+  String get routeNew => 'Ny rute';
+
+  @override
+  String get routeEdit => 'Rediger rute';
+
+  @override
+  String get routeNameHint => 'Jobb 1, søndagsrunde…';
+
+  @override
+  String get routeDescription => 'Beskrivelse (valgfritt)';
+
+  @override
+  String get routeFavoriteHint => 'Vises først på motorsykkelforsiden';
+
+  @override
+  String get routeSection => 'Rute';
+
+  @override
+  String get routeSearchHint =>
+      'Søk etter steder — du trenger ikke skrive inn koordinater.';
+
+  @override
+  String get routeAdvancedCoords => 'Avansert: koordinater';
+
+  @override
+  String get routeAdvancedHint => 'Kun som reserve';
+
+  @override
+  String coordLatitude(String role) {
+    return '$role breddegrad';
+  }
+
+  @override
+  String get coordLongitude => 'Lengdegrad';
+
+  @override
+  String get coordApply => 'Bruk koordinater';
+
+  @override
+  String get routeCatWork => 'Jobb';
+
+  @override
+  String get routeCatCommute => 'Pendling';
+
+  @override
+  String get routeCatHome => 'Hjem';
+
+  @override
+  String get routeCatWeekend => 'Helg';
+
+  @override
+  String get routeCatTouring => 'Langtur';
+
+  @override
+  String get routeCatFavourite => 'Favoritt';
+
+  @override
+  String get routeCatCustom => 'Egendefinert';
+
+  @override
+  String get mapSelectEndpoints =>
+      'Velg start og destinasjon for å forhåndsvise ruten';
+
+  @override
+  String get placeSearchHint => 'Søk etter sted eller adresse';
+
+  @override
+  String get placeNoResults => 'Ingen steder funnet';
+
+  @override
+  String get placeSearchFailed => 'Stedsøket mislyktes';
+
+  @override
+  String get placeSearchUnavailable => 'Stedsøk er midlertidig utilgjengelig.';
+
+  @override
+  String get routeStraightSegmentsNotice =>
+      'Forhåndsvisningen bruker rette streker fordi veiruting ikke er tilgjengelig.';
+
+  @override
+  String get plannerCouldNotSave => 'Kunne ikke lagre ruten for analyse.';
+
+  @override
+  String get feedbackTitle => 'Hvordan kjentes antrekket?';
+
+  @override
+  String get feedbackTooCold => 'For kaldt';
+
+  @override
+  String get feedbackSlightlyCold => 'Litt kaldt';
+
+  @override
+  String get feedbackJustRight => 'Passe';
+
+  @override
+  String get feedbackSlightlyWarm => 'Litt varmt';
+
+  @override
+  String get feedbackTooWarm => 'For varmt';
+
+  @override
+  String get feedbackSubmit => 'Send tilbakemelding';
+
+  @override
+  String get feedbackThanks => 'Takk — komfortprofilen er oppdatert';
+
+  @override
+  String analysisTempChip(String value) {
+    return 'Temp $value';
+  }
+
+  @override
+  String analysisRainChip(String value) {
+    return 'Regn $value';
+  }
+
+  @override
+  String analysisWindChip(String value) {
+    return 'Vind $value';
+  }
+
+  @override
+  String get routeCoordsInvalid => 'Koordinatene må være gyldige tall.';
+
+  @override
+  String get routeEditorIncomplete =>
+      'Skriv inn et navn og velg sted for start og destinasjon.';
+
+  @override
+  String get coordCustomPoint => 'Egendefinert punkt';
 }
