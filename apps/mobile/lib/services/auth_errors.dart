@@ -11,6 +11,12 @@ String localizeAuthError(Object error, AppLocalizations l10n) {
         return l10n.authEmailAlreadyRegistered;
       }
     }
+    if (code == 'INVALID_CURRENT_PASSWORD') {
+      return l10n.authInvalidCurrentPassword;
+    }
+    if (code == 'NO_LOCAL_PASSWORD') {
+      return l10n.authNoLocalPassword;
+    }
     if (code == 'INVALID_CREDENTIALS' || error.statusCode == 401) {
       return l10n.authInvalidCredentials;
     }

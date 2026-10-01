@@ -133,5 +133,13 @@
   "authSetNewPassword": "Set new password",
   "authPasswordMismatch": "Passwords do not match.",
   "authPasswordResetSuccess": "Password updated. You can sign in now.",
-  "authInvalidResetToken": "This password reset link is invalid or has expired."
+  "authInvalidResetToken": "This password reset link is invalid or has expired.",
+  "authChangePassword": "Change password",
+  "authChangePasswordTitle": "Change password",
+  "authChangePasswordSubtitle": "Enter your current password, then choose a new one.",
+  "authCurrentPasswordLabel": "Current password",
+  "authCurrentPasswordRequired": "Enter your current password.",
+  "authInvalidCurrentPassword": "Current password is incorrect.",
+  "authNoLocalPassword": "This account does not use a password.",
+  "authPasswordChanged": "Password updated."
 }

@@ -310,4 +310,63 @@ describe('AuthService login/register/password reset', () => {
       response: expect.objectContaining({ code: 'INVALID_RESET_TOKEN' }),
     });
   });
+
+  it('change-password rejects an incorrect current password', async () => {
+    const passwordHash = await bcrypt.hash('current-password', 10);
+    users.push({
+      id: 'u1',
+      email: 'rider@example.com',
+      displayName: 'Rider',
+      passwordHash,
+    });
+    await expect(
+      service.changePassword('u1', {
+        currentPassword: 'wrong-password',
+        newPassword: 'new-password',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVALID_CURRENT_PASSWORD' }),
+    });
+    expect(await bcrypt.compare('current-password', users[0].passwordHash!)).toBe(
+      true,
+    );
+  });
+
+  it('change-password updates the hash when the current password is correct', async () => {
+    const passwordHash = await bcrypt.hash('current-password', 10);
+    users.push({
+      id: 'u1',
+      email: 'rider@example.com',
+      displayName: 'Rider',
+      passwordHash,
+    });
+    const res = await service.changePassword('u1', {
+      currentPassword: 'current-password',
+      newPassword: 'new-password',
+    });
+    expect(res.ok).toBe(true);
+    expect(await bcrypt.compare('new-password', users[0].passwordHash!)).toBe(
+      true,
+    );
+    expect(
+      await bcrypt.compare('current-password', users[0].passwordHash!),
+    ).toBe(false);
+  });
+
+  it('change-password rejects accounts that have no local password', async () => {
+    users.push({
+      id: 'oauth',
+      email: 'oauth@example.com',
+      displayName: 'OAuth',
+      passwordHash: null,
+    });
+    await expect(
+      service.changePassword('oauth', {
+        currentPassword: 'anything',
+        newPassword: 'new-password',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'NO_LOCAL_PASSWORD' }),
+    });
+  });
 });

@@ -41,6 +41,14 @@ class AppTheme {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbVisibility: const WidgetStatePropertyAll(true),
+        trackVisibility: const WidgetStatePropertyAll(false),
+        thickness: const WidgetStatePropertyAll(3),
+        radius: const Radius.circular(8),
+        thumbColor: WidgetStatePropertyAll(steel.withValues(alpha: 0.4)),
+        interactive: false,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.7),

@@ -12,6 +12,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { OAuthDto } from './dto/oauth.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -39,6 +40,12 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  changePassword(@Req() req: AuthRequest, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(req.user.userId, dto);
   }
 
   @Get('providers')

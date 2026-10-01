@@ -11,6 +11,7 @@ import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
+import 'package:motorcycle_clothing/theme/app_scroll_behavior.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/screens/login_screen.dart';
 import 'package:motorcycle_clothing/screens/shell_screen.dart';
@@ -85,6 +86,7 @@ class MotorcycleClothingApp extends StatelessWidget {
             onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appTitle,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
+            scrollBehavior: const AppScrollBehavior(),
             locale: localeCtrl.locale,
             supportedLocales: LocaleController.supported,
             localizationsDelegates: const [
