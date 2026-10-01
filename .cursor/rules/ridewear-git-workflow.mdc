@@ -5,23 +5,29 @@ alwaysApply: true
 
 # RideWear Git Workflow Rule
 
-`main` is the stable, owner-controlled branch.
+`main` is the stable branch. Never merge into `main` automatically.
 
-`dev` is the integration branch for ongoing development.
+`dev` is the reviewed development branch. Never merge into `dev` automatically.
+
+`dev_test` is the integration and testing branch. Completed implementation work may be merged into `dev_test` only after the required tests for that change pass.
+
+`feature/*` and `fix/*` are implementation branches. Use `refactor/*` or `docs/*` when that is the whole change.
+
+Human promotion is manual only:
+
+`dev_test` → `dev` → `main`
 
 For every development task:
 
-- Start from the latest `dev`.
+- Start from the latest `dev`. If the change depends on work that is already on `dev_test` but not yet on `dev`, branch from the latest `dev_test` instead.
 - Create a dedicated `feature/...`, `fix/...`, `refactor/...`, or `docs/...` branch.
-- Open pull requests against `dev`, never directly against `main`.
-- Do not push directly to `main`.
-- Do not merge anything into `main`.
+- Open pull requests against `dev_test`, never directly against `dev` or `main`.
+- Do not push directly to `main` or `dev`.
+- Do not merge anything into `main` or `dev`.
 - Do not change the default branch.
-- Do not merge a feature branch into `dev` unless the relevant tests and CI pass.
-- If CI fails, diagnose and fix the failure on the feature branch before considering the task complete.
-- Keep each PR focused on the requested milestone/task. Do not add unrelated architecture changes or features.
-
-`dev -> main` is a controlled release/integration step and must be initiated and merged manually by the repository owner.
+- After the required tests pass, the implementation branch may be merged into `dev_test` and `dev_test` may be pushed.
+- If tests or CI fail, diagnose and fix the failure on the implementation branch before merging into `dev_test`.
+- Keep each change focused on the requested milestone/task. Do not add unrelated architecture changes or features.
 
 Before starting work, read `PROJECT_PLAN.md`, `ARCHITECTURE.md`, `SECURITY.md`, `PRIVACY_ARCHITECTURE.md`, and `RIDEWEAR_CONTEXT.md` when present. Treat these as architectural constraints and source-of-truth documents. If a requested change conflicts with them, explain the conflict instead of silently changing the architecture.
 
