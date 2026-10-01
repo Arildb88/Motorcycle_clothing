@@ -138,6 +138,24 @@ Implementations:
 
 Cache by geohash + hour bucket (Redis later; Prisma `WeatherCache` is fine early).
 
+**Time-aware route weather (v1):** `WeatherService` implements `WeatherPort.forecast(points[{lat,lon,at}])` for ETA-stamped samples. Motorcycle recommend must not depend on provider DTOs. Wind direction is never invented when absent.
+
+### Route weather timeline (v1)
+
+Provider-neutral module under `apps/api/src/recommend/route-weather/`:
+
+```
+RouteAnalysis → bounded samples (start/end/stops/intervals, max 8)
+             → ETA per sample from travel segments (arrival mode: resolve departure first)
+             → WeatherPort.forecast(lat,lon,at)
+             → RouteWeatherTimeline
+             → timelineToPipelineInput → motorcycle exposure/demand
+```
+
+- Sampling strategy `bounded_v1` is documented and replaceable without changing the sample contract.
+- Persist only `RouteWeatherTimelineSummaryV1` (coarse samples) — not dense GPS or raw provider payloads.
+- `analyzeRideAt(time)` is the reusable entry point; **Find My Best Time** must call the same pipeline per candidate time (not implemented here).
+
 ### RoutingPort
 
 ```ts
@@ -161,7 +179,8 @@ Keep pure functions in something like `apps/api/src/recommend/engine/` (no Nest 
 ### Pipeline stages
 
 1. `buildSegments(plan, geometry|points) → Segment[]` (ETA per point)
-2. `attachWeather(segments, WeatherPort) → ExposedSegment[]`
+2. `attachWeather(segments, WeatherPort) → ExposedSegment[]`  
+   **v1 production path:** `buildRouteWeatherTimeline` / `analyzeRideAt` stamps weather at travel-based ETAs (not origin-only departure weather).
 3. `scoreExposure(activityProfile, segments) → ExposureSummary`  
    - motorcycle: wind chill using speed estimate × windProtection  
    - includes duration weights + wear vs pack split
@@ -169,7 +188,8 @@ Keep pure functions in something like `apps/api/src/recommend/engine/` (no Nest 
    slots: `base | mid | shell | hands | legs | head | feet | rain`
 5. `matchWardrobe(demand, garments[]) → RecommendationItems`  
    fallback generics if empty wardrobe
-6. `explain(...) → reasons[] + confidence`
+6. `explain(...) → reasons[] + confidence`  
+   timeline reason codes: `ROUTE_WEATHER_TIMELINE_USED`, `ROUTE_WEATHER_PARTIAL`, `WEATHER_TIME_INTERPOLATED`, `ROUTE_TIMING_FALLBACK_USED`, `WIND_DIRECTION_UNAVAILABLE`
 
 ### Motorcycle exposure sketch
 
@@ -252,7 +272,7 @@ WeatherCache
 
 **RoutingPort / RouteAnalysis:** server adapters (Null today; Google/Mapbox/ORS later) emit provider-neutral `RouteAnalysis` (distance, duration, travel segments with `expectedSpeedKmh`). Motorcycle exposure consumes analysis segments — never provider SDKs. Client place-search/preview geometry remains Flutter-side and is not turn-by-turn navigation.
 
-**Find My Best Time (boundary only):** future port evaluates nearby candidate departure/arrival times with explainable RideWear comfort criteria (rain, temp, wind/gusts, route-aware airflow, duration). Not implemented in this foundation.
+**Find My Best Time (boundary only):** future port evaluates nearby candidate departure/arrival times with explainable RideWear comfort criteria (rain, temp, wind/gusts, route-aware airflow, duration). Must reuse `analyzeRideAt` / the route-weather + motorcycle exposure pipeline per candidate — not a separate approximation engine. Ranking not implemented in this PR.
 
 **Navigation handoff (boundary only):** after the rider accepts a plan, the client may open an external navigator (Google Maps / Apple Maps / system default). RideWear is not a turn-by-turn navigation product.
 
