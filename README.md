@@ -135,6 +135,22 @@ Generated folders you can ignore: `node_modules/`, `build/`, `.dart_tool/`, `app
 | JDK 17 | Used by the Android Gradle toolchain (`JavaVersion.VERSION_17` in the app Gradle file) |
 | PowerShell | Commands below are PowerShell-friendly |
 
+### Fresh Windows setup (do this before cloning/running the app)
+
+1. **Install Node.js LTS** from the official Node.js installer. npm is included. Close/reopen your terminal or IDE after installation so PATH refreshes.
+2. **Install Flutter SDK** and add `<flutter-sdk>\bin` to your user PATH. Close/reopen the terminal/IDE.
+3. **Install Android Studio** with the Android SDK and Android Emulator.
+4. In Android Studio open **SDK Manager → SDK Tools** and install **Android SDK Command-line Tools (latest)**.
+5. In the same SDK Tools screen enable **Show Package Details**, expand **NDK (Side by side)**, and install **NDK 28.2.13676358**. RideWear's Android build currently requires this exact NDK version.
+6. Create an Android Virtual Device in **Device Manager** and start it before running the Flutter app.
+7. Run `flutter doctor`. Resolve Android-toolchain errors before continuing. With newer Android CLI versions, `flutter doctor --android-licenses` may report that `--licenses` is no longer needed; that message is informational.
+
+Expected NDK location with the default Windows Android SDK path:
+
+```text
+C:\Users\<your-user>\AppData\Local\Android\sdk\ndk\28.2.13676358
+```
+
 ### Verify installs
 
 ```powershell
@@ -143,9 +159,12 @@ node --version
 npm --version
 flutter --version
 flutter doctor
+flutter devices
 ```
 
-`flutter doctor` should be healthy for the **Android toolchain** before you try the emulator app.
+`flutter doctor` should report **No issues found** (or at minimum a healthy Android toolchain), and `flutter devices` should list your running Android emulator before you try the mobile app.
+
+> **Note:** `npm WARN deprecated ...` during `npm install` and Flutter messages such as `packages have newer versions incompatible with dependency constraints` are warnings, not installation failures. Do not force-upgrade dependencies during first-time setup.
 
 ---
 
