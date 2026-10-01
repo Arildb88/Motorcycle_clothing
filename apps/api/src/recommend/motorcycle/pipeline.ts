@@ -232,6 +232,7 @@ export {
   type RouteTravelSegment,
   type SpeedSource,
   routeTravelFromDurationDistance,
+  routeTravelAlignedWithSamples,
   durationWeightedSpeedKmh,
   associateWeatherIndex,
 } from './route-travel';

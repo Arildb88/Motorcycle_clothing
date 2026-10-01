@@ -103,7 +103,8 @@ function buildSegmentRow(input: {
  * Build duration-aware ride segments.
  *
  * Prefer `routeTravelSegments` when a provider-neutral speed profile exists.
- * Weather samples are associated by cumulative duration fraction (v1 mapping).
+ * Weather samples are associated by cumulative duration fraction.
+ * Geometry sampling passes one travel segment per weather sample so the map is 1:1.
  *
  * Without a route profile: weather points share ride duration evenly and use
  * the resolved cruise/default speed (legacy behaviour).

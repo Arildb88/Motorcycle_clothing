@@ -1,0 +1,33 @@
+import { selectMetTimeseriesIndex } from './met-timeseries';
+
+describe('selectMetTimeseriesIndex', () => {
+  const times = [
+    '2026-10-01T08:00:00Z',
+    '2026-10-01T09:00:00Z',
+    '2026-10-01T12:00:00Z',
+    'not-a-time',
+  ];
+
+  it('returns the first entry when no ETA is supplied', () => {
+    expect(selectMetTimeseriesIndex(times, null)).toBe(0);
+    expect(selectMetTimeseriesIndex(times)).toBe(0);
+  });
+
+  it('selects the forecast hour closest to the ETA', () => {
+    expect(
+      selectMetTimeseriesIndex(times, new Date('2026-10-01T09:20:00Z')),
+    ).toBe(1);
+    expect(
+      selectMetTimeseriesIndex(times, new Date('2026-10-01T11:40:00Z')),
+    ).toBe(2);
+  });
+
+  it('ignores invalid timestamps', () => {
+    expect(
+      selectMetTimeseriesIndex(
+        ['nope', '2026-10-01T15:00:00Z'],
+        new Date('2026-10-01T15:10:00Z'),
+      ),
+    ).toBe(1);
+  });
+});

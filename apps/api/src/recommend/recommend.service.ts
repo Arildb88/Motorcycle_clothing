@@ -2,12 +2,20 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { RoutesService } from '../routes/routes.service';
 import { WeatherService } from '../weather/weather.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MVP_ACTIVITY_TYPE } from '../domain';
+import { MVP_ACTIVITY_TYPE, parseRoutePreferences } from '../domain';
+import { OpenRouteServiceRoutingAdapter } from '../routing/ors-routing.adapter';
+import {
+  resolveRouteWeatherSamples,
+  type RouteWeatherSample,
+} from '../routing/route-weather-sampling';
+import type { GeoPoint } from '../routing/routing.types';
 import {
   MOTORCYCLE_EXPOSURE,
+  routeTravelAlignedWithSamples,
   runMotorcycleRecommendationPipeline,
   type GarmentInput,
   type KitItem,
+  type RouteTravelSegment,
 } from './motorcycle';
 
 /**
@@ -24,6 +32,7 @@ export class RecommendService {
     private readonly routes: RoutesService,
     private readonly weather: WeatherService,
     private readonly prisma: PrismaService,
+    private readonly roadRouting: OpenRouteServiceRoutingAdapter,
   ) {}
 
   async forUser(
@@ -65,8 +74,29 @@ export class RecommendService {
       n > 0 ? personalWeight * (offset?.meanResidual ?? 0) : 0;
     const personalColdBiasC = -(profile?.coldSensitivity ?? 0) + shrunk;
 
-    const points = this.routes.weatherPointsFor(route);
-    const weather = await this.weather.forRoutePoints(points);
+    const departAt = parseDeparture(_departureAt);
+    const fallbackPoints = this.routes.weatherPointsFor(route);
+    const road = await this.roadGeometryFor(route, fallbackPoints);
+    const sampled = resolveRouteWeatherSamples({
+      roadGeometry: road?.points,
+      providerDurationMin: road?.durationMin,
+      fallbackPoints,
+      fallbackDurationMin: route.typicalDurationMin ?? 30,
+      departAt,
+    });
+    const weather = await this.weather.forRouteSamples(
+      sampled.samples.map((sample) => ({
+        lat: sample.lat,
+        lon: sample.lon,
+        at: sample.at,
+      })),
+    );
+    const routeTravelSegments = this.travelForRoadSamples(
+      sampled.usedRoadGeometry,
+      sampled.samples,
+      sampled.durationMin,
+      road?.distanceM,
+    );
 
     const garments = await this.prisma.garment.findMany({
       where: { userId },
@@ -77,12 +107,12 @@ export class RecommendService {
     const engine = runMotorcycleRecommendationPipeline({
       weather,
       wardrobe,
-      rideDurationMin: route.typicalDurationMin ?? 30,
-      // Production path: no provider step-speed profile on the API yet.
-      // Engine falls back to assumed default cruise (speedSource=assumed_default).
-      // When RoutingPort adapters emit RouteTravelSegment[], pass routeTravelSegments.
+      rideDurationMin: sampled.durationMin,
+      // Road geometry supplies one travel segment per weather sample so the
+      // engine keeps every ETA sample. Without a road line, speed stays the
+      // assumed default and samples stay on saved waypoints.
       cruiseKmh: null,
-      routeTravelSegments: undefined,
+      routeTravelSegments,
       personalColdBiasC,
       personalSampleCount: n,
       shrinkageK: k,
@@ -163,6 +193,49 @@ export class RecommendService {
     };
   }
 
+  private async roadGeometryFor(
+    route: { preferencesJson?: string | null },
+    waypoints: GeoPoint[],
+  ): Promise<{
+    points: GeoPoint[];
+    distanceM: number;
+    durationMin: number;
+  } | null> {
+    if (!this.roadRouting.isConfigured || waypoints.length < 2) return null;
+    try {
+      const preview = await this.roadRouting.preview({
+        waypoints,
+        preferences: parseRoutePreferences(route.preferencesJson),
+        travelProfile: 'drive',
+      });
+      if (!preview || preview.points.length < 2) return null;
+      if (!(preview.distanceM > 0) || !(preview.durationMin > 0)) return null;
+      return {
+        points: preview.points,
+        distanceM: preview.distanceM,
+        durationMin: preview.durationMin,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private travelForRoadSamples(
+    usedRoadGeometry: boolean,
+    samples: RouteWeatherSample[],
+    durationMin: number,
+    distanceM?: number,
+  ): RouteTravelSegment[] | undefined {
+    if (!usedRoadGeometry || samples.length === 0) return undefined;
+    if (distanceM == null || !(distanceM > 0)) return undefined;
+    const segments = routeTravelAlignedWithSamples({
+      samples,
+      durationMin,
+      distanceM,
+    });
+    return segments.length > 0 ? segments : undefined;
+  }
+
   private kitLabel(item: KitItem): string {
     if (item.source === 'wardrobe' && item.garmentName) {
       const configs = item.configuration
@@ -231,4 +304,11 @@ export class RecommendService {
       })),
     };
   }
+}
+
+function parseDeparture(value?: string): Date {
+  if (!value) return new Date();
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return new Date();
+  return parsed;
 }

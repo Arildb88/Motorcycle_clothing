@@ -13,6 +13,7 @@ export {
   computeApparentAirflow,
   associateWeatherIndex,
   routeTravelFromDurationDistance,
+  routeTravelAlignedWithSamples,
 } from './pipeline';
 export type { PipelineInput, ApparentAirflow, ApparentAirflowMode } from './pipeline';
 export type { RouteTravelSegment, SpeedSource } from './route-travel';

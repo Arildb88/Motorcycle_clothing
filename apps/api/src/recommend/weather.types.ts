@@ -13,6 +13,8 @@ export type WeatherPoint = {
    */
   windFromDeg?: number | null;
   symbol?: string;
+  /** ISO time the forecast was selected for, when the sample has an ETA. */
+  forecastAt?: string;
 };
 
 export type RouteWeatherSummary = {

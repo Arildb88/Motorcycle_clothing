@@ -81,12 +81,105 @@ export function durationWeightedSpeedKmh(
 }
 
 /**
+ * Duration shares for weather samples already placed along a route.
+ * One segment per sample so associateWeatherIndex stays 1:1.
+ * Speed is the provider overview (distance / duration), not a legal limit.
+ */
+export function routeTravelAlignedWithSamples(input: {
+  samples: Array<{ lat: number; lon: number; progress: number }>;
+  durationMin: number;
+  distanceM: number;
+}): RouteTravelSegment[] {
+  const samples = input.samples.filter(
+    (sample) =>
+      Number.isFinite(sample.lat) &&
+      Number.isFinite(sample.lon) &&
+      Number.isFinite(sample.progress),
+  );
+  if (samples.length === 0) return [];
+
+  const durationMin = Math.max(1, Math.round(input.durationMin));
+  const distanceM = Math.max(0, input.distanceM);
+  const durations = durationShares(
+    samples.map((sample) => Math.min(1, Math.max(0, sample.progress))),
+    durationMin,
+  );
+  const durationSum = durations.reduce((sum, value) => sum + value, 0);
+  const hours = durationMin / 60;
+  const expectedSpeedKmh =
+    hours > 0 && distanceM > 0
+      ? Math.round((distanceM / 1000 / hours) * 10) / 10
+      : 0;
+
+  return samples.map((sample, index) => {
+    const next = samples[Math.min(index + 1, samples.length - 1)];
+    const previous = samples[Math.max(0, index - 1)];
+    const heading =
+      index < samples.length - 1
+        ? headingDeg(sample, next)
+        : headingDeg(previous, sample);
+    const share = durationSum > 0 ? durations[index] / durationSum : 0;
+    return {
+      index,
+      durationMin: durations[index],
+      distanceM: Math.max(0, Math.round(distanceM * share)),
+      expectedSpeedKmh,
+      startLat: sample.lat,
+      startLon: sample.lon,
+      endLat: next.lat,
+      endLon: next.lon,
+      headingDeg: heading,
+    };
+  });
+}
+
+function durationShares(progresses: number[], durationMin: number): number[] {
+  const count = progresses.length;
+  if (count === 1) return [durationMin];
+
+  const bounds = [0];
+  for (let index = 0; index < count - 1; index++) {
+    bounds.push((progresses[index] + progresses[index + 1]) / 2);
+  }
+  bounds.push(1);
+  const widths = bounds
+    .slice(0, count)
+    .map((bound, index) => Math.max(0, bounds[index + 1] - bound));
+  const widthSum = widths.reduce((sum, width) => sum + width, 0) || 1;
+  const durations = widths.map((width) =>
+    Math.max(1, Math.round((width / widthSum) * durationMin)),
+  );
+  const sum = durations.reduce((total, value) => total + value, 0);
+  durations[count - 1] = Math.max(
+    1,
+    durations[count - 1] + (durationMin - sum),
+  );
+  return durations;
+}
+
+function headingDeg(
+  a: { lat: number; lon: number },
+  b: { lat: number; lon: number },
+): number | null {
+  if (a.lat === b.lat && a.lon === b.lon) return null;
+  const toRad = (degrees: number) => (degrees * Math.PI) / 180;
+  const toDeg = (radians: number) => (radians * 180) / Math.PI;
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+/**
  * Deterministic weather↔travel association (v1).
  *
  * Travel segments drive duration/speed. Each travel segment is paired with a
- * weather sample by cumulative duration fraction along the weather timeline
- * (evenly spaced weather samples map to [0,1] progress). Replaceable later
- * with geometry-based sampling without changing the exposure engine.
+ * weather sample by cumulative duration fraction along the weather timeline.
+ * When sample count equals segment count (geometry sampling), the map is 1:1.
  */
 export function associateWeatherIndex(
   travelIndex: number,

@@ -6,6 +6,7 @@ import {
   RouteWeatherSummary,
   WeatherPoint,
 } from '../recommend/weather.types';
+import { selectMetTimeseriesIndex } from './met-timeseries';
 
 @Injectable()
 export class WeatherService {
@@ -33,6 +34,40 @@ export class WeatherService {
       weatherPoints.push(await this.pointWeather(p.lat, p.lon, provider));
     }
 
+    return this.summarize(provider, weatherPoints);
+  }
+
+  /**
+   * Fetch one forecast per already-chosen sample. Does not collapse the set.
+   * When `at` is set, MET uses the timeseries entry nearest that ETA.
+   */
+  async forRouteSamples(
+    samples: Array<{ lat: number; lon: number; at?: Date }>,
+  ): Promise<RouteWeatherSummary> {
+    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
+    const usable =
+      samples.length > 0 ? samples : [{ lat: 59.9139, lon: 10.7522 }];
+
+    const weatherPoints: WeatherPoint[] = [];
+    for (const sample of usable) {
+      const point = await this.pointWeather(
+        sample.lat,
+        sample.lon,
+        provider,
+        sample.at,
+      );
+      weatherPoints.push(
+        sample.at ? { ...point, forecastAt: sample.at.toISOString() } : point,
+      );
+    }
+
+    return this.summarize(provider, weatherPoints);
+  }
+
+  private summarize(
+    provider: string,
+    weatherPoints: WeatherPoint[],
+  ): RouteWeatherSummary {
     const temps = weatherPoints.map((p) => p.airTempC);
     const rains = weatherPoints.map((p) => p.precipitationProbPct);
     const precips = weatherPoints.map((p) => p.precipitationMm);
@@ -62,8 +97,13 @@ export class WeatherService {
     lat: number,
     lon: number,
     provider: string,
+    at?: Date,
   ): Promise<WeatherPoint> {
-    const key = `${provider}:${lat.toFixed(3)},${lon.toFixed(3)}`;
+    const hour =
+      at && !Number.isNaN(at.getTime()) ? at.toISOString().slice(0, 13) : '';
+    const key = hour
+      ? `${provider}:${lat.toFixed(3)},${lon.toFixed(3)}@${hour}`
+      : `${provider}:${lat.toFixed(3)},${lon.toFixed(3)}`;
     const cached = await this.prisma.weatherCache.findUnique({
       where: { cacheKey: key },
     });
@@ -73,7 +113,7 @@ export class WeatherService {
 
     const point =
       provider === 'met'
-        ? await this.fetchMet(lat, lon)
+        ? await this.fetchMet(lat, lon, at)
         : this.mockWeather(lat, lon);
 
     const validUntil = new Date(Date.now() + 15 * 60 * 1000);
@@ -115,7 +155,11 @@ export class WeatherService {
     };
   }
 
-  private async fetchMet(lat: number, lon: number): Promise<WeatherPoint> {
+  private async fetchMet(
+    lat: number,
+    lon: number,
+    at?: Date,
+  ): Promise<WeatherPoint> {
     const userAgent = this.config.get(
       'MET_USER_AGENT',
       'MotorcycleClothingApp/0.1 (dev)',
@@ -126,7 +170,12 @@ export class WeatherService {
         headers: { 'User-Agent': userAgent, Accept: 'application/json' },
         timeout: 8000,
       });
-      const series = data?.properties?.timeseries?.[0]?.data;
+      const timeseries = data?.properties?.timeseries ?? [];
+      const index = selectMetTimeseriesIndex(
+        timeseries.map((entry: { time?: string }) => entry?.time),
+        at,
+      );
+      const series = timeseries[index]?.data;
       const instant = series?.instant?.details ?? {};
       const next1 = series?.next_1_hours ?? series?.next_6_hours ?? {};
       return {
