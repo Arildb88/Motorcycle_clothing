@@ -9,8 +9,8 @@ Language switching uses the existing `LocaleController` (`preferred_language` in
 ## Commit / PR
 
 - Branch: `feature/nb-localization-completion` from `dev_test` (`24cc7f4`)
-- Commit: recorded in the follow-up docs commit on this branch
-- PR: against `dev_test` only. Not merged to `dev` or `main`.
+- Commit: `a5ad77c` — feat(l10n): complete Norwegian Bokmål for user-facing UI
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/22 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
