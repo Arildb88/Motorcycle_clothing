@@ -38,6 +38,40 @@ void main() {
       );
     }
   });
+
+  testWidgets('section heading stays clear of the floating label', (
+    tester,
+  ) async {
+    final name = TextEditingController(text: 'Rider');
+    addTearDown(name.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('PROFILE'),
+              OutlineFormField(
+                child: TextField(
+                  controller: name,
+                  decoration: const InputDecoration(labelText: 'Display name'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final heading = tester.getRect(find.text('PROFILE'));
+    final label = tester.getRect(find.text('Display name'));
+    expect(
+      label.top,
+      greaterThanOrEqualTo(heading.bottom + OutlineFormField.fieldGap - 0.5),
+    );
+  });
 }
 
 Widget _field(String label, String value, String valueLabel) {

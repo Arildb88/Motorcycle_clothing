@@ -145,9 +145,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           ),
           const SizedBox(height: 16),
           Text('PROFILE', style: _sectionStyle),
-          TextField(
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'Display name'),
+          OutlineFormField(
+            child: TextField(
+              controller: _name,
+              decoration: const InputDecoration(labelText: 'Display name'),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -157,53 +159,57 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           ),
           const SizedBox(height: 16),
           Text(AppLocalizations.of(context).language.toUpperCase(), style: _sectionStyle),
-          DropdownButtonFormField<String>(
-            // ignore: deprecated_member_use
-            value: context.watch<LocaleController>().preferredCode ??
-                context.watch<LocaleController>().locale.languageCode,
-            decoration: InputDecoration(
-              labelText: AppLocalizations.of(context).language,
+          OutlineFormField(
+            child: DropdownButtonFormField<String>(
+              // ignore: deprecated_member_use
+              value: context.watch<LocaleController>().preferredCode ??
+                  context.watch<LocaleController>().locale.languageCode,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).language,
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'nb',
+                  child: Text(AppLocalizations.of(context).languageNorwegian),
+                ),
+                DropdownMenuItem(
+                  value: 'en',
+                  child: Text(AppLocalizations.of(context).languageEnglish),
+                ),
+              ],
+              onChanged: (code) async {
+                if (code == null) return;
+                final locale = context.read<LocaleController>();
+                final api = context.read<ApiClient>();
+                final messenger = ScaffoldMessenger.of(context);
+                final savedMsg = AppLocalizations.of(context).languageSaved;
+                await locale.setPreferred(code);
+                try {
+                  await api.patch('/users/me', {'preferredLanguage': code});
+                } catch (_) {
+                  /* local preference still applied */
+                }
+                if (!mounted) return;
+                messenger.showSnackBar(SnackBar(content: Text(savedMsg)));
+              },
             ),
-            items: [
-              DropdownMenuItem(
-                value: 'nb',
-                child: Text(AppLocalizations.of(context).languageNorwegian),
-              ),
-              DropdownMenuItem(
-                value: 'en',
-                child: Text(AppLocalizations.of(context).languageEnglish),
-              ),
-            ],
-            onChanged: (code) async {
-              if (code == null) return;
-              final locale = context.read<LocaleController>();
-              final api = context.read<ApiClient>();
-              final messenger = ScaffoldMessenger.of(context);
-              final savedMsg = AppLocalizations.of(context).languageSaved;
-              await locale.setPreferred(code);
-              try {
-                await api.patch('/users/me', {'preferredLanguage': code});
-              } catch (_) {
-                /* local preference still applied */
-              }
-              if (!mounted) return;
-              messenger.showSnackBar(SnackBar(content: Text(savedMsg)));
-            },
           ),
           const SizedBox(height: 16),
           Text('ACTIVITY', style: _sectionStyle),
-          DropdownButtonFormField<AppActivity>(
-            // ignore: deprecated_member_use
-            value: activity.defaultActivity,
-            decoration: const InputDecoration(labelText: 'Default activity'),
-            items: AppActivity.selectable
-                .map(
-                  (a) => DropdownMenuItem(value: a, child: Text(a.label)),
-                )
-                .toList(),
-            onChanged: (v) async {
-              if (v != null) await activity.setDefaultActivity(v);
-            },
+          OutlineFormField(
+            child: DropdownButtonFormField<AppActivity>(
+              // ignore: deprecated_member_use
+              value: activity.defaultActivity,
+              decoration: const InputDecoration(labelText: 'Default activity'),
+              items: AppActivity.selectable
+                  .map(
+                    (a) => DropdownMenuItem(value: a, child: Text(a.label)),
+                  )
+                  .toList(),
+              onChanged: (v) async {
+                if (v != null) await activity.setDefaultActivity(v);
+              },
+            ),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
