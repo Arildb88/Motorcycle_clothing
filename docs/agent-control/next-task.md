@@ -1,23 +1,51 @@
 # Authorized RideWear Task
-## Type: UX_AND_COMPLIANCE
-## ID: FNUGG-ATTRIBUTION-001
-## Generation: 29
-## Handoff-From: TEST-COVERAGE-001
+## Type: PERFORMANCE_AND_DATA
+## ID: XC-TRAIL-SYNC-001
+## Generation: 30
+## Handoff-From: FNUGG-ATTRIBUTION-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T22:18:00Z
-## Task: Add clear Fnugg attribution wherever RideWear presents Fnugg-sourced resort data
+## Promoted: 2026-10-02T22:31:27Z
+## Task: Make nearby cross-country trail retrieval fast while keeping Geonorge Turrutebasen data fresh
 
-Implement attribution for the existing Fnugg integration.
+Use the authoritative Geonorge Turrutebasen dataset:
+https://kartkatalog.geonorge.no/metadata/turrutebasen/d1422d17-6d95-4ef1-96ab-8af31744dd63
 
-Requirements:
-- Verify the current official Fnugg API/terms immediately before implementation and follow the applicable attribution wording/link requirements.
-- Wherever user-visible resort/facility/conditions data originates from Fnugg, show a clear but visually unobtrusive attribution in proximity to that data.
-- Attribution must not be hidden as microtext or made materially less readable than surrounding secondary text.
-- Link Fnugg attribution to the relevant Fnugg destination when the integration provides a reliable relevant URL; otherwise use the official Fnugg destination allowed by the terms.
-- Keep RideWear-fetched MET weather clearly distinct from Fnugg-sourced data; do not label RideWear's direct MET data as Fnugg data.
-- If RideWear displays Fnugg fields whose terms require additional weather/conditions attribution (for example Yr/Meteorologisk institutt/NRK), implement the currently required wording rather than guessing.
-- Preserve provider-neutral backend boundaries and existing alpine/snowboard behavior.
-- Add focused Flutter tests for attribution visibility and relevant link/conditional behavior.
-- Run Flutter analyze/tests and API tests if server/provider mapping changes.
-- No new provider, paid service, schema migration or unrelated redesign.
-- Keep dev and main untouched. Follow queue rules.
+Primary UX requirement:
+- A user requesting nearby ski trails must get the nearby result quickly; do not make the request wait for a national dataset refresh/download.
+- Flutter continues to call the RideWear NestJS API. Do not fetch Geonorge directly from Flutter.
+
+Before changing architecture:
+- Inspect the completed XC-TRAIL-DISCOVERY-001 implementation and verify which Geonorge endpoint/service it currently uses.
+- Verify current official Turrutebasen access methods and metadata before selecting WFS/download/ATOM or another documented official interface.
+- Reuse the existing implementation where it already satisfies the requirements.
+
+Fast read path:
+- Serve nearby-trail queries from a server-side cache/local indexed representation when practical.
+- If the existing official API supports sufficiently fast bounded spatial queries, it may be used behind a short-lived server cache instead of importing all Norway.
+- Prefer bounded geographic queries (position/radius or bbox) and only the Skiløype features/fields needed by RideWear.
+- Add suitable spatial/indexing strategy only when supported by the current architecture and measured need.
+- Do not block a user request on a full refresh.
+
+Refresh:
+- Check for fresh source data at most once per 24 hours by default; a refresh check must not make the interactive nearby-trail request wait for a full national update.
+- Refresh asynchronously/server-side where the current deployment model supports it.
+- Keep serving the last known-good data while refresh is running.
+- If Geonorge is unavailable or refresh fails, retain and serve last known-good data and report/log freshness rather than emptying the trail map.
+- Avoid duplicate concurrent refreshes.
+- Do not claim real-time grooming/preparation status unless the verified source actually supplies current operational status.
+
+Performance and correctness:
+- Measure the nearby-trail path before/after and document timings/test method; optimize based on evidence.
+- Preserve XC manual-route fallback.
+- Preserve Norwegian characters/localization.
+- Preserve Kartverket/Geonorge attribution and license requirements.
+- No scraping, fabricated trails, paid providers, unrelated features or broad architecture changes.
+- Do not modify motorcycle/cycling/alpine wardrobe behavior.
+
+Validation:
+- Deterministic tests for cache hit, stale cache, refresh failure/stale-data fallback, duplicate-refresh suppression and geographic filtering.
+- API tests/build and Prisma validation if persistence is touched.
+- Flutter tests/analyze for any client changes.
+- Clearly distinguish tests from live-provider checks.
+
+Keep dev and main untouched. Follow queue rules.
