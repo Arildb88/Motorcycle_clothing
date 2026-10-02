@@ -1,14 +1,19 @@
 # Authorized RideWear Task
-## Type: IMPLEMENTATION
-## ID: CYCLING-001
+
+## Type: NONE
+
+## ID: none
+
 ## Generation: 5
+
 ## Handoff-From: none
-## Authorization: authorized
-## Promoted: 2026-10-02T13:00:00Z
-## Task: Implement cycling recommendation foundation
 
-Implement the first cycling-specific recommendation foundation according to docs/product/CYCLING_PLAN.md, reusing shared route/weather/elevation infrastructure but not motorcycle clothing rules. MVP scope: cycling route/weather along route at ETA, ground elevation where available, cycling intensity inputs already supported/authorized by the plan, wear/pack reasons and confidence with safe fallbacks.
+## Authorization: none
 
-Do not add turn-by-turn navigation, live rerouting, power-meter integration, unsupported surface-quality claims, new paid providers, dependencies, or schema changes unless the existing plan explicitly makes them unnecessary. If a required schema/dependency/provider decision appears, BLOCK instead of inventing it.
+## Task: No active task
 
-Use focused domain/API tests. Mobile work is allowed only if the plan and existing activity UI support it without schema/dependency expansion; otherwise block/report the boundary. Follow queue rules.
+No implementation is authorized.
+
+The queue is `docs/agent-control/task-queue.md`. The ledger is `docs/agent-control/consumed.md`.
+
+Do not promote a queued item from an agent run while promotion is manual. Do not add a task. This file is not an authorization handoff.
