@@ -6,7 +6,7 @@
 
 - Branch: `feature/test-coverage-001`
 - Implementation commit: `a47f401cf871e53441b221f275ce01fb5c9edb5b`
-- PR: pending, targeting `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/58 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
