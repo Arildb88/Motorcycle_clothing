@@ -1,58 +1,74 @@
-# WEATHER-VALIDATION-001 weather validation harness
+# MVP-SMOKE-001 readiness pass
 
 ## Task
 
-`WEATHER-VALIDATION-001`, generation 14, authorized by the automatic final control update on `dev_test` commit `a5b366bab5773f1b374485b96a30d090997ca3b6`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`MVP-SMOKE-001`, generation 15, authorized by the automatic final control update on `dev_test` commit `add9dde8e06099c096777f07ab0850291663eced`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/weather-validation-001-harness`
-- Implementation: `81aa48a2b6ac9bf9b0a6cf7aa5a019c040e06847`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/47 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/mvp-smoke-001`
+- Implementation: readiness record on this branch. No application code change.
+- PR: opened against `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
-`apps/api/src/weather/validation/` shapes paired weather rows and computes the measurements in `docs/research/WEATHER_DATA_QUALITY.md` §11 from readings the caller already has.
+No product code, dependency, schema, or provider change. The authorized paths were exercised with the existing deterministic suites and the repository smoke script. Concrete regressions inside the current architecture were not found.
 
-- Latitude and longitude are truncated toward zero to 4 decimals. Elevation is rounded to integer metres. A row that misses its declared lead bucket (`h1`, `h6`, or `next_morning`) is dropped. `next_morning` uses Europe/Oslo civil time.
-- Providers for one case must be fetched inside 15 minutes. Elevation-matched error requires `elevation_sent` and the same integer height.
-- Station observations join only at that same coordinate and height. Route and resort observations join only within 5 km and 50 m.
-- Temperature MAE and mean bias require 2 m temperatures. Wind MAE requires 10 m wind. Precipitation occurrence uses the motorcycle 0.3 mm cut and 1-hour amounts. Probability is not substituted for amount.
-- Warmth-tier disagreements use `motorcycleExposureC` and `warmthDemandFromExposureC` with personal bias 0. The stop-rule comparison counts only cases where the baseline and the candidate are both eligible.
-- Coverage counts an empty series or HTTP failure as a miss. Latency p50 and p95 use supplied successful durations. A five-call route batch is the sum of five successes.
-- Provider-versus-MET temperature difference is labeled disagreement, not accuracy. A stratum is reportable for the stop rule only at 30 or more overlapping observation-paired rows.
-- Every report sets `empiricalTrial: false` and `adoption: withheld`, including when fixture numbers meet every stop-rule clause.
+Happy paths that passed:
 
-Section 12 of `docs/research/WEATHER_DATA_QUALITY.md` records these measurements. No empirical score was added.
+- Auth: `POST /api/auth/register` returned an access token. `GET /api/auth/providers` showed email enabled. Facebook and Microsoft were not configured. The smoke script's demo Facebook OAuth call succeeded only because `ALLOW_DEMO_OAUTH` was set for that local process.
+- Profile: `GET /api/users/me` returned the new user. The smoke script's `PATCH /api/users/me` set `defaultActivity` to hiking.
+- Wardrobe: create a base layer, seed demo garments, keep a personal garment when demo garments are deleted.
+- Route planning: create a saved commute, then `POST /api/routes/:id/plan` with `planningMode=departure`. With routing unconfigured, the plan used the saved waypoints and the 30-minute duration hint. That is the null-routing fallback, not a live routing result.
+- Motorcycle recommendation: smoke `GET /api/recommend` returned `effectiveTempC` under `WEATHER_PROVIDER=mock`.
+- Cycling: saved route plus `GET /api/recommend?intensity=steady` returned engine `cycling_v1` and intensity `steady`.
+- Alpine skiing: saved route plus recommend returned engine `alpine_v1`, discipline `alpine_skiing`, and exposure mode `lift` when the query omitted exposure. That matches the engine default.
+- Snowboarding: saved route plus `exposure=lift` returned engine `alpine_v1` and discipline `snowboarding`.
+- Cross-country: saved route plus `intensity=easy&style=classic` returned engine `xc_v1`, style `classic`, and intensity `easy`.
+- Ads-off default: `AppConfig.adsEnabled` is the `ADS_ENABLED` compile flag and defaults to false. `ad_placement_policy_test.dart` expects a disabled flag to refuse every surface.
 
 ## Final control state
 
-Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
+Promotion is automatic. No queued unconsumed item remains, so this close is idle and authorizes nothing.
 
-- `WEATHER-VALIDATION-001` completed and appended once to `consumed.md`
-- `MVP-SMOKE-001` is `active`
-- `active_id: MVP-SMOKE-001`
+- `MVP-SMOKE-001` completed and appended once to `consumed.md`
+- `active_id: none`
 - `promotion: automatic` unchanged
-- `handoff_generation: 15`
-- `handoff_state: authorized`
+- `handoff_generation: 15` unchanged
+- `handoff_state: idle`
 - `paused: false`
-- `next-task.md`: `MVP-SMOKE-001`, Generation 15, Handoff-From `WEATHER-VALIDATION-001`, Authorization `authorized`, Promoted `2026-10-02T13:12:57Z`
+- `next-task.md`: idle, Generation 15, Handoff-From `none`, Authorization `none`
 
 ## Checks
 
-Node 22, in `apps/api`:
+Node v22.14.0, in `apps/api`:
 
-- `npx jest src/weather/validation/harness.spec.ts --runInBand --no-coverage` — 18 tests passed
-- `npx tsc -p tsconfig.build.json --noEmit` — passed
-- `npx eslint src/weather/validation/**/*.ts` — passed
+- `npx prisma generate` — passed
+- `npm test -- --runInBand --no-coverage` — 31 suites, 213 tests passed
+- `npm run build` — passed
+- `SMOKE_SKIP_UNIT=1 SMOKE_SKIP_BUILD=1 bash scripts/smoke-api.sh` — passed against local PostgreSQL 16 after applying `20261002120000_postgres_baseline`. Unit tests and the build had just passed, so the smoke run followed the CI split and covered migrate plus HTTP.
 
-Live MET, Frost, Open-Meteo, and WeatherKit were not called. The full API suite and Flutter checks were not required for this harness.
+Flutter 3.47.6 (Dart 3.13.5), in `apps/mobile`:
+
+- `flutter test` — 78 tests passed
+- `flutter analyze` — no issues
+
+Additional local HTTP exercise, same mock weather and no routing key: register, profile read, cycling, alpine skiing, snowboarding, cross-country recommend, and route plan. Each returned HTTP 200 or 201 as recorded above. Weather responses came from the mock provider. Live MET was not called for those recommends.
 
 ## Architecture / config
 
-No new dependency, provider, paid service, schema change, or secret. `WeatherService` and `WEATHER_PROVIDER` are unchanged. Recommendation ranking is unchanged. `dev` and `main` were not modified.
+No new dependency, provider, paid service, schema change, or secret. `WEATHER_PROVIDER` stayed `mock` for the HTTP exercise. Routing was left unconfigured. `dev` and `main` were not modified.
 
 ## Remaining
 
-- The harness does not run a live trial and does not adopt a provider.
-- Frost element ids and station metadata are still an open question. The caller must supply the observation.
-- Price, commercial terms, monetization fit, and the frozen engine commit are caller inputs. The harness does not look them up.
-- `MVP-SMOKE-001` is authorized for a later run.
+Manual or live-service checks that this run did not perform:
+
+- A device or emulator pass through the Flutter screens.
+- Live MET weather. This run used the mock provider and does not claim live forecast accuracy.
+- A recorded Kartverket elevation result. The adapter may contact the network and swallows failures. No elevation success was asserted.
+- OpenRouteService directions. The plan response is the saved-waypoint fallback.
+- Configured Facebook, Microsoft, or other non-demo OAuth.
+- Hosted Supabase or a production deploy.
+- A device build with the ad SDK. The automated check is the placement policy and the default-off flag, not a rendered ad.
+
+Known MVP limit, left unchanged: a saved `hiking` route is accepted, and `GET /api/recommend` for that route uses `motorcycle_v1`. Hiking has no separate engine. Adding one would be a new feature.
+
+No further queued task is authorized.
