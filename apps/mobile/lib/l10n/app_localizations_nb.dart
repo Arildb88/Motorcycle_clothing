@@ -470,6 +470,48 @@ class AppLocalizationsNb extends AppLocalizations {
       'Klarte ikke å hente posisjonen nå. Prøv igjen eller søk etter et skianlegg.';
 
   @override
+  String get plannerTrailSubtitle =>
+      'Finn en skiløype i nærheten, eller planlegg start og mål selv.';
+
+  @override
+  String get plannerTrailNearby => 'Finn løype i nærheten';
+
+  @override
+  String get plannerTrailManual => 'Planlegg egen tur';
+
+  @override
+  String get plannerTrailNearPlace => 'Nær et sted';
+
+  @override
+  String get plannerTrailEmpty => 'Ingen skiløyper funnet.';
+
+  @override
+  String get plannerTrailUnavailable =>
+      'Skiløyper er midlertidig utilgjengelige.';
+
+  @override
+  String get plannerTrailAttribution => 'Løypeinformasjon fra Kartverket';
+
+  @override
+  String get plannerTrailSelected => 'Valgt løype';
+
+  @override
+  String get plannerTrailLocationDenied =>
+      'Posisjonstillatelse ble avslått. Du kan fortsatt søke nær et sted, eller planlegge egen tur.';
+
+  @override
+  String get plannerTrailLocationDeniedForever =>
+      'Posisjonstillatelse er blokkert. Skru den på i innstillinger, søk nær et sted, eller planlegg egen tur.';
+
+  @override
+  String get plannerTrailLocationDisabled =>
+      'Posisjonstjenester er av. Skru dem på, søk nær et sted, eller planlegg egen tur.';
+
+  @override
+  String get plannerTrailLocationTemporary =>
+      'Klarte ikke å hente posisjonen nå. Prøv igjen, søk nær et sted, eller planlegg egen tur.';
+
+  @override
   String get plannerIncompleteResort => 'Velg et skianlegg før du analyserer.';
 
   @override

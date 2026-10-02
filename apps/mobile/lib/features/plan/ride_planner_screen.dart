@@ -8,9 +8,12 @@ import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/features/plan/ride_analysis_result_screen.dart';
 import 'package:motorcycle_clothing/features/plan/resort_discovery.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_models.dart';
+import 'package:motorcycle_clothing/features/plan/trail_discovery.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
+import 'package:motorcycle_clothing/services/trails/ski_trail.dart';
+import 'package:motorcycle_clothing/services/trails/trail_directory.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
@@ -20,6 +23,8 @@ import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+
+enum _XcPlanningChoice { nearby, manual }
 
 /// Plan a route for the current activity, then request its recommendation.
 ///
@@ -55,6 +60,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   String? _error;
   String? _locationError;
   bool _locating = false;
+  _XcPlanningChoice _xcChoice = _XcPlanningChoice.manual;
 
   DeviceLocationService get _deviceLocation =>
       context.read<DeviceLocationService>();
@@ -243,6 +249,45 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       _nameCtrl.text = resort.name;
     }
     _update(_state.copyWith(waypoints: [draft], routeName: _nameCtrl.text));
+  }
+
+  bool get _xcNearby =>
+      _state.activityType == 'xc_skiing' &&
+      _xcChoice == _XcPlanningChoice.nearby;
+
+  String? get _selectedTrailId {
+    if (_state.waypoints.isEmpty) return null;
+    final id = _state.waypoints.first.providerPlaceId;
+    const prefix = 'geonorge:';
+    if (id == null || !id.startsWith(prefix)) return null;
+    final raw = id.substring(prefix.length);
+    return raw.isEmpty ? null : raw;
+  }
+
+  String? get _selectedTrailName {
+    if (_selectedTrailId == null || _state.waypoints.isEmpty) return null;
+    if (!_state.waypoints.first.isResolved) return null;
+    final label = _state.waypoints.first.displayLabel;
+    return label.isEmpty ? null : label;
+  }
+
+  void _selectTrail(SkiTrail trail) {
+    if (trail.line.length < 2) return;
+    final drafts = [
+      for (var i = 0; i < trail.line.length; i++)
+        WaypointDraft.fromResolved(
+          ResolvedPlace(
+            providerPlaceId: i == 0 ? trail.providerPlaceId : '',
+            label: trail.name,
+            lat: trail.line[i].lat,
+            lon: trail.line[i].lon,
+          ),
+        ),
+    ];
+    if (_nameCtrl.text.trim().isEmpty) {
+      _nameCtrl.text = trail.name;
+    }
+    _update(_state.copyWith(waypoints: drafts, routeName: _nameCtrl.text));
   }
 
   String _locationFailureMessage(
@@ -451,10 +496,38 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     }
   }
 
+  Widget _xcChoiceButton({
+    required String label,
+    required bool selected,
+    required VoidCallback onPressed,
+  }) {
+    final style = TextButton.styleFrom(
+      minimumSize: const Size(48, 48),
+      tapTargetSize: MaterialTapTargetSize.padded,
+    );
+    if (selected) {
+      return FilledButton(
+        style: style,
+        onPressed: onPressed,
+        child: Text(label),
+      );
+    }
+    return OutlinedButton(
+      style: style,
+      onPressed: onPressed,
+      child: Text(label),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final sitePins = activityUsesSitePins(_state.activityType);
+    final subtitle = sitePins
+        ? l10n.plannerResortSubtitle
+        : _state.activityType == 'xc_skiing'
+        ? l10n.plannerTrailSubtitle
+        : l10n.plannerSubtitle;
     final stops = _state.waypoints
         .map((w) => w.geoPoint)
         .whereType<GeoPoint>()
@@ -483,11 +556,32 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           Text(
-            sitePins ? l10n.plannerResortSubtitle : l10n.plannerSubtitle,
+            subtitle,
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
           ),
           const SizedBox(height: 12),
-          if (!sitePins)
+          if (_state.activityType == 'xc_skiing') ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _xcChoiceButton(
+                  label: l10n.plannerTrailNearby,
+                  selected: _xcChoice == _XcPlanningChoice.nearby,
+                  onPressed: () =>
+                      setState(() => _xcChoice = _XcPlanningChoice.nearby),
+                ),
+                _xcChoiceButton(
+                  label: l10n.plannerTrailManual,
+                  selected: _xcChoice == _XcPlanningChoice.manual,
+                  onPressed: () =>
+                      setState(() => _xcChoice = _XcPlanningChoice.manual),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (!sitePins && !_xcNearby)
             RouteMapPreview(
               waypoints: stops,
               geometry: _geometry,
@@ -505,7 +599,16 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          if (sitePins)
+          if (_xcNearby)
+            TrailDiscoverySection(
+              directory: context.read<TrailDirectory>(),
+              deviceLocation: _deviceLocation,
+              places: _location.search,
+              selectedTrailId: _selectedTrailId,
+              selectedTrailName: _selectedTrailName,
+              onSelected: _selectTrail,
+            )
+          else if (sitePins)
             ResortDiscoverySection(
               directory: context.read<ResortDirectory>(),
               deviceLocation: _deviceLocation,

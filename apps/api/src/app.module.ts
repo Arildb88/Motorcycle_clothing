@@ -10,6 +10,7 @@ import { WeatherModule } from './weather/weather.module';
 import { RecommendModule } from './recommend/recommend.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { ResortsModule } from './resorts/resorts.module';
+import { TrailsModule } from './trails/trails.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -25,6 +26,7 @@ import { HealthController } from './health.controller';
     RecommendModule,
     FeedbackModule,
     ResortsModule,
+    TrailsModule,
   ],
   controllers: [HealthController],
 })

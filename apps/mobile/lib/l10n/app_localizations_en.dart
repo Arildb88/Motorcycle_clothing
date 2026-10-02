@@ -468,6 +468,48 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not read your location right now. Try again or search for a ski resort.';
 
   @override
+  String get plannerTrailSubtitle =>
+      'Find a cross-country trail near you, or plan your own start and finish.';
+
+  @override
+  String get plannerTrailNearby => 'Find a trail nearby';
+
+  @override
+  String get plannerTrailManual => 'Plan your own trip';
+
+  @override
+  String get plannerTrailNearPlace => 'Near a place';
+
+  @override
+  String get plannerTrailEmpty => 'No ski trails found.';
+
+  @override
+  String get plannerTrailUnavailable =>
+      'Ski trail search is temporarily unavailable.';
+
+  @override
+  String get plannerTrailAttribution => 'Trail information from Kartverket';
+
+  @override
+  String get plannerTrailSelected => 'Selected trail';
+
+  @override
+  String get plannerTrailLocationDenied =>
+      'Location permission was denied. You can still search near a place, or plan your own trip.';
+
+  @override
+  String get plannerTrailLocationDeniedForever =>
+      'Location permission is blocked. Enable it in system settings, search near a place, or plan your own trip.';
+
+  @override
+  String get plannerTrailLocationDisabled =>
+      'Location services are off. Turn them on, search near a place, or plan your own trip.';
+
+  @override
+  String get plannerTrailLocationTemporary =>
+      'Could not read your location right now. Try again, search near a place, or plan your own trip.';
+
+  @override
   String get plannerIncompleteResort => 'Choose a ski resort before analyzing.';
 
   @override

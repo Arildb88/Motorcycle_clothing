@@ -8,6 +8,8 @@ import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/services/resorts/api_resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
+import 'package:motorcycle_clothing/services/trails/api_trail_directory.dart';
+import 'package:motorcycle_clothing/services/trails/trail_directory.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
@@ -29,6 +31,7 @@ Future<void> main() async {
   final api = ApiClient(baseUrl: AppConfig.apiBaseUrl);
   final location = LocationServices(api: api);
   final resorts = ApiResortDirectory.fromClient(api);
+  final trails = ApiTrailDirectory.fromClient(api);
   final deviceLocation = GeolocatorDeviceLocationService();
   final auth = AuthState(api);
   final activity = ActivityContext();
@@ -43,6 +46,7 @@ Future<void> main() async {
       api: api,
       location: location,
       resorts: resorts,
+      trails: trails,
       deviceLocation: deviceLocation,
       auth: auth,
       activity: activity,
@@ -58,6 +62,7 @@ class MotorcycleClothingApp extends StatelessWidget {
     required this.api,
     required this.location,
     required this.resorts,
+    required this.trails,
     required this.deviceLocation,
     required this.auth,
     required this.activity,
@@ -68,6 +73,7 @@ class MotorcycleClothingApp extends StatelessWidget {
   final ApiClient api;
   final LocationServices location;
   final ResortDirectory resorts;
+  final TrailDirectory trails;
   final DeviceLocationService deviceLocation;
   final AuthState auth;
   final ActivityContext activity;
@@ -81,6 +87,7 @@ class MotorcycleClothingApp extends StatelessWidget {
         Provider.value(value: api),
         Provider.value(value: location),
         Provider<ResortDirectory>.value(value: resorts),
+        Provider<TrailDirectory>.value(value: trails),
         Provider<DeviceLocationService>.value(value: deviceLocation),
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: activity),

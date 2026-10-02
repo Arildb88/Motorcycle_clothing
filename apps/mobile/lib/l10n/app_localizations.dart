@@ -860,6 +860,78 @@ abstract class AppLocalizations {
   /// **'Could not read your location right now. Try again or search for a ski resort.'**
   String get plannerResortLocationTemporary;
 
+  /// No description provided for @plannerTrailSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a cross-country trail near you, or plan your own start and finish.'**
+  String get plannerTrailSubtitle;
+
+  /// No description provided for @plannerTrailNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a trail nearby'**
+  String get plannerTrailNearby;
+
+  /// No description provided for @plannerTrailManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan your own trip'**
+  String get plannerTrailManual;
+
+  /// No description provided for @plannerTrailNearPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Near a place'**
+  String get plannerTrailNearPlace;
+
+  /// No description provided for @plannerTrailEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No ski trails found.'**
+  String get plannerTrailEmpty;
+
+  /// No description provided for @plannerTrailUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Ski trail search is temporarily unavailable.'**
+  String get plannerTrailUnavailable;
+
+  /// No description provided for @plannerTrailAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Trail information from Kartverket'**
+  String get plannerTrailAttribution;
+
+  /// No description provided for @plannerTrailSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected trail'**
+  String get plannerTrailSelected;
+
+  /// No description provided for @plannerTrailLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission was denied. You can still search near a place, or plan your own trip.'**
+  String get plannerTrailLocationDenied;
+
+  /// No description provided for @plannerTrailLocationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Enable it in system settings, search near a place, or plan your own trip.'**
+  String get plannerTrailLocationDeniedForever;
+
+  /// No description provided for @plannerTrailLocationDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off. Turn them on, search near a place, or plan your own trip.'**
+  String get plannerTrailLocationDisabled;
+
+  /// No description provided for @plannerTrailLocationTemporary.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read your location right now. Try again, search near a place, or plan your own trip.'**
+  String get plannerTrailLocationTemporary;
+
   /// No description provided for @plannerIncompleteResort.
   ///
   /// In en, this message translates to:
