@@ -1,74 +1,61 @@
-# MVP-SMOKE-001 readiness pass
+# MANUAL-REGRESSION-001
 
 ## Task
 
-`MVP-SMOKE-001`, generation 15, authorized by the automatic final control update on `dev_test` commit `add9dde8e06099c096777f07ab0850291663eced`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`MANUAL-REGRESSION-001`, generation 16, authorized by the from-idle human token on `dev_test` commit `74025d088a7d36d3c7fb8cfb1420a8e1f773fff5`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/mvp-smoke-001`
-- Implementation: `a623f60c99f65ea380d8087c1d84d5ccc260c388`. No application code change.
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/48 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/manual-regression-001`
+- Implementation: `dd83c2188daf7c3e2953aa116c52fd623342b6aa`
+- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
-No product code, dependency, schema, or provider change. The authorized paths were exercised with the existing deterministic suites and the repository smoke script. Concrete regressions inside the current architecture were not found.
+Place search applies only the latest request. A successful result clears the error. A real provider failure still clears suggestions and shows the localized error, including "Stedsøk er midlertidig utilgjengelig." / "Place search is temporarily unavailable."
 
-Happy paths that passed:
+Selecting a concrete place keeps the richer label. Pelias labels such as "Kristiansand lufthavn, Kjevik" stay the display label when the short name is only the locality. The typed query stays separate from the selected place. Coordinates and provider place id come from resolve.
 
-- Auth: `POST /api/auth/register` returned an access token. `GET /api/auth/providers` showed email enabled. Facebook and Microsoft were not configured. The smoke script's demo Facebook OAuth call succeeded only because `ALLOW_DEMO_OAUTH` was set for that local process.
-- Profile: `GET /api/users/me` returned the new user. The smoke script's `PATCH /api/users/me` set `defaultActivity` to hiking.
-- Wardrobe: create a base layer, seed demo garments, keep a personal garment when demo garments are deleted.
-- Route planning: create a saved commute, then `POST /api/routes/:id/plan` with `planningMode=departure`. With routing unconfigured, the plan used the saved waypoints and the 30-minute duration hint. That is the null-routing fallback, not a live routing result.
-- Motorcycle recommendation: smoke `GET /api/recommend` returned `effectiveTempC` under `WEATHER_PROVIDER=mock`.
-- Cycling: saved route plus `GET /api/recommend?intensity=steady` returned engine `cycling_v1` and intensity `steady`.
-- Alpine skiing: saved route plus recommend returned engine `alpine_v1`, discipline `alpine_skiing`, and exposure mode `lift` when the query omitted exposure. That matches the engine default.
-- Snowboarding: saved route plus `exposure=lift` returned engine `alpine_v1` and discipline `snowboarding`.
-- Cross-country: saved route plus `intensity=easy&style=classic` returned engine `xc_v1`, style `classic`, and intensity `easy`.
-- Ads-off default: `AppConfig.adsEnabled` is the `ADS_ENABLED` compile flag and defaults to false. `ad_placement_policy_test.dart` expects a disabled flag to refuse every surface.
+"Bytt om" copies each stop's local id, so the field, label, coordinates, and provider id move together.
+
+Alpine skiing and snowboarding plan from one place. Extra places stay optional. They do not show start/destination, the motorway toggle, round trip, or the road map. Motorcycle, cycling, and cross-country still need two points. Cycling and cross-country keep their existing intensity, style, and exposure controls. Road preview stays for motorcycle and cycling.
+
+Hiking has no recommendation engine. The coming-soon home no longer offers "Open Motorcycle today". The routes screen does not remap hiking to motorcycle or load motorcycle routes.
+
+"Legg til demo-klær" / "Add demo clothes" is available when the wardrobe has personal garments and no demo rows. Repeating the seed does not insert another demo set. Replacing demo clothes deletes only demo rows.
+
+"Endre passord" / "Change password" is a filled RideWear button at least 48dp tall. Navigation, validation, and localization are unchanged.
 
 ## Final control state
 
 Promotion is automatic. No queued unconsumed item remains, so this close is idle and authorizes nothing.
 
-- `MVP-SMOKE-001` completed and appended once to `consumed.md`
+- `MANUAL-REGRESSION-001` completed and appended once to `consumed.md`
 - `active_id: none`
 - `promotion: automatic` unchanged
-- `handoff_generation: 15` unchanged
+- `handoff_generation: 16`
 - `handoff_state: idle`
 - `paused: false`
-- `next-task.md`: idle, Generation 15, Handoff-From `none`, Authorization `none`
+- `next-task.md`: idle, Generation 16, Handoff-From `none`, Authorization `none`
 
 ## Checks
 
-Node v22.14.0, in `apps/api`:
-
-- `npx prisma generate` — passed
-- `npm test -- --runInBand --no-coverage` — 31 suites, 213 tests passed
-- `npm run build` — passed
-- `SMOKE_SKIP_UNIT=1 SMOKE_SKIP_BUILD=1 bash scripts/smoke-api.sh` — passed against local PostgreSQL 16 after applying `20261002120000_postgres_baseline`. Unit tests and the build had just passed, so the smoke run followed the CI split and covered migrate plus HTTP.
-
 Flutter 3.47.6 (Dart 3.13.5), in `apps/mobile`:
 
-- `flutter test` — 78 tests passed
+- `flutter test test/manual_regression_flow_test.dart test/ride_planner_test.dart test/wardrobe_demo_test.dart test/waypoint_draft_test.dart test/activity_context_test.dart test/nb_localization_test.dart` — 40 tests passed
 - `flutter analyze` — no issues
 
-Additional local HTTP exercise, same mock weather and no routing key: register, profile read, cycling, alpine skiing, snowboarding, cross-country recommend, and route plan. Each returned HTTP 200 or 201 as recorded above. Weather responses came from the mock provider. Live MET was not called for those recommends.
+Node, in `apps/api`, after `npx prisma generate`:
+
+- `npm test -- src/routing/ors-geocoding.service.spec.ts src/routes/routes.service.spec.ts src/wardrobe/wardrobe.service.spec.ts --runInBand --no-coverage` — 3 suites, 32 tests passed
 
 ## Architecture / config
 
-No new dependency, provider, paid service, schema change, or secret. `WEATHER_PROVIDER` stayed `mock` for the HTTP exercise. Routing was left unconfigured. `dev` and `main` were not modified.
+No new dependency, provider, paid service, schema migration, or secret. Existing ORS/HeiGIT mapping is unchanged except that a concrete Pelias label is kept as the display label. `dev` and `main` were not modified.
 
 ## Remaining
 
-Manual or live-service checks that this run did not perform:
+Live or device checks this run did not perform:
 
-- A device or emulator pass through the Flutter screens.
-- Live MET weather. This run used the mock provider and does not claim live forecast accuracy.
-- A recorded Kartverket elevation result. The adapter may contact the network and swallows failures. No elevation success was asserted.
-- OpenRouteService directions. The plan response is the saved-waypoint fallback.
-- Configured Facebook, Microsoft, or other non-demo OAuth.
-- Hosted Supabase or a production deploy.
-- A device build with the ad SDK. The automated check is the placement policy and the default-off flag, not a rendered ad.
-
-Known MVP limit, left unchanged: a saved `hiking` route is accepted, and `GET /api/recommend` for that route uses `motorcycle_v1`. Hiking has no separate engine. Adding one would be a new feature.
+- A device or emulator pass against live OpenRouteService / HeiGIT geocoding and routing.
+- Live place search for Kristiansand lufthavn, Kjevik and Arendal Trefoldighetskirke. The regression tests use fixtures and fakes.
 
 No further queued task is authorized.
