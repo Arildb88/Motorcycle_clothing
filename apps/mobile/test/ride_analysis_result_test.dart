@@ -439,6 +439,44 @@ void main() {
       expect(find.textContaining('Best'), findsNothing);
     },
   );
+
+  testWidgets(
+    'analysis can record cold, comfortable, or hot for that activity',
+    (tester) async {
+      await tester.pumpWidget(
+        _analysisApp(
+          locale: const Locale('nb'),
+          home: const RideAnalysisResultScreen(
+            payload: {
+              'route': {'name': 'Oslo loop', 'activityType': 'cycling'},
+              'weather': {
+                'minTempC': 8,
+                'maxTempC': 11,
+                'maxRainProbPct': 10,
+                'maxWindMs': 4,
+              },
+              'recommendation': {
+                'engine': 'cycling_v1',
+                'wear': [],
+                'pack': [],
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('thermal-feedback-open')),
+        200,
+      );
+      await tester.tap(find.byKey(const Key('thermal-feedback-open')));
+      await tester.pumpAndSettle();
+      expect(find.text('For kald'), findsOneWidget);
+      expect(find.text('Passe'), findsOneWidget);
+      expect(find.text('For varm'), findsOneWidget);
+      expect(find.text('Litt kaldt'), findsNothing);
+    },
+  );
 }
 
 Widget _analysisApp({

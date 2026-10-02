@@ -50,11 +50,17 @@ export function cyclingApparentAirflow(input: {
 
 /**
  * Cycling exposure °C. Metabolic heat is added. Wind chill uses cycling
- * coefficients on apparent airflow. Personal motorcycle offsets are not applied.
+ * coefficients on apparent airflow. Motorcycle offsets are not an input.
+ * personalColdBiasC is this activity's own shrunk feedback, and 0 leaves
+ * the exposure unchanged.
  */
 export function cyclingExposureC(
   point: WeatherPoint,
-  input: { apparentAirflowMs: number; intensity: CyclingIntensity },
+  input: {
+    apparentAirflowMs: number;
+    intensity: CyclingIntensity;
+    personalColdBiasC?: number;
+  },
 ): number {
   const above = Math.max(
     0,
@@ -66,8 +72,13 @@ export function cyclingExposureC(
     point.precipitationProbPct >= CYCLING_EXPOSURE.rainProbWetThreshold
       ? CYCLING_EXPOSURE.wetExposurePenaltyC
       : 0;
+  const bias = finiteBias(input.personalColdBiasC);
   const value =
-    point.airTempC + CYCLING_METABOLIC_OFFSET_C[input.intensity] - chill - wet;
+    point.airTempC +
+    CYCLING_METABOLIC_OFFSET_C[input.intensity] -
+    chill -
+    wet -
+    bias;
   return round1(value);
 }
 
@@ -95,6 +106,10 @@ export function cyclingWaterDemand(point: WeatherPoint): number {
   if (prob >= 30 || mm >= 0.2) return 3;
   if (prob >= 15 || mm > 0) return 2;
   return 1;
+}
+
+function finiteBias(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
 function round1(value: number): number {

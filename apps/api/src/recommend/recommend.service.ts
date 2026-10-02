@@ -10,6 +10,8 @@ import { WeatherService } from '../weather/weather.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   MVP_ACTIVITY_TYPE,
+  THERMAL_SHRINKAGE_K,
+  appliedThermalBiasC,
   parseActivityTags,
   parseRoutePreferences,
   parseStoredSharedCategories,
@@ -104,21 +106,17 @@ export class RecommendService {
     const profile = await this.prisma.userProfile.findUnique({
       where: { userId },
     });
-    const offset = await this.prisma.personalOffset.findUnique({
-      where: {
-        userId_activityType_zone: {
-          userId,
-          activityType: MVP_ACTIVITY_TYPE,
-          zone: 'overall',
-        },
-      },
-    });
-
-    const n = offset?.n ?? 0;
-    const k = MOTORCYCLE_EXPOSURE.personalShrinkageK;
-    const personalWeight = n / (n + k);
-    const shrunk = n > 0 ? personalWeight * (offset?.meanResidual ?? 0) : 0;
-    const personalColdBiasC = -(profile?.coldSensitivity ?? 0) + shrunk;
+    const calibration = await this.thermalCalibration(
+      userId,
+      MVP_ACTIVITY_TYPE,
+    );
+    const n = calibration.n;
+    const k = calibration.shrinkageK;
+    const personalWeight = calibration.personalWeight;
+    // Manual coldSensitivity stays the prior. Feedback adds only the shrunk
+    // residual, and an empty offset adds 0.
+    const personalColdBiasC =
+      -(profile?.coldSensitivity ?? 0) + calibration.appliedBiasC;
 
     const departAt = parseDeparture(_departureAt);
     const fallbackPoints = this.routes.weatherPointsFor(route);
@@ -335,6 +333,7 @@ export class RecommendService {
       road?.distanceM,
       sampled.appliedLegs,
     );
+    const calibration = await this.thermalCalibration(userId, 'cycling');
     const engine = runCyclingRecommendationPipeline({
       weather,
       wardrobe: await this.loadActivityWardrobe(userId, 'cycling'),
@@ -342,6 +341,8 @@ export class RecommendService {
       intensity,
       routeTravelSegments,
       geometryFallback: !sampled.usedRoadGeometry,
+      personalColdBiasC: calibration.appliedBiasC,
+      personalSampleCount: calibration.n,
     });
     const items = [
       ...engine.wear.map((item) => this.kitLabel(item)),
@@ -372,9 +373,9 @@ export class RecommendService {
       weather,
       comfort: {
         coldSensitivity: null,
-        personalSampleCount: 0,
-        personalWeight: 0,
-        personalColdBiasC: 0,
+        personalSampleCount: calibration.n,
+        personalWeight: calibration.personalWeight,
+        personalColdBiasC: calibration.appliedBiasC,
         intensity: engine.intensity,
         intensityAssumed: engine.intensityAssumed,
       },
@@ -395,7 +396,8 @@ export class RecommendService {
       },
       personalization: {
         ...engine.personalization,
-        reason: 'Cycling foundation does not apply motorcycle personal offsets',
+        reason:
+          'Cycling applies only its own shrunk thermal feedback. Motorcycle offsets are not used.',
       },
     };
   }
@@ -505,6 +507,7 @@ export class RecommendService {
         },
       ];
     });
+    const calibration = await this.thermalCalibration(userId, discipline);
     const engine = runAlpineRecommendationPipeline({
       discipline,
       exposureMode: exposure,
@@ -512,6 +515,8 @@ export class RecommendService {
       plan,
       samples,
       wardrobe: await this.loadActivityWardrobe(userId, discipline),
+      personalColdBiasC: calibration.appliedBiasC,
+      personalSampleCount: calibration.n,
     });
     const temps = samples.map((sample) => sample.weather.airTempC);
     const rains = samples.map((sample) => sample.weather.precipitationProbPct);
@@ -561,9 +566,9 @@ export class RecommendService {
       weather,
       comfort: {
         coldSensitivity: null,
-        personalSampleCount: 0,
-        personalWeight: 0,
-        personalColdBiasC: 0,
+        personalSampleCount: calibration.n,
+        personalWeight: calibration.personalWeight,
+        personalColdBiasC: calibration.appliedBiasC,
         exposureMode: engine.exposureMode,
         exposureModeAssumed: engine.exposureModeAssumed,
       },
@@ -584,7 +589,7 @@ export class RecommendService {
       personalization: {
         ...engine.personalization,
         reason:
-          'Alpine foundation does not apply motorcycle personal offsets or road routing',
+          "Alpine applies only this discipline's shrunk thermal feedback. Motorcycle offsets and road routing are not used.",
       },
     };
   }
@@ -708,6 +713,7 @@ export class RecommendService {
           }
         : null,
     };
+    const calibration = await this.thermalCalibration(userId, 'xc_skiing');
     const engine = runXcRecommendationPipeline({
       weather,
       wardrobe: await this.loadActivityWardrobe(userId, 'xc_skiing'),
@@ -719,6 +725,8 @@ export class RecommendService {
         requests.map((request) => request.timeProgress),
         durationMin,
       ),
+      personalColdBiasC: calibration.appliedBiasC,
+      personalSampleCount: calibration.n,
     });
     const items = [
       ...engine.wear.map((item) => this.kitLabel(item)),
@@ -749,9 +757,9 @@ export class RecommendService {
       weather,
       comfort: {
         coldSensitivity: null,
-        personalSampleCount: 0,
-        personalWeight: 0,
-        personalColdBiasC: 0,
+        personalSampleCount: calibration.n,
+        personalWeight: calibration.personalWeight,
+        personalColdBiasC: calibration.appliedBiasC,
         intensity: engine.intensity,
         intensityAssumed: engine.intensityAssumed,
         style: engine.style,
@@ -776,7 +784,7 @@ export class RecommendService {
       personalization: {
         ...engine.personalization,
         reason:
-          'Cross-country foundation does not apply motorcycle personal offsets, alpine lift weighting, or road routing',
+          'Cross-country applies only its own shrunk thermal feedback. Motorcycle offsets, alpine lift weighting, and road routing are not used.',
       },
     };
   }
@@ -871,6 +879,26 @@ export class RecommendService {
       legs,
     });
     return segments.length > 0 ? segments : undefined;
+  }
+
+  private async thermalCalibration(userId: string, activityType: string) {
+    const offset = await this.prisma.personalOffset.findUnique({
+      where: {
+        userId_activityType_zone: {
+          userId,
+          activityType,
+          zone: 'overall',
+        },
+      },
+    });
+    const n = offset?.n ?? 0;
+    const personalWeight = n > 0 ? n / (n + THERMAL_SHRINKAGE_K) : 0;
+    return {
+      n,
+      shrinkageK: THERMAL_SHRINKAGE_K,
+      personalWeight,
+      appliedBiasC: appliedThermalBiasC(offset),
+    };
   }
 
   private kitLabel(

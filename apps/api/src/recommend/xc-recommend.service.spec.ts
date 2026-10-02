@@ -158,7 +158,15 @@ describe('RecommendService cross-country foundation', () => {
     );
 
     expect(roadWeatherSource).not.toHaveBeenCalled();
-    expect(personalOffset).not.toHaveBeenCalled();
+    expect(personalOffset).toHaveBeenCalledWith({
+      where: {
+        userId_activityType_zone: {
+          userId: 'user-1',
+          activityType: 'xc_skiing',
+          zone: 'overall',
+        },
+      },
+    });
     expect(userProfile).toHaveBeenCalled();
     const samples = forRouteSamples.mock.calls[0][0] as Array<{
       lat: number;

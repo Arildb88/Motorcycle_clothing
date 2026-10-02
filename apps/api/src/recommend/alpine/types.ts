@@ -177,9 +177,9 @@ export type AlpineRecommendationResult = {
   };
   personalization: {
     voice: 'baseline';
-    sampleCount: 0;
+    sampleCount: number;
     canClaimPersonal: false;
-    personalColdBiasC: 0;
+    personalColdBiasC: number;
   };
 };
 
@@ -190,4 +190,7 @@ export type AlpinePipelineInput = {
   plan: AlpineSitePlan;
   samples: AlpineSample[];
   wardrobe: AlpineGarmentInput[];
+  /** This discipline's shrunk feedback. Omitted or 0 leaves exposure unchanged. */
+  personalColdBiasC?: number;
+  personalSampleCount?: number;
 };

@@ -133,7 +133,15 @@ describe('RecommendService alpine foundation', () => {
     );
 
     expect(roadWeatherSource).not.toHaveBeenCalled();
-    expect(personalOffset).not.toHaveBeenCalled();
+    expect(personalOffset).toHaveBeenCalledWith({
+      where: {
+        userId_activityType_zone: {
+          userId: 'user-1',
+          activityType: 'alpine_skiing',
+          zone: 'overall',
+        },
+      },
+    });
     expect(userProfile).toHaveBeenCalled();
     expect(result).not.toHaveProperty('departureComparison');
     const samples = forRouteSamples.mock.calls[0][0] as Array<{

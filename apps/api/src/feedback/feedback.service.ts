@@ -1,18 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  appliedThermalBiasC,
+  isActivityType,
+  nextThermalOffset,
+} from '../domain';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
-import { MVP_ACTIVITY_TYPE } from '../domain';
 
 /**
- * M1 foundation: persist feedback on ActivityLog / ActivityFeedback.
- * Does NOT fully implement M5 learning — only stores evidence and lightly
- * bumps PersonalOffset.n toward future shrinkage (capped).
+ * Stores cold / comfortable / hot feedback on the existing activity log
+ * and updates only that activity's overall PersonalOffset.
+ * UserProfile.coldSensitivity is left unchanged.
  */
 @Injectable()
 export class FeedbackService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateFeedbackDto) {
+    if (!isActivityType(dto.activityType)) {
+      throw new BadRequestException(
+        'activityType must be a known RideWear activity',
+      );
+    }
+    const activityType = dto.activityType;
     const overallRating = this.mapLegacyRating(dto.rating);
 
     const log = await this.prisma.activityLog.create({
@@ -33,49 +43,44 @@ export class FeedbackService {
       include: { feedback: true },
     });
 
-    // Preliminary evidence bump only (full similarity-weighted M5 later).
-    const residual = -overallRating * 0.5;
     const existing = await this.prisma.personalOffset.findUnique({
       where: {
         userId_activityType_zone: {
           userId,
-          activityType: MVP_ACTIVITY_TYPE,
+          activityType,
           zone: 'overall',
         },
       },
     });
-    const prevN = existing?.n ?? 0;
-    const prevMean = existing?.meanResidual ?? 0;
-    const nextN = prevN + 1;
-    const nextMean = (prevMean * prevN + residual) / nextN;
-    const cappedMean = Math.max(-3, Math.min(3, nextMean));
-
+    const next = nextThermalOffset(existing, dto.rating);
     const offset = await this.prisma.personalOffset.upsert({
       where: {
         userId_activityType_zone: {
           userId,
-          activityType: MVP_ACTIVITY_TYPE,
+          activityType,
           zone: 'overall',
         },
       },
       create: {
         userId,
-        activityType: MVP_ACTIVITY_TYPE,
+        activityType,
         zone: 'overall',
-        n: 1,
-        meanResidual: Math.max(-3, Math.min(3, residual)),
+        n: next.n,
+        meanResidual: next.meanResidual,
       },
       update: {
-        n: nextN,
-        meanResidual: cappedMean,
+        n: next.n,
+        meanResidual: next.meanResidual,
       },
     });
 
     return {
       feedback: log.feedback,
       activityLogId: log.id,
+      activityType,
       personalOffset: offset,
-      note: 'Stored for M5 learning; spike recommender still speaks in baseline voice',
+      appliedBiasC: appliedThermalBiasC(next),
+      note: 'Stored for this activity only. One event is shrunk by n/(n+k) and does not change coldSensitivity.',
     };
   }
 

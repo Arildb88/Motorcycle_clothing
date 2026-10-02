@@ -164,9 +164,9 @@ export type XcRecommendationResult = {
   };
   personalization: {
     voice: 'baseline';
-    sampleCount: 0;
+    sampleCount: number;
     canClaimPersonal: false;
-    personalColdBiasC: 0;
+    personalColdBiasC: number;
   };
 };
 
@@ -184,4 +184,7 @@ export type XcPipelineInput = {
   style?: string | null;
   /** Minutes for each weather point, same order. Even split when omitted. */
   sampleDurationMin?: number[];
+  /** This activity's shrunk feedback. Omitted or 0 leaves exposure unchanged. */
+  personalColdBiasC?: number;
+  personalSampleCount?: number;
 };

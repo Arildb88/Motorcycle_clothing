@@ -175,9 +175,9 @@ export type CyclingRecommendationResult = {
   };
   personalization: {
     voice: 'baseline';
-    sampleCount: 0;
+    sampleCount: number;
     canClaimPersonal: false;
-    personalColdBiasC: 0;
+    personalColdBiasC: number;
   };
 };
 
@@ -190,4 +190,7 @@ export type CyclingPipelineInput = {
   routeTravelSegments?: CyclingTravelSegment[];
   /** Saved-waypoint samples because cycling routing was down or unconfigured. */
   geometryFallback: boolean;
+  /** This activity's shrunk feedback. Omitted or 0 leaves exposure unchanged. */
+  personalColdBiasC?: number;
+  personalSampleCount?: number;
 };

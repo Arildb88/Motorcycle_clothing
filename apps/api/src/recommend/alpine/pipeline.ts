@@ -23,6 +23,7 @@ export function runAlpineRecommendationPipeline(
   input: AlpinePipelineInput,
 ): AlpineRecommendationResult {
   const parsed = parseExposureMode(input.exposureMode);
+  const personalColdBiasC = finiteBias(input.personalColdBiasC);
   const samples = input.samples.filter((sample) =>
     sampleMatchesSite(sample, input.plan),
   );
@@ -35,8 +36,16 @@ export function runAlpineRecommendationPipeline(
   const upperTempC = minAir(upperSamples);
   const upperWindMs = maxWind(upperSamples);
   const baseWindMs = maxWind(baseSamples);
-  const baseExposure = meanExposure(baseSamples, parsed.mode);
-  const upperExposure = meanExposure(upperSamples, parsed.mode);
+  const baseExposure = meanExposure(
+    baseSamples,
+    parsed.mode,
+    personalColdBiasC,
+  );
+  const upperExposure = meanExposure(
+    upperSamples,
+    parsed.mode,
+    personalColdBiasC,
+  );
 
   let wornFrom: AlpineWornFrom = 'unavailable';
   let wornExposureC: number | null = null;
@@ -146,7 +155,11 @@ export function runAlpineRecommendationPipeline(
         airTempC: sample.weather.airTempC,
         windSpeedMs: sample.weather.windSpeedMs,
         groundElevationM: sample.weather.groundElevationM ?? null,
-        exposureC: alpineExposureC(sample.weather, parsed.mode),
+        exposureC: alpineExposureC(
+          sample.weather,
+          parsed.mode,
+          personalColdBiasC,
+        ),
       })),
     },
     wear: matched.wear,
@@ -155,9 +168,9 @@ export function runAlpineRecommendationPipeline(
     confidence,
     personalization: {
       voice: 'baseline',
-      sampleCount: 0,
+      sampleCount: finiteCount(input.personalSampleCount),
       canClaimPersonal: false,
-      personalColdBiasC: 0,
+      personalColdBiasC,
     },
   };
 }
@@ -274,10 +287,12 @@ function scoreConfidence(input: {
 function meanExposure(
   samples: AlpineSample[],
   mode: ReturnType<typeof parseExposureMode>['mode'],
+  personalColdBiasC: number,
 ): number | null {
   if (samples.length === 0) return null;
   const total = samples.reduce(
-    (sum, sample) => sum + alpineExposureC(sample.weather, mode),
+    (sum, sample) =>
+      sum + alpineExposureC(sample.weather, mode, personalColdBiasC),
     0,
   );
   return round1(total / samples.length);
@@ -307,6 +322,16 @@ function dedupe(reasons: AlpineReason[]): AlpineReason[] {
     out.push(reason);
   }
   return out;
+}
+
+function finiteBias(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function finiteCount(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : 0;
 }
 
 function round1(value: number): number {

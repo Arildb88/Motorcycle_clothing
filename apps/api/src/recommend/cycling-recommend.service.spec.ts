@@ -33,9 +33,17 @@ describe('RecommendService cycling foundation', () => {
       legs: Array<{ distanceM: number; durationMin: number }> | null;
     } | null;
     elevationM?: number | null;
+    offset?: { n: number; meanResidual: number } | null;
+    coldSensitivity?: number;
   }) {
-    const personalOffset = jest.fn();
-    const userProfile = jest.fn();
+    const personalOffset = jest.fn(() =>
+      overrides && 'offset' in overrides ? overrides.offset : undefined,
+    );
+    const userProfile = jest.fn(() =>
+      overrides?.coldSensitivity == null
+        ? null
+        : { coldSensitivity: overrides.coldSensitivity },
+    );
     const roadWeatherSource = jest.fn(() =>
       overrides && 'road' in overrides
         ? overrides.road
@@ -147,7 +155,15 @@ describe('RecommendService cycling foundation', () => {
       'hard',
     );
 
-    expect(personalOffset).not.toHaveBeenCalled();
+    expect(personalOffset).toHaveBeenCalledWith({
+      where: {
+        userId_activityType_zone: {
+          userId: 'user-1',
+          activityType: 'cycling',
+          zone: 'overall',
+        },
+      },
+    });
     expect(userProfile).toHaveBeenCalled();
     expect(roadWeatherSource).toHaveBeenCalledWith(
       expect.objectContaining({ travelProfile: 'cycling' }),
@@ -187,5 +203,43 @@ describe('RecommendService cycling foundation', () => {
       ]),
     );
     expect(result.recommendation.confidence.level).not.toBe('HIGH');
+  });
+
+  it('applies shrunk cycling feedback and ignores manual cold sensitivity', async () => {
+    const neutral = service();
+    const tuned = service({
+      offset: { n: 6, meanResidual: 1 },
+      coldSensitivity: 1,
+    });
+    const before = await neutral.recommend.forUser(
+      'user-1',
+      'route-bike',
+      undefined,
+      'steady',
+    );
+    const after = await tuned.recommend.forUser(
+      'user-1',
+      'route-bike',
+      undefined,
+      'steady',
+    );
+
+    expect(before.comfort.personalColdBiasC).toBe(0);
+    expect(after.comfort.personalColdBiasC).toBeCloseTo(0.5, 10);
+    expect(after.comfort.coldSensitivity).toBeNull();
+    expect(after.recommendation.exposure.cyclingExposureSustainedC).toBeCloseTo(
+      before.recommendation.exposure.cyclingExposureSustainedC - 0.5,
+      5,
+    );
+    expect(after.personalization.canClaimPersonal).toBe(false);
+    expect(tuned.personalOffset).toHaveBeenCalledWith({
+      where: {
+        userId_activityType_zone: {
+          userId: 'user-1',
+          activityType: 'cycling',
+          zone: 'overall',
+        },
+      },
+    });
   });
 });

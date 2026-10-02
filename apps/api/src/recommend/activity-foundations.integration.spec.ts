@@ -192,7 +192,7 @@ describe('activity foundation integration', () => {
     expect(motorcycle.recommendation.engine).toBe('motorcycle_v1');
     expect(motorcycle.route.activityType).toBe('motorcycle');
     expect(motorcycle.comfort.personalColdBiasC).toBe(-1);
-    expect(personalOffset).toHaveBeenCalledTimes(1);
+    expect(personalOffset).toHaveBeenCalledTimes(5);
     expect(userProfile).toHaveBeenCalledTimes(5);
     expect(
       altitudes(forRouteSamples, 0).every((height) => height === 120),
@@ -202,7 +202,7 @@ describe('activity foundation integration', () => {
     expect(cycling.comfort.personalColdBiasC).toBe(0);
     expect(cycling.comfort.intensity).toBe('steady');
     expect(cycling.recommendation.geometry).toBe('cycling_profile');
-    expect(personalOffset).toHaveBeenCalledTimes(1);
+    expect(personalOffset).toHaveBeenCalledTimes(5);
     expect(userProfile).toHaveBeenCalledTimes(5);
     expect(altitudes(forRouteSamples, 1).every((height) => height === 90)).toBe(
       true,
@@ -230,7 +230,27 @@ describe('activity foundation integration', () => {
     expect(xc.comfort.personalColdBiasC).toBe(0);
     expect(xc.comfort.intensity).toBe('easy');
     expect(altitudes(forRouteSamples, 4)).toEqual([220, null]);
-    expect(personalOffset).toHaveBeenCalledTimes(1);
+    expect(personalOffset).toHaveBeenCalledTimes(5);
+    const offsetCalls = personalOffset.mock.calls as unknown as Array<
+      [
+        {
+          where: {
+            userId_activityType_zone: { activityType: string };
+          };
+        },
+      ]
+    >;
+    expect(
+      offsetCalls.map(
+        (call) => call[0].where.userId_activityType_zone.activityType,
+      ),
+    ).toEqual([
+      'motorcycle',
+      'cycling',
+      'alpine_skiing',
+      'snowboarding',
+      'xc_skiing',
+    ]);
     expect(userProfile).toHaveBeenCalledTimes(5);
 
     expect(roadWeatherSource).toHaveBeenCalledTimes(2);

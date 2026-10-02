@@ -7,8 +7,12 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { ACTIVITY_TYPES } from '../../domain';
 
 export class CreateFeedbackDto {
+  @IsIn([...ACTIVITY_TYPES])
+  activityType!: string;
+
   @IsOptional()
   @IsString()
   routeId?: string;

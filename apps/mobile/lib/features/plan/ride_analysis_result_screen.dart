@@ -8,6 +8,7 @@ import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+import 'package:motorcycle_clothing/screens/feedback_sheet.dart';
 
 final _metricUnits = UnitPreferencesController();
 
@@ -160,6 +161,13 @@ class RideAnalysisResultScreen extends StatelessWidget {
             ),
           ...recommendationExplanationWidgets(context, view),
           const SizedBox(height: 24),
+          FilledButton.tonal(
+            key: const Key('thermal-feedback-open'),
+            style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+            onPressed: () => showFeedbackSheet(context, payload),
+            child: Text(l10n.homeHowWasTheRide),
+          ),
+          const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
             child: Text(l10n.plannerBackToPlanner),

@@ -10,12 +10,17 @@ import {
  * XC exposure °C.
  *
  * Forecast wind only. Travel speed is not added, because a driving or
- * cycling route is not a ski track. Climbing adds metabolic heat. Personal
- * motorcycle offsets and alpine lift waiting are not applied.
+ * cycling route is not a ski track. Climbing adds metabolic heat. Motorcycle
+ * offsets and alpine lift waiting are not applied. personalColdBiasC is this
+ * activity's own shrunk feedback, and 0 leaves the exposure unchanged.
  */
 export function xcExposureC(
   point: WeatherPoint,
-  input: { intensity: XcIntensity; climbing: boolean },
+  input: {
+    intensity: XcIntensity;
+    climbing: boolean;
+    personalColdBiasC?: number;
+  },
 ): number {
   const windMs = Math.max(0, point.windSpeedMs);
   const above = Math.max(0, windMs - XC_EXPOSURE.windThresholdMs);
@@ -28,7 +33,8 @@ export function xcExposureC(
   const metabolic =
     XC_METABOLIC_OFFSET_C[input.intensity] +
     (input.climbing ? XC_EXPOSURE.climbExtraC : 0);
-  return round1(point.airTempC + metabolic - chill - wet);
+  const bias = finiteBias(input.personalColdBiasC);
+  return round1(point.airTempC + metabolic - chill - wet - bias);
 }
 
 export function xcWarmthDemand(exposureC: number): number {
@@ -72,6 +78,10 @@ export function xcSampleIsClimbing(
     return false;
   }
   return elevationM - previousElevationM >= XC_EXPOSURE.climbRiseM;
+}
+
+function finiteBias(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
 function round1(value: number): number {

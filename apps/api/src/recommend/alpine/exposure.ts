@@ -11,10 +11,13 @@ import {
 /**
  * Stationary mountain exposure. Travel speed is not an input: a one-minute
  * descent does not set the outfit, and motorcycle airflow is not reused.
+ * personalColdBiasC is this discipline's own shrunk feedback. Zero leaves
+ * the exposure unchanged. Alpine skiing and snowboarding do not share it.
  */
 export function alpineExposureC(
   point: WeatherPoint,
   mode: AlpineExposureMode,
+  personalColdBiasC = 0,
 ): number {
   const windMs =
     Math.max(0, point.windSpeedMs) +
@@ -26,7 +29,10 @@ export function alpineExposureC(
     point.precipitationProbPct >= ALPINE_EXPOSURE.rainProbWetThreshold
       ? ALPINE_EXPOSURE.wetExposurePenaltyC
       : 0;
-  return round1(point.airTempC + ALPINE_METABOLIC_OFFSET_C[mode] - chill - wet);
+  const bias = finiteBias(personalColdBiasC);
+  return round1(
+    point.airTempC + ALPINE_METABOLIC_OFFSET_C[mode] - chill - wet - bias,
+  );
 }
 
 export function alpineWarmthDemand(exposureC: number): number {
@@ -74,6 +80,10 @@ export function parseExposureMode(value?: string | null): {
     return { mode: text as AlpineExposureMode, assumed: false };
   }
   return { mode: 'lift', assumed: true };
+}
+
+function finiteBias(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
 function round1(value: number): number {

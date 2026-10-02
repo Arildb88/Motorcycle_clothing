@@ -1507,7 +1507,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get feedbackTitle => 'Hvordan kjentes antrekket?';
 
   @override
-  String get feedbackTooCold => 'For kaldt';
+  String get feedbackTooCold => 'For kald';
 
   @override
   String get feedbackSlightlyCold => 'Litt kaldt';
@@ -1519,7 +1519,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get feedbackSlightlyWarm => 'Litt varmt';
 
   @override
-  String get feedbackTooWarm => 'For varmt';
+  String get feedbackTooWarm => 'For varm';
 
   @override
   String get feedbackSubmit => 'Send tilbakemelding';

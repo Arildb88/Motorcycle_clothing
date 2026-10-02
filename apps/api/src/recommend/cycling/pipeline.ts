@@ -38,6 +38,7 @@ export function runCyclingRecommendationPipeline(
   input: CyclingPipelineInput,
 ): CyclingRecommendationResult {
   const parsed = parseIntensity(input.intensity);
+  const personalColdBiasC = finiteBias(input.personalColdBiasC);
   const incompleteWeather = input.weather.points.length === 0;
   const segments = buildSegments(input, parsed.intensity, incompleteWeather);
   const demand = summarizeDemand(segments);
@@ -147,9 +148,9 @@ export function runCyclingRecommendationPipeline(
     },
     personalization: {
       voice: 'baseline',
-      sampleCount: 0,
+      sampleCount: finiteCount(input.personalSampleCount),
       canClaimPersonal: false,
-      personalColdBiasC: 0,
+      personalColdBiasC,
     },
   };
 }
@@ -220,6 +221,7 @@ function buildSegments(
     const exposure = cyclingExposureC(point, {
       apparentAirflowMs: airflow.apparentAirflowMs,
       intensity,
+      personalColdBiasC: finiteBias(input.personalColdBiasC),
     });
     return {
       index,
@@ -465,6 +467,16 @@ function weightedMean(rows: Array<{ value: number; weight: number }>): number {
 
 function clampTier(value: number): number {
   return Math.min(5, Math.max(1, Math.round(value)));
+}
+
+function finiteBias(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function finiteCount(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : 0;
 }
 
 function round1(value: number): number {

@@ -34,6 +34,7 @@ export function runXcRecommendationPipeline(
   input: XcPipelineInput,
 ): XcRecommendationResult {
   const parsed = parseXcIntensity(input.intensity);
+  const personalColdBiasC = finiteBias(input.personalColdBiasC);
   const style = parseXcStyle(input.style);
   const incompleteWeather = input.weather.points.length === 0;
   const segments = buildSegments(input, parsed.intensity, incompleteWeather);
@@ -121,9 +122,9 @@ export function runXcRecommendationPipeline(
     },
     personalization: {
       voice: 'baseline',
-      sampleCount: 0,
+      sampleCount: finiteCount(input.personalSampleCount),
       canClaimPersonal: false,
-      personalColdBiasC: 0,
+      personalColdBiasC,
     },
   };
 }
@@ -173,7 +174,11 @@ function buildSegments(
   const raw = points.map((point, index) => {
     const previous = index > 0 ? points[index - 1].groundElevationM : null;
     const climbing = xcSampleIsClimbing(point.groundElevationM, previous);
-    const exposure = xcExposureC(point, { intensity, climbing });
+    const exposure = xcExposureC(point, {
+      intensity,
+      climbing,
+      personalColdBiasC: finiteBias(input.personalColdBiasC),
+    });
     return {
       index,
       durationMin: useSupplied ? supplied[index] : even[index],
@@ -421,6 +426,16 @@ function weightedMean(rows: Array<{ value: number; weight: number }>): number {
 function clampTier(value: number): number {
   if (!Number.isFinite(value)) return 1;
   return Math.min(5, Math.max(1, Math.round(value)));
+}
+
+function finiteBias(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function finiteCount(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : 0;
 }
 
 function round1(value: number): number {
