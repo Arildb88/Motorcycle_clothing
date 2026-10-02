@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
+active_id: ROUTING-WEATHER-002
 promotion: manual
-handoff_generation: 2
-handoff_state: idle
+handoff_generation: 3
+handoff_state: authorized
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -554,7 +554,7 @@ Run focused API tests for touched geo/weather code; broader suites only if the c
 
 ### ROUTING-WEATHER-002
 
-- status: queued
+- status: active
 - title: Improve route ETA/weather sampling
 - source: existing route-weather-sampling foundation
 
