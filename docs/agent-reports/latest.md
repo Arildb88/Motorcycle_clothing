@@ -6,7 +6,7 @@
 
 - Branch: `feature/weather-validation-001-harness`
 - Implementation: `81aa48a2b6ac9bf9b0a6cf7aa5a019c040e06847`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/47 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
