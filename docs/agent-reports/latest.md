@@ -1,74 +1,114 @@
-# Altitude-aware route weather foundation
+# Demo wardrobe identity migration
 
 ## Task
 
-Server-side ground elevation for the existing motorcycle recommendation flow: road geometry, route weather samples and ETA, ground altitude, then MET Locationforecast at that height. Provider-independent so later activities can reuse the elevation port.
+Give seeded demo garments a durable identity (`Garment.isDemo`) so they can be badged and removed without deleting personal garments, including after the user renames or edits them.
 
-## Selected elevation source
+## Migration / schema
 
-Kartverket open Høydedata, `GET https://ws.geonorge.no/hoydedata/v1/punkt`.
+Prisma `Garment` on the current SQLite setup:
 
-Why: `docs/architecture/GEO_DATA_STRATEGY.md` and `docs/research/WEATHER_DATA_QUALITY.md` already identify this as the Norway-first open elevation API. It needs no key and no new dependency (the API client already uses axios). Open-Meteo’s free elevation tier is non-commercial and is not used. HeiGIT elevation shares the small directions quota and is not used.
+```prisma
+/// Inserted by the demo wardrobe seed. Survives rename and edit.
+/// Clients cannot set or clear this value.
+isDemo Boolean @default(false)
+```
 
-## Licensing / attribution / config
+Migration: `apps/api/prisma/migrations/20261002100000_garment_is_demo/migration.sql`
 
-- License: Kartverket open data, CC BY 4.0.
-- Attribution: `© Kartverket` on `weather.elevation` when at least one sample height is returned.
-- `ELEVATION_PROVIDER=kartverket` (default). Any other value, including `off`, uses the null adapter.
-- Optional `ELEVATION_BASE_URL`. No API key.
-- Coordinates are sent as `koordsys=4258` (geographic lat/lon). `punkter` is `[[lon, lat], ...]` with at most 50 points per request. MET receives `altitude` as whole metres.
+```sql
+ALTER TABLE "Garment" ADD COLUMN "isDemo" BOOLEAN NOT NULL DEFAULT false;
+```
+
+Existing rows default to `false`. Historical demo rows are not guessed or backfilled from names or other editable fields.
+
+## How demo identity is protected from client writes
+
+- Create and update DTOs have no `isDemo` field.
+- The global `ValidationPipe` uses `whitelist` and `forbidNonWhitelisted`, so a body that includes `isDemo` is rejected.
+- `WardrobeService.create` and `update` never write `isDemo`. Create relies on the database default (`false`). Update leaves the stored flag unchanged.
+- `seedDemo` is the only writer that sets `isDemo = true`.
+- The garment response includes read-only `isDemo` for the Flutter UI.
+
+## Deletion safety
+
+`DELETE /api/wardrobe/actions/demo` deletes with `where: { userId, isDemo: true }`.
+
+- Only the authenticated user's demo rows are removed.
+- Personal garments (`isDemo = false`) stay.
+- Another user's demo rows stay.
+- This path does not use seed `force=true`, which still deletes the whole wardrobe when explicitly requested by the existing seed endpoint.
+- `DELETE /api/wardrobe/:id` still deletes one owned garment.
+
+## Localization
+
+Seed names are chosen from `?lang=nb` or `?lang=en` (anything else, including omission, uses English). Examples: `Demo – Touringjakke` / `Demo – Touring jacket`. The Flutter seed action sends the current UI language.
+
+New ARB strings (generated with `flutter gen-l10n`, not hand-edited):
+
+- Badge: `DEMO` (en and nb)
+- Action: `Delete demo wardrobe` / `Slett demo-garderobe`
+- Confirmation explains that only demo-added garments are removed and personal garments stay
+
+The badge and delete action use `isDemo`, so they still apply after a rename.
 
 ## Commit / PR
 
-- Branch: `feature/altitude-aware-route-weather` from `dev_test` (`9cc3aae`)
-- Implementation commit: `02b59f6523acdcd263837c4153239cb55ca05bc7` — feat: add ground altitude to route weather
-- Report commit that CI passed: `8b2abcc8471fd6fbf1d83f128cf31a11f878ffa5`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/25
-- CI: `api-ci` succeeded on that head (pull_request run 36975353586, job `test` SUCCESS). The implementation push run 36975306751 also succeeded.
-- Merge: fast-forward into `dev_test` only. `dev` and `main` are unchanged. The `dev_test` tip is the commit that adds this CI and merge record.
+- Branch: `feature/demo-wardrobe-identity` from `dev_test` (`f509a6671765c08f2180bd0c9e43632d12a98295`)
+- Implementation commit: `5da3415b005f840c4a03b08bdbfdada9814f95d1` — feat: identify demo garments and delete them safely
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/26
+- Merge target: `dev_test` only. `dev` and `main` are unchanged.
 
 ## Files changed
 
-- `apps/api/src/elevation/elevation.port.ts`
-- `apps/api/src/elevation/elevation.module.ts`
-- `apps/api/src/elevation/kartverket-elevation.adapter.ts`
-- `apps/api/src/elevation/kartverket-elevation.adapter.spec.ts`
-- `apps/api/src/elevation/null-elevation.adapter.ts`
-- `apps/api/src/elevation/lookup-sample-altitudes.ts`
-- `apps/api/src/weather/met-request.ts`
-- `apps/api/src/weather/met-request.spec.ts`
-- `apps/api/src/weather/weather.service.ts`
-- `apps/api/src/weather/weather.service.spec.ts`
-- `apps/api/src/recommend/recommend.module.ts`
-- `apps/api/src/recommend/recommend.service.ts`
-- `apps/api/src/recommend/weather.types.ts`
-- `apps/api/.env.example`
+- `apps/api/prisma/schema.prisma`
+- `apps/api/prisma/migrations/20261002100000_garment_is_demo/migration.sql`
+- `apps/api/src/domain/demo-wardrobe.ts`
+- `apps/api/src/domain/enums.spec.ts`
+- `apps/api/src/wardrobe/wardrobe.controller.ts`
+- `apps/api/src/wardrobe/wardrobe.service.ts`
+- `apps/api/src/wardrobe/wardrobe.service.spec.ts`
+- `apps/api/src/wardrobe/wardrobe.dto.spec.ts`
+- `apps/mobile/lib/domain/garment.dart`
+- `apps/mobile/lib/features/wardrobe/wardrobe_screen.dart`
+- `apps/mobile/lib/l10n/app_en.arb`
+- `apps/mobile/lib/l10n/app_nb.arb`
+- `apps/mobile/lib/l10n/app_localizations.dart`
+- `apps/mobile/lib/l10n/app_localizations_en.dart`
+- `apps/mobile/lib/l10n/app_localizations_nb.dart`
+- `apps/mobile/test/nb_localization_test.dart`
+- `apps/mobile/test/wardrobe_demo_test.dart`
+- `scripts/smoke-api.sh`
 - `docs/agent-reports/latest.md`
 
-## Tests / build
+## Tests / build / smoke
 
-- Focused tests: Kartverket batching/caching/fallback, sample-altitude fallback, MET URL and cache key, ETA timeseries selection, weather service altitude propagation. Passed.
-- `npm test`: 20 suites, 128 tests passed.
+- `npm test`: 21 suites, 136 tests passed.
 - `npm run build`: passed.
-- `scripts/smoke-api.sh` (`SMOKE_SKIP_UNIT=1`, `SMOKE_SKIP_BUILD=1`): passed, including `GET /api/recommend`.
-- GitHub `api-ci` on PR #25: success (run 36975353586).
+- `flutter analyze`: no issues.
+- `flutter test`: 60 tests passed, including badge visibility, confirmation cancel/confirm, action hidden when no demo rows remain, and the Norwegian action label.
+- `scripts/smoke-api.sh` (`SMOKE_SKIP_UNIT=1`, `SMOKE_SKIP_BUILD=1`): passed. Applied `20261002100000_garment_is_demo`. Seeded wardrobe contains `Demo – Insulated winter gloves` and `isDemo: true`. A personal garment created afterward survives `DELETE /api/wardrobe/actions/demo`.
 
 ## Architecture / config
 
-New server-side `ElevationPort`. Recommendation code does not import Kartverket. Weather samples (already at most five) are the only coordinates sent for elevation. Dense road geometry stays ephemeral and is not stored. No schema migration, no new dependency, no routing-provider change. In-memory elevation cache holds at most 500 successful heights and does not store failures. Weather cache keys gain `@<metres>m` only when a height is present, so existing lat/lon cache entries still match.
+No new provider, dependency, or auth change. Identity is a boolean on the existing `Garment` model. Demo display names are stored strings chosen at seed time; they are not a second source of identity.
 
 ## Fallback
 
-If the provider is not `kartverket`, the request fails, the response is not 2xx, or the body length does not match, sample heights stay null. MET is then called with lat/lon only, and the recommendation still returns. A MET failure still falls back to the existing mock point.
+- Unknown or missing `lang` seeds English demo names.
+- Flutter treats a missing `isDemo` field as `false`.
+- Rows that existed before the migration stay `isDemo = false`.
 
 ## Manual testing recommended
 
-- With `ELEVATION_PROVIDER=kartverket` and `WEATHER_PROVIDER=met`, recommend a route that climbs and confirm `weather.points[].groundElevationM` and `weather.elevation.attribution` (`© Kartverket`).
-- Set `ELEVATION_PROVIDER=off` and confirm the same route still returns a recommendation without `groundElevationM`.
-- Confirm a MET request for a known height includes `altitude=<whole metres>` and still follows the sample ETA.
+- With the app in Norwegian, load the demo wardrobe on an empty wardrobe and confirm names such as `Demo – Touringjakke`, the `DEMO` badge, and `Slett demo-garderobe`.
+- Switch to English, seed again on an empty wardrobe, and confirm `Demo – Touring jacket` and `Delete demo wardrobe`.
+- Rename a demo garment, confirm the badge remains, then confirm deletion still removes that renamed demo garment.
+- Add a personal garment first if the wardrobe is not empty, or add one after seeding, and confirm it remains after demo deletion and the bottom action disappears.
 
 ## Remaining issues
 
-- Heights are not compared with a surveyed station in this change. The weather research document’s station check is still outstanding.
-- The elevation cache is process-local only.
-- Cycling, alpine/snowboard, and cross-country do not call this port yet.
+- Garments seeded before this migration cannot be classified as demo, because names are editable and this task does not backfill.
+- Demo notes, brands, and models stay English. Only the garment name is localized at seed time.
+- The load-demo action is still shown only on an empty wardrobe. `force=true` on seed still replaces the entire wardrobe and is not used by the app.
+- No Supabase/PostgreSQL migration in this task. The SQL is the repository's current SQLite migration and should be revisited when the database moves.
