@@ -13,7 +13,13 @@ export class RecommendController {
     @Req() req: AuthRequest,
     @Query('routeId') routeId?: string,
     @Query('departureAt') departureAt?: string,
+    @Query('intensity') intensity?: string,
   ) {
-    return this.recommend.forUser(req.user.userId, routeId, departureAt);
+    return this.recommend.forUser(
+      req.user.userId,
+      routeId,
+      departureAt,
+      intensity,
+    );
   }
 }

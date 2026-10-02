@@ -1,9 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { parseRoutePreferences, type RoutePreferences } from '../domain/ride-planning';
 import {
+  CYCLING_GEOMETRY_NOTICE,
+  CYCLING_GEOMETRY_NOTICE_CODE,
   DRIVING_GEOMETRY_NOTICE,
   DRIVING_GEOMETRY_NOTICE_CODE,
   HEIGIT_ORS_BASE_URL,
+  ORS_CYCLING_REGULAR_PROFILE,
+  ORS_DRIVING_CAR_PROFILE,
   resolveOrsBaseUrl,
 } from './ors.constants';
 import { orsAuthHeaders, orsPost, type OrsHttpPost } from './ors.http';
@@ -22,9 +26,11 @@ export type RoutePreviewResult = {
   points: GeoPoint[];
   distanceM: number;
   durationMin: number;
-  travelMode: 'driving';
+  travelMode: 'driving' | 'cycling';
   usedFallbackTravelMode: false;
-  noticeCode: typeof DRIVING_GEOMETRY_NOTICE_CODE;
+  noticeCode:
+    | typeof DRIVING_GEOMETRY_NOTICE_CODE
+    | typeof CYCLING_GEOMETRY_NOTICE_CODE;
   providerWarning: string;
 };
 
@@ -82,14 +88,19 @@ export class OpenRouteServiceRoutingAdapter implements RoutingPort {
   async preview(request: RoutingRequest): Promise<RoutePreviewResult | null> {
     const mapped = await this.fetchDirections(request);
     if (!mapped || mapped.previewPoints.length < 2) return null;
+    const cycling = request.travelProfile === 'cycling';
     return {
       points: mapped.previewPoints,
       distanceM: mapped.analysis.distanceM,
       durationMin: mapped.analysis.durationMin,
-      travelMode: 'driving',
+      travelMode: cycling ? 'cycling' : 'driving',
       usedFallbackTravelMode: false,
-      noticeCode: DRIVING_GEOMETRY_NOTICE_CODE,
-      providerWarning: DRIVING_GEOMETRY_NOTICE,
+      noticeCode: cycling
+        ? CYCLING_GEOMETRY_NOTICE_CODE
+        : DRIVING_GEOMETRY_NOTICE_CODE,
+      providerWarning: cycling
+        ? CYCLING_GEOMETRY_NOTICE
+        : DRIVING_GEOMETRY_NOTICE,
     };
   }
 
@@ -127,7 +138,7 @@ export class OpenRouteServiceRoutingAdapter implements RoutingPort {
       body.options = { avoid_features: avoid };
     }
 
-    const url = `${this.baseUrl}/v2/directions/driving-car/geojson`;
+    const url = `${this.baseUrl}/v2/directions/${orsDirectionsProfile(request)}/geojson`;
     let status: number | undefined;
     try {
       const res = await this.post(url, body, {
@@ -220,6 +231,16 @@ export function mapOrsDirections(
       },
     },
   };
+}
+
+/**
+ * Cycling requests use the interim cycling-regular profile.
+ * Motorcycle and driving requests stay on driving-car.
+ */
+export function orsDirectionsProfile(request: RoutingRequest): string {
+  return request.travelProfile === 'cycling'
+    ? ORS_CYCLING_REGULAR_PROFILE
+    : ORS_DRIVING_CAR_PROFILE;
 }
 
 function avoidFeatures(preferences: RoutePreferences): string[] {

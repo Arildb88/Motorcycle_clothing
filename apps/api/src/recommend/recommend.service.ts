@@ -15,6 +15,10 @@ import {
 } from '../routing/route-weather-sampling';
 import type { GeoPoint, RouteLegTiming } from '../routing/routing.types';
 import {
+  runCyclingRecommendationPipeline,
+  type CyclingKitItem,
+} from './cycling';
+import {
   MOTORCYCLE_EXPOSURE,
   routeTravelAlignedWithSamples,
   runMotorcycleRecommendationPipeline,
@@ -41,7 +45,12 @@ export class RecommendService {
     @Inject(ELEVATION_PORT) private readonly elevations: ElevationPort,
   ) {}
 
-  async forUser(userId: string, routeId?: string, _departureAt?: string) {
+  async forUser(
+    userId: string,
+    routeId?: string,
+    _departureAt?: string,
+    intensity?: string,
+  ) {
     const route = routeId
       ? await this.routes.get(userId, routeId)
       : await this.routes.getDefault(userId);
@@ -54,6 +63,10 @@ export class RecommendService {
 
     if (routeId) {
       await this.routes.touchLastUsed(userId, route.id);
+    }
+
+    if (route.activityType === 'cycling') {
+      return this.forCycling(userId, route, _departureAt, intensity);
     }
 
     const profile = await this.prisma.userProfile.findUnique({
@@ -211,9 +224,146 @@ export class RecommendService {
     };
   }
 
+  /**
+   * Cycling foundation. Reuses route sampling, ETA, and ground elevation.
+   * Does not read motorcycle personal offsets or cold-sensitivity shrinkage.
+   */
+  private async forCycling(
+    userId: string,
+    route: {
+      id: string;
+      name: string;
+      description: string | null;
+      activityType: string;
+      routeKind: string;
+      category: string | null;
+      isFavorite: boolean;
+      isDefaultCommute: boolean;
+      startLabel: string | null;
+      endLabel: string | null;
+      typicalDurationMin: number | null;
+      preferencesJson?: string | null;
+      waypoints?: Array<{
+        sortOrder: number;
+        lat: number;
+        lon: number;
+        label: string | null;
+      }>;
+    },
+    departureAt: string | undefined,
+    intensity: string | undefined,
+  ) {
+    const departAt = parseDeparture(departureAt);
+    const fallbackPoints = this.routes.weatherPointsFor(route);
+    const road = await this.roadGeometryFor(route, fallbackPoints, 'cycling');
+    const sampled = resolveRouteWeatherSamples({
+      roadGeometry: road?.points,
+      providerDurationMin: road?.durationMin,
+      providerLegs: road?.legs,
+      fallbackPoints,
+      fallbackDurationMin: route.typicalDurationMin ?? 60,
+      departAt,
+    });
+    const elevation = await lookupSampleAltitudes(
+      this.elevations,
+      sampled.samples.map((sample) => ({
+        lat: sample.lat,
+        lon: sample.lon,
+      })),
+    );
+    const weather = await this.weather.forRouteSamples(
+      sampled.samples.map((sample, index) => ({
+        lat: sample.lat,
+        lon: sample.lon,
+        at: sample.at,
+        altitudeM: elevation.points[index]?.elevationM ?? null,
+      })),
+    );
+    if (elevation.attribution) {
+      weather.elevation = {
+        provider: elevation.provider,
+        attribution: elevation.attribution,
+      };
+    }
+    const routeTravelSegments = this.travelForRoadSamples(
+      sampled.usedRoadGeometry,
+      sampled.samples,
+      sampled.durationMin,
+      road?.distanceM,
+      sampled.appliedLegs,
+    );
+    const garments = await this.prisma.garment.findMany({
+      where: { userId },
+      include: { components: true },
+    });
+    const engine = runCyclingRecommendationPipeline({
+      weather,
+      wardrobe: garments.map((garment) => this.toGarmentInput(garment)),
+      rideDurationMin: sampled.durationMin,
+      intensity,
+      routeTravelSegments,
+      geometryFallback: !sampled.usedRoadGeometry,
+    });
+    const items = [
+      ...engine.wear.map((item) => this.kitLabel(item)),
+      ...engine.pack.map((item) => `Pack: ${this.kitLabel(item)}`),
+    ];
+    return {
+      route: {
+        id: route.id,
+        name: route.name,
+        description: route.description,
+        activityType: route.activityType,
+        routeKind: route.routeKind,
+        category: route.category,
+        isFavorite: route.isFavorite,
+        isDefaultCommute: route.isDefaultCommute,
+        startLabel: route.startLabel,
+        endLabel: route.endLabel,
+        typicalDurationMin: route.typicalDurationMin,
+        waypoints: route.waypoints?.map((waypoint) => ({
+          sortOrder: waypoint.sortOrder,
+          lat: waypoint.lat,
+          lon: waypoint.lon,
+          label: waypoint.label,
+        })),
+      },
+      departureAt: departureAt ?? new Date().toISOString(),
+      weather,
+      comfort: {
+        coldSensitivity: null,
+        personalSampleCount: 0,
+        personalWeight: 0,
+        personalColdBiasC: 0,
+        intensity: engine.intensity,
+        intensityAssumed: engine.intensityAssumed,
+      },
+      recommendation: {
+        engine: engine.engine,
+        effectiveTempC: engine.exposure.cyclingExposureSustainedC,
+        exposure: engine.exposure,
+        demand: engine.demand,
+        wear: engine.wear,
+        pack: engine.pack,
+        reasons: engine.reasons,
+        confidence: engine.confidence,
+        items,
+        reasonCodes: engine.reasons.map((reason) => reason.code),
+        voice: engine.personalization.voice,
+        geometry: engine.geometry,
+        elevation: engine.elevation,
+      },
+      personalization: {
+        ...engine.personalization,
+        reason: 'Cycling foundation does not apply motorcycle personal offsets',
+      },
+    };
+  }
+
   private async roadGeometryFor(
     route: { preferencesJson?: string | null },
     waypoints: GeoPoint[],
+    travelProfile: 'drive' | 'cycling' = 'drive',
   ): Promise<{
     points: GeoPoint[];
     distanceM: number;
@@ -225,7 +375,7 @@ export class RecommendService {
       const source = await this.roadRouting.roadWeatherSource({
         waypoints,
         preferences: parseRoutePreferences(route.preferencesJson),
-        travelProfile: 'drive',
+        travelProfile,
       });
       if (!source) return null;
       return source;
@@ -252,7 +402,7 @@ export class RecommendService {
     return segments.length > 0 ? segments : undefined;
   }
 
-  private kitLabel(item: KitItem): string {
+  private kitLabel(item: KitItem | CyclingKitItem): string {
     if (item.source === 'wardrobe' && item.garmentName) {
       const configs = item.configuration
         .map((c) => c.code.toLowerCase().replace(/_/g, ' '))

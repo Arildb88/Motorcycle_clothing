@@ -84,6 +84,9 @@ export type RoutingRequest = {
    * Provider adapters typically ignore this and return their own ETA.
    */
   durationMin?: number;
-  /** Soft hint — motorcycle / drive — never Google-specific enums. */
-  travelProfile?: 'motorcycle' | 'drive';
+  /**
+   * Soft hint. `cycling` selects a cycling directions profile.
+   * `motorcycle` and `drive` stay on the existing driving profile.
+   */
+  travelProfile?: 'motorcycle' | 'drive' | 'cycling';
 };

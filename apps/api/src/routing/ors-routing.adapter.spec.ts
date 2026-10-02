@@ -1,4 +1,8 @@
-import { HEIGIT_ORS_BASE_URL } from './ors.constants';
+import {
+  HEIGIT_ORS_BASE_URL,
+  ORS_CYCLING_REGULAR_PROFILE,
+  ORS_DRIVING_CAR_PROFILE,
+} from './ors.constants';
 import {
   mapOrsDirections,
   OpenRouteServiceRoutingAdapter,
@@ -100,6 +104,43 @@ describe('OpenRouteServiceRoutingAdapter', () => {
     expect(analysis!.geometry.encoding).toBe('none');
     expect(analysis!.geometry.points).toEqual(waypoints);
     expect(analysis!.geometry.data).toBeNull();
+  });
+
+  it('requests the interim cycling profile only when travelProfile is cycling', async () => {
+    const urls: string[] = [];
+    const adapter = adapterWith((url) => {
+      urls.push(url);
+      return { status: 200, data: orsBody };
+    });
+
+    await adapter.roadWeatherSource({
+      waypoints,
+      travelProfile: 'cycling',
+    });
+    await adapter.analyze({ waypoints, travelProfile: 'motorcycle' });
+    await adapter.analyze({ waypoints, travelProfile: 'drive' });
+    const preview = await adapter.preview({
+      waypoints,
+      travelProfile: 'cycling',
+    });
+
+    expect(urls[0]).toBe(
+      `${HEIGIT_ORS_BASE_URL}/v2/directions/${ORS_CYCLING_REGULAR_PROFILE}/geojson`,
+    );
+    expect(urls[1]).toBe(
+      `${HEIGIT_ORS_BASE_URL}/v2/directions/${ORS_DRIVING_CAR_PROFILE}/geojson`,
+    );
+    expect(urls[2]).toBe(
+      `${HEIGIT_ORS_BASE_URL}/v2/directions/${ORS_DRIVING_CAR_PROFILE}/geojson`,
+    );
+    expect(preview).toMatchObject({
+      travelMode: 'cycling',
+      noticeCode: 'CYCLING_GEOMETRY',
+    });
+    expect(preview!.providerWarning.toLowerCase()).not.toContain('motorcycle');
+    expect(preview!.providerWarning.toLowerCase()).toContain(
+      'not a surface-quality',
+    );
   });
 
   it('omits avoid_features when avoidMotorways is false', async () => {
