@@ -1,7 +1,7 @@
 # Authorized RideWear Task
 ## Type: IMPLEMENTATION
 ## ID: DB-SUPABASE-002
-## Promoted: 2026-10-02T09:07:00Z
+## Promoted: 2026-10-02T09:12:00Z
 ## Task: Prepare Supabase deployment readiness
 
 After DB-POSTGRES-001 is completed, make the PostgreSQL setup operationally ready for a first manual Supabase deployment. Verify/document environment variable roles, pooled runtime versus direct migration connection, migration commands, empty-public preflight, rollback/recovery, and operator steps.
