@@ -5,7 +5,7 @@
 `MVP-SMOKE-001`, generation 15, authorized by the automatic final control update on `dev_test` commit `add9dde8e06099c096777f07ab0850291663eced`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
 - Branch: `feature/mvp-smoke-001`
-- Implementation: readiness record on this branch. No application code change.
+- Implementation: `a623f60c99f65ea380d8087c1d84d5ccc260c388`. No application code change.
 - PR: opened against `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation

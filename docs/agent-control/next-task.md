@@ -1,14 +1,19 @@
 # Authorized RideWear Task
-## Type: IMPLEMENTATION
-## ID: MVP-SMOKE-001
+
+## Type: NONE
+
+## ID: none
+
 ## Generation: 15
-## Handoff-From: WEATHER-VALIDATION-001
-## Authorization: authorized
-## Promoted: 2026-10-02T13:12:57Z
-## Task: Run an MVP smoke/readiness pass and fix concrete in-scope defects
 
-Exercise the repository-supported happy paths for auth, profile, wardrobe, route planning, motorcycle recommendations, cycling, alpine/snowboard and cross-country recommendations, plus the ads-off default. Run the strongest existing deterministic API and Flutter checks practical in the repository. Fix concrete regressions that stay within existing architecture and contracts.
+## Handoff-From: none
 
-Do not add new features, dependencies, providers, schema migrations, paid services or broad refactors. Do not fake successful live-provider behavior. Record any manual/device/live-service checks that still require a human separately instead of claiming they passed.
+## Authorization: none
 
-Leave dev and main untouched. Update the report with exact automated results, remaining manual checks and known MVP issues. Follow queue rules.
+## Task: No active task
+
+No implementation is authorized.
+
+The queue is `docs/agent-control/task-queue.md`. The ledger is `docs/agent-control/consumed.md`.
+
+Do not promote a queued item from an agent run while promotion is manual. Do not add a task. This file is not an authorization handoff.

@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: MVP-SMOKE-001
+active_id: none
 promotion: automatic
 handoff_generation: 15
-handoff_state: authorized
+handoff_state: idle
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -44,6 +44,8 @@ Generation `12` is spent: `MOBILE-ACTIVITIES-001` completed and the automatic fi
 Generation `13` is spent: `RECOMMENDATION-UX-001` completed and the automatic final control update authorizes `WEATHER-VALIDATION-001` at generation `14`. Do not reuse generation `13`. Do not execute `RECOMMENDATION-UX-001` again.
 
 Generation `14` is spent: `WEATHER-VALIDATION-001` completed and the automatic final control update authorizes `MVP-SMOKE-001` at generation `15`. Do not reuse generation `14`. Do not execute `WEATHER-VALIDATION-001` again.
+
+Generation `15` is spent: `MVP-SMOKE-001` completed and no queued unconsumed item remained, so the final close is idle at generation `15`. Do not reuse generation `15`. Do not execute `MVP-SMOKE-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -847,7 +849,7 @@ Add focused deterministic tests and update the research/report with what is actu
 
 ### MVP-SMOKE-001
 
-- status: active
+- status: completed
 - title: RideWear MVP smoke and readiness pass
 - source: completed integration/mobile/recommendation foundations
 
@@ -870,4 +872,4 @@ Leave dev and main untouched. Update the report with exact automated results, re
 
 ## QUEUE-CONTROL-006 — no-claim execution
 
-Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorized `RECOMMENDATION-UX-001` at generation 13 and that task completed. The automatic final control update authorized `WEATHER-VALIDATION-001` at generation 14 and that task completed. The automatic final control update authorizes `MVP-SMOKE-001` at generation 15.
+Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorized `RECOMMENDATION-UX-001` at generation 13 and that task completed. The automatic final control update authorized `WEATHER-VALIDATION-001` at generation 14 and that task completed. The automatic final control update authorized `MVP-SMOKE-001` at generation 15 and that task completed. No queued unconsumed item remained, so the final close is idle at generation 15.
