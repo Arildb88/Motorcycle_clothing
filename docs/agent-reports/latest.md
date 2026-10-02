@@ -56,8 +56,10 @@ The badge and delete action use `isDemo`, so they still apply after a rename.
 
 - Branch: `feature/demo-wardrobe-identity` from `dev_test` (`f509a6671765c08f2180bd0c9e43632d12a98295`)
 - Implementation commit: `5da3415b005f840c4a03b08bdbfdada9814f95d1` — feat: identify demo garments and delete them safely
+- Report commit that CI passed: `5f1e5a82bc3aef337d8d2d459fb88cf9d966cd84`
 - PR: https://github.com/Arildb88/Motorcycle_clothing/pull/26
-- Merge target: `dev_test` only. `dev` and `main` are unchanged.
+- CI: `api-ci` succeeded on that head (pull_request run 36978571334, job `test` SUCCESS). The implementation push run 36978494320 also succeeded.
+- Merge: fast-forward into `dev_test` only. `dev` and `main` are unchanged. The `dev_test` tip is the commit that adds this CI and merge record.
 
 ## Files changed
 
