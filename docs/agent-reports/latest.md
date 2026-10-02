@@ -6,7 +6,7 @@
 
 - Branch: `feature/departure-compare-001`
 - Implementation commit: `3cf1b110f45852a925521eb2895a478a470136fd`
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/62 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
