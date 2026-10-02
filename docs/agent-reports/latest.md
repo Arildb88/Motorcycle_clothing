@@ -1,44 +1,70 @@
-# Multi-activity platform, geo, weather, and monetization research
+# Altitude-aware route weather foundation
 
 ## Task
 
-Planning and research only: shared RideWear platform versus activity-specific logic, Norway-first geo data, weather quality and a validation method, cycling / alpine-snowboard / cross-country plans, and a restrained ad strategy. No production feature, SDK, dependency, or schema change.
+Server-side ground elevation for the existing motorcycle recommendation flow: road geometry, route weather samples and ETA, ground altitude, then MET Locationforecast at that height. Provider-independent so later activities can reuse the elevation port.
+
+## Selected elevation source
+
+Kartverket open Høydedata, `GET https://ws.geonorge.no/hoydedata/v1/punkt`.
+
+Why: `docs/architecture/GEO_DATA_STRATEGY.md` and `docs/research/WEATHER_DATA_QUALITY.md` already identify this as the Norway-first open elevation API. It needs no key and no new dependency (the API client already uses axios). Open-Meteo’s free elevation tier is non-commercial and is not used. HeiGIT elevation shares the small directions quota and is not used.
+
+## Licensing / attribution / config
+
+- License: Kartverket open data, CC BY 4.0.
+- Attribution: `© Kartverket` on `weather.elevation` when at least one sample height is returned.
+- `ELEVATION_PROVIDER=kartverket` (default). Any other value, including `off`, uses the null adapter.
+- Optional `ELEVATION_BASE_URL`. No API key.
+- Coordinates are sent as `koordsys=4258` (geographic lat/lon). `punkter` is `[[lon, lat], ...]` with at most 50 points per request. MET receives `altitude` as whole metres.
 
 ## Commit / PR
 
-- Branch: `feature/multi-activity-research` from `dev_test` (`8bc74b5`)
-- Research commit: `b57dc0a` — docs: research multi-activity platform, geo, weather, and ads
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/24 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/altitude-aware-route-weather` from `dev_test` (`9cc3aae`)
+- Implementation commit: `02b59f6523acdcd263837c4153239cb55ca05bc7` — feat: add ground altitude to route weather
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/25 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
-- `docs/product/RIDEWEAR_PLATFORM_PLAN.md`
-- `docs/architecture/GEO_DATA_STRATEGY.md`
-- `docs/research/WEATHER_DATA_QUALITY.md`
-- `docs/product/CYCLING_PLAN.md`
-- `docs/product/ALPINE_SNOWBOARD_PLAN.md`
-- `docs/product/CROSS_COUNTRY_SKIING_PLAN.md`
-- `docs/business/ADS_MONETIZATION_STRATEGY.md`
+- `apps/api/src/elevation/elevation.port.ts`
+- `apps/api/src/elevation/elevation.module.ts`
+- `apps/api/src/elevation/kartverket-elevation.adapter.ts`
+- `apps/api/src/elevation/kartverket-elevation.adapter.spec.ts`
+- `apps/api/src/elevation/null-elevation.adapter.ts`
+- `apps/api/src/elevation/lookup-sample-altitudes.ts`
+- `apps/api/src/weather/met-request.ts`
+- `apps/api/src/weather/met-request.spec.ts`
+- `apps/api/src/weather/weather.service.ts`
+- `apps/api/src/weather/weather.service.spec.ts`
+- `apps/api/src/recommend/recommend.module.ts`
+- `apps/api/src/recommend/recommend.service.ts`
+- `apps/api/src/recommend/weather.types.ts`
+- `apps/api/.env.example`
 - `docs/agent-reports/latest.md`
 
 ## Tests / build
 
-No documentation linter or docs test script exists in the repository. None was installed, and no test result is claimed. Application `npm test` / `npm run build` were not run because no application code changed.
+- Focused tests: Kartverket batching/caching/fallback, sample-altitude fallback, MET URL and cache key, ETA timeseries selection, weather service altitude propagation. Passed.
+- `npm test`: 20 suites, 128 tests passed.
+- `npm run build`: passed.
+- `scripts/smoke-api.sh` (`SMOKE_SKIP_UNIT=1`, `SMOKE_SKIP_BUILD=1`): passed, including `GET /api/recommend`.
 
 ## Architecture / config
 
-No architecture, config, dependency, schema, or provider change was made. The documents recommend, for later review, keeping one Flutter app and one NestJS API, adding elevation as a port, passing ground height into MET, and leaving ads off.
+New server-side `ElevationPort`. Recommendation code does not import Kartverket. Weather samples (already at most five) are the only coordinates sent for elevation. Dense road geometry stays ephemeral and is not stored. No schema migration, no new dependency, no routing-provider change. In-memory elevation cache holds at most 500 successful heights and does not store failures. Weather cache keys gain `@<metres>m` only when a height is present, so existing lat/lon cache entries still match.
+
+## Fallback
+
+If the provider is not `kartverket`, the request fails, the response is not 2xx, or the body length does not match, sample heights stay null. MET is then called with lat/lon only, and the recommendation still returns. A MET failure still falls back to the existing mock point.
 
 ## Manual testing recommended
 
-None for this change. The documents are for reading. When implementation is later authorized, the weather document’s station comparison is the first empirical check, before any paid feed.
+- With `ELEVATION_PROVIDER=kartverket` and `WEATHER_PROVIDER=met`, recommend a route that climbs and confirm `weather.points[].groundElevationM` and `weather.elevation.attribution` (`© Kartverket`).
+- Set `ELEVATION_PROVIDER=off` and confirm the same route still returns a recommendation without `groundElevationM`.
+- Confirm a MET request for a known height includes `altitude=<whole metres>` and still follows the sample ETA.
 
 ## Remaining issues
 
-- Open-Meteo’s live euro price was not on the static pricing page fetched on 2026-10-01. Do not budget from secondary €29 / €99 claims until Stripe is checked.
-- Sporet GPS tracks are not licensed for RideWear. OSM nordic and downhill coverage is incomplete.
-- HeiGIT’s standard Directions quota is 2,000 requests/day. A busier app cannot assume the hosted free tier.
-- MET is not sent an `altitude` today. Whether height changes a clothing tier is unmeasured.
-- No accuracy scores were produced. Paid sources are not declared better.
-- Hiking stays a reserved activity and was not planned here.
-- Another implementation task was not started.
+- Heights are not compared with a surveyed station in this change. The weather research document’s station check is still outstanding.
+- The elevation cache is process-local only.
+- Cycling, alpine/snowboard, and cross-country do not call this port yet.
