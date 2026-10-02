@@ -1,38 +1,36 @@
-# THERMAL-FEEDBACK-001
+# PERFORMANCE-001
 
 ## Task
 
-`THERMAL-FEEDBACK-001`, generation 34, authorized by the automatic final control update that completed `RECOMMENDATION-EXPLAIN-001`. The parent tip held that token at generation 33 with `RECOMMENDATION-EXPLAIN-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`PERFORMANCE-001`, generation 35, authorized by the automatic final control update that completed `THERMAL-FEEDBACK-001`. The parent tip held that token at generation 34 with `THERMAL-FEEDBACK-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/thermal-feedback-001`
-- Implementation commit: `751f5e1efc7219811f443a57eea1b26906c60bca`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/64 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/performance-001`
+- Implementation commit: `90caa71485103d85edd486449d39e72a1f7c5c40`
+- PR: into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-A recommendation can be marked for kald, passe, or for varm. The rating is stored on the activity that produced it.
+Measured waste, then removed it without a new cache, provider, dependency, or schema change.
 
-- The three Norwegian choices are For kald, Passe, and For varm. They are on today's recommendation and on the planner analysis screen.
-- A missing activity type does not fall back to motorcycle, so the submit control stays off.
-- The rating updates only that activity's existing `PersonalOffset` (`zone: overall`). Alpine skiing and snowboarding stay on separate rows. Motorcycle clothes stay on the motorcycle wardrobe.
-- `UserProfile.coldSensitivity` is not rewritten. Motorcycle recommendations still add that manual prior, then the shrunk feedback residual. Cycling, alpine, snowboard, and cross-country apply only their own residual and do not read the manual prior or another activity's offset.
-- One extreme rating from an empty offset stores a 1 °C residual and applies `1/7` °C, because shrinkage uses `n/(n+6)`. The stored mean stays within ±3 °C. A long run of the same rating approaches at most 1 °C of applied bias.
-- Comfortable feedback pulls an existing mean toward 0. No feedback (`n` is 0) applies 0, including a stored mean with no samples, so existing recommendations stay as they were.
-- The engines do not turn the bias into a personal-history sentence. `canClaimPersonal` stays false.
-- The API still accepts the older slightly-cold and slightly-warm ratings at half the step. The screen does not show them.
+Before the change, three route samples at two places made 3 sequential MET locationforecast calls (`max` in flight was 1). The same place at two hours downloaded the full series twice. After the change those samples make 2 calls, and both places are in flight together. A long alpine session is one download per site instead of one per phase.
+
+- `forRouteSamples` and `forRoutePoints` still return points in request order. A fresh per-hour point cache still wins and does not refetch. An empty or failed MET payload still falls back to the existing mock forecast and is not stored as 0 °C. The series cache key already used by departure comparison stores a successful locationforecast so later hours at that place do not download it again. An in-flight download is shared and dropped when it finishes, including failures, so a miss can be retried.
+- Departure comparison starts one series download per distinct place before it reads the hours. Out-of-range departures stay unavailable.
+- Motorcycle, cycling, alpine, snowboard, and cross-country start the wardrobe and thermal-offset reads while route geometry and weather are still running. The recommendation result is unchanged. `touchLastUsed` still finishes before the response is returned.
+- The planner requests a new road preview only when the resolved stops, the motorway switch, or whether the activity uses a road preview changes. Leave-now, arrival versus departure, session length, and the route name do not.
 
 ## Checks
 
 API, focused:
 
-- `thermal-calibration`, `feedback.service`, `thermal-bias.exposure`, `cycling-recommend`, `alpine-recommend`, `xc-recommend`, `activity-foundations`, `cycling.engine`, `alpine.engine`, `xc.engine`, and `explain-kit` — 59 tests passed
+- `weather.service`, `altitude-aware-weather`, `departure-compare`, `cycling-recommend`, `alpine-recommend`, `xc-recommend`, `departure-compare.recommend`, and `activity-foundations` — passed
 - `nest build` passed
-- `tsc --noEmit` still reports existing spec-file union errors. The new activity-type assertion was cast so it does not add one. Production files in this change typecheck through the build.
+- `tsc --noEmit` still reports the existing spec-file union errors. The new files do not add one.
 
 Flutter, in `apps/mobile`:
 
-- `flutter analyze` on `feedback_sheet.dart` and `ride_analysis_result_screen.dart` — no issues
-- `flutter test test/thermal_feedback_sheet_test.dart test/ride_analysis_result_test.dart test/nb_localization_test.dart` — 14 tests passed
+- `flutter analyze` on `ride_planner_screen.dart` and `ride_planner_models.dart` — no issues
+- `flutter test test/ride_planner_test.dart` — 15 tests passed
 
 Android, iOS, and a live provider call were not run.
 
@@ -40,23 +38,34 @@ Android, iOS, and a live provider call were not run.
 
 Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, schema migration, or paid service. `dev` and `main` were not modified.
 
-`ActivityLog` still has no `activityType` column. The calibration key is the existing `PersonalOffset` row. A later query of logs by activity would need an additive column. This task did not add one.
+The 15-minute weather cache and the Kartverket elevation cache were already there. This task did not add another cache.
 
-Hiking can be stored if a client sends that activity type. Hiking still has no recommendation engine, so nothing reads that row.
+## Measured change
+
+- Same place, two hours, plus a second place: locationforecast calls 3 → 2. Peak in-flight calls 1 → 2.
+- Distinct places in one departure comparison now overlap the same way.
+- Cycling wardrobe and thermal-offset reads are issued before route weather resolves.
+- Schedule-only planner edits no longer call route preview.
+
+## Deferred
+
+- Search fields already debounce and ignore stale responses. That was left as it is.
+- Trail XML parsing, OpenRouteService preview versus the later recommendation route, and a national trail download were not changed. A shared route cache would be new infrastructure.
+- Device frames and live MET timing were not run.
 
 ## Final control state
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `THERMAL-FEEDBACK-001` completed and appended once to `consumed.md`
-- `PERFORMANCE-001` is active
-- `active_id: PERFORMANCE-001`
+- `PERFORMANCE-001` completed and appended once to `consumed.md`
+- `SECURITY-HARDENING-001` is active
+- `active_id: SECURITY-HARDENING-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 35`
+- `handoff_generation: 36`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `PERFORMANCE-001`, Generation 35, Handoff-From `THERMAL-FEEDBACK-001`, Authorization `authorized`
+- `next-task.md`: `SECURITY-HARDENING-001`, Generation 36, Handoff-From `PERFORMANCE-001`, Authorization `authorized`
 
 ## Remaining
 
-A device pass of the feedback sheet was not run. `PERFORMANCE-001` is authorized for a later run. This run stops after merge.
+A device pass of the planner was not run. `SECURITY-HARDENING-001` is authorized for a later run. This run stops after merge.
