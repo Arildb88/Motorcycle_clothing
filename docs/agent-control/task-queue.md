@@ -8,7 +8,7 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: DB-SUPABASE-002
+active_id: GEO-ELEVATION-002
 promotion: automatic
 ```
 
@@ -274,7 +274,7 @@ Follow the queue success rule in `docs/agent-control/task-queue.md`. If promotio
 
 ### DB-SUPABASE-002
 
-- status: active
+- status: completed
 - title: Supabase deployment readiness
 - source: `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
 
@@ -298,7 +298,7 @@ Update relevant architecture/operator docs and report. Follow queue success/bloc
 
 ### GEO-ELEVATION-002
 
-- status: queued
+- status: active
 - title: Validate altitude-aware weather
 - source: existing Kartverket elevation + MET altitude implementation
 
