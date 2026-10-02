@@ -42,8 +42,48 @@ void main() {
       expect(view.hasElevationRange, isFalse);
       expect(view.sites, isEmpty);
       expect(view.elevationAttribution, isNull);
+      expect(kitBecauseCodes(view.wear.single), isEmpty);
     },
   );
+
+  test('keeps garment explanations on the item that carried them', () {
+    final view = presentRecommendation({
+      'recommendation': {
+        'wear': [
+          {
+            'garmentName': 'Shell',
+            'because': [
+              'SUSTAINED_COLD_EXPOSURE',
+              '',
+              3,
+              'SUSTAINED_COLD_EXPOSURE',
+            ],
+          },
+        ],
+        'pack': [
+          {
+            'genericLabel': 'Gloves',
+            'because': ['PACK_EXTRA_INSULATION'],
+          },
+        ],
+        'reasons': [
+          {'code': 'INCOMPLETE_WEATHER'},
+          {'code': 'BASELINE_NO_PERSONAL_EVIDENCE'},
+        ],
+      },
+    });
+
+    expect(kitBecauseCodes(view.wear.single), ['SUSTAINED_COLD_EXPOSURE']);
+    expect(kitBecauseCodes(view.pack.single), ['PACK_EXTRA_INSULATION']);
+    expect(view.limitReasons, [
+      'INCOMPLETE_WEATHER',
+      'BASELINE_NO_PERSONAL_EVIDENCE',
+    ]);
+    expect(
+      kitBecauseCodes(view.wear.single),
+      isNot(contains('INCOMPLETE_WEATHER')),
+    );
+  });
 
   test('uses saved-point heights only when no mountain sites are present', () {
     final view = presentRecommendation({

@@ -130,11 +130,12 @@ class RideAnalysisResultScreen extends StatelessWidget {
           if (wear.isEmpty)
             Text(l10n.plannerNoWearItems)
           else
-            ...wear.map(
-              (item) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.checkroom),
-                title: Text(kitLine(l10n, item)),
+            ...wear.asMap().entries.map(
+              (entry) => recommendationKitEntry(
+                context: context,
+                item: entry.value,
+                icon: Icons.checkroom,
+                index: entry.key,
               ),
             ),
           const SizedBox(height: 16),
@@ -149,11 +150,12 @@ class RideAnalysisResultScreen extends StatelessWidget {
           if (pack.isEmpty)
             Text(l10n.plannerNoPackItems)
           else
-            ...pack.map(
-              (item) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.backpack_outlined),
-                title: Text(kitLine(l10n, item)),
+            ...pack.asMap().entries.map(
+              (entry) => recommendationKitEntry(
+                context: context,
+                item: entry.value,
+                icon: Icons.backpack_outlined,
+                index: wear.length + entry.key,
               ),
             ),
           ...recommendationExplanationWidgets(context, view),

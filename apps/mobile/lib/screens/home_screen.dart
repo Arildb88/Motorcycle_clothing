@@ -462,10 +462,6 @@ class _RecommendationBody extends StatelessWidget {
 
   final Map<String, dynamic> data;
 
-  String _kitLabel(AppLocalizations l10n, Map<String, dynamic> item) {
-    return kitLine(l10n, item);
-  }
-
   String _routeLine(AppLocalizations l10n, Map<String, dynamic> route) {
     final start = route['startLabel']?.toString();
     final end = route['endLabel']?.toString();
@@ -569,21 +565,12 @@ class _RecommendationBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (wear.isNotEmpty)
-            ...wear.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _kitLabel(l10n, item),
-                        style: const TextStyle(fontSize: 17),
-                      ),
-                    ),
-                  ],
-                ),
+            ...wear.asMap().entries.map(
+              (entry) => recommendationKitEntry(
+                context: context,
+                item: entry.value,
+                icon: Icons.check_circle_outline,
+                index: entry.key,
               ),
             )
           else
@@ -615,21 +602,12 @@ class _RecommendationBody extends StatelessWidget {
               style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
             ),
             const SizedBox(height: 8),
-            ...pack.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.backpack_outlined, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _kitLabel(l10n, item),
-                        style: const TextStyle(fontSize: 17),
-                      ),
-                    ),
-                  ],
-                ),
+            ...pack.asMap().entries.map(
+              (entry) => recommendationKitEntry(
+                context: context,
+                item: entry.value,
+                icon: Icons.backpack_outlined,
+                index: wear.length + entry.key,
               ),
             ),
           ],

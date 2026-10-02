@@ -359,6 +359,86 @@ void main() {
     );
     expect(find.text('Departure times'), findsNothing);
   });
+
+  testWidgets(
+    'analysis shows Norwegian reasons only for the garment that has them',
+    (tester) async {
+      await tester.pumpWidget(
+        _analysisApp(
+          locale: const Locale('nb'),
+          home: const RideAnalysisResultScreen(
+            payload: {
+              'route': {'name': 'Fjell'},
+              'weather': {
+                'minTempC': -4,
+                'maxTempC': -1,
+                'maxRainProbPct': 0,
+                'maxWindMs': 2,
+              },
+              'recommendation': {
+                'wear': [
+                  {
+                    'garmentName': 'Skalljakke',
+                    'source': 'wardrobe',
+                    'slot': 'shell',
+                    'because': ['SUSTAINED_COLD_EXPOSURE'],
+                  },
+                ],
+                'pack': [
+                  {
+                    'genericLabel': 'Ekstra mellomlag',
+                    'source': 'generic',
+                    'slot': 'mid',
+                    'because': ['PACK_EXTRA_INSULATION'],
+                  },
+                ],
+                'reasons': [
+                  {'code': 'INCOMPLETE_WEATHER'},
+                ],
+              },
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Skalljakke'), findsOneWidget);
+      expect(find.text('Ekstra mellomlag (ikke i garderoben)'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('kit-because-0')),
+          matching: find.text('Vedvarende kulde øker behovet for varme.'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('kit-because-1')),
+          matching: find.text(
+            'Pakk ekstra isolasjon for korte kalde segmenter.',
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('kit-because-0')),
+          matching: find.text(
+            'Pakk ekstra isolasjon for korte kalde segmenter.',
+          ),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('kit-because-0')),
+          matching: find.textContaining('ufullstendig'),
+        ),
+        findsNothing,
+      );
+      expect(find.textContaining('Best'), findsNothing);
+    },
+  );
 }
 
 Widget _analysisApp({

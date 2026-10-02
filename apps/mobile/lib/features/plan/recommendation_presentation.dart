@@ -45,6 +45,19 @@ class RecommendationPresentation {
   }
 }
 
+/// Reason codes the API attached to this garment. Missing or non-text
+/// entries stay absent.
+List<String> kitBecauseCodes(Map<String, dynamic> item) {
+  final raw = item['because'];
+  if (raw is! List) return const [];
+  final codes = <String>[];
+  for (final entry in raw) {
+    if (entry is! String || entry.isEmpty || codes.contains(entry)) continue;
+    codes.add(entry);
+  }
+  return codes;
+}
+
 class ElevationSiteView {
   const ElevationSiteView({
     required this.role,

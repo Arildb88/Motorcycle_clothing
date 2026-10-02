@@ -138,6 +138,56 @@ List<Widget> recommendationExplanationWidgets(
   return blocks;
 }
 
+/// One wear or pack row, with the reason codes the API attached to it.
+Widget recommendationKitEntry({
+  required BuildContext context,
+  required Map<String, dynamic> item,
+  required IconData icon,
+  required int index,
+}) {
+  final l10n = AppLocalizations.of(context);
+  final reasonL10n = AppLocalizationsReasonLookup(l10n);
+  final because = kitBecauseCodes(item)
+      .map((code) => localizeReasonCode(code, reasonL10n))
+      .toList();
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(kitLine(l10n, item), style: const TextStyle(fontSize: 17)),
+              if (because.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Column(
+                    key: Key('kit-because-$index'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final line in because)
+                        Text(
+                          line,
+                          style: TextStyle(
+                            color: AppTheme.steel.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 Widget recommendationSectionTitle(String text) {
   return Text(
     text,
