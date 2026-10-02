@@ -46,6 +46,13 @@ class RideAnalysisResultScreen extends StatelessWidget {
             l10n.plannerAnalysisSubtitle,
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
+          if (recommendationInputSummary(l10n, payload['comfort']) != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              recommendationInputSummary(l10n, payload['comfort'])!,
+              style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
+            ),
+          ],
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,

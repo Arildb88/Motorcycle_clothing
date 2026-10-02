@@ -1424,6 +1424,102 @@ abstract class AppLocalizations {
   /// **'Cycling'**
   String get activityCycling;
 
+  /// No description provided for @activityAlpineSkiing.
+  ///
+  /// In en, this message translates to:
+  /// **'Alpine skiing'**
+  String get activityAlpineSkiing;
+
+  /// No description provided for @activitySnowboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Snowboarding'**
+  String get activitySnowboarding;
+
+  /// No description provided for @activityXcSkiing.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-country skiing'**
+  String get activityXcSkiing;
+
+  /// No description provided for @plannerIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Effort'**
+  String get plannerIntensity;
+
+  /// No description provided for @plannerIntensityEasy.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy'**
+  String get plannerIntensityEasy;
+
+  /// No description provided for @plannerIntensitySteady.
+  ///
+  /// In en, this message translates to:
+  /// **'Steady'**
+  String get plannerIntensitySteady;
+
+  /// No description provided for @plannerIntensityHard.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard'**
+  String get plannerIntensityHard;
+
+  /// No description provided for @plannerExposure.
+  ///
+  /// In en, this message translates to:
+  /// **'Where you spend time'**
+  String get plannerExposure;
+
+  /// No description provided for @plannerExposureLift.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifts'**
+  String get plannerExposureLift;
+
+  /// No description provided for @plannerExposureHike.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiking up'**
+  String get plannerExposureHike;
+
+  /// No description provided for @plannerExposureBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Staying at the base'**
+  String get plannerExposureBase;
+
+  /// No description provided for @plannerStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get plannerStyle;
+
+  /// No description provided for @plannerStyleUnspecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not specified'**
+  String get plannerStyleUnspecified;
+
+  /// No description provided for @plannerStyleClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get plannerStyleClassic;
+
+  /// No description provided for @plannerStyleSkate.
+  ///
+  /// In en, this message translates to:
+  /// **'Skate'**
+  String get plannerStyleSkate;
+
+  /// No description provided for @plannerSessionLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Session length'**
+  String get plannerSessionLength;
+
   /// No description provided for @activityWhatToday.
   ///
   /// In en, this message translates to:

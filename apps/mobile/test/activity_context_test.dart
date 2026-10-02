@@ -39,5 +39,28 @@ void main() {
     expect(AppActivity.hiking.label, 'Hiking');
     expect(AppActivity.hiking.hasRecommendationEngine, isFalse);
     expect(AppActivity.motorcycle.hasRecommendationEngine, isTrue);
+    expect(AppActivity.cycling.hasRecommendationEngine, isTrue);
+    expect(AppActivity.alpineSkiing.hasRecommendationEngine, isTrue);
+    expect(AppActivity.snowboarding.hasRecommendationEngine, isTrue);
+    expect(AppActivity.xcSkiing.hasRecommendationEngine, isTrue);
+  });
+
+  test('profile activities stay on the API allow-list', () {
+    expect(
+      AppActivity.selectable.map((activity) => activity.apiValue).toList(),
+      ['motorcycle', 'hiking', 'cycling'],
+    );
+    expect(AppActivity.alpineSkiing.apiValue, 'alpine_skiing');
+    expect(AppActivity.xcSkiing.apiValue, 'xc_skiing');
+    expect(AppActivity.snowboarding.apiValue, 'snowboarding');
+    expect(
+      AppActivity.sessionChoices.map((activity) => activity.apiValue),
+      containsAll([
+        'alpine_skiing',
+        'snowboarding',
+        'xc_skiing',
+        'cycling',
+      ]),
+    );
   });
 }

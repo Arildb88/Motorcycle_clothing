@@ -54,4 +54,38 @@ void main() {
     expect(find.text('Instance of'), findsNothing);
     expect(find.byType(AdBannerSlot), findsNothing);
   });
+
+  testWidgets('analysis shows the effort and style returned for the activity', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        home: RideAnalysisResultScreen(
+          payload: {
+            'route': {'name': 'Lake loop'},
+            'comfort': {
+              'intensity': 'steady',
+              'style': 'classic',
+            },
+            'weather': {
+              'minTempC': -2,
+              'maxTempC': 1,
+              'maxRainProbPct': 0,
+              'maxWindMs': 3,
+            },
+            'recommendation': {
+              'wear': const <Map<String, dynamic>>[],
+              'pack': const <Map<String, dynamic>>[],
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Steady · Classic'), findsOneWidget);
+  });
 }

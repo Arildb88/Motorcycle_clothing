@@ -6,7 +6,9 @@ import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
+import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
+import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
@@ -30,6 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _error;
   bool _loadingRoutes = true;
   bool _loadingRec = false;
+  ActivityPlanningInputs _inputs = const ActivityPlanningInputs();
+
+  String get _activityType =>
+      context.read<ActivityContext>().currentActivity.apiValue;
 
   @override
   void initState() {
@@ -57,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final api = context.read<ApiClient>();
-      final list = await api.getList('/routes?activityType=motorcycle');
+      final list = await api.getList('/routes?activityType=$_activityType');
       if (!mounted) return;
       setState(() {
         _routes = list
@@ -97,10 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       final q = Uri(
         path: '/recommend',
-        queryParameters: {
-          'routeId': route.id,
-          'departureAt': when.toIso8601String(),
-        },
+        queryParameters: recommendationQuery(
+          activityType: _activityType,
+          routeId: route.id,
+          departureAt: when.toIso8601String(),
+          inputs: _inputs,
+        ),
       );
       final data = await api.get(q.toString());
       if (mounted) setState(() => _data = data);
@@ -207,7 +215,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _addRoute() async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => RidePlannerScreen(savedRoutes: _routes),
+        builder: (_) => RidePlannerScreen(
+          savedRoutes: _routes,
+          activityType: _activityType,
+          initialInputs: _inputs,
+        ),
       ),
     );
     if (saved == true) await _loadRoutes();
@@ -241,6 +253,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const ActivitySwitcher(),
                   const SizedBox(height: 6),
+                  ActivityPlanningControls(
+                    activityType: context
+                        .watch<ActivityContext>()
+                        .currentActivity
+                        .apiValue,
+                    inputs: _inputs,
+                    onChanged: (next) => setState(() => _inputs = next),
+                  ),
                   Text(
                     AppLocalizations.of(context).quickRoutes,
                     style: GoogleFonts.sourceSerif4(
@@ -496,6 +516,13 @@ class _RecommendationBody extends StatelessWidget {
             '${route['startLabel'] ?? l10n.labelStart} → ${route['endLabel'] ?? l10n.labelEnd}',
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
+          if (recommendationInputSummary(l10n, data['comfort']) != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              recommendationInputSummary(l10n, data['comfort'])!,
+              style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
+            ),
+          ],
           const SizedBox(height: 20),
           Wrap(
             spacing: 16,

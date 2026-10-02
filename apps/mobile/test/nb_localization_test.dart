@@ -21,6 +21,9 @@ void main() {
     expect(activityLabel(nb, AppActivity.motorcycle), 'Motorsykkel');
     expect(activityLabel(nb, AppActivity.hiking), 'Fottur');
     expect(activityLabel(nb, AppActivity.cycling), 'Sykling');
+    expect(activityLabel(nb, AppActivity.alpineSkiing), 'Alpint');
+    expect(activityLabel(nb, AppActivity.snowboarding), 'Snøbrett');
+    expect(activityLabel(nb, AppActivity.xcSkiing), 'Langrenn');
 
     expect(waypointRole(nb, 0, 3), 'Start');
     expect(waypointRole(nb, 1, 3), 'Stopp 1');

@@ -1,3 +1,4 @@
+import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
 
@@ -8,7 +9,7 @@ extension PlanningModeApi on PlanningMode {
   String get apiValue => name;
 }
 
-/// In-memory motorcycle ride planner state.
+/// In-memory planner state. Motorcycle stays the default activity.
 class RidePlannerState {
   RidePlannerState({
     this.routeId,
@@ -19,11 +20,14 @@ class RidePlannerState {
     this.leaveNow = true,
     this.roundTrip = false,
     this.avoidMotorways = false,
-    this.durationMin = 30,
+    int? durationMin,
+    this.activityType = 'motorcycle',
+    this.inputs = const ActivityPlanningInputs(),
   })  : waypoints = WaypointListOps.ensureStartAndEnd(
           waypoints ?? [WaypointDraft.empty(), WaypointDraft.empty()],
         ),
-        anchorAt = anchorAt ?? DateTime.now();
+        anchorAt = anchorAt ?? DateTime.now(),
+        durationMin = durationMin ?? defaultPlanningDurationMin(activityType);
 
   final String? routeId;
   final String routeName;
@@ -34,6 +38,10 @@ class RidePlannerState {
   final bool roundTrip;
   final bool avoidMotorways;
   final int durationMin;
+  final String activityType;
+  final ActivityPlanningInputs inputs;
+
+  bool get usesRoadPreview => activityUsesRoadPreview(activityType);
 
   bool get canAnalyze => WaypointListOps.canAnalyze(waypoints);
 
@@ -63,13 +71,22 @@ class RidePlannerState {
 
   Map<String, dynamic> routeUpsertBody() => {
         'name': routeName.trim().isEmpty ? 'Ride plan' : routeName.trim(),
-        'activityType': 'motorcycle',
+        'activityType': activityType,
         'waypoints': WaypointListOps.toApiWaypoints(waypoints),
         'typicalDurationMin': durationMin,
         'preferences': preferencesJson(),
         if (roundTrip || WaypointListOps.looksLikeRoundTrip(waypoints))
           'routeKind': 'loop',
       };
+
+  Map<String, String> recommendQuery(String routeId, String departureAt) {
+    return recommendationQuery(
+      activityType: activityType,
+      routeId: routeId,
+      departureAt: departureAt,
+      inputs: inputs,
+    );
+  }
 
   RidePlannerState copyWith({
     String? routeId,
@@ -81,6 +98,8 @@ class RidePlannerState {
     bool? roundTrip,
     bool? avoidMotorways,
     int? durationMin,
+    String? activityType,
+    ActivityPlanningInputs? inputs,
     bool clearRouteId = false,
   }) {
     return RidePlannerState(
@@ -93,6 +112,8 @@ class RidePlannerState {
       roundTrip: roundTrip ?? this.roundTrip,
       avoidMotorways: avoidMotorways ?? this.avoidMotorways,
       durationMin: durationMin ?? this.durationMin,
+      activityType: activityType ?? this.activityType,
+      inputs: inputs ?? this.inputs,
     );
   }
 }

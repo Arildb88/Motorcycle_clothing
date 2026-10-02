@@ -13,7 +13,71 @@ String activityLabel(AppLocalizations l10n, AppActivity activity) {
       return l10n.activityHiking;
     case AppActivity.cycling:
       return l10n.activityCycling;
+    case AppActivity.alpineSkiing:
+      return l10n.activityAlpineSkiing;
+    case AppActivity.snowboarding:
+      return l10n.activitySnowboarding;
+    case AppActivity.xcSkiing:
+      return l10n.activityXcSkiing;
   }
+}
+
+String intensityLabel(AppLocalizations l10n, String value) {
+  switch (value) {
+    case 'easy':
+      return l10n.plannerIntensityEasy;
+    case 'steady':
+      return l10n.plannerIntensitySteady;
+    case 'hard':
+      return l10n.plannerIntensityHard;
+    default:
+      return value;
+  }
+}
+
+String exposureModeLabel(AppLocalizations l10n, String value) {
+  switch (value) {
+    case 'lift':
+      return l10n.plannerExposureLift;
+    case 'hike':
+      return l10n.plannerExposureHike;
+    case 'base':
+      return l10n.plannerExposureBase;
+    default:
+      return value;
+  }
+}
+
+String xcStyleLabel(AppLocalizations l10n, String value) {
+  switch (value) {
+    case 'classic':
+      return l10n.plannerStyleClassic;
+    case 'skate':
+      return l10n.plannerStyleSkate;
+    default:
+      return value;
+  }
+}
+
+/// Selected effort, exposure, or style already returned on the recommendation.
+String? recommendationInputSummary(AppLocalizations l10n, Object? comfort) {
+  if (comfort is! Map) return null;
+  final data = Map<String, dynamic>.from(comfort);
+  final parts = <String>[];
+  final intensity = data['intensity']?.toString();
+  if (intensity != null && intensity.isNotEmpty) {
+    parts.add(intensityLabel(l10n, intensity));
+  }
+  final exposure = data['exposureMode']?.toString();
+  if (exposure != null && exposure.isNotEmpty) {
+    parts.add(exposureModeLabel(l10n, exposure));
+  }
+  final style = data['style']?.toString();
+  if (style != null && style.isNotEmpty) {
+    parts.add(xcStyleLabel(l10n, style));
+  }
+  if (parts.isEmpty) return null;
+  return parts.join(' · ');
 }
 
 String waypointRole(AppLocalizations l10n, int index, int length) {

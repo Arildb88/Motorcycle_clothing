@@ -14,8 +14,8 @@ class ActivityHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activity = context.watch<ActivityContext>().currentActivity;
-    if (activity == AppActivity.motorcycle) {
-      return const HomeScreen();
+    if (activity.hasRecommendationEngine) {
+      return HomeScreen(key: ValueKey(activity));
     }
     return _ComingSoonHome(activity: activity);
   }
@@ -91,7 +91,7 @@ class _ActivitySwitcher extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return PopupMenuButton<AppActivity>(
       onSelected: (a) => ctx.setCurrentActivity(a),
-      itemBuilder: (context) => AppActivity.selectable
+      itemBuilder: (context) => AppActivity.sessionChoices
           .map(
             (a) => PopupMenuItem(
               value: a,

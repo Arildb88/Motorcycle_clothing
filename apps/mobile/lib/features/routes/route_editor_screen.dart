@@ -18,9 +18,14 @@ import 'package:motorcycle_clothing/theme/app_theme.dart';
 /// Coordinates stay canonical for persistence; the user-facing flow uses
 /// place/address search. Manual lat/lon is a collapsed advanced fallback only.
 class RouteEditorScreen extends StatefulWidget {
-  const RouteEditorScreen({super.key, this.existing});
+  const RouteEditorScreen({
+    super.key,
+    this.existing,
+    this.activityType = 'motorcycle',
+  });
 
   final SavedRoute? existing;
+  final String activityType;
 
   @override
   State<RouteEditorScreen> createState() => _RouteEditorScreenState();
@@ -234,7 +239,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
           'description': _description.text.trim(),
         if (_category != null) 'category': _category,
         'isFavorite': _favorite,
-        'activityType': 'motorcycle',
+        'activityType': widget.existing?.activityType ?? widget.activityType,
         'waypoints': waypoints,
         'typicalDurationMin': duration,
       };

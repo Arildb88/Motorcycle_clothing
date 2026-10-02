@@ -736,6 +736,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityCycling => 'Cycling';
 
   @override
+  String get activityAlpineSkiing => 'Alpine skiing';
+
+  @override
+  String get activitySnowboarding => 'Snowboarding';
+
+  @override
+  String get activityXcSkiing => 'Cross-country skiing';
+
+  @override
+  String get plannerIntensity => 'Effort';
+
+  @override
+  String get plannerIntensityEasy => 'Easy';
+
+  @override
+  String get plannerIntensitySteady => 'Steady';
+
+  @override
+  String get plannerIntensityHard => 'Hard';
+
+  @override
+  String get plannerExposure => 'Where you spend time';
+
+  @override
+  String get plannerExposureLift => 'Lifts';
+
+  @override
+  String get plannerExposureHike => 'Hiking up';
+
+  @override
+  String get plannerExposureBase => 'Staying at the base';
+
+  @override
+  String get plannerStyle => 'Style';
+
+  @override
+  String get plannerStyleUnspecified => 'Not specified';
+
+  @override
+  String get plannerStyleClassic => 'Classic';
+
+  @override
+  String get plannerStyleSkate => 'Skate';
+
+  @override
+  String get plannerSessionLength => 'Session length';
+
+  @override
   String get activityWhatToday => 'What are you doing today?';
 
   @override

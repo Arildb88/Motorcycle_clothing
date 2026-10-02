@@ -43,7 +43,7 @@ class ActivityChooserScreen extends StatelessWidget {
                   style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
                 ),
                 const SizedBox(height: 24),
-                ...AppActivity.selectable.map((a) {
+                ...AppActivity.sessionChoices.map((a) {
                   final isDefault = a == activity.defaultActivity;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),

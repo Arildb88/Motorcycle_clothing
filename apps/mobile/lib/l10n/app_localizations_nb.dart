@@ -737,6 +737,54 @@ class AppLocalizationsNb extends AppLocalizations {
   String get activityCycling => 'Sykling';
 
   @override
+  String get activityAlpineSkiing => 'Alpint';
+
+  @override
+  String get activitySnowboarding => 'Snøbrett';
+
+  @override
+  String get activityXcSkiing => 'Langrenn';
+
+  @override
+  String get plannerIntensity => 'Innsats';
+
+  @override
+  String get plannerIntensityEasy => 'Lett';
+
+  @override
+  String get plannerIntensitySteady => 'Jevn';
+
+  @override
+  String get plannerIntensityHard => 'Hard';
+
+  @override
+  String get plannerExposure => 'Hvor du oppholder deg';
+
+  @override
+  String get plannerExposureLift => 'Heiser';
+
+  @override
+  String get plannerExposureHike => 'Gå opp';
+
+  @override
+  String get plannerExposureBase => 'Bli i bunnen';
+
+  @override
+  String get plannerStyle => 'Stil';
+
+  @override
+  String get plannerStyleUnspecified => 'Ikke valgt';
+
+  @override
+  String get plannerStyleClassic => 'Klassisk';
+
+  @override
+  String get plannerStyleSkate => 'Skøyting';
+
+  @override
+  String get plannerSessionLength => 'Øktlengde';
+
+  @override
   String get activityWhatToday => 'Hva skal du gjøre i dag?';
 
   @override

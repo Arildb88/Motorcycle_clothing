@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/features/plan/ride_analysis_result_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_models.dart';
@@ -17,7 +18,7 @@ import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
-/// Motorcycle ride planner — plan → analyze weather/exposure → kit advice.
+/// Plan a route for the current activity, then request its recommendation.
 ///
 /// Not turn-by-turn navigation. External navigation handoff is out of scope.
 class RidePlannerScreen extends StatefulWidget {
@@ -25,10 +26,14 @@ class RidePlannerScreen extends StatefulWidget {
     super.key,
     this.initialRoute,
     this.savedRoutes = const [],
+    this.activityType = 'motorcycle',
+    this.initialInputs = const ActivityPlanningInputs(),
   });
 
   final SavedRoute? initialRoute;
   final List<SavedRoute> savedRoutes;
+  final String activityType;
+  final ActivityPlanningInputs initialInputs;
 
   @override
   State<RidePlannerScreen> createState() => _RidePlannerScreenState();
@@ -52,6 +57,12 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
 
   LocationServices get _location => context.read<LocationServices>();
 
+  List<int> get _sessionLengthChoices {
+    final values = <int>{60, 120, 180, 240, _state.durationMin};
+    final list = values.toList()..sort();
+    return list;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -67,10 +78,15 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         avoidMotorways: initial.avoidMotorways,
         roundTrip: initial.routeKind == 'loop' ||
             WaypointListOps.looksLikeRoundTrip(wps),
+        activityType: initial.activityType,
+        inputs: widget.initialInputs,
       );
       _nameCtrl.text = initial.name;
     } else {
-      _state = RidePlannerState();
+      _state = RidePlannerState(
+        activityType: widget.activityType,
+        inputs: widget.initialInputs,
+      );
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshGeometry());
   }
@@ -87,6 +103,14 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   }
 
   Future<void> _refreshGeometry() async {
+    if (!_state.usesRoadPreview) {
+      setState(() {
+        _geometry = null;
+        _mapError = null;
+        _mapLoading = false;
+      });
+      return;
+    }
     final pts = _state.waypoints
         .map((w) => w.geoPoint)
         .whereType<GeoPoint>()
@@ -240,7 +264,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     if (chosen == null || !mounted) return;
     final wps = chosen.waypoints.map(WaypointDraft.fromRouteWaypoint).toList();
     _nameCtrl.text = chosen.name;
-    _update(
+      _update(
       RidePlannerState(
         routeId: chosen.id,
         routeName: chosen.name,
@@ -252,6 +276,8 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         planningMode: _state.planningMode,
         leaveNow: _state.leaveNow,
         anchorAt: _state.anchorAt,
+        activityType: chosen.activityType,
+        inputs: _state.inputs,
       ),
     );
   }
@@ -327,10 +353,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       final data = await api.get(
         Uri(
           path: '/recommend',
-          queryParameters: {
-            'routeId': routeId,
-            'departureAt': departureIso,
-          },
+          queryParameters: _state.recommendQuery(routeId, departureIso),
         ).toString(),
       );
       if (!mounted) return;
@@ -619,13 +642,39 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.plannerAvoidMotorways),
-            subtitle: Text(l10n.plannerAvoidMotorwaysHint),
-            value: _state.avoidMotorways,
-            onChanged: (v) => _update(_state.copyWith(avoidMotorways: v)),
+          ActivityPlanningControls(
+            activityType: _state.activityType,
+            inputs: _state.inputs,
+            onChanged: (next) => setState(
+              () => _state = _state.copyWith(inputs: next),
+            ),
           ),
+          if (!_state.usesRoadPreview) ...[
+            Text(l10n.plannerSessionLength),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final minutes in _sessionLengthChoices)
+                  ChoiceChip(
+                    label: Text(routeDuration(l10n, minutes)),
+                    selected: _state.durationMin == minutes,
+                    onSelected: (_) =>
+                        _update(_state.copyWith(durationMin: minutes)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (_state.usesRoadPreview)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.plannerAvoidMotorways),
+              subtitle: Text(l10n.plannerAvoidMotorwaysHint),
+              value: _state.avoidMotorways,
+              onChanged: (v) => _update(_state.copyWith(avoidMotorways: v)),
+            ),
           TextField(
             controller: _nameCtrl,
             onChanged: (v) =>

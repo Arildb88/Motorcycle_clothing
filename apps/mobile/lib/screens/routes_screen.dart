@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/ads/ad_placement_policy.dart';
 import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
@@ -30,6 +31,12 @@ class _RoutesScreenState extends State<RoutesScreen> {
     _load();
   }
 
+  String _planningActivityType() {
+    final activity = context.read<ActivityContext>().currentActivity;
+    if (!activity.hasRecommendationEngine) return 'motorcycle';
+    return activity.apiValue;
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -37,7 +44,8 @@ class _RoutesScreenState extends State<RoutesScreen> {
     });
     try {
       final api = context.read<ApiClient>();
-      final list = await api.getList('/routes?activityType=motorcycle');
+      final list =
+          await api.getList('/routes?activityType=${_planningActivityType()}');
       if (mounted) {
         setState(() {
           _routes = list
@@ -58,7 +66,10 @@ class _RoutesScreenState extends State<RoutesScreen> {
   Future<void> _openEditor({SavedRoute? existing}) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => RouteEditorScreen(existing: existing),
+        builder: (_) => RouteEditorScreen(
+          existing: existing,
+          activityType: existing?.activityType ?? _planningActivityType(),
+        ),
       ),
     );
     if (saved == true) await _load();
@@ -70,6 +81,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
         builder: (_) => RidePlannerScreen(
           initialRoute: existing,
           savedRoutes: _routes,
+          activityType: existing?.activityType ?? _planningActivityType(),
         ),
       ),
     );
