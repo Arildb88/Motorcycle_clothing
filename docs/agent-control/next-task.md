@@ -1,14 +1,14 @@
 # Authorized RideWear Task
 ## Type: IMPLEMENTATION
-## ID: ALPINE-001
-## Generation: 7
-## Handoff-From: CYCLING-001
+## ID: XC-SKI-001
+## Generation: 8
+## Handoff-From: ALPINE-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T11:40:23Z
-## Task: Implement alpine/snowboard exposure foundation
+## Promoted: 2026-10-02T11:54:38Z
+## Task: Implement cross-country skiing foundation
 
-Implement only the provider-independent foundation supported by docs/product/ALPINE_SNOWBOARD_PLAN.md. Keep alpine_skiing and snowboarding as separate activity values while allowing a shared exposure engine. Model/use base, mid and upper elevation weather correctly; never substitute village weather as summit weather.
+Implement only the provider-independent XC foundation supported by docs/product/CROSS_COUNTRY_SKIING_PLAN.md: track/line weather with elevation and ETA plus easy/steady/hard intensity, with classic/skate as a tag rather than separate engines.
 
-Do not add a piste/resort provider, paid service, dependency, schema migration, or fake resort data. If the existing data model cannot support the planned MVP without one of those decisions, BLOCK and report the exact minimal requirement instead of improvising.
+No grooming-status claims, Sporet integration, live rerouting, wax advice, new paid provider, dependency, or unauthorized schema migration. BLOCK if a required data-model/provider decision is missing.
 
-Focused tests only for the implemented domain behavior; broaden only when necessary. Follow queue rules.
+Use focused tests and follow queue success/block rules.
