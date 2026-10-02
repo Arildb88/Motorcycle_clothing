@@ -1,25 +1,33 @@
 # Authorized RideWear Task
-## Type: IMPLEMENTATION
-## ID: DEMO-WARDROBE-ACTIVITY-001
-## Generation: 21
-## Handoff-From: XC-TRAIL-DISCOVERY-001
+## Type: MAINTENANCE
+## ID: DEPENDENCY-MAINTENANCE-001
+## Generation: 22
+## Handoff-From: DEMO-WARDROBE-ACTIVITY-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T18:43:57Z
-## Task: Expand demo wardrobe with activity-relevant garments
+## Promoted: 2026-10-02T18:52:53Z
+## Task: Update RideWear dependencies and tooling in controlled groups
 
-Improve demo wardrobe data so motorcycle, cycling, alpine skiing, snowboarding and cross-country skiing can be tested with realistic activity-relevant clothing choices.
+Perform a dedicated dependency/toolchain maintenance pass after the queued feature work.
 
-Requirements:
-- Keep demo garments clearly identifiable as demo data and separate from personal garments.
-- Preserve the existing idempotent demo-data behavior.
-- Demo garments must be useful to the existing recommendation model; do not create unsupported garment capabilities or a new recommendation engine.
-- Provide reasonable coverage across the currently supported activities and layering/body-area concepts already represented by the domain model.
-- Do not remap hiking into another activity.
-- Preserve localization and existing personal wardrobe behavior.
-- No schema migration, new provider, paid service or broad architecture change.
+Inventory first:
+- Record current and available Flutter/Dart packages, npm/NestJS packages, Prisma, Android Gradle/Kotlin tooling and other repository-managed SDK/tool constraints.
+- Use the package managers' own outdated/audit information where available.
+- Separate compatible updates from major/migration-bearing updates.
 
-Tests:
-- Add/update focused deterministic tests for demo generation, idempotency, coexistence with personal garments and activity coverage.
-- Run relevant API/Flutter tests and Flutter analyze where affected.
+Execution:
+- Apply compatible dependency updates in controlled groups and run relevant tests after each logical group.
+- Major updates are allowed only when their official migration requirements are understood and can be completed within this task without changing RideWear product architecture.
+- Do not blindly force incompatible versions or suppress failures.
+- Prisma/database changes require special care: do not create a database/schema migration merely to satisfy a package update. If a required major upgrade implies an unresolved schema/data/architecture decision, leave that major update deferred and document it rather than breaking the working database foundation.
+- Preserve Flutter -> NestJS -> provider architecture and server-side secrets.
+- Do not introduce unrelated packages, providers or features.
+- Keep lockfiles/config files consistent with accepted updates.
+
+Validation:
+- Run Flutter analyze and relevant/full Flutter tests.
+- Run relevant/full API tests, type checks/builds and Prisma generation/validation as applicable.
+- Run Android build/tooling validation where the environment supports it.
+- Report every deferred major update and the concrete reason.
+- Do not claim iOS validation from Windows.
 
 Keep dev and main untouched. Follow queue rules.
