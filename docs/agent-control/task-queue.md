@@ -7,7 +7,7 @@ Cursor must not add a product or implementation task to this file.
 ## Control
 
 ```text
-paused: true
+paused: false
 active_id: QUEUE-CONTROL-002
 promotion: manual
 ```
