@@ -6,7 +6,7 @@
 
 - Branch: `feature/ads-001-placement-policy`
 - Implementation: `cf72e6601b8342c86aa719e001f6458aa6e4c142`
-- PR: opened against `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/43 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
