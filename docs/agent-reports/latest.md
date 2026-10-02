@@ -32,7 +32,7 @@ Generation `3` is the idle baseline after this close. The next from-idle human a
 - Branch: `feature/routing-weather-002-eta-sampling` from `dev_test` at `ad9292b3a9b41804303bcd3ca9cc81b7b7a99043`
 - Claim: `d86e2e4` — chore(agent): claim ROUTING-WEATHER-002 generation 3
 - Implementation: `6ad856390690012adddb06379c22c750a5385673` — feat(routing): time weather samples from provider legs
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/37 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
