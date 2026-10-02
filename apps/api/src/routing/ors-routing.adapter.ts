@@ -11,6 +11,7 @@ import type { RoutingPort } from './routing.port';
 import type {
   GeoPoint,
   RouteAnalysis,
+  RouteLegTiming,
   RouteTravelSegment,
   RoutingRequest,
 } from './routing.types';
@@ -27,6 +28,18 @@ export type RoutePreviewResult = {
   providerWarning: string;
 };
 
+/**
+ * Ephemeral road line for weather sampling.
+ * `points` are not stored. `legs` is null unless the provider returned one
+ * timed interval per waypoint pair.
+ */
+export type RoadWeatherSource = {
+  points: GeoPoint[];
+  distanceM: number;
+  durationMin: number;
+  legs: RouteLegTiming[] | null;
+};
+
 type ProviderLeg = {
   distanceM: number;
   durationSec: number;
@@ -37,7 +50,9 @@ type ProviderLeg = {
  *
  * Profile is `driving-car` (road-following driving geometry). This is not
  * motorcycle-optimized routing. Dense polylines are returned only from
- * [preview]; [analyze] keeps waypoint geometry so plans do not store the line.
+ * [preview] and [roadWeatherSource]. [analyze] keeps waypoint geometry so
+ * plans do not store the line. Leg timing is included only when the provider
+ * returned one duration per waypoint interval.
  */
 export class OpenRouteServiceRoutingAdapter implements RoutingPort {
   private readonly apiKey: string;
@@ -78,9 +93,26 @@ export class OpenRouteServiceRoutingAdapter implements RoutingPort {
     };
   }
 
+  async roadWeatherSource(
+    request: RoutingRequest,
+  ): Promise<RoadWeatherSource | null> {
+    const mapped = await this.fetchDirections(request);
+    if (!mapped || mapped.previewPoints.length < 2) return null;
+    if (!(mapped.analysis.distanceM > 0) || !(mapped.analysis.durationMin > 0)) {
+      return null;
+    }
+    return {
+      points: mapped.previewPoints,
+      distanceM: mapped.analysis.distanceM,
+      durationMin: mapped.analysis.durationMin,
+      legs: mapped.providerLegs,
+    };
+  }
+
   private async fetchDirections(request: RoutingRequest): Promise<{
     analysis: RouteAnalysis;
     previewPoints: GeoPoint[];
+    providerLegs: RouteLegTiming[] | null;
   } | null> {
     if (!this.isConfigured) return null;
     const waypoints = validWaypoints(request.waypoints);
@@ -121,7 +153,11 @@ export function mapOrsDirections(
   data: unknown,
   waypoints: GeoPoint[],
   preferences: RoutePreferences,
-): { analysis: RouteAnalysis; previewPoints: GeoPoint[] } | null {
+): {
+  analysis: RouteAnalysis;
+  previewPoints: GeoPoint[];
+  providerLegs: RouteLegTiming[] | null;
+} | null {
   const feature = firstFeature(data);
   if (!feature) return null;
   const geometry = feature.geometry;
@@ -149,15 +185,23 @@ export function mapOrsDirections(
     })
     .filter((leg): leg is ProviderLeg => leg != null);
 
+  const matchedLegs =
+    providerLegs.length === waypoints.length - 1 ? providerLegs : null;
   const travelSegments = buildTravelSegments(
     waypoints,
-    providerLegs.length === waypoints.length - 1 ? providerLegs : null,
+    matchedLegs,
     roundedDistanceM,
     durationMin,
   );
 
   return {
     previewPoints,
+    providerLegs: matchedLegs
+      ? travelSegments.map((segment) => ({
+          distanceM: segment.distanceM ?? 0,
+          durationMin: segment.durationMin,
+        }))
+      : null,
     analysis: {
       distanceM: roundedDistanceM,
       durationMin,

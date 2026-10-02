@@ -16,6 +16,17 @@ export type GeoPoint = {
   lon: number;
 };
 
+/**
+ * Provider distance and duration for one waypoint interval.
+ * Present only when the routing provider returned that breakdown.
+ * This is not a polyline and is not stored on the route.
+ */
+export type RouteLegTiming = {
+  distanceM: number;
+  /** Minutes. Callers must not invent this from a single route total. */
+  durationMin: number;
+};
+
 export type RouteTravelSegment = {
   index: number;
   durationMin: number;

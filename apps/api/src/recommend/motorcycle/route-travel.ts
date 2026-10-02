@@ -12,6 +12,12 @@
  * expectedSpeedKmh over legal limits for airflow exposure.
  */
 
+import {
+  reconcileProviderLegs,
+  timeProgressAlongLegs,
+} from '../../routing/route-weather-sampling';
+import type { RouteLegTiming } from '../../routing/routing.types';
+
 export type SpeedSource =
   | 'route_profile'
   | 'explicit_cruise'
@@ -83,12 +89,19 @@ export function durationWeightedSpeedKmh(
 /**
  * Duration shares for weather samples already placed along a route.
  * One segment per sample so associateWeatherIndex stays 1:1.
- * Speed is the provider overview (distance / duration), not a legal limit.
+ * Without provider legs, speed is the route overview (distance / duration).
+ * With provider legs, speed is that sample's distance band divided by the
+ * provider time in the band. Neither path uses a legal speed limit.
  */
 export function routeTravelAlignedWithSamples(input: {
   samples: Array<{ lat: number; lon: number; progress: number }>;
   durationMin: number;
   distanceM: number;
+  /**
+   * When these legs reconcile to `durationMin`, each sample owns the provider
+   * time in its distance band. Without them, one overview speed is used.
+   */
+  legs?: RouteLegTiming[] | null;
 }): RouteTravelSegment[] {
   const samples = input.samples.filter(
     (sample) =>
@@ -100,13 +113,18 @@ export function routeTravelAlignedWithSamples(input: {
 
   const durationMin = Math.max(1, Math.round(input.durationMin));
   const distanceM = Math.max(0, input.distanceM);
-  const durations = durationShares(
-    samples.map((sample) => Math.min(1, Math.max(0, sample.progress))),
-    durationMin,
+  const progresses = samples.map((sample) =>
+    Math.min(1, Math.max(0, sample.progress)),
   );
+  const reconciled = reconcileProviderLegs(input.legs, durationMin);
+  const timeAt = reconciled
+    ? (fraction: number) => timeProgressAlongLegs(fraction, reconciled)
+    : (fraction: number) => fraction;
+  const durations = durationShares(progresses, durationMin, timeAt);
   const durationSum = durations.reduce((sum, value) => sum + value, 0);
+  const bounds = distanceBounds(progresses);
   const hours = durationMin / 60;
-  const expectedSpeedKmh =
+  const overviewSpeedKmh =
     hours > 0 && distanceM > 0
       ? Math.round((distanceM / 1000 / hours) * 10) / 10
       : 0;
@@ -119,10 +137,17 @@ export function routeTravelAlignedWithSamples(input: {
         ? headingDeg(sample, next)
         : headingDeg(previous, sample);
     const share = durationSum > 0 ? durations[index] / durationSum : 0;
+    const band = Math.max(0, bounds[index + 1] - bounds[index]);
+    const segmentDistanceM = reconciled
+      ? Math.max(0, Math.round(distanceM * band))
+      : Math.max(0, Math.round(distanceM * share));
+    const expectedSpeedKmh = reconciled
+      ? speedKmh(segmentDistanceM, durations[index])
+      : overviewSpeedKmh;
     return {
       index,
       durationMin: durations[index],
-      distanceM: Math.max(0, Math.round(distanceM * share)),
+      distanceM: segmentDistanceM,
       expectedSpeedKmh,
       startLat: sample.lat,
       startLon: sample.lon,
@@ -133,18 +158,28 @@ export function routeTravelAlignedWithSamples(input: {
   });
 }
 
-function durationShares(progresses: number[], durationMin: number): number[] {
-  const count = progresses.length;
-  if (count === 1) return [durationMin];
-
+function distanceBounds(progresses: number[]): number[] {
+  if (progresses.length <= 1) return [0, 1];
   const bounds = [0];
-  for (let index = 0; index < count - 1; index++) {
+  for (let index = 0; index < progresses.length - 1; index++) {
     bounds.push((progresses[index] + progresses[index + 1]) / 2);
   }
   bounds.push(1);
+  return bounds;
+}
+
+function durationShares(
+  progresses: number[],
+  durationMin: number,
+  timeAt: (distanceFraction: number) => number,
+): number[] {
+  const count = progresses.length;
+  if (count === 1) return [durationMin];
+
+  const bounds = distanceBounds(progresses);
   const widths = bounds
     .slice(0, count)
-    .map((bound, index) => Math.max(0, bounds[index + 1] - bound));
+    .map((bound, index) => Math.max(0, timeAt(bounds[index + 1]) - timeAt(bound)));
   const widthSum = widths.reduce((sum, width) => sum + width, 0) || 1;
   const durations = widths.map((width) =>
     Math.max(1, Math.round((width / widthSum) * durationMin)),
@@ -155,6 +190,12 @@ function durationShares(progresses: number[], durationMin: number): number[] {
     durations[count - 1] + (durationMin - sum),
   );
   return durations;
+}
+
+function speedKmh(distanceM: number, durationMin: number): number {
+  const hours = durationMin / 60;
+  if (hours <= 0 || distanceM <= 0) return 0;
+  return Math.round((distanceM / 1000 / hours) * 10) / 10;
 }
 
 function headingDeg(

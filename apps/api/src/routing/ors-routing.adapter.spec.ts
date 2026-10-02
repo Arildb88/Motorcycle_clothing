@@ -128,6 +128,54 @@ describe('OpenRouteServiceRoutingAdapter', () => {
     expect(preview!.points).toHaveLength(5);
     expect(preview!.points[0]).toEqual({ lat: 58.1467, lon: 7.9956 });
     expect(preview!.providerWarning.toLowerCase()).toContain('not motorcycle');
+    expect(preview).not.toHaveProperty('legs');
+  });
+
+  it('returns ephemeral provider legs for weather sampling and does not store the line', async () => {
+    const adapter = adapterWith(async () => ({ status: 200, data: orsBody }));
+    const source = await adapter.roadWeatherSource({ waypoints });
+    expect(source).toEqual({
+      points: [
+        { lat: 58.1467, lon: 7.9956 },
+        { lat: 58.15, lon: 8.002 },
+        { lat: 58.1599, lon: 8.018 },
+        { lat: 58.18, lon: 8.04 },
+        { lat: 58.2, lon: 8.08 },
+      ],
+      distanceM: 18500,
+      durationMin: 22,
+      legs: [
+        { distanceM: 8000, durationMin: 9 },
+        { distanceM: 10500, durationMin: 13 },
+      ],
+    });
+
+    const analysis = await adapter.analyze({ waypoints });
+    expect(analysis!.geometry).toEqual({
+      encoding: 'none',
+      data: null,
+      points: waypoints,
+    });
+  });
+
+  it('omits leg timing when the provider segment count does not match the waypoints', async () => {
+    const mismatched = {
+      ...orsBody,
+      features: [
+        {
+          ...orsBody.features[0],
+          properties: {
+            ...orsBody.features[0].properties,
+            segments: [{ distance: 18500.4, duration: 1320.2 }],
+          },
+        },
+      ],
+    };
+    const adapter = adapterWith(async () => ({ status: 200, data: mismatched }));
+    const source = await adapter.roadWeatherSource({ waypoints });
+    expect(source!.points).toHaveLength(5);
+    expect(source!.legs).toBeNull();
+    expect(source!.durationMin).toBe(22);
   });
 
   it('returns null on provider errors and does not throw', async () => {

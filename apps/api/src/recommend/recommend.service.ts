@@ -13,7 +13,7 @@ import {
   resolveRouteWeatherSamples,
   type RouteWeatherSample,
 } from '../routing/route-weather-sampling';
-import type { GeoPoint } from '../routing/routing.types';
+import type { GeoPoint, RouteLegTiming } from '../routing/routing.types';
 import {
   MOTORCYCLE_EXPOSURE,
   routeTravelAlignedWithSamples,
@@ -81,6 +81,7 @@ export class RecommendService {
     const sampled = resolveRouteWeatherSamples({
       roadGeometry: road?.points,
       providerDurationMin: road?.durationMin,
+      providerLegs: road?.legs,
       fallbackPoints,
       fallbackDurationMin: route.typicalDurationMin ?? 30,
       departAt,
@@ -111,6 +112,7 @@ export class RecommendService {
       sampled.samples,
       sampled.durationMin,
       road?.distanceM,
+      sampled.appliedLegs,
     );
 
     const garments = await this.prisma.garment.findMany({
@@ -124,8 +126,9 @@ export class RecommendService {
       wardrobe,
       rideDurationMin: sampled.durationMin,
       // Road geometry supplies one travel segment per weather sample so the
-      // engine keeps every ETA sample. Without a road line, speed stays the
-      // assumed default and samples stay on saved waypoints.
+      // engine keeps every ETA sample. Provider legs, when returned, set the
+      // ETA and the speed of each distance band. Without a road line, speed
+      // stays the assumed default and samples stay on saved waypoints.
       cruiseKmh: null,
       routeTravelSegments,
       personalColdBiasC,
@@ -215,21 +218,17 @@ export class RecommendService {
     points: GeoPoint[];
     distanceM: number;
     durationMin: number;
+    legs: RouteLegTiming[] | null;
   } | null> {
     if (!this.roadRouting.isConfigured || waypoints.length < 2) return null;
     try {
-      const preview = await this.roadRouting.preview({
+      const source = await this.roadRouting.roadWeatherSource({
         waypoints,
         preferences: parseRoutePreferences(route.preferencesJson),
         travelProfile: 'drive',
       });
-      if (!preview || preview.points.length < 2) return null;
-      if (!(preview.distanceM > 0) || !(preview.durationMin > 0)) return null;
-      return {
-        points: preview.points,
-        distanceM: preview.distanceM,
-        durationMin: preview.durationMin,
-      };
+      if (!source) return null;
+      return source;
     } catch {
       return null;
     }
@@ -240,6 +239,7 @@ export class RecommendService {
     samples: RouteWeatherSample[],
     durationMin: number,
     distanceM?: number,
+    legs?: RouteLegTiming[] | null,
   ): RouteTravelSegment[] | undefined {
     if (!usedRoadGeometry || samples.length === 0) return undefined;
     if (distanceM == null || !(distanceM > 0)) return undefined;
@@ -247,6 +247,7 @@ export class RecommendService {
       samples,
       durationMin,
       distanceM,
+      legs,
     });
     return segments.length > 0 ? segments : undefined;
   }
