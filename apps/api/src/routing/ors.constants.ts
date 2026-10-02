@@ -4,6 +4,17 @@ export const HEIGIT_ORS_BASE_URL = 'https://api.heigit.org/openrouteservice';
 /** Pelias geocoding on HeiGIT (not under the /openrouteservice prefix). */
 export const HEIGIT_PELIAS_BASE_URL = 'https://api.heigit.org/pelias/v1';
 
+/** Road-following driving geometry. Not a cycling route. */
+export const ORS_DRIVING_DIRECTIONS_PROFILE = 'driving-car';
+
+/**
+ * HeiGIT's general cycling profile.
+ * CYCLING_PLAN still leaves cycling-regular vs cycling-road vs cycling-mountain
+ * unsettled for Norwegian mixed commuting. This is the general profile used
+ * for weather sampling, not a claim that the Norway choice is decided.
+ */
+export const ORS_CYCLING_DIRECTIONS_PROFILE = 'cycling-regular';
+
 export const DRIVING_GEOMETRY_NOTICE_CODE = 'DRIVING_GEOMETRY';
 
 export const DRIVING_GEOMETRY_NOTICE =

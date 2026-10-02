@@ -4,6 +4,8 @@ import {
   DRIVING_GEOMETRY_NOTICE,
   DRIVING_GEOMETRY_NOTICE_CODE,
   HEIGIT_ORS_BASE_URL,
+  ORS_CYCLING_DIRECTIONS_PROFILE,
+  ORS_DRIVING_DIRECTIONS_PROFILE,
   resolveOrsBaseUrl,
 } from './ors.constants';
 import { orsAuthHeaders, orsPost, type OrsHttpPost } from './ors.http';
@@ -48,11 +50,15 @@ type ProviderLeg = {
 /**
  * OpenRouteService directions via the current HeiGIT host.
  *
- * Profile is `driving-car` (road-following driving geometry). This is not
- * motorcycle-optimized routing. Dense polylines are returned only from
- * [preview] and [roadWeatherSource]. [analyze] keeps waypoint geometry so
- * plans do not store the line. Leg timing is included only when the provider
- * returned one duration per waypoint interval.
+ * `driving-car` is the profile for motorcycle and drive requests. It is
+ * road-following driving geometry, not motorcycle-optimized routing.
+ * `travelProfile: 'cycle'` uses the general cycling profile so a bike
+ * recommendation is not sampled on driving geometry. [preview] stays on
+ * driving-car because that response contract is the shared route preview.
+ * Dense polylines are returned only from [preview] and [roadWeatherSource].
+ * [analyze] keeps waypoint geometry so plans do not store the line. Leg
+ * timing is included only when the provider returned one duration per
+ * waypoint interval.
  */
 export class OpenRouteServiceRoutingAdapter implements RoutingPort {
   private readonly apiKey: string;
@@ -80,7 +86,10 @@ export class OpenRouteServiceRoutingAdapter implements RoutingPort {
   }
 
   async preview(request: RoutingRequest): Promise<RoutePreviewResult | null> {
-    const mapped = await this.fetchDirections(request);
+    const mapped = await this.fetchDirections({
+      ...request,
+      travelProfile: 'drive',
+    });
     if (!mapped || mapped.previewPoints.length < 2) return null;
     return {
       points: mapped.previewPoints,
@@ -127,7 +136,7 @@ export class OpenRouteServiceRoutingAdapter implements RoutingPort {
       body.options = { avoid_features: avoid };
     }
 
-    const url = `${this.baseUrl}/v2/directions/driving-car/geojson`;
+    const url = `${this.baseUrl}/v2/directions/${directionsProfile(request.travelProfile)}/geojson`;
     let status: number | undefined;
     try {
       const res = await this.post(url, body, {
@@ -220,6 +229,13 @@ export function mapOrsDirections(
       },
     },
   };
+}
+
+function directionsProfile(
+  travelProfile: RoutingRequest['travelProfile'],
+): typeof ORS_DRIVING_DIRECTIONS_PROFILE | typeof ORS_CYCLING_DIRECTIONS_PROFILE {
+  if (travelProfile === 'cycle') return ORS_CYCLING_DIRECTIONS_PROFILE;
+  return ORS_DRIVING_DIRECTIONS_PROFILE;
 }
 
 function avoidFeatures(preferences: RoutePreferences): string[] {

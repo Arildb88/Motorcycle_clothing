@@ -131,6 +131,30 @@ describe('OpenRouteServiceRoutingAdapter', () => {
     expect(preview).not.toHaveProperty('legs');
   });
 
+  it('samples weather on cycling-regular and keeps the shared preview on driving-car', async () => {
+    const urls: string[] = [];
+    const adapter = adapterWith(async (url) => {
+      urls.push(url);
+      return { status: 200, data: orsBody };
+    });
+
+    const source = await adapter.roadWeatherSource({
+      waypoints,
+      travelProfile: 'cycle',
+    });
+    const preview = await adapter.preview({
+      waypoints,
+      travelProfile: 'cycle',
+    });
+
+    expect(source).not.toBeNull();
+    expect(preview?.travelMode).toBe('driving');
+    expect(urls).toEqual([
+      `${HEIGIT_ORS_BASE_URL}/v2/directions/cycling-regular/geojson`,
+      `${HEIGIT_ORS_BASE_URL}/v2/directions/driving-car/geojson`,
+    ]);
+  });
+
   it('returns ephemeral provider legs for weather sampling and does not store the line', async () => {
     const adapter = adapterWith(async () => ({ status: 200, data: orsBody }));
     const source = await adapter.roadWeatherSource({ waypoints });
