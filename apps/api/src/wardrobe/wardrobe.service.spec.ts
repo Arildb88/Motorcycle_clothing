@@ -266,6 +266,17 @@ describe('WardrobeService', () => {
     expect(seeded.garments.some((g) => g.name === 'Demo – Touringjakke')).toBe(
       true,
     );
+    const tags = seeded.garments.flatMap((g) => g.activityTags);
+    expect(tags).toEqual(
+      expect.arrayContaining([
+        'motorcycle',
+        'cycling',
+        'alpine_skiing',
+        'snowboarding',
+        'xc_skiing',
+      ]),
+    );
+    expect(tags).not.toContain('hiking');
 
     const personal = await service.create('user1', {
       name: 'My jacket',
