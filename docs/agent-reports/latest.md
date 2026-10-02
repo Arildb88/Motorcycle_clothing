@@ -6,7 +6,7 @@
 
 - Branch: `feature/wardrobe-sharing-001`
 - Implementation commit: `89d11e52a7ca074f05ac245d3aa8b5fd171155f3`
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/57 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
