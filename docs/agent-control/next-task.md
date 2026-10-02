@@ -1,35 +1,35 @@
 # Authorized RideWear Task
-## Type: VALIDATION_AND_FIX
-## ID: STABILIZATION-001
-## Generation: 24
-## Handoff-From: none
+## Type: PRODUCT_SIMPLIFICATION
+## ID: ALPINE-SNOWBOARD-UNIFY-001
+## Generation: 25
+## Handoff-From: STABILIZATION-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T19:30:00Z
-## Task: Run consolidated RideWear regression and fix in-scope defects
+## Promoted: 2026-10-02T19:41:19Z
+## Task: Present alpine skiing and snowboarding as one shared resort activity flow while preserving useful internal distinctions
 
-After the queued feature and dependency work, perform one broad stabilization pass over the MVP instead of another feature expansion.
+Simplify the RideWear user experience so alpine skiing and snowboarding no longer appear as unnecessarily separate planning categories.
 
-Coverage:
-- Authentication/profile/password/logout.
-- Wardrobe, personal garments and demo garments.
-- Motorcycle and cycling route planning, place search, Norwegian Unicode, current position, swap, waypoints, route preview/save/analyze and weather/elevation integration.
-- Alpine skiing and snowboarding resort discovery/selection and recommendation flow.
-- Cross-country nearby-trail/manual-route flows and recommendation flow.
-- Empty/error/provider-unavailable states and Norwegian localization.
-- Verify hiking remains unavailable unless a separately authorized engine exists.
-- Check important touch targets/layout regressions found during earlier emulator testing.
+Product behavior:
+- Present one shared user-facing activity entry for resort snow sports, preferably localized as "Alpint & snowboard" / "Alpine & snowboard" where appropriate.
+- Use the same resort discovery, selected resort, time, MET weather/elevation and recommendation planning flow for both.
+- Do not duplicate planner screens or resort-provider calls merely to distinguish skiing from snowboarding.
+- Preserve the existing Fnugg-backed resort discovery and attribution.
+- Preserve current personal thermal-profile behavior so user feedback/personalization can account for whether a person tends to run warmer or colder.
+- Do not encode an unsupported blanket rule that snowboard is always warmer or more strenuous than alpine skiing.
 
-Fix policy:
-- Fix reproducible defects within existing architecture and dependency set.
-- Prefer root-cause fixes over hiding errors.
-- Do not add new product features, providers, schema migrations, paid services or broad architecture changes.
-- If a defect requires one of those decisions, document it as blocked/remaining rather than inventing the change.
+Internal compatibility:
+- Do not remove or destructively migrate existing ALPINE_SKIING / SNOWBOARDING domain values merely for UI simplification.
+- Keep existing stored/API data compatible.
+- If an existing internal distinction can be retained cheaply for future recommendation tuning/analytics, retain it without forcing the user through two separate planner categories.
+- Do not add a schema migration for this simplification.
 
-Validation:
-- Run the broadest practical API and Flutter automated suites, Flutter analyze, API build/type checks and relevant Prisma validation.
-- Run Android build/emulator checks where the available environment supports them.
-- Distinguish deterministic automated checks from live provider/device checks.
-- Produce a concise remaining-issues list suitable for the next human manual regression pass.
-- Do not claim iOS validation from Windows.
+Scope:
+- Update home/activity selection and relevant labels/navigation so users see one coherent resort-snow-sports choice.
+- Reuse existing alpine/snowboard recommendation capabilities rather than adding a new recommendation engine.
+- Ensure hiking remains unavailable and cross-country skiing remains a separate activity.
+- Preserve Norwegian Unicode/localization.
+- Add/update focused Flutter tests for the unified entry and shared planner behavior.
+- Run Flutter analyze and relevant tests; run API tests only if API behavior changes.
+- No new provider, paid service, dependency, schema migration or broad architecture change.
 
 Keep dev and main untouched. Follow queue rules.

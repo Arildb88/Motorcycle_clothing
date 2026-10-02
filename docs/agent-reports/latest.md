@@ -5,7 +5,7 @@
 `STABILIZATION-001`, generation 24, authorized from idle by `e1d008db1d5f565c036263fe942d983878dea143`. The parent tip was idle at generation 23 after the abandoned generation 23 token was closed. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
 - Branch: `feature/stabilization-001`
-- Results commit: RESULTS_COMMIT
+- Results commit: `61ab32ffc5dbbe8008cb3d38e0d885be98ec30c5`
 - PR: PR_URL into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
