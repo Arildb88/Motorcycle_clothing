@@ -1,104 +1,87 @@
 # Authorized RideWear Task
 
-## Type: IMPLEMENTATION
+## Type: RESEARCH / MIGRATION ANALYSIS ONLY
 
-## Task: Demo wardrobe identity migration and safe removal
+## Task: Plan SQLite -> Supabase PostgreSQL migration
 
-Continue the previously blocked demo-wardrobe task. The investigation established that reliable demo identity requires a minimal schema change. This task explicitly authorizes that migration.
+Prepare the safest minimal migration plan for moving the existing RideWear NestJS/Prisma persistence layer from local SQLite to the already-created Supabase PostgreSQL project.
 
 Read first:
 - `docs/agent-control/guardrails.md`
-- `docs/agent-control/next-task.md`
 - `docs/agent-reports/latest.md`
+- current `apps/api/prisma/schema.prisma`
+- all existing Prisma migrations and relevant API database configuration
 
-### Authorized schema change
+### Architecture that must remain
 
-Add a non-client-writable field to Prisma `Garment`:
+Flutter -> NestJS API -> Prisma -> PostgreSQL (Supabase)
 
-```prisma
-/// Inserted by the demo wardrobe seed. Survives rename and edit.
-/// Clients cannot set or clear this value.
-isDemo Boolean @default(false)
-```
+Do not introduce direct Flutter-to-Supabase database access.
+Do not add `@supabase/supabase-js` merely for database access.
+Prisma/NestJS remain the application database boundary.
 
-Create the normal Prisma migration for the repository's current database setup. Existing rows must safely default to `false`. Do not attempt to guess/backfill historical demo rows from names or other editable fields.
+### Investigation
 
-### API behavior
+Produce a concrete evidence-based plan covering:
+- current Prisma models, relations, indexes, constraints and migration history
+- SQLite-specific schema/migration SQL that needs PostgreSQL treatment
+- recommended PostgreSQL Prisma datasource/config changes
+- correct roles of `DATABASE_URL` and, if appropriate for the installed Prisma version/setup, `DIRECT_URL`
+- Supabase pooled vs direct connection usage for runtime and migrations
+- how local development should work after migration
+- how to create a clean PostgreSQL baseline without replaying incompatible SQLite SQL
+- treatment of the new `Garment.isDemo` field
+- auth/password-reset/user data implications
+- existing data migration considerations (assume Supabase is currently empty; do not invent a need to migrate disposable local dev data)
+- rollback/recovery approach
+- secret handling: what belongs in local/host environment only and must never be committed
+- exact minimal implementation sequence for a later authorized task
+- focused verification needed after conversion
 
-- `seedDemo` must set `isDemo = true` for garments it creates.
-- Normal user-created garments remain `isDemo = false`.
-- Create/update DTOs must not allow clients to set or clear `isDemo`.
-- Editing/renaming a demo garment must preserve `isDemo = true`.
-- Expose read-only `isDemo` in the garment response needed by the Flutter UI.
-- Add a safe delete-demo operation that deletes only rows matching the authenticated user AND `isDemo = true`.
-- Never use the existing destructive force behavior to implement delete-demo if it can delete user garments.
-- Preserve existing normal single-garment deletion.
+### Cursor-capacity rule
 
-### Flutter behavior
+Do not rerun broad test suites merely to reconfirm the already-green current `dev_test` state.
 
-- Give seeded demo garments clear localized names, e.g. `Demo – Touringjakke` / appropriate English equivalent.
-- Show a small visible `DEMO` badge on demo garment cards.
-- When at least one demo garment exists, show a bottom action:
-  - nb: `Slett demo-garderobe`
-  - en: `Delete demo wardrobe`
-- Show a confirmation dialog explaining that only demo-added garments will be removed and personal garments remain.
-- On confirmation call the safe API operation.
-- Refresh state after deletion.
-- Hide the delete-demo action when no demo garments remain.
-- Demo identity must still work after the user edits/renames a demo garment.
+This is analysis-only. Do not run `npm test`, `flutter test`, `flutter analyze`, full builds, or smoke tests unless a specific investigation step truly requires execution. Prefer static inspection of schema, migrations, config and existing recent test/report evidence.
 
-### Localization
+For the later implementation plan, recommend targeted tests/checks first and only the minimum broader verification needed for database-sensitive changes. Avoid duplicate tests that provide no new evidence.
 
-Use the existing ARB/gen-l10n system for all new user-visible Norwegian Bokmål and English strings. Do not manually edit generated localization files.
+### Deliverable
 
-### Tests
+Create/update:
+`docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
 
-Add focused API and Flutter tests covering at minimum:
-- seed creates `isDemo = true`
-- normal create remains false
-- update/rename preserves demo identity
-- client cannot set/clear demo identity
-- delete-demo removes only authenticated user's demo rows
-- personal garments survive demo deletion
-- UI badge/action visibility
-- delete action disappears when no demo rows remain
-- confirmation flow where practical
+The document must include:
+1. Current state
+2. Compatibility findings
+3. Target architecture/config
+4. Migration/baseline strategy
+5. Secrets/environment strategy
+6. Local development strategy
+7. Implementation sequence
+8. Minimal verification strategy
+9. Rollback/recovery
+10. Risks/open questions
+
+Update `docs/agent-reports/latest.md` with a concise summary of findings and the exact next implementation recommendation.
 
 ### Explicitly out of scope
 
-- No unrelated schema changes.
-- No attempt to classify/backfill old rows as demo.
-- No Supabase/PostgreSQL migration yet; keep this task compatible with the repository's current database setup.
+- No Prisma datasource/provider change yet.
+- No schema or migration changes.
+- No connection to the user's Supabase database.
+- No database credentials/secrets.
+- No Supabase CLI setup.
+- No package/dependency changes.
+- No production code changes.
+- No Data API/client SDK.
 - No auth redesign.
-- No unrelated wardrobe redesign.
-- No recommendation/routing/weather/elevation changes.
-- No dependency/package upgrades.
-- No ads.
-- No Cycling/Alpine/XC implementation.
+- No Flutter changes.
 - Do not modify `dev` or `main`.
-
-### Verification
-
-Run relevant focused tests plus:
-- API: `npm test`, `npm run build`, and smoke test if applicable.
-- Flutter: `flutter analyze`, `flutter test`.
-
-All required checks must pass before merge.
 
 ### Completion
 
-Follow `docs/agent-control/guardrails.md`.
-Use a `feature/*` or `fix/*` branch from latest `dev_test`.
-PR and merge successful work only to `dev_test`.
-Update `docs/agent-reports/latest.md` with:
-- migration/schema details
-- how demo identity is protected from client writes
-- branch/commit/PR
-- files changed
-- localization changes
-- tests/analyze/build/smoke results
-- deletion safety behavior
-- manual validation recommended
-- remaining issues
-
-Then STOP. Do not begin another task.
+Work from latest `dev_test` on a focused `feature/*` branch.
+Because this is documentation/research only, do not spend capacity on unrelated tests.
+Open/merge successful documentation work only to `dev_test` according to guardrails.
+Update the report, then STOP. Do not begin the PostgreSQL implementation.
