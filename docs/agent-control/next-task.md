@@ -1,33 +1,35 @@
 # Authorized RideWear Task
-## Type: MAINTENANCE
-## ID: DEPENDENCY-MAINTENANCE-001
-## Generation: 22
-## Handoff-From: DEMO-WARDROBE-ACTIVITY-001
+## Type: VALIDATION_AND_FIX
+## ID: STABILIZATION-001
+## Generation: 23
+## Handoff-From: DEPENDENCY-MAINTENANCE-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T18:52:53Z
-## Task: Update RideWear dependencies and tooling in controlled groups
+## Promoted: 2026-10-02T19:08:30Z
+## Task: Run consolidated RideWear regression and fix in-scope defects
 
-Perform a dedicated dependency/toolchain maintenance pass after the queued feature work.
+After the queued feature and dependency work, perform one broad stabilization pass over the MVP instead of another feature expansion.
 
-Inventory first:
-- Record current and available Flutter/Dart packages, npm/NestJS packages, Prisma, Android Gradle/Kotlin tooling and other repository-managed SDK/tool constraints.
-- Use the package managers' own outdated/audit information where available.
-- Separate compatible updates from major/migration-bearing updates.
+Coverage:
+- Authentication/profile/password/logout.
+- Wardrobe, personal garments and demo garments.
+- Motorcycle and cycling route planning, place search, Norwegian Unicode, current position, swap, waypoints, route preview/save/analyze and weather/elevation integration.
+- Alpine skiing and snowboarding resort discovery/selection and recommendation flow.
+- Cross-country nearby-trail/manual-route flows and recommendation flow.
+- Empty/error/provider-unavailable states and Norwegian localization.
+- Verify hiking remains unavailable unless a separately authorized engine exists.
+- Check important touch targets/layout regressions found during earlier emulator testing.
 
-Execution:
-- Apply compatible dependency updates in controlled groups and run relevant tests after each logical group.
-- Major updates are allowed only when their official migration requirements are understood and can be completed within this task without changing RideWear product architecture.
-- Do not blindly force incompatible versions or suppress failures.
-- Prisma/database changes require special care: do not create a database/schema migration merely to satisfy a package update. If a required major upgrade implies an unresolved schema/data/architecture decision, leave that major update deferred and document it rather than breaking the working database foundation.
-- Preserve Flutter -> NestJS -> provider architecture and server-side secrets.
-- Do not introduce unrelated packages, providers or features.
-- Keep lockfiles/config files consistent with accepted updates.
+Fix policy:
+- Fix reproducible defects within existing architecture and dependency set.
+- Prefer root-cause fixes over hiding errors.
+- Do not add new product features, providers, schema migrations, paid services or broad architecture changes.
+- If a defect requires one of those decisions, document it as blocked/remaining rather than inventing the change.
 
 Validation:
-- Run Flutter analyze and relevant/full Flutter tests.
-- Run relevant/full API tests, type checks/builds and Prisma generation/validation as applicable.
-- Run Android build/tooling validation where the environment supports it.
-- Report every deferred major update and the concrete reason.
+- Run the broadest practical API and Flutter automated suites, Flutter analyze, API build/type checks and relevant Prisma validation.
+- Run Android build/emulator checks where the available environment supports them.
+- Distinguish deterministic automated checks from live provider/device checks.
+- Produce a concise remaining-issues list suitable for the next human manual regression pass.
 - Do not claim iOS validation from Windows.
 
 Keep dev and main untouched. Follow queue rules.
