@@ -31,8 +31,10 @@ Do not start that work from this report.
 ## Commit / PR
 
 - Branch: `feature/supabase-postgres-migration-plan` from `dev_test` (`069e29c663eb1af51d20f10657f035a0df73166f`)
-- PR: recorded in the follow-up commit once opened
-- Merge target: `dev_test` only. `dev` and `main` are unchanged.
+- Plan commit: `08c48276fe04b9c87dcc02dd4567a48f15a064bb` — docs: plan SQLite to Supabase PostgreSQL migration
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/27
+- Merge: fast-forward into `dev_test` only. `dev` and `main` are unchanged. The `dev_test` tip is the commit that adds this PR and merge record.
+- Required checks: none. This task is documentation-only and forbids the test suites. `api-ci` does not run for `docs/` changes.
 
 ## Files changed
 
