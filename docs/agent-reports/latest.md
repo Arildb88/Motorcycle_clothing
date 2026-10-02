@@ -6,7 +6,7 @@
 
 - Branch: `feature/stabilization-001`
 - Results commit: `61ab32ffc5dbbe8008cb3d38e0d885be98ec30c5`
-- PR: PR_URL into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/55 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
