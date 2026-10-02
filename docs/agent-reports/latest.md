@@ -1,55 +1,62 @@
-# FNUGG-ATTRIBUTION-001
+# XC-TRAIL-SYNC-001
 
 ## Task
 
-`FNUGG-ATTRIBUTION-001`, generation 29, authorized by the automatic final control update that completed `TEST-COVERAGE-001`. The parent tip held the unclaimed from-idle token for `TEST-COVERAGE-001` at generation 28. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`XC-TRAIL-SYNC-001`, generation 30, authorized by the automatic final control update that completed `FNUGG-ATTRIBUTION-001`. The parent tip held that token at generation 29 with `FNUGG-ATTRIBUTION-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/fnugg-attribution-001`
-- Implementation commit: `54bfc10def7828e855577f4f3f0d149c3bead010`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/59 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/xc-trail-sync-001`
+- Implementation commit: `1caefa3acc02232b57eecbac67d7e2bafeec1cda`
+- PR: pending, targeting `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Resort names, coordinates, and straight-line distance that come from Fnugg now carry a readable attribution next to that data.
+Nearby cross-country trails still come from the official Geonorge Turrutebasen WFS (`app:Skiløype` on `https://wfs.geonorge.no/skwms1/wfs.turogfriluftsruter`). Flutter still calls the RideWear API. A nearby search reads a process-local collection for a 0.01-degree map cell and filters it to the existing 8 km straight-line radius.
 
-The credit uses 14px body text, underlined, with a 48dp target. It is not microtext. The directory credit says resort information comes from Fnugg.no and links to https://fnugg.no. Each resort row, and the selected resort, links to `https://fnugg.no` plus the documented `site_path` when that path is a single slug such as `/trysil/` or `/al/`. Any other path or host falls back to https://fnugg.no.
+The first search in a cell performs one bounded query, because there is no older collection to serve. That query is not a national download. Later searches in the same cell return the stored collection. Each cell is checked against Geonorge at most once per 24 hours. When a check is due, the stored collection is returned immediately and one refresh runs beside the request. A failed refresh keeps that collection, logs the fetch time and age, and does not empty the list. Concurrent callers share one cold fetch or one refresh. A cold outage still fails closed instead of caching an empty list.
 
-Terms checked on 2026-10-02 at https://fnugg.no/artikler/api/ and https://api.fnugg.no/docs/v1. Those pages require a visible statement that the information comes from fnugg.no, at the same size as surrounding text, next to the data, and linked to the source page. The weather-and-conditions sentence that names Yr, Meteorologisk institutt, and NRK applies to vær- og føredata. RideWear does not request or display Fnugg weather, snow, lifts, or conditions. That sentence is not shown. RideWear's own MET forecast and Kartverket elevation credit stay separate and are not labeled as Fnugg data.
-
-The Fnugg logo is not embedded. The terms allow text instead of the logo, and they also say the logo must not be used as part of the service.
+Manual start and finish planning was not changed. Norwegian names still pass through the existing XML decoder. Kartverket remains the attribution. Preparation codes are still not returned as grooming status.
 
 ## Checks
 
+Metadata and the live query were read on 2026-10-02. They are not part of the automated suite.
+
+Geonorge metadata `d1422d17-6d95-4ef1-96ab-8af31744dd63`:
+
+- `DateUpdated`: 2026-09-29. Maintenance frequency: weekly.
+- Access: open data. Other constraints: "No conditions apply to access and use".
+- Distributions: Geonorge download order and ATOM feeds for FGDB, GML, GPX, PostGIS, and SOSI, including national files. The WFS used by `XC-TRAIL-DISCOVERY-001` still answers `GetFeature`.
+
+Live bounded query, Python urllib, one GET, 30 s timeout, User-Agent `RideWear/1.0 (cross-country trail discovery)`, WFS 2.0.0 `GetFeature`, `typeNames=app:Skiløype`, `count=80`, EPSG:4326 bbox around 59.98, 10.70:
+
+- First call: HTTP 200, 1.453 s, 179035 bytes, 67 features.
+- Repeat call: HTTP 200, 1.172 s, 179035 bytes, 67 features.
+
+Cached-path timing, local only: `ts-node` ran `mapGeonorgeSkiTrails` on that saved collection at 59.98, 10.70. Five warmup calls, then 20 timed calls: 23.01 ms total, 1.15 ms per call, 20 hits after the existing result cap. A cache hit does this filtering and does not call Geonorge.
+
 API, in `apps/api`:
 
-- `npx jest src/resorts/fnugg-resort.adapter.spec.ts` — 7 tests passed
+- `npx jest --no-coverage` — 267 tests passed
+- `npx nest build` — passed
 
-Flutter 3.47.6 / Dart 3.13.5, in `apps/mobile`:
-
-- `flutter analyze` — no issues
-- `flutter test` — 132 tests passed
-
-Android, iOS, and live providers were not run. A live read of `site_path` confirmed pages such as https://fnugg.no/trysil/ and https://fnugg.no/al/ before the mapping was written. Those calls were not part of the automated suite.
+Prisma was not validated. Persistence was not touched. Flutter analyze and Flutter tests were not run. The client was not changed. Android, iOS, and a live cache-hit request were not run.
 
 ## Architecture / config
 
-Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, schema migration, or paid service. `url_launcher` 6.3.2 was already in the lockfile and is now a direct dependency so the attribution link can open. Its version did not change. Android may query an https VIEW intent so that link can open. `dev` and `main` were not modified.
-
-The resort contract adds `sourceUrl`. Weather, lifts, and resort copy are still not mapped.
+Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, schema migration, or paid service. The cache is process-local, the same shape as the elevation cache, and holds at most 32 cells. A national file import and a spatial database were not added. The bounded WFS query is already about one second, and a stored cell filters in about a millisecond. `dev` and `main` were not modified.
 
 ## Final control state
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `FNUGG-ATTRIBUTION-001` completed and appended once to `consumed.md`
-- `XC-TRAIL-SYNC-001` is active
-- `active_id: XC-TRAIL-SYNC-001`
+- `XC-TRAIL-SYNC-001` completed and appended once to `consumed.md`
+- `UX-POLISH-001` is active
+- `active_id: UX-POLISH-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 30`
+- `handoff_generation: 31`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `XC-TRAIL-SYNC-001`, Generation 30, Handoff-From `FNUGG-ATTRIBUTION-001`, Authorization `authorized`
+- `next-task.md`: `UX-POLISH-001`, Generation 31, Handoff-From `XC-TRAIL-SYNC-001`, Authorization `authorized`
 
 ## Remaining
 
-Device and live-provider checks were not run. `XC-TRAIL-SYNC-001` is authorized for a later run. This run stops after merge.
+Device checks and a live cache-hit request were not run. The first search in an empty process still waits for one bounded WFS query. `UX-POLISH-001` is authorized for a later run. This run stops after merge.

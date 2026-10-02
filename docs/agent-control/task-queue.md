@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: XC-TRAIL-SYNC-001
+active_id: UX-POLISH-001
 promotion: automatic
-handoff_generation: 30
+handoff_generation: 31
 handoff_state: authorized
 ```
 
@@ -74,6 +74,8 @@ Generation `27` is spent: `TEST-COVERAGE-001` was authorized at that generation 
 Generation `28` is spent: `TEST-COVERAGE-001` was authorized from idle and completed. The automatic final control update authorizes `FNUGG-ATTRIBUTION-001` at generation `29`. Do not reuse generation `28`. Do not execute `TEST-COVERAGE-001` again.
 
 Generation `29` is spent: `FNUGG-ATTRIBUTION-001` completed and the automatic final control update authorizes `XC-TRAIL-SYNC-001` at generation `30`. Do not reuse generation `29`. Do not execute `FNUGG-ATTRIBUTION-001` again.
+
+Generation `30` is spent: `XC-TRAIL-SYNC-001` completed and the automatic final control update authorizes `UX-POLISH-001` at generation `31`. Do not reuse generation `30`. Do not execute `XC-TRAIL-SYNC-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1393,7 +1395,7 @@ Requirements:
 
 ### XC-TRAIL-SYNC-001
 
-- status: active
+- status: completed
 - title: Fast authoritative XC trail retrieval and refresh
 - source: explicitly approved Geonorge Turrutebasen performance/refresh design
 
@@ -1452,7 +1454,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### UX-POLISH-001
 
-- status: queued
+- status: active
 - title: MVP UI and UX consistency pass
 - source: approved final pre-release hardening plan
 
