@@ -6,7 +6,7 @@
 
 - Branch: `feature/demo-wardrobe-activity-001`
 - Implementation: `bc47b4fffeb7ded0de698a1dd7733d34749be728`
-- PR: opened into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/53 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
