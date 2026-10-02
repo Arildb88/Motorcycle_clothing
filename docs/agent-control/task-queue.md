@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: MOBILE-ACTIVITIES-001
+active_id: RECOMMENDATION-UX-001
 promotion: automatic
-handoff_generation: 12
+handoff_generation: 13
 handoff_state: authorized
 ```
 
@@ -38,6 +38,8 @@ Generation `9` is spent: `WEATHER-PROVIDER-RESEARCH-002` completed and the autom
 Generation `10` is spent: `ADS-001` completed and no queued unconsumed item remained, so the final close is idle at generation `10`. Do not reuse generation `10`. Do not execute `ADS-001` again.
 
 Generation `11` is spent: `INTEGRATION-001` was authorized from idle and completed. The automatic final control update authorizes `MOBILE-ACTIVITIES-001` at generation `12`. Do not reuse generation `11`. Do not execute `INTEGRATION-001` again.
+
+Generation `12` is spent: `MOBILE-ACTIVITIES-001` completed and the automatic final control update authorizes `RECOMMENDATION-UX-001` at generation `13`. Do not reuse generation `12`. Do not execute `MOBILE-ACTIVITIES-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -775,7 +777,7 @@ Update the agent report with exact commands and results. Follow queue rules.
 
 ### MOBILE-ACTIVITIES-001
 
-- status: active
+- status: completed
 - title: Mobile activity planning integration
 - source: existing multi-activity UI plus completed recommendation engines
 
@@ -797,7 +799,7 @@ Add focused Flutter/API contract tests for changed behavior and run Flutter anal
 
 ### RECOMMENDATION-UX-001
 
-- status: queued
+- status: active
 - title: Recommendation wear/pack UX
 - source: existing recommendation outputs and mobile UI
 
@@ -864,4 +866,4 @@ Leave dev and main untouched. Update the report with exact automated results, re
 
 ## QUEUE-CONTROL-006 — no-claim execution
 
-Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorizes `MOBILE-ACTIVITIES-001` at generation 12.
+Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorizes `RECOMMENDATION-UX-001` at generation 13.
