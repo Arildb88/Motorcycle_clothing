@@ -4,6 +4,10 @@
 
 `CYCLING-001`, generation 6, from-idle authorization `88a5bccc7e83c44bcc3886a2bbc739be0ddc76eb`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
+- Branch: `feature/cycling-001-generation-6`
+- Implementation: `28e48ef911879955af28383998c6b002c5f23b3b`
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/39 into `dev_test` only. Not merged to `dev` or `main`.
+
 ## Implementation
 
 Cycling routes now use engine `cycling_v1` instead of the motorcycle engine.
