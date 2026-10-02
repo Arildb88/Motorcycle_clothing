@@ -22,6 +22,10 @@ describe('domain enums', () => {
   it('recognizes activity types including future sports', () => {
     expect(isActivityType('motorcycle')).toBe(true);
     expect(isActivityType('hiking')).toBe(true);
+    expect(isActivityType('cycling')).toBe(true);
+    expect(isActivityType('alpine_skiing')).toBe(true);
+    expect(isActivityType('snowboarding')).toBe(true);
+    expect(isActivityType('xc_skiing')).toBe(true);
     expect(isActivityType('surfing')).toBe(false);
   });
 

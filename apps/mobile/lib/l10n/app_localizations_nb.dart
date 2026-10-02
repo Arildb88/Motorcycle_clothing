@@ -159,10 +159,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get unitsSection => 'Enheter';
 
   @override
-  String get unitsPresetMetric => 'Metersystem';
+  String get unitsPresetMetric => 'Meter';
 
   @override
-  String get unitsPresetImperial => 'Britiske/amerikanske';
+  String get unitsPresetImperial => 'Miles';
 
   @override
   String get unitsTemperature => 'Temperatur';
@@ -198,7 +198,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get unitMs => 'm/s';
 
   @override
-  String get unitsSaved => 'Enheter lagret';
+  String get unitsSaved => 'Endringer er lagret';
 
   @override
   String get plannerTitle => 'Planlegg tur';
@@ -677,13 +677,13 @@ class AppLocalizationsNb extends AppLocalizations {
   String get profileLinked => 'Tilknyttet';
 
   @override
-  String get profileConnectFacebook => 'Koble til Facebook-innlogging';
+  String get profileConnectFacebook => 'Facebook-innlogging';
 
   @override
-  String get profileConnectMicrosoft => 'Koble til Microsoft-innlogging';
+  String get profileConnectMicrosoft => 'Microsoft-innlogging';
 
   @override
-  String get profileServices => 'Tilknyttede tjenester';
+  String get profileServices => 'Eksterne Tjenester';
 
   @override
   String get profileConnected => 'Tilkoblet';
@@ -806,10 +806,10 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wardrobeIntro =>
-      'Legg inn det du faktisk eier. Kategori gir fornuftige standarder — du kan finjustere senere.';
+      'Legg inn klær for å få anbefalinger på klesvalg.';
 
   @override
-  String get wardrobeEmptyTitle => 'Ingen plagg ennå';
+  String get wardrobeEmptyTitle => 'Ingen plagg lagt til';
 
   @override
   String get wardrobeEmptyBody =>
@@ -877,8 +877,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get garmentThermalLiner => 'Termofôr følger med';
 
   @override
-  String get garmentThermalLinerHint =>
-      'Samme jakke — fôret kan settes i, det er ikke et eget plagg';
+  String get garmentThermalLinerHint => 'Samme jakke — fôret kan settes i';
 
   @override
   String get garmentWaterproofLiner => 'Vanntett fôr følger med';

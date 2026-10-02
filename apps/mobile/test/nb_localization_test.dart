@@ -41,7 +41,7 @@ void main() {
     expect(nb.onboardingStart, 'Start RideWear');
     expect(nb.mapSelectEndpoints, isNot(en.mapSelectEndpoints));
     expect(nb.profileSignOut, 'Logg ut');
-    expect(nb.wardrobeEmptyTitle, 'Ingen plagg ennå');
+    expect(nb.wardrobeEmptyTitle, 'Ingen plagg lagt til');
     expect(nb.wardrobeDemoBadge, 'DEMO');
     expect(nb.wardrobeDeleteDemo, 'Slett demo-garderobe');
     expect(en.wardrobeDeleteDemo, 'Delete demo wardrobe');

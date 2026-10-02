@@ -33,6 +33,6 @@ void main() {
     expect(nb.unitsSection, 'Enheter');
     expect(nb.unitsTemperature, 'Temperatur');
     expect(nb.unitCelsius, contains('Celsius'));
-    expect(nb.unitsPresetMetric, 'Metersystem');
+    expect(nb.unitsPresetMetric, 'Meter');
   });
 }

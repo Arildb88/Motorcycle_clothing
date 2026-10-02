@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
+import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
@@ -92,7 +93,7 @@ class RideAnalysisResultScreen extends StatelessWidget {
               (item) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.checkroom),
-                title: Text(item['name']?.toString() ?? item.toString()),
+                title: Text(kitLine(l10n, item)),
               ),
             ),
           const SizedBox(height: 16),
@@ -111,7 +112,7 @@ class RideAnalysisResultScreen extends StatelessWidget {
               (item) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.backpack_outlined),
-                title: Text(item['name']?.toString() ?? item.toString()),
+                title: Text(kitLine(l10n, item)),
               ),
             ),
           if (reasons.isNotEmpty) ...[
