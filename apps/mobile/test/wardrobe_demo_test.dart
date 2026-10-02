@@ -15,47 +15,61 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('shows a demo badge and deletes only demo garments after confirmation', (
-    tester,
-  ) async {
-    final api = _FakeApi([
-      _garment(id: 'demo', name: 'Custom touring shell', isDemo: true),
-      _garment(id: 'mine', name: 'My jacket', isDemo: false),
-    ]);
-    await tester.pumpWidget(_harness(api));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'shows a demo badge and deletes only demo garments after confirmation',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    expect(find.text('DEMO'), findsOneWidget);
-    expect(find.text('Custom touring shell'), findsOneWidget);
-    expect(find.text('My jacket'), findsOneWidget);
-    expect(find.text('Delete demo wardrobe'), findsOneWidget);
+      final api = _FakeApi([
+        _garment(id: 'demo', name: 'Custom touring shell', isDemo: true),
+        _garment(id: 'mine', name: 'My jacket', isDemo: false),
+      ]);
+      await tester.pumpWidget(_harness(api));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Delete demo wardrobe'));
-    await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'Only demo clothes for this activity are removed. Your own garments stay.',
-      ),
-      findsOneWidget,
-    );
-    expect(api.demoDeletes, 0);
+      expect(find.text('DEMO'), findsOneWidget);
+      expect(find.text('Custom touring shell'), findsOneWidget);
+      expect(find.text('My jacket'), findsOneWidget);
+      expect(find.text('Delete demo wardrobe'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
-    await tester.pumpAndSettle();
-    expect(api.demoDeletes, 0);
-    expect(find.text('DEMO'), findsOneWidget);
+      final deleteDemo = find.widgetWithText(
+        OutlinedButton,
+        'Delete demo wardrobe',
+      );
+      await tester.ensureVisible(deleteDemo);
+      await tester.tap(deleteDemo);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Only demo clothes for this activity are removed. Your own garments stay.',
+        ),
+        findsOneWidget,
+      );
+      expect(api.demoDeletes, 0);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Delete demo wardrobe'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete demo wardrobe'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      expect(api.demoDeletes, 0);
+      expect(find.text('DEMO'), findsOneWidget);
 
-    expect(api.demoDeletes, 1);
-    expect(find.text('Custom touring shell'), findsNothing);
-    expect(find.text('DEMO'), findsNothing);
-    expect(find.text('Delete demo wardrobe'), findsNothing);
-    expect(find.text('My jacket'), findsOneWidget);
-  });
+      await tester.ensureVisible(deleteDemo);
+      await tester.tap(deleteDemo);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Delete demo wardrobe'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(api.demoDeletes, 1);
+      expect(find.text('Custom touring shell'), findsNothing);
+      expect(find.text('DEMO'), findsNothing);
+      expect(find.text('Delete demo wardrobe'), findsNothing);
+      expect(find.text('My jacket'), findsOneWidget);
+    },
+  );
 
   testWidgets('hides the demo delete action when no demo garments remain', (
     tester,
@@ -71,23 +85,24 @@ void main() {
     expect(find.text('My jacket'), findsOneWidget);
   });
 
-  testWidgets('offers demo clothes when the wardrobe already has personal garments', (
-    tester,
-  ) async {
-    final api = _FakeApi([
-      _garment(id: 'mine', name: 'My jacket', isDemo: false),
-    ]);
-    await tester.pumpWidget(_harness(api));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'offers demo clothes when the wardrobe already has personal garments',
+    (tester) async {
+      final api = _FakeApi([
+        _garment(id: 'mine', name: 'My jacket', isDemo: false),
+      ]);
+      await tester.pumpWidget(_harness(api));
+      await tester.pumpAndSettle();
 
-    expect(find.text('My jacket'), findsOneWidget);
-    expect(find.text('Add demo clothes'), findsOneWidget);
-    expect(find.text('Delete demo wardrobe'), findsNothing);
+      expect(find.text('My jacket'), findsOneWidget);
+      expect(find.text('Add demo clothes'), findsOneWidget);
+      expect(find.text('Delete demo wardrobe'), findsNothing);
 
-    await tester.pumpWidget(_harness(api, const Locale('nb')));
-    await tester.pumpAndSettle();
-    expect(find.text('Legg til demo-klær'), findsOneWidget);
-  });
+      await tester.pumpWidget(_harness(api, const Locale('nb')));
+      await tester.pumpAndSettle();
+      expect(find.text('Legg til demo-klær'), findsOneWidget);
+    },
+  );
 
   testWidgets('uses the Norwegian demo delete action', (tester) async {
     final api = _FakeApi([
@@ -99,6 +114,25 @@ void main() {
     expect(find.text('DEMO'), findsOneWidget);
     expect(find.text('Slett demo-garderobe'), findsOneWidget);
     expect(find.text('Delete demo wardrobe'), findsNothing);
+  });
+
+  testWidgets('a failed wardrobe load can be retried', (tester) async {
+    final api = _FakeApi([])..failLoads = 1;
+    await tester.pumpWidget(_harness(api));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('wardrobe-load-error')), findsOneWidget);
+    expect(
+      find.text('Something went wrong. Please try again.'),
+      findsOneWidget,
+    );
+    expect(find.text('No garments yet'), findsNothing);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('wardrobe-load-error')), findsNothing);
+    expect(find.text('No garments yet'), findsOneWidget);
   });
 }
 
@@ -154,9 +188,15 @@ class _FakeApi extends ApiClient {
 
   final List<Map<String, dynamic>> garments;
   int demoDeletes = 0;
+  int failLoads = 0;
+  int loadAttempts = 0;
 
   @override
   Future<List<dynamic>> getList(String path, {bool auth = true}) async {
+    loadAttempts += 1;
+    if (loadAttempts <= failLoads) {
+      throw ApiException('unavailable', statusCode: 503);
+    }
     return garments.map((item) => Map<String, dynamic>.from(item)).toList();
   }
 

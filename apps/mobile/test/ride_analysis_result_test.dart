@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:motorcycle_clothing/features/plan/ride_analysis_result_screen.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
+import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   setUpAll(() {
@@ -14,10 +16,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
+      _analysisApp(
         home: RideAnalysisResultScreen(
           payload: {
             'route': {'name': 'Hill loop'},
@@ -61,10 +60,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
+      _analysisApp(
         home: RideAnalysisResultScreen(
           payload: {
             'route': {'name': 'Lake loop'},
@@ -94,10 +90,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(800, 2400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
+      _analysisApp(
         home: RideAnalysisResultScreen(
           payload: {
             'route': {
@@ -172,11 +165,11 @@ void main() {
     );
     expect(find.text('ELEVATION_PARTIAL'), findsNothing);
     expect(find.text('Low'), findsOneWidget);
-    expect(find.text('Base · 1°C · 180 m'), findsOneWidget);
-    expect(find.text('Mid · -3°C · 900 m · estimated height'), findsOneWidget);
+    expect(find.text('Base · 1 °C · 180 m'), findsOneWidget);
+    expect(find.text('Mid · -3 °C · 900 m · estimated height'), findsOneWidget);
     expect(find.textContaining('Upper ·'), findsNothing);
     expect(find.text('Elevation source: © Kartverket'), findsOneWidget);
-    expect(find.text('Exposure -6°C'), findsOneWidget);
+    expect(find.text('Exposure -6 °C'), findsOneWidget);
 
     final wearY = tester.getTopLeft(find.text('Wear')).dy;
     final packY = tester.getTopLeft(find.text('Pack')).dy;
@@ -191,9 +184,7 @@ void main() {
 
   testWidgets('analysis keeps uncertainty in Norwegian', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+      _analysisApp(
         locale: const Locale('nb'),
         home: const RideAnalysisResultScreen(
           payload: {
@@ -219,4 +210,58 @@ void main() {
     expect(find.text('Lav'), findsOneWidget);
     expect(find.text('VILLAGE_WEATHER_NOT_USED_AS_SUMMIT'), findsNothing);
   });
+
+  testWidgets('analysis uses the profile temperature and wind units', (
+    tester,
+  ) async {
+    final units = UnitPreferencesController()
+      ..temperatureUnit = 'fahrenheit'
+      ..windSpeedUnit = 'mph';
+    await tester.pumpWidget(
+      _analysisApp(
+        units: units,
+        home: RideAnalysisResultScreen(
+          payload: {
+            'route': {'name': 'Hill loop'},
+            'weather': {'minTempC': -8, 'maxTempC': 1, 'maxWindMs': 12},
+            'recommendation': {
+              'effectiveTempC': -6,
+              'wear': const <Map<String, dynamic>>[],
+              'pack': const <Map<String, dynamic>>[],
+              'exposure': {
+                'baseTempC': 1,
+                'sites': [
+                  {'role': 'base', 'elevationM': 180, 'estimated': false},
+                ],
+              },
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Temp 18–34 °F'), findsOneWidget);
+    expect(find.text('Exposure 21 °F'), findsOneWidget);
+    expect(find.text('Wind 27 mph'), findsOneWidget);
+    expect(find.text('Base · 34 °F · 180 m'), findsOneWidget);
+    expect(find.textContaining('°C'), findsNothing);
+    expect(find.textContaining('m/s'), findsNothing);
+  });
+}
+
+Widget _analysisApp({
+  required Widget home,
+  Locale locale = const Locale('en'),
+  UnitPreferencesController? units,
+}) {
+  return ChangeNotifierProvider<UnitPreferencesController>.value(
+    value: units ?? UnitPreferencesController(),
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
+      home: home,
+    ),
+  );
 }

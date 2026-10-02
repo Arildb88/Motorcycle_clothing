@@ -53,13 +53,16 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             .map((e) => Garment.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
         _shared = {
-          for (final category in (sharing['sharedCategories'] as List? ?? const []))
+          for (final category
+              in (sharing['sharedCategories'] as List? ?? const []))
             category.toString(),
         };
       });
     } on ApiException catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -69,8 +72,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   Future<void> _seedDemo() async {
     final api = context.read<ApiClient>();
     final activity = _activity.apiValue;
-    final code =
-        Localizations.localeOf(context).languageCode == 'nb' ? 'nb' : 'en';
+    final code = Localizations.localeOf(context).languageCode == 'nb'
+        ? 'nb'
+        : 'en';
     await api.post(
       '/wardrobe/actions/seed-demo?lang=$code&activity=$activity',
       {},
@@ -126,7 +130,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizeUserError(e, AppLocalizations.of(context)))),
+        SnackBar(
+          content: Text(localizeUserError(e, AppLocalizations.of(context))),
+        ),
       );
       await _load();
     }
@@ -162,10 +168,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   Future<void> _openForm({Garment? existing}) async {
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => GarmentFormScreen(
-          existing: existing,
-          activity: _activity.apiValue,
-        ),
+        builder: (_) =>
+            GarmentFormScreen(existing: existing, activity: _activity.apiValue),
       ),
     );
     if (changed == true) await _load();
@@ -219,51 +223,66 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                    ? Center(child: Text(_error!))
-                    : RefreshIndicator(
-                        onRefresh: _load,
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                          children: [
-                            if (hiking)
-                              Text(l10n.wardrobeHikingUnavailable)
-                            else ...[
-                              _SharingPanel(
-                                shared: _shared,
-                                onChanged: _toggleShared,
-                              ),
-                              const SizedBox(height: 12),
-                              if (_items.isEmpty)
-                                _EmptyWardrobe(
-                                  onAdd: () => _openForm(),
-                                  onSeed: _seedDemo,
-                                )
-                              else
-                                ...[
-                                  for (var i = 0; i < _items.length; i++) ...[
-                                    if (i > 0) const SizedBox(height: 8),
-                                    _GarmentTile(
-                                      garment: _items[i],
-                                      onOpen: () => _openForm(existing: _items[i]),
-                                      onDelete: () => _delete(_items[i]),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 12),
-                                  if (!_items.any((g) => g.isDemo))
-                                    OutlinedButton(
-                                      onPressed: _seedDemo,
-                                      child: Text(l10n.wardrobeLoadDemo),
-                                    ),
-                                  if (_items.any((g) => g.isDemo))
-                                    OutlinedButton(
-                                      onPressed: _deleteDemo,
-                                      child: Text(l10n.wardrobeDeleteDemo),
-                                    ),
-                                ],
-                            ],
-                          ],
-                        ),
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        key: const Key('wardrobe-load-error'),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_error!, textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: _load,
+                            child: Text(l10n.commonRetry),
+                          ),
+                        ],
                       ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      children: [
+                        if (hiking)
+                          Text(l10n.wardrobeHikingUnavailable)
+                        else ...[
+                          _SharingPanel(
+                            shared: _shared,
+                            onChanged: _toggleShared,
+                          ),
+                          const SizedBox(height: 12),
+                          if (_items.isEmpty)
+                            _EmptyWardrobe(
+                              onAdd: () => _openForm(),
+                              onSeed: _seedDemo,
+                            )
+                          else ...[
+                            for (var i = 0; i < _items.length; i++) ...[
+                              if (i > 0) const SizedBox(height: 8),
+                              _GarmentTile(
+                                garment: _items[i],
+                                onOpen: () => _openForm(existing: _items[i]),
+                                onDelete: () => _delete(_items[i]),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            if (!_items.any((g) => g.isDemo))
+                              OutlinedButton(
+                                onPressed: _seedDemo,
+                                child: Text(l10n.wardrobeLoadDemo),
+                              ),
+                            if (_items.any((g) => g.isDemo))
+                              OutlinedButton(
+                                onPressed: _deleteDemo,
+                                child: Text(l10n.wardrobeDeleteDemo),
+                              ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
           ),
           if (_showWardrobeAd)
             const AdBannerSlot(
@@ -277,14 +296,14 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   }
 
   bool get _showWardrobeAd => evaluateAdPlacement(
-        AdPlacementRequest(
-          adsEnabled: AppConfig.adsEnabled,
-          surface: AdSurface.wardrobeList,
-          format: AdFormat.banner,
-          contentState: _wardrobeAdState,
-          position: AdPlacementPosition.reservedFooter,
-        ),
-      ).show;
+    AdPlacementRequest(
+      adsEnabled: AppConfig.adsEnabled,
+      surface: AdSurface.wardrobeList,
+      format: AdFormat.banner,
+      contentState: _wardrobeAdState,
+      position: AdPlacementPosition.reservedFooter,
+    ),
+  ).show;
 
   AdContentState get _wardrobeAdState {
     if (_loading) return AdContentState.loading;
@@ -325,7 +344,6 @@ class _SharingPanel extends StatelessWidget {
         for (final category in shareableWardrobeCategories)
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            dense: true,
             title: Text(labels[category]!),
             value: shared.contains(category),
             onChanged: (value) => onChanged(category, value ?? false),
@@ -357,10 +375,7 @@ class _GarmentTile extends StatelessWidget {
         title: Row(
           children: [
             Flexible(
-              child: Text(
-                garment.name,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(garment.name, overflow: TextOverflow.ellipsis),
             ),
             if (garment.isDemo) ...[
               const SizedBox(width: 8),
@@ -426,17 +441,11 @@ class _EmptyWardrobe extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            l10n.wardrobeEmptyBody,
-            textAlign: TextAlign.center,
-          ),
+          Text(l10n.wardrobeEmptyBody, textAlign: TextAlign.center),
           const SizedBox(height: 20),
           FilledButton(onPressed: onAdd, child: Text(l10n.wardrobeAdd)),
           const SizedBox(height: 8),
-          TextButton(
-            onPressed: onSeed,
-            child: Text(l10n.wardrobeLoadDemo),
-          ),
+          TextButton(onPressed: onSeed, child: Text(l10n.wardrobeLoadDemo)),
         ],
       ),
     );

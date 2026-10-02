@@ -4,6 +4,7 @@ import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/auth_errors.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+import 'package:motorcycle_clothing/theme/outline_form_field.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -40,21 +41,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final token = _token.text.trim();
     final password = _password.text;
     if (token.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authInvalidResetToken)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authInvalidResetToken)));
       return;
     }
     if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authPasswordTooShort)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authPasswordTooShort)));
       return;
     }
     if (password != _confirm.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authPasswordMismatch)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authPasswordMismatch)));
       return;
     }
 
@@ -63,15 +61,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     try {
       await auth.resetPassword(token: token, password: password);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authPasswordResetSuccess)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authPasswordResetSuccess)));
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizeAuthError(e, l10n))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(localizeAuthError(e, l10n))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -98,29 +94,38 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _token,
-                decoration: InputDecoration(labelText: l10n.authResetTokenLabel),
+                decoration: InputDecoration(
+                  labelText: l10n.authResetTokenLabel,
+                ),
                 autocorrect: false,
                 enabled: !_busy,
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _password,
-                decoration: InputDecoration(labelText: l10n.authNewPasswordLabel),
-                obscureText: true,
-                enabled: !_busy,
+              OutlineFormField(
+                child: TextField(
+                  controller: _password,
+                  decoration: InputDecoration(
+                    labelText: l10n.authNewPasswordLabel,
+                  ),
+                  obscureText: true,
+                  enabled: !_busy,
+                ),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _confirm,
-                decoration:
-                    InputDecoration(labelText: l10n.authConfirmPasswordLabel),
-                obscureText: true,
-                enabled: !_busy,
+              OutlineFormField(
+                child: TextField(
+                  controller: _confirm,
+                  decoration: InputDecoration(
+                    labelText: l10n.authConfirmPasswordLabel,
+                  ),
+                  obscureText: true,
+                  enabled: !_busy,
+                ),
               ),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _busy ? null : _submit,
-                child: Text(l10n.authSetNewPassword),
+                child: _busy
+                    ? const FilledButtonProgress()
+                    : Text(l10n.authSetNewPassword),
               ),
             ],
           ),

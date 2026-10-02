@@ -29,9 +29,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final l10n = AppLocalizations.of(context);
     final email = _email.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authInvalidEmail)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authInvalidEmail)));
       return;
     }
 
@@ -46,9 +45,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final devToken = res['devResetToken'] as String?;
       if (!mounted) return;
       setState(() => _info = message);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
       if (devToken != null && devToken.isNotEmpty) {
         await Navigator.of(context).push(
           MaterialPageRoute(
@@ -58,9 +56,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizeAuthError(e, l10n))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(localizeAuthError(e, l10n))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -95,7 +92,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _busy ? null : _submit,
-                child: Text(l10n.authSendResetLink),
+                child: _busy
+                    ? const FilledButtonProgress()
+                    : Text(l10n.authSendResetLink),
               ),
               if (_info != null) ...[
                 const SizedBox(height: 16),

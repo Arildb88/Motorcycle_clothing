@@ -367,7 +367,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get unitsPresetMetric => 'Meter';
 
   @override
-  String get unitsPresetImperial => 'Miles';
+  String get unitsPresetImperial => 'Engelske mil';
 
   @override
   String get unitsTemperature => 'Temperatur';
@@ -391,7 +391,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get unitKilometers => 'Kilometer (km)';
 
   @override
-  String get unitMiles => 'Miles (mi)';
+  String get unitMiles => 'Engelske mil (mi)';
 
   @override
   String get unitKmh => 'km/t';

@@ -4,6 +4,7 @@ import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/auth_errors.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+import 'package:motorcycle_clothing/theme/outline_form_field.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -32,21 +33,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final current = _current.text;
     final password = _password.text;
     if (current.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authCurrentPasswordRequired)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.authCurrentPasswordRequired)));
       return;
     }
     if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authPasswordTooShort)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authPasswordTooShort)));
       return;
     }
     if (password != _confirm.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authPasswordMismatch)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authPasswordMismatch)));
       return;
     }
 
@@ -58,15 +57,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         newPassword: password,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.authPasswordChanged)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.authPasswordChanged)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizeAuthError(e, l10n))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(localizeAuthError(e, l10n))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -93,35 +90,37 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _current,
-                decoration:
-                    InputDecoration(labelText: l10n.authCurrentPasswordLabel),
+                decoration: InputDecoration(
+                  labelText: l10n.authCurrentPasswordLabel,
+                ),
                 obscureText: true,
                 enabled: !_busy,
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _password,
-                decoration: InputDecoration(labelText: l10n.authNewPasswordLabel),
-                obscureText: true,
-                enabled: !_busy,
+              OutlineFormField(
+                child: TextField(
+                  controller: _password,
+                  decoration: InputDecoration(
+                    labelText: l10n.authNewPasswordLabel,
+                  ),
+                  obscureText: true,
+                  enabled: !_busy,
+                ),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _confirm,
-                decoration:
-                    InputDecoration(labelText: l10n.authConfirmPasswordLabel),
-                obscureText: true,
-                enabled: !_busy,
+              OutlineFormField(
+                child: TextField(
+                  controller: _confirm,
+                  decoration: InputDecoration(
+                    labelText: l10n.authConfirmPasswordLabel,
+                  ),
+                  obscureText: true,
+                  enabled: !_busy,
+                ),
               ),
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: _busy ? null : _submit,
                 child: _busy
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const FilledButtonProgress()
                     : Text(l10n.authChangePassword),
               ),
             ],

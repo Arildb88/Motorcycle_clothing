@@ -26,14 +26,14 @@ class _AdBannerSlotState extends State<AdBannerSlot> {
   bool _loaded = false;
 
   bool get _allowed => evaluateAdPlacement(
-        AdPlacementRequest(
-          adsEnabled: AppConfig.adsEnabled,
-          surface: widget.surface,
-          format: AdFormat.banner,
-          contentState: widget.contentState,
-          position: widget.position,
-        ),
-      ).show;
+    AdPlacementRequest(
+      adsEnabled: AppConfig.adsEnabled,
+      surface: widget.surface,
+      format: AdFormat.banner,
+      contentState: widget.contentState,
+      position: widget.position,
+    ),
+  ).show;
 
   void _load() {
     if (!_allowed || _ad != null) return;
@@ -105,14 +105,24 @@ class AtmosphereBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFD7E3E8),
-            Color(0xFFE8EEF1),
-            Color(0xFFC5D4DC),
-          ],
+          colors: [Color(0xFFD7E3E8), Color(0xFFE8EEF1), Color(0xFFC5D4DC)],
         ),
       ),
       child: child,
+    );
+  }
+}
+
+/// Spinner that stays visible on RideWear's dark filled buttons.
+class FilledButtonProgress extends StatelessWidget {
+  const FilledButtonProgress({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.fog),
     );
   }
 }

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_presentation.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
+import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+
+final _metricUnits = UnitPreferencesController();
 
 /// Clothing recommendation after planner "Analyze ride".
 class RideAnalysisResultScreen extends StatelessWidget {
@@ -15,6 +19,10 @@ class RideAnalysisResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final units = context.watch<UnitPreferencesController?>();
+    final fmt = (units ?? _metricUnits).formatter(
+      localeName: Localizations.localeOf(context).toString(),
+    );
     final route = payload['route'] as Map<String, dynamic>? ?? const {};
     final weather = payload['weather'] as Map<String, dynamic>? ?? const {};
     final view = presentRecommendation(payload);
@@ -66,14 +74,17 @@ class RideAnalysisResultScreen extends StatelessWidget {
                 Chip(
                   label: Text(
                     l10n.analysisTempChip(
-                      '${(weather['minTempC'] as num).toStringAsFixed(0)}–${(weather['maxTempC'] as num).toStringAsFixed(0)}°C',
+                      fmt.temperatureRangeFromC(
+                        weather['minTempC'] as num,
+                        weather['maxTempC'] as num,
+                      ),
                     ),
                   ),
                 ),
               if (view.exposureC != null)
                 Chip(
                   label: Text(
-                    '${l10n.metricExposure} ${view.exposureC!.toStringAsFixed(0)}°C',
+                    '${l10n.metricExposure} ${fmt.temperatureFromC(view.exposureC!)}',
                   ),
                 ),
               if (weather['maxRainProbPct'] != null)
@@ -88,13 +99,17 @@ class RideAnalysisResultScreen extends StatelessWidget {
                 Chip(
                   label: Text(
                     l10n.analysisWindChip(
-                      '${(weather['maxWindMs'] as num).toStringAsFixed(0)} m/s',
+                      fmt.windFromMs(weather['maxWindMs'] as num),
                     ),
                   ),
                 ),
             ],
           ),
-          ...recommendationContextWidgets(context, view),
+          ...recommendationContextWidgets(
+            context,
+            view,
+            formatTemp: fmt.temperatureFromC,
+          ),
           const SizedBox(height: 24),
           recommendationSectionTitle(l10n.wearSection),
           const SizedBox(height: 4),

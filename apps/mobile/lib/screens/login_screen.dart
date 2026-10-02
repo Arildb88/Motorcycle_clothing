@@ -6,6 +6,7 @@ import 'package:motorcycle_clothing/screens/forgot_password_screen.dart';
 import 'package:motorcycle_clothing/services/auth_errors.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+import 'package:motorcycle_clothing/theme/outline_form_field.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/oauth_flow.dart';
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _name = TextEditingController();
   bool _registerMode = false;
   bool _busy = false;
+  String? _formError;
   Map<String, dynamic>? _providers;
   late final AnimationController _fade;
 
@@ -79,13 +81,14 @@ class _LoginScreenState extends State<LoginScreen>
     final l10n = AppLocalizations.of(context);
     final validationError = _validate(l10n);
     if (validationError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validationError)),
-      );
+      setState(() => _formError = validationError);
       return;
     }
 
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _formError = null;
+    });
     final auth = context.read<AuthState>();
     try {
       if (_registerMode) {
@@ -95,17 +98,13 @@ class _LoginScreenState extends State<LoginScreen>
           displayName: _name.text.trim(),
         );
       } else {
-        await auth.login(
-          email: _email.text.trim(),
-          password: _password.text,
-        );
+        await auth.login(email: _email.text.trim(), password: _password.text);
       }
     } catch (e) {
       if (mounted) {
         final message = localizeAuthError(auth.lastError ?? e, l10n);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -117,8 +116,7 @@ class _LoginScreenState extends State<LoginScreen>
     final l10n = AppLocalizations.of(context);
     final auth = context.read<AuthState>();
     final api = context.read<ApiClient>();
-    final enabled =
-        (_providers?[provider] as Map?)?['enabled'] == true;
+    final enabled = (_providers?[provider] as Map?)?['enabled'] == true;
     final demo = _providers?['demoOAuthAllowed'] == true;
     try {
       if (enabled) {
@@ -130,15 +128,12 @@ class _LoginScreenState extends State<LoginScreen>
           accessToken: 'demo:$provider-rider',
         );
       } else {
-        throw ApiException(
-          '$provider login is not configured on the server',
-        );
+        throw ApiException('$provider login is not configured on the server');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizeAuthError(e, l10n))),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(localizeAuthError(e, l10n))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -172,26 +167,40 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
                 const SizedBox(height: 36),
-                if (_registerMode) ...[
+                if (_registerMode)
                   TextField(
                     controller: _name,
-                    decoration:
-                        InputDecoration(labelText: l10n.authDisplayNameLabel),
+                    decoration: InputDecoration(
+                      labelText: l10n.authDisplayNameLabel,
+                    ),
                     textCapitalization: TextCapitalization.words,
                   ),
-                  const SizedBox(height: 12),
-                ],
-                TextField(
-                  controller: _email,
-                  decoration: InputDecoration(labelText: l10n.authEmailLabel),
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _password,
-                  decoration: InputDecoration(labelText: l10n.authPasswordLabel),
-                  obscureText: true,
+                if (_registerMode)
+                  OutlineFormField(
+                    child: TextField(
+                      controller: _email,
+                      decoration: InputDecoration(
+                        labelText: l10n.authEmailLabel,
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      autocorrect: false,
+                    ),
+                  )
+                else
+                  TextField(
+                    controller: _email,
+                    decoration: InputDecoration(labelText: l10n.authEmailLabel),
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                  ),
+                OutlineFormField(
+                  child: TextField(
+                    controller: _password,
+                    decoration: InputDecoration(
+                      labelText: l10n.authPasswordLabel,
+                    ),
+                    obscureText: true,
+                  ),
                 ),
                 if (!_registerMode)
                   Align(
@@ -202,22 +211,31 @@ class _LoginScreenState extends State<LoginScreen>
                           : () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      const ForgotPasswordScreen(),
+                                  builder: (_) => const ForgotPasswordScreen(),
                                 ),
                               );
                             },
                       child: Text(l10n.authForgotPassword),
                     ),
                   ),
+                if (_formError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _formError!,
+                    key: const Key('login-form-error'),
+                    style: TextStyle(color: Colors.red.shade800),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 FilledButton(
                   onPressed: _busy ? null : _submit,
-                  child: Text(
-                    _registerMode
-                        ? l10n.authCreateAccount
-                        : l10n.authContinueWithEmail,
-                  ),
+                  child: _busy
+                      ? const FilledButtonProgress()
+                      : Text(
+                          _registerMode
+                              ? l10n.authCreateAccount
+                              : l10n.authContinueWithEmail,
+                        ),
                 ),
                 TextButton(
                   onPressed: _busy

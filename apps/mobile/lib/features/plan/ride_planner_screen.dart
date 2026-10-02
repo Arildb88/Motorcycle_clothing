@@ -26,6 +26,7 @@ import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/route_preview_copy.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
+import 'package:motorcycle_clothing/widgets/common.dart';
 
 enum _XcPlanningChoice { nearby, manual }
 
@@ -820,15 +821,23 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
           ),
           const SizedBox(height: 8),
           SegmentedButton<PlanningMode>(
+            expandedInsets: EdgeInsets.zero,
+            showSelectedIcon: false,
             segments: [
               ButtonSegment(
                 value: PlanningMode.departure,
-                label: Text(l10n.plannerDeparture),
+                label: Text(
+                  l10n.plannerDeparture,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 icon: const Icon(Icons.logout),
               ),
               ButtonSegment(
                 value: PlanningMode.arrival,
-                label: Text(l10n.plannerArrival),
+                label: Text(
+                  l10n.plannerArrival,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 icon: const Icon(Icons.login),
               ),
             ],
@@ -881,13 +890,14 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
             onTap: _pickDateTime,
           ),
           const SizedBox(height: 12),
-          Text(
-            l10n.plannerOptionsSection,
-            style: GoogleFonts.barlowCondensed(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+          if (_state.usesRoadPreview)
+            Text(
+              l10n.plannerOptionsSection,
+              style: GoogleFonts.barlowCondensed(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
           ResortDisciplineControl(
             activityType: _state.activityType,
             onChanged: _setResortDiscipline,
@@ -929,8 +939,12 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
             onChanged: (v) =>
                 setState(() => _state = _state.copyWith(routeName: v)),
             decoration: InputDecoration(
-              labelText: l10n.plannerRouteName,
-              hintText: l10n.plannerRouteNameHint,
+              labelText: _state.usesRoadPreview
+                  ? l10n.plannerRouteName
+                  : l10n.commonName,
+              hintText: _state.usesRoadPreview
+                  ? l10n.plannerRouteNameHint
+                  : null,
             ),
           ),
           if (_error != null) ...[
@@ -941,11 +955,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
           FilledButton.icon(
             onPressed: (_busy || !_state.canAnalyze) ? null : _analyzeRide,
             icon: _busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const FilledButtonProgress()
                 : const Icon(Icons.wb_cloudy_outlined),
             label: Text(l10n.plannerAnalyzeRide),
           ),

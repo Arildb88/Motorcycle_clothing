@@ -34,5 +34,7 @@ void main() {
     expect(nb.unitsTemperature, 'Temperatur');
     expect(nb.unitCelsius, contains('Celsius'));
     expect(nb.unitsPresetMetric, 'Meter');
+    expect(nb.unitsPresetImperial, 'Engelske mil');
+    expect(nb.unitMiles, 'Engelske mil (mi)');
   });
 }

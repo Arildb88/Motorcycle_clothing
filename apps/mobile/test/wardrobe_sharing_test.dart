@@ -74,6 +74,11 @@ void main() {
   testWidgets('cycling form can add resort membership in Norwegian', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final api = _SharingApi(const []);
     await tester.pumpWidget(_form(api, 'cycling', const Locale('nb')));
     await tester.pumpAndSettle();
@@ -84,9 +89,9 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Ulltrøye');
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Alpint & snowboard'));
     await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Legg i garderoben'));
+    final save = find.text('Legg i garderoben');
+    await tester.ensureVisible(save);
+    await tester.tap(save);
     await tester.pumpAndSettle();
 
     expect(api.createdTags, [

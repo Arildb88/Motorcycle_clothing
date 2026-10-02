@@ -26,6 +26,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   Map<String, dynamic>? _providers;
   Map<String, dynamic>? _connectionStatus;
   bool _loading = true;
+  String? _loadError;
   final _name = TextEditingController();
 
   @override
@@ -41,7 +42,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     final api = context.read<ApiClient>();
     try {
       final me = await api.get('/users/me');
@@ -67,14 +71,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       });
     } catch (e) {
       if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              localizeUserError(e, AppLocalizations.of(context)),
-            ),
-          ),
-        );
+        setState(() {
+          _loading = false;
+          _loadError = localizeUserError(e, AppLocalizations.of(context));
+        });
       }
     }
   }
@@ -87,8 +87,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       'displayName': _name.text.trim(),
       'defaultActivity': activity.defaultActivity.apiValue,
       'showActivityChooserOnLaunch': activity.showChooserOnLaunch,
-      'coldSensitivity':
-          (_me?['profile'] as Map?)?['coldSensitivity'] ?? 0,
+      'coldSensitivity': (_me?['profile'] as Map?)?['coldSensitivity'] ?? 0,
       ...units.toApiBody(),
     });
     if (mounted) {
@@ -106,14 +105,12 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     try {
       await api.patch('/users/me', units.toApiBody());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.unitsSaved)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.unitsSaved)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizeUserError(e, l10n))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(localizeUserError(e, l10n))));
     }
   }
 
@@ -122,18 +119,39 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     final auth = context.watch<AuthState>();
     final activity = context.watch<ActivityContext>();
     final l10n = AppLocalizations.of(context);
-    if (_loading || _me == null) {
+    if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (_me == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            key: const Key('profile-load-error'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _loadError ?? l10n.errorCouldNotLoad,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(onPressed: _load, child: Text(l10n.commonRetry)),
+            ],
+          ),
+        ),
+      );
+    }
 
-    final identities =
-        (_me!['authIdentities'] as List? ?? const []).cast<dynamic>();
+    final identities = (_me!['authIdentities'] as List? ?? const [])
+        .cast<dynamic>();
     final canChangePassword = identities.any(
       (raw) => raw is Map && raw['provider']?.toString() == 'local',
     );
-    final connections =
-        (_me!['connectedAccounts'] as List? ?? const []).cast<dynamic>();
-    final strava = connections.cast<Map>().where((c) => c['provider'] == 'strava');
+    final connections = (_me!['connectedAccounts'] as List? ?? const [])
+        .cast<dynamic>();
+    final strava = connections.cast<Map>().where(
+      (c) => c['provider'] == 'strava',
+    );
     final stravaConnected = strava.isNotEmpty;
     final stravaCfg =
         (_connectionStatus?['strava'] as Map?)?['enabled'] == true;
@@ -171,11 +189,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           OutlineFormField(
             child: DropdownButtonFormField<String>(
               // ignore: deprecated_member_use
-              value: context.watch<LocaleController>().preferredCode ??
+              value:
+                  context.watch<LocaleController>().preferredCode ??
                   context.watch<LocaleController>().locale.languageCode,
-              decoration: InputDecoration(
-                labelText: l10n.language,
-              ),
+              decoration: InputDecoration(labelText: l10n.language),
               items: [
                 DropdownMenuItem(
                   value: 'nb',
@@ -209,7 +226,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             child: DropdownButtonFormField<AppActivity>(
               // ignore: deprecated_member_use
               value: activity.defaultActivity,
-              decoration: InputDecoration(labelText: l10n.profileDefaultActivity),
+              decoration: InputDecoration(
+                labelText: l10n.profileDefaultActivity,
+              ),
               items: AppActivity.selectable
                   .map(
                     (a) => DropdownMenuItem(
@@ -236,7 +255,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             return ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(_providerLabel(l10n, i['provider']?.toString())),
-              subtitle: Text(i['providerEmail']?.toString() ?? l10n.profileLinked),
+              subtitle: Text(
+                i['providerEmail']?.toString() ?? l10n.profileLinked,
+              ),
               leading: const Icon(Icons.check_circle_outline),
             );
           }),
@@ -253,25 +274,31 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           const SizedBox(height: 12),
           Text(l10n.profileServices.toUpperCase(), style: _sectionStyle),
           if (stravaConnected)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                'Strava · ${strava.first['displayName'] ?? l10n.profileConnected}',
-              ),
-              subtitle: Text(l10n.profileConnected),
-              trailing: Wrap(
-                spacing: 4,
-                children: [
-                  TextButton(
-                    onPressed: stravaCfg ? _syncStrava : null,
-                    child: Text(l10n.profileSync),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'Strava · ${strava.first['displayName'] ?? l10n.profileConnected}',
                   ),
-                  TextButton(
-                    onPressed: () => _disconnect('strava'),
-                    child: Text(l10n.profileDisconnect),
-                  ),
-                ],
-              ),
+                  subtitle: Text(l10n.profileConnected),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    TextButton(
+                      onPressed: stravaCfg ? _syncStrava : null,
+                      child: Text(l10n.profileSync),
+                    ),
+                    TextButton(
+                      onPressed: () => _disconnect('strava'),
+                      child: Text(l10n.profileDisconnect),
+                    ),
+                  ],
+                ),
+              ],
             )
           else
             _linkButton(
@@ -281,7 +308,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               disabledHint: l10n.profileStravaNotConfigured,
             ),
           const SizedBox(height: 12),
-          Text(l10n.unitsSection, style: _sectionStyle),
+          Text(l10n.unitsSection.toUpperCase(), style: _sectionStyle),
           _UnitsSection(onChanged: _saveUnits),
           FilledButton(onPressed: _saveBasics, child: Text(l10n.profileSave)),
           const SizedBox(height: 16),
@@ -318,11 +345,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   }
 
   TextStyle get _sectionStyle => GoogleFonts.barlowCondensed(
-        fontSize: 14,
-        letterSpacing: 1.1,
-        color: AppTheme.steel,
-        fontWeight: FontWeight.w600,
-      );
+    fontSize: 14,
+    letterSpacing: 1.1,
+    color: AppTheme.steel,
+    fontWeight: FontWeight.w600,
+  );
 
   String _providerLabel(AppLocalizations l10n, String? p) {
     switch (p) {
@@ -353,10 +380,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             child: Text(label),
           ),
           if (!enabled && disabledHint != null)
-            Text(
-              disabledHint,
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(disabledHint, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
@@ -386,7 +410,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizeUserError(e, AppLocalizations.of(context)))),
+          SnackBar(
+            content: Text(localizeUserError(e, AppLocalizations.of(context))),
+          ),
         );
       }
     } catch (e) {

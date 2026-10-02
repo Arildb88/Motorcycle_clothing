@@ -6,6 +6,7 @@ import 'package:motorcycle_clothing/domain/wardrobe_sharing.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/theme/outline_form_field.dart';
 
 class GarmentFormScreen extends StatefulWidget {
   const GarmentFormScreen({
@@ -62,8 +63,7 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       _water = g.waterResistTier.toDouble();
       _breath = g.breathabilityTier.toDouble();
       _thermalLiner = g.components.any((c) => c.kind == 'thermal_liner');
-      _waterproofLiner =
-          g.components.any((c) => c.kind == 'waterproof_liner');
+      _waterproofLiner = g.components.any((c) => c.kind == 'waterproof_liner');
       _motorcycleLocked = tagsAreMotorcycleOnly(g.activityTags);
       if (!_motorcycleLocked) {
         _membership.addAll(categoriesForActivityTags(g.activityTags));
@@ -159,14 +159,18 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
     if (!_motorcycleLocked && _membership.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).wardrobeActivityMembership),
+          content: Text(
+            AppLocalizations.of(context).wardrobeActivityMembership,
+          ),
         ),
       );
       return;
     }
     if (_name.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).garmentNameRequired)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).garmentNameRequired),
+        ),
       );
       return;
     }
@@ -242,7 +246,6 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             for (final category in shareableWardrobeCategories)
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                dense: true,
                 title: Text(_membershipLabel(l10n, category)),
                 value: _membership.contains(category),
                 onChanged: (value) {
@@ -264,58 +267,61 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             ),
             textCapitalization: TextCapitalization.sentences,
           ),
-          if (!_isEdit) ...[
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String?>(
-              // ignore: deprecated_member_use
-              value: _preset,
-              decoration: InputDecoration(
-                labelText: l10n.garmentQuickType,
+          if (!_isEdit)
+            OutlineFormField(
+              child: DropdownButtonFormField<String?>(
+                // ignore: deprecated_member_use
+                value: _preset,
+                decoration: InputDecoration(labelText: l10n.garmentQuickType),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(l10n.commonCustom)),
+                  ...garmentPresets.map(
+                    (p) => DropdownMenuItem(
+                      value: p['id'],
+                      child: Text(garmentPresetLabel(l10n, p['id']!)),
+                    ),
+                  ),
+                ],
+                onChanged: _applyPreset,
               ),
+            ),
+          OutlineFormField(
+            child: DropdownButtonFormField<String>(
+              // ignore: deprecated_member_use
+              value: _category,
+              decoration: InputDecoration(labelText: l10n.commonCategory),
+              items: garmentCategories
+                  .map(
+                    (c) => DropdownMenuItem(
+                      value: c,
+                      child: Text(garmentCategoryLabel(l10n, c)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) setState(() => _category = v);
+              },
+            ),
+          ),
+          OutlineFormField(
+            child: DropdownButtonFormField<String?>(
+              // ignore: deprecated_member_use
+              value: _material,
+              decoration: InputDecoration(labelText: l10n.garmentMaterial),
               items: [
-                DropdownMenuItem(value: null, child: Text(l10n.commonCustom)),
-                ...garmentPresets.map(
-                  (p) => DropdownMenuItem(
-                    value: p['id'],
-                    child: Text(garmentPresetLabel(l10n, p['id']!)),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(l10n.garmentUnspecified),
+                ),
+                ...garmentMaterials.map(
+                  (m) => DropdownMenuItem(
+                    value: m,
+                    child: Text(garmentMaterialLabel(l10n, m)),
                   ),
                 ),
               ],
-              onChanged: _applyPreset,
+              onChanged: (v) => setState(() => _material = v),
             ),
-          ],
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            // ignore: deprecated_member_use
-            value: _category,
-            decoration: InputDecoration(labelText: l10n.commonCategory),
-            items: garmentCategories
-                .map(
-                  (c) => DropdownMenuItem(
-                    value: c,
-                    child: Text(garmentCategoryLabel(l10n, c)),
-                  ),
-                )
-                .toList(),
-            onChanged: (v) {
-              if (v != null) setState(() => _category = v);
-            },
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String?>(
-            // ignore: deprecated_member_use
-            value: _material,
-            decoration: InputDecoration(labelText: l10n.garmentMaterial),
-            items: [
-              DropdownMenuItem(value: null, child: Text(l10n.garmentUnspecified)),
-              ...garmentMaterials.map(
-                (m) => DropdownMenuItem(
-                  value: m,
-                  child: Text(garmentMaterialLabel(l10n, m)),
-                ),
-              ),
-            ],
-            onChanged: (v) => setState(() => _material = v),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -343,15 +349,17 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             value: _waterproofLiner,
             onChanged: (v) => setState(() => _waterproofLiner = v),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _brand,
-            decoration: InputDecoration(labelText: l10n.garmentBrand),
+          OutlineFormField(
+            child: TextField(
+              controller: _brand,
+              decoration: InputDecoration(labelText: l10n.garmentBrand),
+            ),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _model,
-            decoration: InputDecoration(labelText: l10n.garmentModel),
+          OutlineFormField(
+            child: TextField(
+              controller: _model,
+              decoration: InputDecoration(labelText: l10n.garmentModel),
+            ),
           ),
           const SizedBox(height: 8),
           SwitchListTile(
@@ -365,21 +373,21 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             _tier(l10n.tierWarmth, _warmth, (v) => setState(() => _warmth = v)),
             _tier(l10n.tierWind, _wind, (v) => setState(() => _wind = v)),
             _tier(l10n.tierWater, _water, (v) => setState(() => _water = v)),
-            _tier(
-              l10n.tierBreath,
-              _breath,
-              (v) => setState(() => _breath = v),
-            ),
+            _tier(l10n.tierBreath, _breath, (v) => setState(() => _breath = v)),
           ],
-          TextField(
-            controller: _notes,
-            decoration: InputDecoration(labelText: l10n.garmentNotes),
-            maxLines: 2,
+          OutlineFormField(
+            child: TextField(
+              controller: _notes,
+              decoration: InputDecoration(labelText: l10n.garmentNotes),
+              maxLines: 2,
+            ),
           ),
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _busy ? null : _save,
-            child: Text(_isEdit ? l10n.garmentSaveChanges : l10n.garmentAddToWardrobe),
+            child: Text(
+              _isEdit ? l10n.garmentSaveChanges : l10n.garmentAddToWardrobe,
+            ),
           ),
         ],
       ),

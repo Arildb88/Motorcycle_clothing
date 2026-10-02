@@ -29,16 +29,37 @@ class AppTheme {
         foregroundColor: asphalt,
         centerTitle: false,
       ),
-      textTheme: _dmSansTextTheme(base.textTheme).apply(
-        bodyColor: asphalt,
-        displayColor: asphalt,
-      ),
+      textTheme: _dmSansTextTheme(base.textTheme)
+          .apply(bodyColor: asphalt, displayColor: asphalt),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: asphalt,
           foregroundColor: fog,
+          minimumSize: const Size(48, 48),
+          tapTargetSize: MaterialTapTargetSize.padded,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: asphalt,
+          minimumSize: const Size(48, 48),
+          tapTargetSize: MaterialTapTargetSize.padded,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: asphalt,
+          minimumSize: const Size(48, 48),
+          tapTargetSize: MaterialTapTargetSize.padded,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       ),
       scrollbarTheme: ScrollbarThemeData(
