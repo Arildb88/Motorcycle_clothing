@@ -27,7 +27,7 @@ API (NestJS)
     ├── RoutingPort  → Null | OpenRouteService (HeiGIT)
     ├── Auth         → Email + IdentityProviders (Facebook, Microsoft; Apple/Google later)
     ├── Connections  → ConnectedServices (Strava; Garmin/Health later)
-    └── Persistence  → Prisma (SQLite local → Postgres staging/prod)
+    └── Persistence  → Prisma (PostgreSQL 16; Supabase is a host, not a client)
 ```
 
 **Rule:** Flutter never holds provider client secrets or refresh tokens for connected services. Identity OAuth uses authorization code + PKCE; token exchange happens on the API.
@@ -338,11 +338,11 @@ Avoid collecting height/weight until a clear model need exists (it does not for 
 
 | Env | DB | Weather | Auth |
 |-----|----|---------|------|
-| Local | SQLite or local Postgres | mock | email |
+| Local | PostgreSQL 16 (Docker) | mock | email |
 | Staging | Postgres (compose) | met | email |
 | Prod | Postgres | met (+ cache) | email (+ later OAuth) |
 
-Config via env: `DATABASE_URL`, `JWT_SECRET`, `WEATHER_PROVIDER`, `MET_USER_AGENT`, `ADS_ENABLED`.
+Config via env: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `WEATHER_PROVIDER`, `MET_USER_AGENT`, `ADS_ENABLED`. Hosted Supabase URLs stay outside git. See [`docs/operations/SUPABASE_FIRST_DEPLOY.md`](docs/operations/SUPABASE_FIRST_DEPLOY.md).
 
 ---
 
@@ -399,7 +399,7 @@ PostgreSQL (Supabase-hosted OK; portable SQL preferred)
 External: MET weather · FB/MS IdP · Strava (tokens encrypted at rest)
 ```
 
-**Supabase timing:** local SQLite now; **Postgres before beta**; production backups before public launch. Do **not** connect Flutter to Postgres with privileged credentials. See [`SECURITY.md`](./SECURITY.md).
+**Supabase timing:** local PostgreSQL 16 now. Hosted Supabase is a manual operator apply after the empty-public preflight in [`docs/operations/SUPABASE_FIRST_DEPLOY.md`](docs/operations/SUPABASE_FIRST_DEPLOY.md). Production backups before public launch. Do **not** connect Flutter to Postgres with privileged credentials. See [`SECURITY.md`](./SECURITY.md).
 
 ---
 

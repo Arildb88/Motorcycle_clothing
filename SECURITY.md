@@ -38,8 +38,8 @@ Prefer `findFirst({ where: { id, userId } })` (or equivalent). Never “load by 
 | Secret | Where allowed | Notes |
 |--------|---------------|-------|
 | `JWT_SECRET` | API only | BEFORE PRODUCTION: strong random, rotated |
-| `DATABASE_URL` | API / migrate CI only | Never in Flutter |
-| `DIRECT_URL` | API migrate only | Same local database in Docker and CI. Never a hosted password in git. Never in Flutter |
+| `DATABASE_URL` | API runtime, and migrate CI | Local and CI: unpooled Postgres 16. Hosted: session pooler port 5432 only. Never in Flutter |
+| `DIRECT_URL` | Prisma Migrate | Same local database in Docker and CI. Hosted: session port 5432, or the direct host after IPv6 or the IPv4 add-on is confirmed. Never a hosted password in git. Never in Flutter |
 | `FACEBOOK_APP_SECRET` | API only | |
 | `MICROSOFT_CLIENT_SECRET` | API only (optional if public+PKCE) | |
 | `STRAVA_CLIENT_SECRET` | API only | |
@@ -90,7 +90,7 @@ Prefer `findFirst({ where: { id, userId } })` (or equivalent). Never “load by 
 | BEFORE BETA | Migrate staging to **PostgreSQL** (Supabase OK as host) |
 | BEFORE PRODUCTION | Postgres + automated backups + restore drill |
 
-PostgreSQL notes: Prisma `provider = "postgresql"`. Local Docker and CI set `DATABASE_URL` and `DIRECT_URL` to the same unpooled Postgres 16 URL. Do not point this API at transaction pooling (port 6543 or `pgbouncer=true`). Hosted Supabase credentials stay outside git.
+PostgreSQL notes: Prisma `provider = "postgresql"`. Local Docker and CI set `DATABASE_URL` and `DIRECT_URL` to the same unpooled Postgres 16 URL. Do not point this API at transaction pooling (port 6543 or `pgbouncer=true`). Hosted Supabase credentials stay outside git. The first hosted apply, empty-public preflight, and rollback are in [`docs/operations/SUPABASE_FIRST_DEPLOY.md`](docs/operations/SUPABASE_FIRST_DEPLOY.md). CI does not run that apply.
 
 **Do not rewrite Flutter → Supabase direct.** Nest remains the application boundary.
 

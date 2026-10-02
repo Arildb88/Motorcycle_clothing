@@ -110,7 +110,7 @@ Motorcycle_clothing/
 │       ├── lib/
 │       ├── android/
 │       └── ios/
-├── scripts/                 # start-api / start-android / smoke-api helpers
+├── scripts/                 # start-api / start-android / smoke-api / supabase readiness
 ├── docs/                    # historical notes (e.g. PLAN.md)
 ├── .cursor/rules/           # Cursor/AI workflow rules
 ├── .github/workflows/       # API CI
@@ -326,6 +326,7 @@ When IdP app IDs are empty, those buttons stay disabled in the UI. With `ALLOW_D
 - Archived SQLite history, not applied: `apps/api/prisma/migrations_sqlite/`
 - Local database: Postgres 16 from `docker compose up -d postgres`
 - Host-side API uses `localhost`. The compose `api` service uses hostname `postgres`. Both `DATABASE_URL` and `DIRECT_URL` are set. Neither is a Supabase URL.
+- First hosted Supabase apply, including env-var roles, session pooling versus the direct migration URL, the empty-public preflight, and rollback: [`docs/operations/SUPABASE_FIRST_DEPLOY.md`](docs/operations/SUPABASE_FIRST_DEPLOY.md). Confirm it with `scripts/check-supabase-readiness.sh` before any hosted URL is used. That script does not connect to a database.
 
 Normal sequence after pulling schema/migration changes:
 

@@ -2,6 +2,8 @@
 
 Planning document only. It does not change the Prisma provider, schema, migrations, dependencies, or any running database.
 
+**Status (2026-10-02).** `DB-POSTGRES-001` completed the provider switch and the local Postgres 16 baseline. Section 1 remains the pre-switch record. The first hosted apply is still manual. Follow [`docs/operations/SUPABASE_FIRST_DEPLOY.md`](../operations/SUPABASE_FIRST_DEPLOY.md). Do not connect to the hosted database from an agent or from CI.
+
 Access date: 2026-10-02.
 
 Labels: **Fact**, **Recommendation**, **Assumption**, **Open question**.
