@@ -51,7 +51,36 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
   Future<void> _seedDemo() async {
     final api = context.read<ApiClient>();
-    await api.post('/wardrobe/actions/seed-demo', {}, auth: true);
+    final code =
+        Localizations.localeOf(context).languageCode == 'nb' ? 'nb' : 'en';
+    await api.post('/wardrobe/actions/seed-demo?lang=$code', {}, auth: true);
+    await _load();
+  }
+
+  Future<void> _deleteDemo() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(l10n.wardrobeDeleteDemoTitle),
+          content: Text(l10n.wardrobeDeleteDemoBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.wardrobeDeleteDemo),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+    final api = context.read<ApiClient>();
+    await api.delete('/wardrobe/actions/demo');
     await _load();
   }
 
@@ -151,7 +180,22 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   child: ListTile(
                                     onTap: () => _openForm(existing: g),
-                                    title: Text(g.name),
+                                    title: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            g.name,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (g.isDemo) ...[
+                                          const SizedBox(width: 8),
+                                          _DemoBadge(
+                                            label: l10n.wardrobeDemoBadge,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                     subtitle: Text(garmentSubtitle(l10n, g)),
                                     trailing: IconButton(
                                       tooltip: l10n.commonDelete,
@@ -164,7 +208,41 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             ),
                           ),
           ),
+          if (!_loading && _error == null && _items.any((g) => g.isDemo))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: OutlinedButton(
+                onPressed: _deleteDemo,
+                child: Text(l10n.wardrobeDeleteDemo),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _DemoBadge extends StatelessWidget {
+  const _DemoBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppTheme.steel.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
+          color: AppTheme.steel,
+        ),
       ),
     );
   }

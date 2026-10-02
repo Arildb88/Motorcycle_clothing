@@ -173,7 +173,31 @@ step "GET /api/wardrobe (seeded gloves)"
 WARDROBE=$(expect_http "GET /api/wardrobe" \
   -X GET "http://localhost:${PORT}/api/wardrobe" \
   -H "Authorization: Bearer ${TOKEN}")
-expect_contains "GET /api/wardrobe" "Insulated winter gloves" "$WARDROBE"
+expect_contains "GET /api/wardrobe" "Demo – Insulated winter gloves" "$WARDROBE"
+expect_contains "GET /api/wardrobe" '"isDemo":true' "$WARDROBE"
+
+step "POST /api/wardrobe (personal garment beside demo)"
+PERSONAL=$(expect_http "POST /api/wardrobe (personal garment beside demo)" \
+  -X POST "http://localhost:${PORT}/api/wardrobe" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"My personal jacket","category":"shell_jacket"}')
+expect_contains "POST /api/wardrobe (personal garment beside demo)" '"isDemo":false' "$PERSONAL"
+
+step "DELETE /api/wardrobe/actions/demo"
+DELETED=$(expect_http "DELETE /api/wardrobe/actions/demo" \
+  -X DELETE "http://localhost:${PORT}/api/wardrobe/actions/demo" \
+  -H "Authorization: Bearer ${TOKEN}")
+expect_contains "DELETE /api/wardrobe/actions/demo" '"deleted":' "$DELETED"
+
+step "GET /api/wardrobe (personal survives demo delete)"
+AFTER=$(expect_http "GET /api/wardrobe (personal survives demo delete)" \
+  -X GET "http://localhost:${PORT}/api/wardrobe" \
+  -H "Authorization: Bearer ${TOKEN}")
+expect_contains "GET /api/wardrobe (personal survives demo delete)" "My personal jacket" "$AFTER"
+if grep -q "Demo – Insulated winter gloves" <<<"$AFTER"; then
+  fail "GET /api/wardrobe (personal survives demo delete)" "demo garment was not removed"
+fi
 
 step "PATCH /api/users/me (activity prefs)"
 ME=$(expect_http "PATCH /api/users/me" \

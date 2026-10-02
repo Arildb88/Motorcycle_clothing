@@ -830,6 +830,19 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get wardrobeDemoBadge => 'DEMO';
+
+  @override
+  String get wardrobeDeleteDemo => 'Slett demo-garderobe';
+
+  @override
+  String get wardrobeDeleteDemoTitle => 'Slette demo-garderobe?';
+
+  @override
+  String get wardrobeDeleteDemoBody =>
+      'Bare plagg som er lagt inn fra demogarderoben fjernes. Dine egne plagg blir værende.';
+
+  @override
   String get garmentEditTitle => 'Rediger plagg';
 
   @override

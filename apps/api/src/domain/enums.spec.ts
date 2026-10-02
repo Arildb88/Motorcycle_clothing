@@ -7,7 +7,11 @@ import {
   isRouteKind,
   isRouteCategory,
 } from './enums';
-import { expandDemoGarment, DEMO_MOTORCYCLE_WARDROBE } from './demo-wardrobe';
+import {
+  expandDemoGarment,
+  DEMO_MOTORCYCLE_WARDROBE,
+  demoWardrobe,
+} from './demo-wardrobe';
 
 describe('domain enums', () => {
   it('recognizes garment categories and rejects unknowns', () => {
@@ -58,5 +62,16 @@ describe('demo wardrobe', () => {
     const merino = expandDemoGarment(DEMO_MOTORCYCLE_WARDROBE[0]);
     expect(merino.layer).toBe('base');
     expect(merino.activityTagsJson).toContain('motorcycle');
+    expect(merino).not.toHaveProperty('nameNb');
+    expect(merino.name.startsWith('Demo – ')).toBe(true);
+  });
+
+  it('localizes demo display names without changing the catalog shape', () => {
+    const nb = demoWardrobe('nb');
+    const en = demoWardrobe('en');
+    expect(nb.some((seed) => seed.name === 'Demo – Touringjakke')).toBe(true);
+    expect(en.some((seed) => seed.name === 'Demo – Touring jacket')).toBe(true);
+    expect(nb.every((seed) => seed.name.startsWith('Demo – '))).toBe(true);
+    expect(en.every((seed) => seed.name.startsWith('Demo – '))).toBe(true);
   });
 });

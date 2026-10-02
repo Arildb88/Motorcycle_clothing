@@ -343,6 +343,10 @@
   "wardrobeLoadDemo": "Last inn demogarderobe for motorsykkel",
   "wardrobeDeleteTitle": "Slette plagg?",
   "wardrobeDeleteBody": "Fjern «{name}» fra garderoben.",
+  "wardrobeDemoBadge": "DEMO",
+  "wardrobeDeleteDemo": "Slett demo-garderobe",
+  "wardrobeDeleteDemoTitle": "Slette demo-garderobe?",
+  "wardrobeDeleteDemoBody": "Bare plagg som er lagt inn fra demogarderoben fjernes. Dine egne plagg blir værende.",
   "@wardrobeDeleteBody": {
     "placeholders": {
       "name": {

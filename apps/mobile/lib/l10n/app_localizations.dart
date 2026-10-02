@@ -1580,6 +1580,30 @@ abstract class AppLocalizations {
   /// **'Remove “{name}” from your wardrobe.'**
   String wardrobeDeleteBody(String name);
 
+  /// No description provided for @wardrobeDemoBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'DEMO'**
+  String get wardrobeDemoBadge;
+
+  /// No description provided for @wardrobeDeleteDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete demo wardrobe'**
+  String get wardrobeDeleteDemo;
+
+  /// No description provided for @wardrobeDeleteDemoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete demo wardrobe?'**
+  String get wardrobeDeleteDemoTitle;
+
+  /// No description provided for @wardrobeDeleteDemoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Only garments added from the demo wardrobe will be removed. Your own garments stay.'**
+  String get wardrobeDeleteDemoBody;
+
   /// No description provided for @garmentEditTitle.
   ///
   /// In en, this message translates to:

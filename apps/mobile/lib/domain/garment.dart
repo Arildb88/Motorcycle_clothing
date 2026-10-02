@@ -16,6 +16,7 @@ class Garment {
     this.model,
     this.notes,
     required this.activityTags,
+    this.isDemo = false,
     this.components = const [],
   });
 
@@ -35,6 +36,7 @@ class Garment {
   final String? model;
   final String? notes;
   final List<String> activityTags;
+  final bool isDemo;
   final List<GarmentComponent> components;
 
   factory Garment.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,7 @@ class Garment {
       activityTags: (json['activityTags'] as List? ?? const [])
           .map((e) => e.toString())
           .toList(),
+      isDemo: json['isDemo'] == true,
       components: comps
           .whereType<Map<String, dynamic>>()
           .map(GarmentComponent.fromJson)

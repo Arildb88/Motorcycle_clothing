@@ -121,6 +121,9 @@ model Garment {
   model             String?
   notes             String?
   activityTagsJson  String   @default("[\"motorcycle\"]")
+  /// Inserted by the demo wardrobe seed. Survives rename and edit.
+  /// Clients cannot set or clear this value.
+  isDemo            Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

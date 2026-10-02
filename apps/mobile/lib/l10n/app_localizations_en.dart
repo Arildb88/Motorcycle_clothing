@@ -829,6 +829,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get wardrobeDemoBadge => 'DEMO';
+
+  @override
+  String get wardrobeDeleteDemo => 'Delete demo wardrobe';
+
+  @override
+  String get wardrobeDeleteDemoTitle => 'Delete demo wardrobe?';
+
+  @override
+  String get wardrobeDeleteDemoBody =>
+      'Only garments added from the demo wardrobe will be removed. Your own garments stay.';
+
+  @override
   String get garmentEditTitle => 'Edit garment';
 
   @override

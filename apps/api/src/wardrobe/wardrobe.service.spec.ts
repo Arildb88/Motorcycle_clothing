@@ -3,6 +3,8 @@ import { BadRequestException } from '@nestjs/common';
 import { WardrobeService } from './wardrobe.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { effectiveGarmentTiers } from '../domain';
+import { CreateGarmentDto } from './dto/create-garment.dto';
+import { UpdateGarmentDto } from './dto/update-garment.dto';
 
 describe('WardrobeService', () => {
   let service: WardrobeService;
@@ -43,6 +45,7 @@ describe('WardrobeService', () => {
             material: null,
             hasVentilation: false,
             isHeated: false,
+            isDemo: false,
             ...data,
           };
           delete (row as { components?: unknown }).components;
@@ -69,6 +72,7 @@ describe('WardrobeService', () => {
             material: null,
             hasVentilation: false,
             isHeated: false,
+            isDemo: false,
             ...d,
           });
         }
@@ -104,19 +108,30 @@ describe('WardrobeService', () => {
         }
         return removed;
       }),
-      deleteMany: jest.fn(async ({ where }: { where: { userId: string } }) => {
-        let i = store.length;
-        while (i--) {
-          if (store[i].userId === where.userId) {
-            const id = store[i].id;
-            store.splice(i, 1);
-            for (let j = components.length - 1; j >= 0; j--) {
-              if (components[j].garmentId === id) components.splice(j, 1);
+      deleteMany: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { userId: string; isDemo?: boolean };
+        }) => {
+          let count = 0;
+          let i = store.length;
+          while (i--) {
+            const matchesUser = store[i].userId === where.userId;
+            const matchesDemo =
+              where.isDemo === undefined || store[i].isDemo === where.isDemo;
+            if (matchesUser && matchesDemo) {
+              const id = store[i].id;
+              store.splice(i, 1);
+              count += 1;
+              for (let j = components.length - 1; j >= 0; j--) {
+                if (components[j].garmentId === id) components.splice(j, 1);
+              }
             }
           }
-        }
-        return { count: 0 };
-      }),
+          return { count };
+        },
+      ),
       count: jest.fn(async ({ where }: { where: { userId: string } }) =>
         store.filter((g) => g.userId === where.userId).length,
       ),
@@ -164,6 +179,7 @@ describe('WardrobeService', () => {
     expect(g.warmthTier).toBe(3);
     expect(g.activityTags).toEqual(['motorcycle']);
     expect(g.components).toEqual([]);
+    expect(g.isDemo).toBe(false);
   });
 
   it('creates textile jacket preset with liners and vents capability', async () => {
@@ -230,6 +246,81 @@ describe('WardrobeService', () => {
       category: 'gloves',
     });
     await expect(service.get('user2', created.id)).rejects.toBeDefined();
+  });
+
+  it('seeds demo garments as isDemo and keeps normal creates false', async () => {
+    const seeded = await service.seedDemo('user1', false, 'nb');
+    expect(seeded.created).toBeGreaterThanOrEqual(8);
+    expect(seeded.garments.every((g) => g.isDemo)).toBe(true);
+    expect(seeded.garments.some((g) => g.name === 'Demo – Touringjakke')).toBe(
+      true,
+    );
+
+    const personal = await service.create('user1', {
+      name: 'My jacket',
+      category: 'shell_jacket',
+    });
+    expect(personal.isDemo).toBe(false);
+
+    const english = await service.seedDemo('user2', false, 'en');
+    expect(
+      english.garments.some((g) => g.name === 'Demo – Touring jacket'),
+    ).toBe(true);
+  });
+
+  it('preserves demo identity across rename and ignores client isDemo', async () => {
+    const created = await service.create('user1', {
+      name: 'Mine',
+      category: 'gloves',
+      isDemo: true,
+    } as CreateGarmentDto);
+    expect(created.isDemo).toBe(false);
+
+    const seeded = await service.seedDemo('user2', false, 'en');
+    const demo = seeded.garments[0];
+    const updated = await service.update('user2', demo.id, {
+      name: 'Renamed jacket',
+      isDemo: false,
+    } as UpdateGarmentDto);
+    expect(updated.name).toBe('Renamed jacket');
+    expect(updated.isDemo).toBe(true);
+    const written = prismaMock.garment.update.mock.calls.at(-1)?.[0] as {
+      data: Record<string, unknown>;
+    };
+    expect(written.data.isDemo).toBeUndefined();
+  });
+
+  it('deletes only the authenticated user demo rows', async () => {
+    await service.seedDemo('user1', false, 'en');
+    const personal = await service.create('user1', {
+      name: 'My jacket',
+      category: 'shell_jacket',
+    });
+    await service.seedDemo('user2', false, 'en');
+
+    const removed = await service.deleteDemo('user1');
+    expect(removed.deleted).toBeGreaterThanOrEqual(8);
+
+    const mine = await service.list('user1');
+    expect(mine.map((g) => g.id)).toEqual([personal.id]);
+    expect(mine[0].isDemo).toBe(false);
+
+    const other = await service.list('user2');
+    expect(other.length).toBeGreaterThanOrEqual(8);
+    expect(other.every((g) => g.isDemo)).toBe(true);
+  });
+
+  it('still deletes one garment by id and leaves the rest', async () => {
+    const seeded = await service.seedDemo('user1', false, 'en');
+    const personal = await service.create('user1', {
+      name: 'Mine',
+      category: 'gloves',
+    });
+    await service.remove('user1', personal.id);
+    const left = await service.list('user1');
+    expect(left.map((g) => g.id)).not.toContain(personal.id);
+    expect(left).toHaveLength(seeded.garments.length);
+    expect(left.every((g) => g.isDemo)).toBe(true);
   });
 });
 

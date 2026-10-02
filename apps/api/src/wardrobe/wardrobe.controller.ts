@@ -13,6 +13,7 @@ import {
 import { WardrobeService } from './wardrobe.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthRequest } from '../auth/jwt-auth.guard';
+import { demoLanguage } from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
 import { UpdateGarmentDto } from './dto/update-garment.dto';
 
@@ -50,6 +51,11 @@ export class WardrobeController {
     return this.wardrobe.update(req.user.userId, id, dto);
   }
 
+  @Delete('actions/demo')
+  deleteDemo(@Req() req: AuthRequest) {
+    return this.wardrobe.deleteDemo(req.user.userId);
+  }
+
   @Delete(':id')
   remove(@Req() req: AuthRequest, @Param('id') id: string) {
     return this.wardrobe.remove(req.user.userId, id);
@@ -59,10 +65,12 @@ export class WardrobeController {
   seedDemo(
     @Req() req: AuthRequest,
     @Query('force') force?: string,
+    @Query('lang') lang?: string,
   ) {
     return this.wardrobe.seedDemo(
       req.user.userId,
       force === 'true' || force === '1',
+      demoLanguage(lang),
     );
   }
 }

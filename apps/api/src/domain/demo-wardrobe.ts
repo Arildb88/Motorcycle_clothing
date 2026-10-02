@@ -14,8 +14,16 @@ export type DemoComponentSeed = {
   name?: string;
 };
 
+export type DemoLanguage = 'en' | 'nb';
+
+export function demoLanguage(value?: string | null): DemoLanguage {
+  return value === 'nb' ? 'nb' : 'en';
+}
+
 export type DemoGarmentSeed = {
   name: string;
+  /** Norwegian Bokmål display name used when seeding for `nb`. */
+  nameNb: string;
   category: GarmentCategory;
   brand?: string;
   model?: string;
@@ -37,7 +45,8 @@ export type DemoGarmentSeed = {
  */
 export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
   {
-    name: 'Merino 200 base layer',
+    name: 'Demo – Merino 200 base layer',
+    nameNb: 'Demo – Merino 200 ullundertøy',
     category: 'base_layer',
     brand: 'Devold',
     model: '200',
@@ -46,13 +55,15 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     notes: 'Classic midweight merino',
   },
   {
-    name: 'Light fleece mid-layer',
+    name: 'Demo – Light fleece mid-layer',
+    nameNb: 'Demo – Lett fleece-mellomlag',
     category: 'mid_layer',
     material: 'synthetic',
     warmthTier: 3,
   },
   {
-    name: 'Touring textile jacket',
+    name: 'Demo – Touring jacket',
+    nameNb: 'Demo – Touringjakke',
     category: 'shell_jacket',
     brand: 'Klim',
     material: 'textile',
@@ -63,7 +74,8 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     components: [{ kind: 'thermal_liner' }, { kind: 'waterproof_liner' }],
   },
   {
-    name: 'Mesh summer jacket',
+    name: 'Demo – Mesh summer jacket',
+    nameNb: 'Demo – Mesh-sommerjakke',
     category: 'shell_jacket',
     material: 'mesh',
     hasVentilation: true,
@@ -73,7 +85,8 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     breathabilityTier: 5,
   },
   {
-    name: 'Waterproof motorcycle pants',
+    name: 'Demo – Waterproof motorcycle pants',
+    nameNb: 'Demo – Vanntett mc-bukse',
     category: 'pants',
     material: 'textile',
     hasVentilation: true,
@@ -83,7 +96,8 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     components: [{ kind: 'thermal_liner' }],
   },
   {
-    name: 'Armored motorcycle jeans',
+    name: 'Demo – Armored motorcycle jeans',
+    nameNb: 'Demo – Forsterket mc-jeans',
     category: 'pants',
     material: 'denim',
     warmthTier: 2,
@@ -91,37 +105,51 @@ export const DEMO_MOTORCYCLE_WARDROBE: DemoGarmentSeed[] = [
     waterResistTier: 1,
   },
   {
-    name: 'Summer gloves',
+    name: 'Demo – Summer gloves',
+    nameNb: 'Demo – Sommerhansker',
     category: 'gloves',
     warmthTier: 1,
     windResistTier: 3,
   },
   {
-    name: 'Insulated winter gloves',
+    name: 'Demo – Insulated winter gloves',
+    nameNb: 'Demo – Isolerte vinterhansker',
     category: 'gloves',
     warmthTier: 5,
     windResistTier: 5,
     waterResistTier: 4,
   },
   {
-    name: 'Heated gloves',
+    name: 'Demo – Heated gloves',
+    nameNb: 'Demo – Varmehansker',
     category: 'gloves',
     isHeated: true,
     warmthTier: 5,
   },
   {
-    name: 'Neck tube',
+    name: 'Demo – Neck tube',
+    nameNb: 'Demo – Halstube',
     category: 'neckwear',
     warmthTier: 2,
   },
   {
-    name: 'Heated vest',
+    name: 'Demo – Heated vest',
+    nameNb: 'Demo – Varmevest',
     category: 'heated_vest',
     isHeated: true,
     warmthTier: 5,
     notes: 'Battery heated; pack when mountain sections are cold',
   },
 ];
+
+/** Display names for the requested language. `nameNb` is not persisted. */
+export function demoWardrobe(language: DemoLanguage = 'en'): DemoGarmentSeed[] {
+  return DEMO_MOTORCYCLE_WARDROBE.map((seed) => ({
+    ...seed,
+    name: language === 'nb' ? seed.nameNb : seed.name,
+    nameNb: seed.nameNb,
+  }));
+}
 
 export function expandDemoGarment(seed: DemoGarmentSeed) {
   const defaults = defaultsForCategory(seed.category);

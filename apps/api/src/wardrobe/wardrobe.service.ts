@@ -22,7 +22,11 @@ import {
   isGarmentMaterial,
   presetById,
 } from '../domain';
-import { DEMO_MOTORCYCLE_WARDROBE, expandDemoGarment } from '../domain';
+import {
+  DemoLanguage,
+  demoWardrobe,
+  expandDemoGarment,
+} from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
 import { UpdateGarmentDto } from './dto/update-garment.dto';
 
@@ -53,6 +57,7 @@ export type GarmentResponse = {
   model: string | null;
   notes: string | null;
   activityTags: string[];
+  isDemo: boolean;
   components: GarmentComponentResponse[];
   createdAt: string;
   updatedAt: string;
@@ -249,6 +254,7 @@ export class WardrobeService {
   async seedDemo(
     userId: string,
     force = false,
+    language: DemoLanguage = 'en',
   ): Promise<{ created: number; garments: GarmentResponse[] }> {
     const count = await this.prisma.garment.count({ where: { userId } });
     if (count > 0 && !force) {
@@ -260,12 +266,13 @@ export class WardrobeService {
       await this.prisma.garment.deleteMany({ where: { userId } });
     }
 
-    for (const seed of DEMO_MOTORCYCLE_WARDROBE) {
+    for (const seed of demoWardrobe(language)) {
       const expanded = expandDemoGarment(seed);
       await this.prisma.garment.create({
         data: {
           userId,
           ...expanded,
+          isDemo: true,
           components: seed.components
             ? {
                 create: this.normalizeComponents(seed.components),
@@ -276,6 +283,17 @@ export class WardrobeService {
     }
     const garments = await this.list(userId);
     return { created: garments.length, garments };
+  }
+
+  /**
+   * Deletes only this user's demo-seeded garments.
+   * Does not use seed `force`, which removes the whole wardrobe.
+   */
+  async deleteDemo(userId: string): Promise<{ deleted: number }> {
+    const result = await this.prisma.garment.deleteMany({
+      where: { userId, isDemo: true },
+    });
+    return { deleted: result.count };
   }
 
   meta() {
@@ -362,6 +380,7 @@ export class WardrobeService {
     model: string | null;
     notes: string | null;
     activityTagsJson: string;
+    isDemo: boolean;
     createdAt: Date;
     updatedAt: Date;
     components?: Array<{
@@ -398,6 +417,7 @@ export class WardrobeService {
       model: g.model,
       notes: g.notes,
       activityTags,
+      isDemo: g.isDemo,
       components: (g.components ?? []).map((c) => ({
         id: c.id,
         kind: c.kind,

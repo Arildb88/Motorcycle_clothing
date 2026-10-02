@@ -42,6 +42,10 @@ void main() {
     expect(nb.mapSelectEndpoints, isNot(en.mapSelectEndpoints));
     expect(nb.profileSignOut, 'Logg ut');
     expect(nb.wardrobeEmptyTitle, 'Ingen plagg ennå');
+    expect(nb.wardrobeDemoBadge, 'DEMO');
+    expect(nb.wardrobeDeleteDemo, 'Slett demo-garderobe');
+    expect(en.wardrobeDeleteDemo, 'Delete demo wardrobe');
+    expect(nb.wardrobeDeleteDemoBody, isNot(en.wardrobeDeleteDemoBody));
     expect(nb.analysisRainChip('40%'), 'Regn 40%');
 
     expect(

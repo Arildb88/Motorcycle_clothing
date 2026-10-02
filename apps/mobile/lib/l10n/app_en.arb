@@ -343,6 +343,10 @@
   "wardrobeLoadDemo": "Load demo motorcycle wardrobe",
   "wardrobeDeleteTitle": "Delete garment?",
   "wardrobeDeleteBody": "Remove “{name}” from your wardrobe.",
+  "wardrobeDemoBadge": "DEMO",
+  "wardrobeDeleteDemo": "Delete demo wardrobe",
+  "wardrobeDeleteDemoTitle": "Delete demo wardrobe?",
+  "wardrobeDeleteDemoBody": "Only garments added from the demo wardrobe will be removed. Your own garments stay.",
   "@wardrobeDeleteBody": {
     "placeholders": {
       "name": {
