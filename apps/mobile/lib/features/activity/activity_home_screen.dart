@@ -54,9 +54,7 @@ class _ComingSoonHome extends StatelessWidget {
                 await activityCtx.setDefaultActivity(activity);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.activityNowDefault(name)),
-                    ),
+                    SnackBar(content: Text(l10n.activityNowDefault(name))),
                   );
                 }
               },
@@ -84,14 +82,14 @@ class _ActivitySwitcher extends StatelessWidget {
     final ctx = context.watch<ActivityContext>();
     final l10n = AppLocalizations.of(context);
     return PopupMenuButton<AppActivity>(
-      onSelected: (a) => ctx.setCurrentActivity(a),
-      itemBuilder: (context) => AppActivity.sessionChoices
+      onSelected: ctx.selectUserFacingActivity,
+      itemBuilder: (context) => AppActivity.userFacingChoices
           .map(
             (a) => PopupMenuItem(
               value: a,
               child: Row(
                 children: [
-                  Expanded(child: Text(activityLabel(l10n, a))),
+                  Expanded(child: Text(activityMenuLabel(l10n, a))),
                   if (a == ctx.defaultActivity)
                     Text(
                       l10n.activityDefaultBadge,
@@ -109,7 +107,7 @@ class _ActivitySwitcher extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            activityLabel(l10n, ctx.currentActivity),
+            activityMenuLabel(l10n, ctx.currentActivity),
             style: GoogleFonts.barlowCondensed(
               fontSize: 28,
               fontWeight: FontWeight.w600,

@@ -7,6 +7,7 @@ import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
+import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
@@ -69,18 +70,16 @@ class _RoutesScreenState extends State<RoutesScreen> {
     });
     try {
       final api = context.read<ApiClient>();
-      final list = await api.getList('/routes?activityType=$activityType');
+      final activity = context.read<ActivityContext>().currentActivity;
+      final routes = await fetchSavedRoutesForActivity(api, activity);
       if (mounted) {
-        setState(() {
-          _routes = list
-              .whereType<Map<String, dynamic>>()
-              .map(SavedRoute.fromJson)
-              .toList();
-        });
+        setState(() => _routes = routes);
       }
     } on ApiException catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -92,10 +91,8 @@ class _RoutesScreenState extends State<RoutesScreen> {
     if (activityType == null) return;
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => RouteEditorScreen(
-          existing: existing,
-          activityType: activityType,
-        ),
+        builder: (_) =>
+            RouteEditorScreen(existing: existing, activityType: activityType),
       ),
     );
     if (saved == true) await _load();
@@ -225,84 +222,80 @@ class _RoutesScreenState extends State<RoutesScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                    ? Center(child: Text(_error!))
-                    : _routes.isEmpty
-                        ? Center(
-                            child: FilledButton.icon(
-                              onPressed: () => _openPlanner(),
-                              icon: const Icon(Icons.add),
-                              label: Text(l10n.plannerTitle),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _load,
-                            child: ListView.separated(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _routes.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, i) {
-                                final r = _routes[i];
-                                return ListTile(
-                                  tileColor:
-                                      Colors.white.withValues(alpha: 0.55),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  leading: Icon(
-                                    r.isFavorite
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: r.isFavorite
-                                        ? AppTheme.amber
-                                        : AppTheme.steel,
-                                  ),
-                                  title: Text(r.name),
-                                  subtitle: Text(
-                                    '${routeSummary(l10n, r)}\n${routeDuration(l10n, r.typicalDurationMin)}'
-                                    '${r.category != null ? ' · ${routeCategoryLabel(l10n, r.category)}' : ''}',
-                                  ),
-                                  isThreeLine: true,
-                                  onTap: () => _openPlanner(existing: r),
-                                  trailing: PopupMenuButton<String>(
-                                    onSelected: (v) async {
-                                      if (v == 'favorite') {
-                                        await _toggleFavorite(r);
-                                      } else if (v == 'delete') {
-                                        await _delete(r);
-                                      } else if (v == 'edit') {
-                                        await _openEditor(existing: r);
-                                      } else if (v == 'plan') {
-                                        await _openPlanner(existing: r);
-                                      }
-                                    },
-                                    itemBuilder: (_) => [
-                                      PopupMenuItem(
-                                        value: 'plan',
-                                        child: Text(l10n.plannerTitle),
-                                      ),
-                                      PopupMenuItem(
-                                        value: 'favorite',
-                                        child: Text(
-                                          r.isFavorite
-                                              ? l10n.commonUnfavorite
-                                              : l10n.commonFavorite,
-                                        ),
-                                      ),
-                                      PopupMenuItem(
-                                        value: 'edit',
-                                        child: Text(l10n.commonEdit),
-                                      ),
-                                      PopupMenuItem(
-                                        value: 'delete',
-                                        child: Text(l10n.commonDelete),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                ? Center(child: Text(_error!))
+                : _routes.isEmpty
+                ? Center(
+                    child: FilledButton.icon(
+                      onPressed: () => _openPlanner(),
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.plannerTitle),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _routes.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        final r = _routes[i];
+                        return ListTile(
+                          tileColor: Colors.white.withValues(alpha: 0.55),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          leading: Icon(
+                            r.isFavorite ? Icons.star : Icons.star_border,
+                            color: r.isFavorite
+                                ? AppTheme.amber
+                                : AppTheme.steel,
+                          ),
+                          title: Text(r.name),
+                          subtitle: Text(
+                            '${routeSummary(l10n, r)}\n${routeDuration(l10n, r.typicalDurationMin)}'
+                            '${r.category != null ? ' · ${routeCategoryLabel(l10n, r.category)}' : ''}',
+                          ),
+                          isThreeLine: true,
+                          onTap: () => _openPlanner(existing: r),
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (v) async {
+                              if (v == 'favorite') {
+                                await _toggleFavorite(r);
+                              } else if (v == 'delete') {
+                                await _delete(r);
+                              } else if (v == 'edit') {
+                                await _openEditor(existing: r);
+                              } else if (v == 'plan') {
+                                await _openPlanner(existing: r);
+                              }
+                            },
+                            itemBuilder: (_) => [
+                              PopupMenuItem(
+                                value: 'plan',
+                                child: Text(l10n.plannerTitle),
+                              ),
+                              PopupMenuItem(
+                                value: 'favorite',
+                                child: Text(
+                                  r.isFavorite
+                                      ? l10n.commonUnfavorite
+                                      : l10n.commonFavorite,
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Text(l10n.commonEdit),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text(l10n.commonDelete),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
           if (_showRoutesAd)
             const AdBannerSlot(
@@ -316,14 +309,14 @@ class _RoutesScreenState extends State<RoutesScreen> {
   }
 
   bool get _showRoutesAd => evaluateAdPlacement(
-        AdPlacementRequest(
-          adsEnabled: AppConfig.adsEnabled,
-          surface: AdSurface.savedRoutesList,
-          format: AdFormat.banner,
-          contentState: _routesAdState,
-          position: AdPlacementPosition.reservedFooter,
-        ),
-      ).show;
+    AdPlacementRequest(
+      adsEnabled: AppConfig.adsEnabled,
+      surface: AdSurface.savedRoutesList,
+      format: AdFormat.banner,
+      contentState: _routesAdState,
+      position: AdPlacementPosition.reservedFooter,
+    ),
+  ).show;
 
   AdContentState get _routesAdState {
     if (_loading) return AdContentState.loading;

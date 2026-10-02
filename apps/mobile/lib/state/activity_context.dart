@@ -58,6 +58,17 @@ class ActivityContext extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Menu selection. Picking the resort entry keeps the current discipline
+  /// when the user is already on alpine skiing or snowboarding.
+  void selectUserFacingActivity(AppActivity activity) {
+    if (activity.isResortSnowSport) {
+      if (_current.isResortSnowSport) return;
+      setCurrentActivity(AppActivity.alpineSkiing);
+      return;
+    }
+    setCurrentActivity(activity);
+  }
+
   Future<void> setDefaultActivity(AppActivity activity) async {
     _defaultActivity = activity;
     final prefs = await SharedPreferences.getInstance();

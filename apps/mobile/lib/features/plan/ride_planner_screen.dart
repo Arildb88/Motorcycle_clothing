@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/features/plan/resort_discipline_control.dart';
+import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/features/plan/ride_analysis_result_screen.dart';
@@ -112,6 +115,17 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   void _update(RidePlannerState next) {
     setState(() => _state = next);
     _refreshGeometry();
+  }
+
+  /// Same resort, time, and weather flow. Only the stored discipline changes.
+  void _setResortDiscipline(AppActivity discipline) {
+    if (!discipline.isResortSnowSport) return;
+    if (_state.activityType == discipline.apiValue) return;
+    _update(_state.copyWith(activityType: discipline.apiValue));
+    Provider.of<ActivityContext?>(
+      context,
+      listen: false,
+    )?.setCurrentActivity(discipline);
   }
 
   Future<void> _refreshGeometry() async {
@@ -873,6 +887,10 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
+          ),
+          ResortDisciplineControl(
+            activityType: _state.activityType,
+            onChanged: _setResortDiscipline,
           ),
           ActivityPlanningControls(
             activityType: _state.activityType,

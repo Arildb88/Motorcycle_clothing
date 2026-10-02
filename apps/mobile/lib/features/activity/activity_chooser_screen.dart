@@ -40,10 +40,12 @@ class ActivityChooserScreen extends StatelessWidget {
                   l10n.activityDefaultLine(
                     activityLabel(l10n, activity.defaultActivity),
                   ),
-                  style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
+                  style: TextStyle(
+                    color: AppTheme.steel.withValues(alpha: 0.9),
+                  ),
                 ),
                 const SizedBox(height: 24),
-                ...AppActivity.sessionChoices.map((a) {
+                ...AppActivity.userFacingChoices.map((a) {
                   final isDefault = a == activity.defaultActivity;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -55,7 +57,7 @@ class ActivityChooserScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                activityLabel(l10n, a),
+                                activityMenuLabel(l10n, a),
                                 style: const TextStyle(fontSize: 18),
                               ),
                             ),

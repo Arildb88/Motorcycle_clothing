@@ -1070,7 +1070,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activitySnowboarding => 'Snowboarding';
 
   @override
+  String get activityAlpineAndSnowboard => 'Alpine & snowboard';
+
+  @override
   String get activityXcSkiing => 'Cross-country skiing';
+
+  @override
+  String get plannerResortDiscipline => 'Skiing or snowboarding';
 
   @override
   String get plannerIntensity => 'Effort';

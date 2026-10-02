@@ -95,7 +95,9 @@ void main() {
     });
 
     test('alpine and snowboard can plan from one place', () {
-      final site = WaypointDraft.fromResolved(place('g', 'Gautefall', 59.07, 8.79));
+      final site = WaypointDraft.fromResolved(
+        place('g', 'Gautefall', 59.07, 8.79),
+      );
       final alpine = RidePlannerState(
         activityType: 'alpine_skiing',
         routeName: 'Gautefall',
@@ -107,6 +109,17 @@ void main() {
       expect(alpine.usesRoadPreview, isFalse);
       expect(alpine.routeUpsertBody()['waypoints'], hasLength(1));
       expect(alpine.routeUpsertBody()['activityType'], 'alpine_skiing');
+      final snowboard = alpine.copyWith(activityType: 'snowboarding');
+      expect(snowboard.waypoints.single.label, 'Gautefall');
+      expect(snowboard.durationMin, alpine.durationMin);
+      expect(snowboard.inputs.exposure, alpine.inputs.exposure);
+      expect(snowboard.routeUpsertBody()['activityType'], 'snowboarding');
+      expect(snowboard.routeUpsertBody()['waypoints'], hasLength(1));
+      const when = '2026-10-02T08:00:00.000Z';
+      expect(
+        snowboard.recommendQuery('g', when),
+        alpine.recommendQuery('g', when),
+      );
 
       final padded = RidePlannerState(
         waypoints: [WaypointDraft.fromResolved(place('a', 'A', 1, 1))],
@@ -130,13 +143,10 @@ void main() {
       expect(state.durationMin, 30);
       expect(state.usesRoadPreview, isTrue);
       expect(state.routeUpsertBody()['activityType'], 'motorcycle');
-      expect(
-        state.recommendQuery('route-1', when.toIso8601String()),
-        {
-          'routeId': 'route-1',
-          'departureAt': when.toIso8601String(),
-        },
-      );
+      expect(state.recommendQuery('route-1', when.toIso8601String()), {
+        'routeId': 'route-1',
+        'departureAt': when.toIso8601String(),
+      });
     });
 
     test('each activity sends only the inputs its engine accepts', () {
@@ -163,7 +173,10 @@ void main() {
         'departureAt': when,
         'exposure': 'hike',
       });
-      expect(alpine.recommendQuery('a', when).containsKey('intensity'), isFalse);
+      expect(
+        alpine.recommendQuery('a', when).containsKey('intensity'),
+        isFalse,
+      );
 
       final snowboard = RidePlannerState(activityType: 'snowboarding');
       expect(snowboard.recommendQuery('s', when)['exposure'], 'lift');
@@ -184,7 +197,10 @@ void main() {
       });
 
       final classicOmitted = RidePlannerState(activityType: 'xc_skiing');
-      expect(classicOmitted.recommendQuery('x', when).containsKey('style'), isFalse);
+      expect(
+        classicOmitted.recommendQuery('x', when).containsKey('style'),
+        isFalse,
+      );
     });
 
     test('arrival mode uses arrivalAt', () {

@@ -25,6 +25,20 @@ void main() {
     expect(activityLabel(nb, AppActivity.alpineSkiing), 'Alpint');
     expect(activityLabel(nb, AppActivity.snowboarding), 'Snøbrett');
     expect(activityLabel(nb, AppActivity.xcSkiing), 'Langrenn');
+    expect(
+      activityMenuLabel(nb, AppActivity.alpineSkiing),
+      'Alpint & snowboard',
+    );
+    expect(
+      activityMenuLabel(nb, AppActivity.snowboarding),
+      'Alpint & snowboard',
+    );
+    expect(
+      activityMenuLabel(en, AppActivity.snowboarding),
+      'Alpine & snowboard',
+    );
+    expect(activityMenuLabel(nb, AppActivity.xcSkiing), 'Langrenn');
+    expect(nb.plannerResortDiscipline, 'Alpint eller snøbrett');
 
     expect(waypointRole(nb, 0, 3), 'Start');
     expect(waypointRole(nb, 1, 3), 'Stopp 1');

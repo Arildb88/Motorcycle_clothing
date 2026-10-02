@@ -22,6 +22,12 @@ String activityLabel(AppLocalizations l10n, AppActivity activity) {
   }
 }
 
+/// Chooser and home title. Resort snow sports share one label.
+String activityMenuLabel(AppLocalizations l10n, AppActivity activity) {
+  if (activity.isResortSnowSport) return l10n.activityAlpineAndSnowboard;
+  return activityLabel(l10n, activity);
+}
+
 String intensityLabel(AppLocalizations l10n, String value) {
   switch (value) {
     case 'easy':
@@ -218,8 +224,7 @@ String garmentPresetLabel(AppLocalizations l10n, String id) {
 String garmentSubtitle(AppLocalizations l10n, Garment garment) {
   final parts = <String>[
     garmentCategoryLabel(l10n, garment.category),
-    if (garment.material != null)
-      garmentMaterialLabel(l10n, garment.material!),
+    if (garment.material != null) garmentMaterialLabel(l10n, garment.material!),
     if (garment.hasVentilation) l10n.garmentVents,
     if (garment.isHeated) l10n.garmentHeatedShort,
     if (garment.components.isNotEmpty)
@@ -274,8 +279,7 @@ String kitLine(AppLocalizations l10n, Map<String, dynamic> item) {
   final base = (name != null && name.isNotEmpty)
       ? name
       : (generic ?? item['slot']?.toString() ?? l10n.kitFallbackItem);
-  final labeled =
-      item['source'] == 'generic' ? l10n.kitNotOwned(base) : base;
+  final labeled = item['source'] == 'generic' ? l10n.kitNotOwned(base) : base;
   return configText.isEmpty ? labeled : '$labeled ($configText)';
 }
 

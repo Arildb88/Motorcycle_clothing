@@ -41,6 +41,19 @@ enum AppActivity {
   /// Hiking has no recommendation engine. The others reuse completed foundations.
   bool get hasRecommendationEngine => this != AppActivity.hiking;
 
+  /// Alpine skiing and snowboarding share one resort planner.
+  bool get isResortSnowSport =>
+      this == AppActivity.alpineSkiing || this == AppActivity.snowboarding;
+
+  /// Saved-route queries for this session. Resort snow sports read both
+  /// stored disciplines without a second planner or provider.
+  List<String> get savedRouteActivityTypes {
+    if (isResortSnowSport) {
+      return const ['alpine_skiing', 'snowboarding'];
+    }
+    return [apiValue];
+  }
+
   static AppActivity fromApi(String? value) {
     switch (value) {
       case 'hiking':
@@ -66,8 +79,10 @@ enum AppActivity {
     AppActivity.cycling,
   ];
 
-  /// Today's activity. Alpine, snowboard, and cross-country are session choices,
-  /// not profile defaults, because the profile contract does not accept them.
+  /// Every session activity, including both resort disciplines.
+  ///
+  /// Alpine skiing and snowboarding stay distinct domain values. The chooser
+  /// and home menu use [userFacingChoices] so they appear as one entry.
   static const sessionChoices = <AppActivity>[
     AppActivity.motorcycle,
     AppActivity.hiking,
@@ -75,5 +90,20 @@ enum AppActivity {
     AppActivity.alpineSkiing,
     AppActivity.snowboarding,
     AppActivity.xcSkiing,
+  ];
+
+  /// Home and activity chooser. Resort snow sports are one entry.
+  static const userFacingChoices = <AppActivity>[
+    AppActivity.motorcycle,
+    AppActivity.hiking,
+    AppActivity.cycling,
+    AppActivity.alpineSkiing,
+    AppActivity.xcSkiing,
+  ];
+
+  /// Discipline kept inside the shared resort flow. Not a second category.
+  static const resortDisciplines = <AppActivity>[
+    AppActivity.alpineSkiing,
+    AppActivity.snowboarding,
   ];
 }

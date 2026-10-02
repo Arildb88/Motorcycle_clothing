@@ -6,8 +6,11 @@ import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
+import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_presentation.dart';
+import 'package:motorcycle_clothing/features/plan/resort_discipline_control.dart';
+import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
@@ -34,8 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingRec = false;
   ActivityPlanningInputs _inputs = const ActivityPlanningInputs();
 
-  String get _activityType =>
-      context.read<ActivityContext>().currentActivity.apiValue;
+  AppActivity get _activity => context.read<ActivityContext>().currentActivity;
+
+  String get _activityType => _activity.apiValue;
 
   @override
   void initState() {
@@ -63,13 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final api = context.read<ApiClient>();
-      final list = await api.getList('/routes?activityType=$_activityType');
+      final routes = await fetchSavedRoutesForActivity(api, _activity);
       if (!mounted) return;
       setState(() {
-        _routes = list
-            .whereType<Map<String, dynamic>>()
-            .map(SavedRoute.fromJson)
-            .toList();
+        _routes = routes;
         _loadingRoutes = false;
       });
     } on ApiException catch (e) {
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final q = Uri(
         path: '/recommend',
         queryParameters: recommendationQuery(
-          activityType: _activityType,
+          activityType: route.activityType,
           routeId: route.id,
           departureAt: when.toIso8601String(),
           inputs: _inputs,
@@ -259,6 +260,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const ActivitySwitcher(),
                   const SizedBox(height: 6),
+                  ResortDisciplineControl(
+                    activityType: context
+                        .watch<ActivityContext>()
+                        .currentActivity
+                        .apiValue,
+                    onChanged: (discipline) => context
+                        .read<ActivityContext>()
+                        .setCurrentActivity(discipline),
+                  ),
                   ActivityPlanningControls(
                     activityType: context
                         .watch<ActivityContext>()

@@ -1958,11 +1958,23 @@ abstract class AppLocalizations {
   /// **'Snowboarding'**
   String get activitySnowboarding;
 
+  /// No description provided for @activityAlpineAndSnowboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Alpine & snowboard'**
+  String get activityAlpineAndSnowboard;
+
   /// No description provided for @activityXcSkiing.
   ///
   /// In en, this message translates to:
   /// **'Cross-country skiing'**
   String get activityXcSkiing;
+
+  /// No description provided for @plannerResortDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'Skiing or snowboarding'**
+  String get plannerResortDiscipline;
 
   /// No description provided for @plannerIntensity.
   ///

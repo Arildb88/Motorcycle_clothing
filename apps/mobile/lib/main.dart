@@ -176,7 +176,7 @@ class _AppGateState extends State<_AppGate> {
     if (activity.shouldShowChooserOnLaunch()) {
       return ActivityChooserScreen(
         onChosen: (AppActivity a) {
-          activity.setCurrentActivity(a);
+          activity.selectUserFacingActivity(a);
           activity.markChooserShownThisSession();
           setState(() {});
         },

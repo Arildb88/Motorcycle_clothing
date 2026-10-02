@@ -55,12 +55,35 @@ void main() {
     expect(AppActivity.snowboarding.apiValue, 'snowboarding');
     expect(
       AppActivity.sessionChoices.map((activity) => activity.apiValue),
-      containsAll([
-        'alpine_skiing',
-        'snowboarding',
-        'xc_skiing',
-        'cycling',
-      ]),
+      containsAll(['alpine_skiing', 'snowboarding', 'xc_skiing', 'cycling']),
     );
+    expect(
+      AppActivity.userFacingChoices
+          .map((activity) => activity.apiValue)
+          .toList(),
+      ['motorcycle', 'hiking', 'cycling', 'alpine_skiing', 'xc_skiing'],
+    );
+    expect(AppActivity.alpineSkiing.savedRouteActivityTypes, [
+      'alpine_skiing',
+      'snowboarding',
+    ]);
+    expect(
+      AppActivity.snowboarding.savedRouteActivityTypes,
+      AppActivity.alpineSkiing.savedRouteActivityTypes,
+    );
+    expect(AppActivity.xcSkiing.savedRouteActivityTypes, ['xc_skiing']);
+    expect(AppActivity.hiking.hasRecommendationEngine, isFalse);
+  });
+
+  test('resort menu keeps the current discipline', () async {
+    final ctx = ActivityContext();
+    await ctx.hydrateLocal();
+    ctx.setCurrentActivity(AppActivity.snowboarding);
+    ctx.selectUserFacingActivity(AppActivity.alpineSkiing);
+    expect(ctx.currentActivity, AppActivity.snowboarding);
+    ctx.selectUserFacingActivity(AppActivity.cycling);
+    expect(ctx.currentActivity, AppActivity.cycling);
+    ctx.selectUserFacingActivity(AppActivity.alpineSkiing);
+    expect(ctx.currentActivity, AppActivity.alpineSkiing);
   });
 }
