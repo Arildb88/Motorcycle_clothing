@@ -32,7 +32,8 @@ Success rule applied on this branch:
 
 - Branch: `feature/queue-trigger-test-001` from `dev_test` at `f791ef4b46cae02f220310d5df3493131997fc8b`.
 - Implementation commit: `d50d130397ee22fae6c8fcc1cc6e1b8fbdf6b04b` — docs: complete queue trigger verification
-- PR: opened against `dev_test` from this branch. The URL is added when the pull request exists.
+- Report commit: `426e868` — docs: record queue trigger verification result
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/29
 - Merge: fast-forward into `dev_test` only. `dev` and `main` are not modified.
 
 ## Files changed
