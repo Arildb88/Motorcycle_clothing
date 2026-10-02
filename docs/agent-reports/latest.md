@@ -1,36 +1,38 @@
-# RECOMMENDATION-EXPLAIN-001
+# THERMAL-FEEDBACK-001
 
 ## Task
 
-`RECOMMENDATION-EXPLAIN-001`, generation 33, authorized by the automatic final control update that completed `DEPARTURE-COMPARE-001`. The parent tip held that token at generation 32 with `DEPARTURE-COMPARE-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`THERMAL-FEEDBACK-001`, generation 34, authorized by the automatic final control update that completed `RECOMMENDATION-EXPLAIN-001`. The parent tip held that token at generation 33 with `RECOMMENDATION-EXPLAIN-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/recommendation-explain-001`
-- Implementation commit: `4673568ae2bdf57829c1985fe2e327ac2399c037`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/63 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/thermal-feedback-001`
+- Implementation commit: `751f5e1efc7219811f443a57eea1b26906c60bca`
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/64 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Each recommended garment can say why it is there, using only reason codes that engine already emitted for that slot.
+A recommendation can be marked for kald, passe, or for varm. The rating is stored on the activity that produced it.
 
-- Wear and pack stay separate. A packed item does not receive a wear-only reason, and a worn item does not receive a pack-only reason.
-- A code is omitted when the engine did not emit it, when the slot rule does not read that input, when a liner or vent was not selected on that garment, or when a wardrobe gap belongs to another slot.
-- Missing reasons stay blank. Limit notes such as incomplete weather stay in the limits section.
-- Motorcycle clothes stay out of cycling, alpine, snowboard, and cross-country explanations. Demo clothes are not shared into another activity. A shared personal alpine garment can be explained only with cycling codes when cycling is the engine.
-- Alpine and snowboard share the alpine rules. No rain sentence is added, because that engine does not emit one.
-- A non-zero motorcycle cold-sensitivity bias is not turned into a personal-history sentence. The motorcycle engine does not emit that claim.
+- The three Norwegian choices are For kald, Passe, and For varm. They are on today's recommendation and on the planner analysis screen.
+- A missing activity type does not fall back to motorcycle, so the submit control stays off.
+- The rating updates only that activity's existing `PersonalOffset` (`zone: overall`). Alpine skiing and snowboarding stay on separate rows. Motorcycle clothes stay on the motorcycle wardrobe.
+- `UserProfile.coldSensitivity` is not rewritten. Motorcycle recommendations still add that manual prior, then the shrunk feedback residual. Cycling, alpine, snowboard, and cross-country apply only their own residual and do not read the manual prior or another activity's offset.
+- One extreme rating from an empty offset stores a 1 °C residual and applies `1/7` °C, because shrinkage uses `n/(n+6)`. The stored mean stays within ±3 °C. A long run of the same rating approaches at most 1 °C of applied bias.
+- Comfortable feedback pulls an existing mean toward 0. No feedback (`n` is 0) applies 0, including a stored mean with no samples, so existing recommendations stay as they were.
+- The engines do not turn the bias into a personal-history sentence. `canClaimPersonal` stays false.
+- The API still accepts the older slightly-cold and slightly-warm ratings at half the step. The screen does not show them.
 
 ## Checks
 
 API, focused:
 
-- `explain-kit` — 9 tests passed
-- `alpine-recommend`, `cycling-recommend`, `xc-recommend`, and `departure-compare.recommend` — 9 tests passed
-- `tsc --noEmit` reported no errors in the changed API files. Existing spec-file type errors were already present and were not changed.
+- `thermal-calibration`, `feedback.service`, `thermal-bias.exposure`, `cycling-recommend`, `alpine-recommend`, `xc-recommend`, `activity-foundations`, `cycling.engine`, `alpine.engine`, `xc.engine`, and `explain-kit` — 59 tests passed
+- `nest build` passed
+- `tsc --noEmit` still reports existing spec-file union errors. The new activity-type assertion was cast so it does not add one. Production files in this change typecheck through the build.
 
 Flutter, in `apps/mobile`:
 
-- `flutter analyze` on the four changed Dart files — no issues
-- `flutter test test/recommendation_presentation_test.dart test/ride_analysis_result_test.dart` — 12 tests passed
+- `flutter analyze` on `feedback_sheet.dart` and `ride_analysis_result_screen.dart` — no issues
+- `flutter test test/thermal_feedback_sheet_test.dart test/ride_analysis_result_test.dart test/nb_localization_test.dart` — 14 tests passed
 
 Android, iOS, and a live provider call were not run.
 
@@ -38,19 +40,23 @@ Android, iOS, and a live provider call were not run.
 
 Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, schema migration, or paid service. `dev` and `main` were not modified.
 
+`ActivityLog` still has no `activityType` column. The calibration key is the existing `PersonalOffset` row. A later query of logs by activity would need an additive column. This task did not add one.
+
+Hiking can be stored if a client sends that activity type. Hiking still has no recommendation engine, so nothing reads that row.
+
 ## Final control state
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `RECOMMENDATION-EXPLAIN-001` completed and appended once to `consumed.md`
-- `THERMAL-FEEDBACK-001` is active
-- `active_id: THERMAL-FEEDBACK-001`
+- `THERMAL-FEEDBACK-001` completed and appended once to `consumed.md`
+- `PERFORMANCE-001` is active
+- `active_id: PERFORMANCE-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 34`
+- `handoff_generation: 35`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `THERMAL-FEEDBACK-001`, Generation 34, Handoff-From `RECOMMENDATION-EXPLAIN-001`, Authorization `authorized`
+- `next-task.md`: `PERFORMANCE-001`, Generation 35, Handoff-From `THERMAL-FEEDBACK-001`, Authorization `authorized`
 
 ## Remaining
 
-A device pass of the explanation lines was not run. `THERMAL-FEEDBACK-001` is authorized for a later run. This run stops after merge.
+A device pass of the feedback sheet was not run. `PERFORMANCE-001` is authorized for a later run. This run stops after merge.

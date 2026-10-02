@@ -1,20 +1,28 @@
 # Authorized RideWear Task
-## Type: FEATURE
-## ID: THERMAL-FEEDBACK-001
-## Generation: 34
-## Handoff-From: RECOMMENDATION-EXPLAIN-001
+## Type: PERFORMANCE
+## ID: PERFORMANCE-001
+## Generation: 35
+## Handoff-From: THERMAL-FEEDBACK-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T23:26:34Z
-## Task: Add simple cold/comfortable/hot feedback after a recommendation or activity as groundwork for personal thermal calibration
+## Promoted: 2026-10-02T23:43:56Z
+## Task: Measure and address obvious RideWear MVP performance inefficiencies
+
+Inspect the working MVP for concrete performance waste and fix only issues supported by evidence or clearly redundant work.
+
+Focus on:
+- Duplicate/unnecessary API requests.
+- Search debounce, stale requests and race handling.
+- Provider request reuse/cancellation where existing abstractions support it.
+- Avoidable Flutter rebuild/state churn in important planner/recommendation screens.
+- Obvious sequential work that can safely run concurrently without changing semantics.
+- Excessive payload/data processing in existing API/provider adapters.
 
 Requirements:
-- Provide a minimal Norwegian UX for “for kald”, “passe” and “for varm” linked to the relevant recommendation/activity context where existing architecture safely permits.
-- Inspect the existing personal thermal/profile model first and reuse it where possible.
-- If safe within the current model, use accumulated feedback conservatively to improve the user's existing thermal preference/calibration; make the behavior deterministic, bounded and testable.
-- Do not use ML, external AI, a new provider or opaque scoring.
-- Do not let one feedback event cause a large calibration change.
-- Preserve historical/user data and existing recommendations when no feedback exists.
-- If persistent feedback requires an unauthorized schema migration, do not create one: implement the safe non-schema portion and document the exact follow-up need, or BLOCK if no meaningful safe implementation is possible.
-- Respect activity/wardrobe isolation rules.
-- Add focused tests for cold/comfortable/hot behavior and bounds.
-- Follow queue/control rules.
+- Measure or demonstrate the problem before non-trivial optimization.
+- Preserve behavior and existing architecture.
+- Do not introduce caching infrastructure, new providers, dependencies, schema changes or speculative rewrites unless already available and clearly appropriate.
+- Add regression tests where practical.
+- Run relevant Flutter/API tests and Flutter analyze.
+- Document measured/observed improvements and deferred opportunities.
+
+Keep dev and main untouched. Follow queue rules.

@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: THERMAL-FEEDBACK-001
+active_id: PERFORMANCE-001
 promotion: automatic
-handoff_generation: 34
+handoff_generation: 35
 handoff_state: authorized
 ```
 
@@ -82,6 +82,8 @@ Generation `31` is spent: `UX-POLISH-001` completed and the automatic final cont
 Generation `32` is spent: `DEPARTURE-COMPARE-001` completed and the automatic final control update authorizes `RECOMMENDATION-EXPLAIN-001` at generation `33`. Do not reuse generation `32`. Do not execute `DEPARTURE-COMPARE-001` again.
 
 Generation `33` is spent: `RECOMMENDATION-EXPLAIN-001` completed and the automatic final control update authorizes `THERMAL-FEEDBACK-001` at generation `34`. Do not reuse generation `33`. Do not execute `RECOMMENDATION-EXPLAIN-001` again.
+
+Generation `34` is spent: `THERMAL-FEEDBACK-001` completed and the automatic final control update authorizes `PERFORMANCE-001` at generation `35`. Do not reuse generation `34`. Do not execute `THERMAL-FEEDBACK-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1552,7 +1554,7 @@ Requirements:
 
 ### THERMAL-FEEDBACK-001
 
-- status: active
+- status: completed
 - title: Simple thermal recommendation feedback
 - source: explicitly approved lightweight personalization enhancement
 
@@ -1580,7 +1582,7 @@ Requirements:
 
 ### PERFORMANCE-001
 
-- status: queued
+- status: active
 - title: Measure and fix obvious MVP performance waste
 - source: approved final pre-release hardening plan
 
