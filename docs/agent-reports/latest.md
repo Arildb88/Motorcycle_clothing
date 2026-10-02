@@ -1,54 +1,51 @@
-# WEATHER-PROVIDER-RESEARCH-002 weather-provider comparison protocol
+# ADS-001 ad-placement policy foundation
 
 ## Task
 
-`WEATHER-PROVIDER-RESEARCH-002`, generation 9, automatic handoff from `XC-SKI-001` on `dev_test` range `a4e4c249cc48aca14b526633eb0cdd99163a1b4d..052af2cce0cc20119380e1b05571c7a4dc9899a6`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`ADS-001`, generation 10, automatic handoff from `WEATHER-PROVIDER-RESEARCH-002` on `dev_test` range `052af2cce0cc20119380e1b05571c7a4dc9899a6..48325d788fae6556b12d7518125e8d7194f886fd`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/weather-provider-research-002`
-- Implementation: `3bb5f5b72cd7c951896011374396c6f3d9d20037`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/42 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/ads-001-placement-policy`
+- Implementation: `cf72e6601b8342c86aa719e001f6458aa6e4c142`
+- PR: opened against `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
-Research and documentation only. `docs/research/WEATHER_DATA_QUALITY.md` now has a pre-registered comparison protocol.
+Provider-neutral placement policy in `apps/mobile/lib/ads/ad_placement_policy.dart`. The existing banner widget asks this policy before it loads. No new ad network, consent SDK, or production ad unit was added.
 
-- Every scored row uses the same coordinate truncated to 4 decimals, the same ground elevation in whole metres, and the same valid time.
-- Lead buckets are 1 hour, 6 hours, and next morning in Europe/Oslo. Providers for one case are fetched inside 15 minutes.
-- MET Locationforecast is the baseline. Error is temperature MAE and bias, 10 m wind MAE, precipitation occurrence at the existing 0.3 mm motorcycle threshold, and motorcycle demand-tier mismatches against an observation.
-- Coverage, server-side latency, and cost are separate columns. Cost uses only an official price.
-- Eligible candidates on 2026-10-02: Open-Meteo, because the licence, call caps, and `elevation` parameter are on the vendor's pages, and Apple WeatherKit, because the USD call ladder is published. WeatherKit has no documented caller elevation, so those rows stay out of the elevation-matched score.
-- Meteomatics has no official list price. meteoblue documents `asl` and credits, but the fetched pricing page did not bind €2,400 per year to one call volume. Both stay out of the trial set.
-- Open-Meteo's official pricing page still has no euro or dollar amount. The free tier remains non-commercial. No provider is ranked. No score was produced.
+- `ADS_ENABLED` still defaults to false. A disabled flag refuses every surface.
+- Eligible surfaces, and only when the list or home content is ready: activity home after the primary content, the saved-routes list in a reserved footer, and the wardrobe list in a reserved footer.
+- Refused: profile and account, auth, consent and privacy, the recommendation result, route editing, map preview, place search, navigation handoff, an active session, safety alerts, and payment.
+- Loading, empty, and error states do not take a slot. Overlay and before-content positions are refused. A second visible placement is refused.
+- `affectsRecommendationRanking` is false. The recommend module does not import this policy.
 
-The live recommend path already sends MET `altitude` when a sample has a height. The note no longer says that call is latitude and longitude only.
+The shell no longer paints a banner on the profile tab. Login and the pushed route editor, map, and planner screens do not request a slot.
 
 ## Final control state
 
-Promotion is automatic. This branch completes `WEATHER-PROVIDER-RESEARCH-002` and authorizes the next queued item.
+Promotion is automatic. No queued unconsumed item remains, so this close is idle and authorizes nothing.
 
-- `WEATHER-PROVIDER-RESEARCH-002` completed and appended once to `consumed.md`
-- `ADS-001` active
-- `active_id: ADS-001`
+- `ADS-001` completed and appended once to `consumed.md`
+- `active_id: none`
 - `promotion: automatic` unchanged
-- `handoff_generation: 10` (generation 9 plus 1)
-- `handoff_state: authorized`
+- `handoff_generation: 10` unchanged
+- `handoff_state: idle`
 - `paused: false`
-- `next-task.md`: `ADS-001`, Generation 10, Handoff-From `WEATHER-PROVIDER-RESEARCH-002`, Authorization `authorized`
-- This run does not implement `ADS-001`
+- `next-task.md`: idle, Generation 10, Handoff-From `none`, Authorization `none`
 
 ## Checks
 
-No production code changed. No API tests, Flutter tests, build, or live forecast calls were run. The task asks for research documentation and says to minimize tests.
+Focused Flutter test, 7 passed:
 
-Official pages re-read on 2026-10-02: MET terms, Open-Meteo terms, pricing, and forecast docs, Apple WeatherKit, Meteomatics pricing, and meteoblue forecast overview and pricing. No API key was created and no checkout was opened.
+- `apps/mobile/test/ad_placement_policy_test.dart`
+
+`flutter analyze` on the touched mobile files reported no issues. No API suite, Flutter build, or live ad request was run. The default build does not initialize ads.
 
 ## Architecture / config
 
-No new dependency, provider, paid service, schema change, or `WEATHER_PROVIDER` default. No secrets. `dev` and `main` were not modified.
+No new dependency, provider, paid service, schema change, or secret. `google_mobile_ads` was already in the app and was not upgraded. `dev` and `main` were not modified.
 
 ## Remaining
 
-- The protocol is not a trial. There are no error numbers.
-- Frost element ids are still unread. A later authorized trial has to read the catalogue before joining observations.
-- Open-Meteo euro price, WeatherKit elevation, and a meteoblue volume-bound price remain unverified.
-- Station density above 1,000 m in southern Norway is unknown.
+- Ads stay off until a human sets `ADS_ENABLED`. Turning them on still needs a certified consent flow, which this task forbids adding.
+- The slot still uses the existing test banner id only when the policy allows a banner. Native banner is an allowed policy format and is not loaded.
+- No ad-free subscription was added.
