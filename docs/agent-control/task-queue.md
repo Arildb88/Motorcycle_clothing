@@ -8,7 +8,7 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: QUEUE-TRIGGER-TEST-001
+active_id: none
 promotion: manual
 ```
 
@@ -185,7 +185,7 @@ No implementation is authorized.
 
 ### QUEUE-TRIGGER-TEST-001
 
-- status: active
+- status: completed
 - title: Verify Cursor queue trigger safely
 - source: control-plane verification only
 
