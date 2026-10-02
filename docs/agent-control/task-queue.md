@@ -1032,6 +1032,163 @@ Tests:
 
 Do not implement cross-country trail discovery in this task. That will be handled separately. Do not add unrelated features or broad refactors. Keep dev and main untouched. Follow queue rules.
 ~~~~~
+### XC-TRAIL-DISCOVERY-001
+
+- status: queued
+- title: Cross-country ski trail discovery
+- source: approved product plan after alpine resort discovery
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: XC-TRAIL-DISCOVERY-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Add nearby cross-country ski trail discovery with manual route fallback
+
+Improve cross-country skiing planning so users can either discover suitable ski trails near a location/current position or continue planning a manual start/end trip.
+
+Provider and data constraints:
+- Prefer authoritative GeoNorge/Kartverket sources and the existing RideWear Flutter -> NestJS -> provider architecture.
+- Use only a source/API whose access, data fields and reuse terms are verified during implementation.
+- Do not scrape UT.no, Skisporet.no or other websites.
+- If no verified production-usable trail source is available, implement the provider-neutral contract and UX/fallback that can be supported safely, document the missing provider decision, and do not fabricate live trail data.
+- Keep external-provider access server-side.
+- No paid provider, secret, schema migration or new dependency unless already authorized by existing architecture; BLOCK if one is truly required.
+
+UX:
+- Offer "Finn løype i nærheten" and "Planlegg egen tur".
+- Nearby discovery must use real coordinates and clearly identify returned trail candidates.
+- Manual planning keeps the existing cross-country start/end flow.
+- Preserve Norwegian Unicode place/trail names.
+- A selected trail must integrate with existing RideWear weather/elevation/recommendation concepts where supported; do not invent geometry or grooming status.
+
+Tests:
+- Add deterministic API/provider-contract and Flutter tests for available, empty and error/fallback states.
+- Run relevant API tests, Flutter tests and Flutter analyze.
+- Record live-provider/device checks separately; do not claim them if not run.
+
+Do not implement unrelated activities or broad refactors. Keep dev and main untouched. Follow queue rules.
+~~~~~
+
+### DEMO-WARDROBE-ACTIVITY-001
+
+- status: queued
+- title: Activity-specific demo wardrobe
+- source: approved product plan for broader end-to-end testing
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: DEMO-WARDROBE-ACTIVITY-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Expand demo wardrobe with activity-relevant garments
+
+Improve demo wardrobe data so motorcycle, cycling, alpine skiing, snowboarding and cross-country skiing can be tested with realistic activity-relevant clothing choices.
+
+Requirements:
+- Keep demo garments clearly identifiable as demo data and separate from personal garments.
+- Preserve the existing idempotent demo-data behavior.
+- Demo garments must be useful to the existing recommendation model; do not create unsupported garment capabilities or a new recommendation engine.
+- Provide reasonable coverage across the currently supported activities and layering/body-area concepts already represented by the domain model.
+- Do not remap hiking into another activity.
+- Preserve localization and existing personal wardrobe behavior.
+- No schema migration, new provider, paid service or broad architecture change.
+
+Tests:
+- Add/update focused deterministic tests for demo generation, idempotency, coexistence with personal garments and activity coverage.
+- Run relevant API/Flutter tests and Flutter analyze where affected.
+
+Keep dev and main untouched. Follow queue rules.
+~~~~~
+
+### DEPENDENCY-MAINTENANCE-001
+
+- status: queued
+- title: Controlled dependency and SDK maintenance
+- source: approved accelerated pre-stabilization maintenance plan
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: MAINTENANCE
+## ID: DEPENDENCY-MAINTENANCE-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Update RideWear dependencies and tooling in controlled groups
+
+Perform a dedicated dependency/toolchain maintenance pass after the queued feature work.
+
+Inventory first:
+- Record current and available Flutter/Dart packages, npm/NestJS packages, Prisma, Android Gradle/Kotlin tooling and other repository-managed SDK/tool constraints.
+- Use the package managers' own outdated/audit information where available.
+- Separate compatible updates from major/migration-bearing updates.
+
+Execution:
+- Apply compatible dependency updates in controlled groups and run relevant tests after each logical group.
+- Major updates are allowed only when their official migration requirements are understood and can be completed within this task without changing RideWear product architecture.
+- Do not blindly force incompatible versions or suppress failures.
+- Prisma/database changes require special care: do not create a database/schema migration merely to satisfy a package update. If a required major upgrade implies an unresolved schema/data/architecture decision, leave that major update deferred and document it rather than breaking the working database foundation.
+- Preserve Flutter -> NestJS -> provider architecture and server-side secrets.
+- Do not introduce unrelated packages, providers or features.
+- Keep lockfiles/config files consistent with accepted updates.
+
+Validation:
+- Run Flutter analyze and relevant/full Flutter tests.
+- Run relevant/full API tests, type checks/builds and Prisma generation/validation as applicable.
+- Run Android build/tooling validation where the environment supports it.
+- Report every deferred major update and the concrete reason.
+- Do not claim iOS validation from Windows.
+
+Keep dev and main untouched. Follow queue rules.
+~~~~~
+
+### STABILIZATION-001
+
+- status: queued
+- title: Consolidated MVP stabilization
+- source: approved accelerated build-first then debug strategy
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: VALIDATION_AND_FIX
+## ID: STABILIZATION-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Run consolidated RideWear regression and fix in-scope defects
+
+After the queued feature and dependency work, perform one broad stabilization pass over the MVP instead of another feature expansion.
+
+Coverage:
+- Authentication/profile/password/logout.
+- Wardrobe, personal garments and demo garments.
+- Motorcycle and cycling route planning, place search, Norwegian Unicode, current position, swap, waypoints, route preview/save/analyze and weather/elevation integration.
+- Alpine skiing and snowboarding resort discovery/selection and recommendation flow.
+- Cross-country nearby-trail/manual-route flows and recommendation flow.
+- Empty/error/provider-unavailable states and Norwegian localization.
+- Verify hiking remains unavailable unless a separately authorized engine exists.
+- Check important touch targets/layout regressions found during earlier emulator testing.
+
+Fix policy:
+- Fix reproducible defects within existing architecture and dependency set.
+- Prefer root-cause fixes over hiding errors.
+- Do not add new product features, providers, schema migrations, paid services or broad architecture changes.
+- If a defect requires one of those decisions, document it as blocked/remaining rather than inventing the change.
+
+Validation:
+- Run the broadest practical API and Flutter automated suites, Flutter analyze, API build/type checks and relevant Prisma validation.
+- Run Android build/emulator checks where the available environment supports them.
+- Distinguish deterministic automated checks from live provider/device checks.
+- Produce a concise remaining-issues list suitable for the next human manual regression pass.
+- Do not claim iOS validation from Windows.
+
+Keep dev and main untouched. Follow queue rules.
+~~~~~
+
 ## QUEUE-CONTROL-006 — no-claim execution
 
 Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorized `RECOMMENDATION-UX-001` at generation 13 and that task completed. The automatic final control update authorized `WEATHER-VALIDATION-001` at generation 14 and that task completed. The automatic final control update authorized `MVP-SMOKE-001` at generation 15 and that task completed. No queued unconsumed item remained, so the final close is idle at generation 15. `MANUAL-REGRESSION-001` was later authorized from idle at generation 16 and completed. No queued unconsumed item remained, so the final close is idle at generation 16.
