@@ -6,7 +6,7 @@
 
 - Branch: `feature/mvp-smoke-001`
 - Implementation: `a623f60c99f65ea380d8087c1d84d5ccc260c388`. No application code change.
-- PR: opened against `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/48 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
