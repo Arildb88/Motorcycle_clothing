@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
+active_id: GEO-ELEVATION-002
 promotion: manual
-handoff_generation: 1
-handoff_state: idle
+handoff_generation: 2
+handoff_state: authorized
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -520,7 +520,7 @@ On success mark QUEUE-CONTROL-002 completed and consumed, leave paused:true, act
 
 ### GEO-ELEVATION-002
 
-- status: queued
+- status: active
 - title: Validate altitude-aware weather
 - source: existing Kartverket elevation + MET altitude implementation
 
