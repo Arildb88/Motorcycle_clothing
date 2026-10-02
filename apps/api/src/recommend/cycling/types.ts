@@ -2,6 +2,8 @@ import type { VentState } from '../../domain';
 import type { CyclingIntensity } from './constants';
 import type { WeatherPoint, RouteWeatherSummary } from '../weather.types';
 
+export type { CyclingIntensity };
+
 export type CyclingAirflowMode = 'vector' | 'scalar_sum';
 
 export type CyclingSpeedSource = 'route_profile' | 'style_default';

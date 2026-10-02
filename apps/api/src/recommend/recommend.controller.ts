@@ -14,12 +14,14 @@ export class RecommendController {
     @Query('routeId') routeId?: string,
     @Query('departureAt') departureAt?: string,
     @Query('intensity') intensity?: string,
+    @Query('exposure') exposure?: string,
   ) {
     return this.recommend.forUser(
       req.user.userId,
       routeId,
       departureAt,
       intensity,
+      exposure,
     );
   }
 }

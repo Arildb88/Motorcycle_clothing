@@ -15,6 +15,13 @@ import {
 } from '../routing/route-weather-sampling';
 import type { GeoPoint, RouteLegTiming } from '../routing/routing.types';
 import {
+  isAlpineDiscipline,
+  planAlpineWeatherSamples,
+  resolveAlpineSites,
+  runAlpineRecommendationPipeline,
+  type AlpineKitItem,
+} from './alpine';
+import {
   runCyclingRecommendationPipeline,
   type CyclingKitItem,
 } from './cycling';
@@ -50,6 +57,7 @@ export class RecommendService {
     routeId?: string,
     _departureAt?: string,
     intensity?: string,
+    exposure?: string,
   ) {
     const route = routeId
       ? await this.routes.get(userId, routeId)
@@ -67,6 +75,10 @@ export class RecommendService {
 
     if (route.activityType === 'cycling') {
       return this.forCycling(userId, route, _departureAt, intensity);
+    }
+
+    if (isAlpineDiscipline(route.activityType)) {
+      return this.forAlpine(userId, route, _departureAt, exposure);
     }
 
     const profile = await this.prisma.userProfile.findUnique({
@@ -241,6 +253,10 @@ export class RecommendService {
       isDefaultCommute: boolean;
       startLabel: string | null;
       endLabel: string | null;
+      startLat: number;
+      startLon: number;
+      endLat: number;
+      endLon: number;
       typicalDurationMin: number | null;
       preferencesJson?: string | null;
       waypoints?: Array<{
@@ -360,6 +376,199 @@ export class RecommendService {
     };
   }
 
+  /**
+   * Alpine and snowboard share one exposure engine. The saved points are the
+   * session sites, not a road. Each forecast uses that site's own elevation.
+   * Motorcycle offsets and road routing are not used.
+   */
+  private async forAlpine(
+    userId: string,
+    route: {
+      id: string;
+      name: string;
+      description: string | null;
+      activityType: string;
+      routeKind: string;
+      category: string | null;
+      isFavorite: boolean;
+      isDefaultCommute: boolean;
+      startLabel: string | null;
+      endLabel: string | null;
+      startLat: number;
+      startLon: number;
+      endLat: number;
+      endLon: number;
+      typicalDurationMin: number | null;
+      waypoints?: Array<{
+        sortOrder: number;
+        lat: number;
+        lon: number;
+        label: string | null;
+      }>;
+    },
+    departureAt: string | undefined,
+    exposure: string | undefined,
+  ) {
+    if (!isAlpineDiscipline(route.activityType)) {
+      throw new Error(
+        'Alpine recommendation requires alpine_skiing or snowboarding',
+      );
+    }
+    const discipline = route.activityType;
+    const departAt = parseDeparture(departureAt);
+    const pins =
+      route.waypoints && route.waypoints.length > 0
+        ? [...route.waypoints]
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((waypoint) => ({
+              lat: waypoint.lat,
+              lon: waypoint.lon,
+              label: waypoint.label,
+            }))
+        : [
+            {
+              lat: route.startLat,
+              lon: route.startLon,
+              label: route.startLabel,
+            },
+            {
+              lat: route.endLat,
+              lon: route.endLon,
+              label: route.endLabel,
+            },
+          ];
+    const elevation = await lookupSampleAltitudes(
+      this.elevations,
+      pins.map((pin) => ({ lat: pin.lat, lon: pin.lon })),
+    );
+    const plan = resolveAlpineSites(
+      pins.map((pin, index) => ({
+        ...pin,
+        elevationM: elevation.points[index]?.elevationM ?? null,
+      })),
+    );
+    const requests = planAlpineWeatherSamples({
+      sites: plan.sites,
+      departAt,
+      durationMin: route.typicalDurationMin ?? 240,
+    });
+    const fetched =
+      requests.length === 0
+        ? null
+        : await this.weather.forRouteSamples(
+            requests.map((request) => ({
+              lat: request.lat,
+              lon: request.lon,
+              at: request.at,
+              altitudeM: request.altitudeM,
+            })),
+          );
+    const samples = requests.flatMap((request, index) => {
+      const point = fetched?.points[index];
+      if (!point) return [];
+      return [
+        {
+          role: request.role,
+          phase: request.phase,
+          estimated: request.estimated,
+          weather: {
+            ...point,
+            lat: request.lat,
+            lon: request.lon,
+            forecastAt: request.at.toISOString(),
+            groundElevationM: request.altitudeM,
+          },
+        },
+      ];
+    });
+    const garments = await this.prisma.garment.findMany({
+      where: { userId },
+      include: { components: true },
+    });
+    const engine = runAlpineRecommendationPipeline({
+      discipline,
+      exposureMode: exposure,
+      durationMin: route.typicalDurationMin ?? 240,
+      plan,
+      samples,
+      wardrobe: garments.map((garment) => this.toGarmentInput(garment)),
+    });
+    const temps = samples.map((sample) => sample.weather.airTempC);
+    const rains = samples.map((sample) => sample.weather.precipitationProbPct);
+    const precips = samples.map((sample) => sample.weather.precipitationMm);
+    const winds = samples.map((sample) => sample.weather.windSpeedMs);
+    const weather = {
+      provider: fetched?.provider ?? 'none',
+      sampledAt: fetched?.sampledAt ?? new Date().toISOString(),
+      points: samples.map((sample) => sample.weather),
+      minTempC: temps.length > 0 ? Math.min(...temps) : 0,
+      maxTempC: temps.length > 0 ? Math.max(...temps) : 0,
+      maxRainProbPct: rains.length > 0 ? Math.max(...rains) : 0,
+      maxPrecipMm: precips.length > 0 ? Math.max(...precips) : 0,
+      maxWindMs: winds.length > 0 ? Math.max(...winds) : 0,
+      elevation: elevation.attribution
+        ? {
+            provider: elevation.provider,
+            attribution: elevation.attribution,
+          }
+        : null,
+    };
+    const items = [
+      ...engine.wear.map((item) => this.kitLabel(item)),
+      ...engine.pack.map((item) => `Pack: ${this.kitLabel(item)}`),
+    ];
+    return {
+      route: {
+        id: route.id,
+        name: route.name,
+        description: route.description,
+        activityType: route.activityType,
+        routeKind: route.routeKind,
+        category: route.category,
+        isFavorite: route.isFavorite,
+        isDefaultCommute: route.isDefaultCommute,
+        startLabel: route.startLabel,
+        endLabel: route.endLabel,
+        typicalDurationMin: route.typicalDurationMin,
+        waypoints: route.waypoints?.map((waypoint) => ({
+          sortOrder: waypoint.sortOrder,
+          lat: waypoint.lat,
+          lon: waypoint.lon,
+          label: waypoint.label,
+        })),
+      },
+      departureAt: departureAt ?? new Date().toISOString(),
+      weather,
+      comfort: {
+        coldSensitivity: null,
+        personalSampleCount: 0,
+        personalWeight: 0,
+        personalColdBiasC: 0,
+        exposureMode: engine.exposureMode,
+        exposureModeAssumed: engine.exposureModeAssumed,
+      },
+      recommendation: {
+        engine: engine.engine,
+        discipline: engine.discipline,
+        effectiveTempC: engine.exposure.wornExposureC,
+        exposure: engine.exposure,
+        wear: engine.wear,
+        pack: engine.pack,
+        reasons: engine.reasons,
+        confidence: engine.confidence,
+        items,
+        reasonCodes: engine.reasons.map((reason) => reason.code),
+        voice: engine.personalization.voice,
+        elevation: engine.elevation,
+      },
+      personalization: {
+        ...engine.personalization,
+        reason:
+          'Alpine foundation does not apply motorcycle personal offsets or road routing',
+      },
+    };
+  }
+
   private async roadGeometryFor(
     route: { preferencesJson?: string | null },
     waypoints: GeoPoint[],
@@ -402,7 +611,7 @@ export class RecommendService {
     return segments.length > 0 ? segments : undefined;
   }
 
-  private kitLabel(item: KitItem | CyclingKitItem): string {
+  private kitLabel(item: KitItem | CyclingKitItem | AlpineKitItem): string {
     if (item.source === 'wardrobe' && item.garmentName) {
       const configs = item.configuration
         .map((c) => c.code.toLowerCase().replace(/_/g, ' '))
