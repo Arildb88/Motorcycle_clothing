@@ -19,6 +19,11 @@ import {
  *
  * Requested data is the local id, route name, and centerline. Preparation
  * codes are not grooming status and are not returned.
+ *
+ * Metadata checked again on 2026-10-02. The dataset also has ATOM feeds
+ * and a Geonorge download order for county and national files. Those are
+ * not used here. A bounded Skiløype query is the read path; `trail-cache.ts`
+ * keeps that query off the interactive request when a stored cell exists.
  */
 export const GEONORGE_TRAIL_WFS_URL =
   'https://wfs.geonorge.no/skwms1/wfs.turogfriluftsruter';
@@ -69,14 +74,37 @@ export class GeonorgeTrailAdapter implements TrailDirectoryPort {
   }
 
   async nearby(lat: number, lon: number): Promise<SkiTrailHit[]> {
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return [];
-    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return [];
-    const data = await this.request(this.nearbyUrl(lat, lon));
+    if (!isQueryableCoordinate(lat, lon)) return [];
+    const data = await this.fetchFeatureCollection(
+      lat,
+      lon,
+      TRAIL_NEARBY_RADIUS_M,
+    );
     return mapGeonorgeSkiTrails(data, { lat, lon }, TRAIL_NEARBY_RADIUS_M);
   }
 
+  /**
+   * One bounded Skiløype GetFeature. Callers that already have a stored
+   * collection should not wait on this.
+   */
+  async fetchFeatureCollection(
+    lat: number,
+    lon: number,
+    radiusM: number,
+  ): Promise<string> {
+    if (!isQueryableCoordinate(lat, lon) || !Number.isFinite(radiusM)) {
+      throw new TrailDirectoryUnavailableError();
+    }
+    if (radiusM <= 0) throw new TrailDirectoryUnavailableError();
+    return this.request(this.featureCollectionUrl(lat, lon, radiusM));
+  }
+
   nearbyUrl(lat: number, lon: number): string {
-    const box = bboxAround(lat, lon, TRAIL_NEARBY_RADIUS_M);
+    return this.featureCollectionUrl(lat, lon, TRAIL_NEARBY_RADIUS_M);
+  }
+
+  featureCollectionUrl(lat: number, lon: number, radiusM: number): string {
+    const box = bboxAround(lat, lon, radiusM);
     const params = new URLSearchParams({
       service: 'WFS',
       version: '2.0.0',
@@ -256,6 +284,17 @@ function decodeXml(value: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'");
+}
+
+function isQueryableCoordinate(lat: number, lon: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
 }
 
 function bboxAround(lat: number, lon: number, radiusM: number) {
