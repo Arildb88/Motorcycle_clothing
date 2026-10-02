@@ -6,7 +6,7 @@
 
 - Branch: `feature/xc-trail-discovery-001`
 - Implementation: `d570cf71f67a19b4dfa84be4b8624a12b68dfcf3`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/52 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
