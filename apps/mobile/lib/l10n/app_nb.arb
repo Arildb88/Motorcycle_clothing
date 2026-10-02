@@ -128,6 +128,17 @@
   "unitsSaved": "Endringer er lagret",
   "plannerTitle": "Planlegg tur",
   "plannerSubtitle": "Velg hvor du skal, når du drar eller ankommer, og analyser vær og antrekk.",
+  "plannerSiteSubtitle": "Velg fjellet eller området. Ett sted er nok. Flere steder kan markere bunn og topp.",
+  "plannerPlace": "Sted",
+  "plannerPlaceNumber": "Sted {number}",
+  "@plannerPlaceNumber": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "plannerAddPlace": "Legg til sted",
+  "plannerSaveDisabledSite": "Legg til et navn og velg et sted før du lagrer.",
+  "plannerIncompleteSite": "Velg et sted før du analyserer.",
   "plannerSavedRoutes": "Lagrede",
   "plannerChooseSavedRoute": "Bruk en lagret rute",
   "plannerNoSavedRoutes": "Ingen lagrede ruter ennå. Bygg en her, og lagre den.",
@@ -403,7 +414,7 @@
       }
     }
   },
-  "activitySharedBody": "Profilen og garderoben din deles allerede på tvers av aktiviteter. Motorsykkelanbefalinger er tilgjengelige i dag.",
+  "activitySharedBody": "Anbefalinger for fottur er ikke tilgjengelige ennå, og aktiviteten bruker ikke motorsykkelanbefalingen.",
   "activityOpenMotorcycle": "Åpne Motorsykkel i dag",
   "activityMakeDefault": "Gjør {activity} til standard",
   "@activityMakeDefault": {
@@ -425,7 +436,7 @@
   "wardrobeEmptyTitle": "Ingen plagg lagt til",
   "wardrobeEmptyBody": "Legg til noen plagg du kjører med, eller last inn et demosett for testing.",
   "wardrobeAdd": "Legg til plagg",
-  "wardrobeLoadDemo": "Last inn demogarderobe for motorsykkel",
+  "wardrobeLoadDemo": "Legg til demo-klær",
   "wardrobeDeleteTitle": "Slette plagg?",
   "wardrobeDeleteBody": "Fjern «{name}» fra garderoben.",
   "wardrobeDemoBadge": "DEMO",

@@ -60,7 +60,35 @@ describe('OrsGeocodingService', () => {
     const place = await service.resolve('whosonfirst:locality:101752863');
     expect(url).toContain('/place?ids=whosonfirst%3Alocality%3A101752863');
     expect(url.includes('pelias-key')).toBe(false);
-    expect(place?.label).toBe('Kristiansand');
+    expect(place?.label).toBe('Kristiansand, Agder, Norway');
+  });
+
+  it('keeps a concrete place label instead of the short locality name', async () => {
+    const service = new OrsGeocodingService({
+      apiKey: 'pelias-key',
+      get: async () => ({
+        status: 200,
+        data: {
+          features: [
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [8.0852, 58.2042] },
+              properties: {
+                gid: 'whosonfirst:venue:airport',
+                name: 'Kristiansand',
+                label: 'Kristiansand lufthavn, Kjevik',
+              },
+            },
+          ],
+        },
+      }),
+    });
+    const [hit] = await service.autocomplete('Kristiansand');
+    expect(hit.primaryText).toBe('Kristiansand lufthavn, Kjevik');
+    expect(hit.label).toBe('Kristiansand lufthavn, Kjevik');
+    expect(hit.label).not.toBe('Kristiansand');
+    expect(hit.lat).toBeCloseTo(58.2042);
+    expect(hit.lon).toBeCloseTo(8.0852);
   });
 
   it('surfaces provider failures without throwing the raw HTTP error', async () => {

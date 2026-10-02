@@ -43,7 +43,12 @@ void main() {
 
       final reversed = WaypointListOps.reverse(moved);
       expect(reversed.first.label, 'B');
+      expect(reversed.first.localId, moved.last.localId);
+      expect(reversed.first.lat, moved.last.lat);
+      expect(reversed.first.lon, moved.last.lon);
       expect(reversed.last.label, 'M');
+      expect(reversed.last.localId, moved.first.localId);
+      expect(reversed.last.providerPlaceId, moved.first.providerPlaceId);
 
       final round = WaypointListOps.applyRoundTrip([a, b], enabled: true);
       expect(WaypointListOps.looksLikeRoundTrip(round), isTrue);
@@ -87,6 +92,28 @@ void main() {
       expect(body['departureAt'], isNotNull);
       expect(body['preferences']['avoidMotorways'], isTrue);
       expect(body.containsKey('arrivalAt'), isFalse);
+    });
+
+    test('alpine and snowboard can plan from one place', () {
+      final site = WaypointDraft.fromResolved(place('g', 'Gautefall', 59.07, 8.79));
+      final alpine = RidePlannerState(
+        activityType: 'alpine_skiing',
+        routeName: 'Gautefall',
+        waypoints: [site],
+      );
+      expect(alpine.waypoints, hasLength(1));
+      expect(alpine.canAnalyze, isTrue);
+      expect(alpine.canSave, isTrue);
+      expect(alpine.usesRoadPreview, isFalse);
+      expect(alpine.routeUpsertBody()['waypoints'], hasLength(1));
+      expect(alpine.routeUpsertBody()['activityType'], 'alpine_skiing');
+
+      final padded = RidePlannerState(
+        waypoints: [WaypointDraft.fromResolved(place('a', 'A', 1, 1))],
+      );
+      expect(padded.activityType, 'motorcycle');
+      expect(padded.waypoints, hasLength(2));
+      expect(padded.canAnalyze, isFalse);
     });
 
     test('motorcycle route stays motorcycle and omits activity inputs', () {

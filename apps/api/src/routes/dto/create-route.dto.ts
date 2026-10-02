@@ -86,12 +86,13 @@ export class CreateRouteDto {
   isDefaultCommute?: boolean;
 
   /**
-   * Ordered waypoints (canonical). Min 2.
+   * Ordered waypoints (canonical).
+   * Road and line activities need at least two. Alpine and snowboard accept one place.
    * When provided, start/end are derived from first/last.
    */
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(2)
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => RouteWaypointInputDto)
   waypoints?: RouteWaypointInputDto[];

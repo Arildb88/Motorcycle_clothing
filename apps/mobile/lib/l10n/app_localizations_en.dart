@@ -412,6 +412,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose where you ride, when you leave or arrive, then analyze weather and kit.';
 
   @override
+  String get plannerSiteSubtitle =>
+      'Choose the mountain or area. One place is enough. Extra places can mark base and summit.';
+
+  @override
+  String get plannerPlace => 'Place';
+
+  @override
+  String plannerPlaceNumber(int number) {
+    return 'Place $number';
+  }
+
+  @override
+  String get plannerAddPlace => 'Add place';
+
+  @override
+  String get plannerSaveDisabledSite =>
+      'Add a name and choose a place before saving.';
+
+  @override
+  String get plannerIncompleteSite => 'Choose a place before analyzing.';
+
+  @override
   String get plannerSavedRoutes => 'Saved';
 
   @override
@@ -1041,7 +1063,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activitySharedBody =>
-      'Your profile and wardrobe are already shared across activities. Motorcycle recommendations are available today.';
+      'Hiking recommendations are not available yet and do not use the motorcycle recommendation.';
 
   @override
   String get activityOpenMotorcycle => 'Open Motorcycle today';
@@ -1071,7 +1093,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wardrobeAdd => 'Add garment';
 
   @override
-  String get wardrobeLoadDemo => 'Load demo motorcycle wardrobe';
+  String get wardrobeLoadDemo => 'Add demo clothes';
 
   @override
   String get wardrobeDeleteTitle => 'Delete garment?';

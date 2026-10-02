@@ -105,17 +105,17 @@ export function mapFeature(feature: unknown): GeocodedPlace | null {
   const props = record.properties ?? {};
   const gid = stringProp(props.gid) ?? stringProp(props.id);
   const name = stringProp(props.name);
-  const label = stringProp(props.label) ?? name;
-  if (!gid || !label) return null;
-  const primary = name ?? label;
+  const peliasLabel = stringProp(props.label);
+  const texts = placeTexts(name, peliasLabel);
+  if (!gid || !texts) return null;
   return {
     providerPlaceId: gid,
-    primaryText: primary,
-    secondaryText: secondaryFromLabel(primary, label),
-    label: primary,
+    primaryText: texts.primaryText,
+    secondaryText: texts.secondaryText,
+    label: texts.label,
     lat,
     lon,
-    address: label,
+    address: peliasLabel ?? texts.label,
   };
 }
 
@@ -125,14 +125,30 @@ function featuresOf(data: unknown): unknown[] {
   return Array.isArray(features) ? features : [];
 }
 
-function secondaryFromLabel(name: string, label: string): string | null {
-  if (!label || label === name) return null;
-  const prefix = `${name}, `;
-  if (label.startsWith(prefix)) {
-    const rest = label.slice(prefix.length).trim();
-    return rest || null;
+/**
+ * Pelias `name` is often only the locality. The selected field must keep the
+ * meaningful `label` (for example "Kristiansand lufthavn, Kjevik") instead of
+ * collapsing to that short name.
+ */
+export function placeTexts(
+  name: string | null,
+  peliasLabel: string | null,
+): { primaryText: string; secondaryText: string | null; label: string } | null {
+  const full = peliasLabel ?? name;
+  if (!full) return null;
+  if (!name || name === full) {
+    return { primaryText: full, secondaryText: null, label: full };
   }
-  return label;
+  const prefix = `${name}, `;
+  if (full.startsWith(prefix)) {
+    const rest = full.slice(prefix.length).trim();
+    return {
+      primaryText: name,
+      secondaryText: rest.length > 0 ? rest : null,
+      label: full,
+    };
+  }
+  return { primaryText: full, secondaryText: null, label: full };
 }
 
 function stringProp(value: unknown): string | null {

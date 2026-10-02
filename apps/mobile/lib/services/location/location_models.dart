@@ -44,6 +44,33 @@ class ResolvedPlace {
   final String? address;
 }
 
+/// Keep a selected place label distinct from the text the user typed.
+///
+/// A resolved locality name such as "Kristiansand" must not replace a concrete
+/// suggestion such as "Kristiansand lufthavn, Kjevik".
+String preserveSelectedPlaceLabel({
+  required String typedQuery,
+  required String suggestionLabel,
+  required String resolvedLabel,
+}) {
+  final query = typedQuery.trim();
+  final suggestion = suggestionLabel.trim();
+  final resolved = resolvedLabel.trim();
+  if (resolved.isEmpty) return suggestion;
+  if (suggestion.isEmpty) return resolved;
+  final same = suggestion.toLowerCase() == resolved.toLowerCase();
+  if (same) return resolved;
+  final resolvedIsQuery =
+      query.isNotEmpty && resolved.toLowerCase() == query.toLowerCase();
+  final suggestionRicher = suggestion.length > resolved.length;
+  if (resolvedIsQuery && suggestionRicher) return suggestion;
+  if (suggestionRicher &&
+      suggestion.toLowerCase().startsWith(resolved.toLowerCase())) {
+    return suggestion;
+  }
+  return resolved;
+}
+
 enum RouteTravelMode {
   /// Motorcycle / scooter where the provider supports it (may be beta).
   twoWheeler,

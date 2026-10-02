@@ -299,7 +299,11 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   Future<void> _saveRoute() async {
     final l10n = AppLocalizations.of(context);
     if (!_state.canSave) {
-      setState(() => _error = l10n.plannerSaveDisabledHint);
+      setState(
+        () => _error = activityUsesSitePins(_state.activityType)
+            ? l10n.plannerSaveDisabledSite
+            : l10n.plannerSaveDisabledHint,
+      );
       return;
     }
     setState(() {
@@ -328,7 +332,11 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   Future<void> _analyzeRide() async {
     final l10n = AppLocalizations.of(context);
     if (!_state.canAnalyze) {
-      setState(() => _error = l10n.plannerIncompleteRoute);
+      setState(
+        () => _error = activityUsesSitePins(_state.activityType)
+            ? l10n.plannerIncompleteSite
+            : l10n.plannerIncompleteRoute,
+      );
       return;
     }
     setState(() {
@@ -374,6 +382,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final sitePins = activityUsesSitePins(_state.activityType);
     final stops = _state.waypoints
         .map((w) => w.geoPoint)
         .whereType<GeoPoint>()
@@ -402,16 +411,17 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           Text(
-            l10n.plannerSubtitle,
+            sitePins ? l10n.plannerSiteSubtitle : l10n.plannerSubtitle,
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
           ),
           const SizedBox(height: 12),
-          RouteMapPreview(
-            waypoints: stops,
-            geometry: _geometry,
-            loading: _mapLoading,
-            error: _mapError,
-          ),
+          if (!sitePins)
+            RouteMapPreview(
+              waypoints: stops,
+              geometry: _geometry,
+              loading: _mapLoading,
+              error: _mapError,
+            ),
           if (localizedRouteNotice(l10n, _geometry) != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -425,8 +435,13 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
           const SizedBox(height: 16),
           ...List.generate(_state.waypoints.length, (i) {
             final w = _state.waypoints[i];
-            final role = waypointRole(l10n, i, _state.waypoints.length);
+            final role = sitePins
+                ? (_state.waypoints.length == 1
+                    ? l10n.plannerPlace
+                    : l10n.plannerPlaceNumber(i + 1))
+                : waypointRole(l10n, i, _state.waypoints.length);
             return Padding(
+              key: ValueKey('plan-${w.localId}'),
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -494,16 +509,16 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
                     ],
                   ),
                   PlaceSearchField(
-                    key: ValueKey(
-                      'plan-$i-${w.providerPlaceId ?? w.displayLabel}',
-                    ),
                     search: _location.search,
                     label: role,
                     initialDisplay:
                         w.displayLabel.isEmpty ? null : w.displayLabel,
                     onSelected: (place) {
                       final next = List<WaypointDraft>.from(_state.waypoints);
-                      next[i] = WaypointDraft.fromResolved(place);
+                      next[i] = WaypointDraft.fromResolved(
+                        place,
+                        localId: next[i].localId,
+                      );
                       var updated = _state.copyWith(waypoints: next);
                       if (updated.roundTrip && i == 0) {
                         updated = updated.copyWith(
@@ -536,32 +551,36 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.add),
-                label: Text(l10n.plannerAddStop),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _update(
-                  _state.copyWith(
-                    waypoints: WaypointListOps.reverse(_state.waypoints),
-                  ),
+                label: Text(
+                  sitePins ? l10n.plannerAddPlace : l10n.plannerAddStop,
                 ),
-                icon: const Icon(Icons.swap_vert),
-                label: Text(l10n.plannerReverse),
               ),
-              FilterChip(
-                label: Text(l10n.plannerRoundTrip),
-                selected: _state.roundTrip,
-                onSelected: (v) {
-                  _update(
+              if (_state.waypoints.length >= 2)
+                OutlinedButton.icon(
+                  onPressed: () => _update(
                     _state.copyWith(
-                      roundTrip: v,
-                      waypoints: WaypointListOps.applyRoundTrip(
-                        _state.waypoints,
-                        enabled: v,
-                      ),
+                      waypoints: WaypointListOps.reverse(_state.waypoints),
                     ),
-                  );
-                },
-              ),
+                  ),
+                  icon: const Icon(Icons.swap_vert),
+                  label: Text(l10n.plannerReverse),
+                ),
+              if (!sitePins)
+                FilterChip(
+                  label: Text(l10n.plannerRoundTrip),
+                  selected: _state.roundTrip,
+                  onSelected: (v) {
+                    _update(
+                      _state.copyWith(
+                        roundTrip: v,
+                        waypoints: WaypointListOps.applyRoundTrip(
+                          _state.waypoints,
+                          enabled: v,
+                        ),
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
           const SizedBox(height: 20),

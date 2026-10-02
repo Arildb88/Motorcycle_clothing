@@ -256,17 +256,18 @@ export class WardrobeService {
     force = false,
     language: DemoLanguage = 'en',
   ): Promise<{ created: number; garments: GarmentResponse[] }> {
-    const count = await this.prisma.garment.count({ where: { userId } });
-    if (count > 0 && !force) {
-      throw new BadRequestException(
-        'Wardrobe is not empty. Pass force=true to replace demo data.',
-      );
+    const demoCount = await this.prisma.garment.count({
+      where: { userId, isDemo: true },
+    });
+    if (demoCount > 0 && !force) {
+      return { created: 0, garments: await this.list(userId) };
     }
-    if (force && count > 0) {
-      await this.prisma.garment.deleteMany({ where: { userId } });
+    if (demoCount > 0 && force) {
+      await this.prisma.garment.deleteMany({ where: { userId, isDemo: true } });
     }
 
-    for (const seed of demoWardrobe(language)) {
+    const seeds = demoWardrobe(language);
+    for (const seed of seeds) {
       const expanded = expandDemoGarment(seed);
       await this.prisma.garment.create({
         data: {
@@ -282,12 +283,13 @@ export class WardrobeService {
       });
     }
     const garments = await this.list(userId);
-    return { created: garments.length, garments };
+    return { created: seeds.length, garments };
   }
 
   /**
    * Deletes only this user's demo-seeded garments.
-   * Does not use seed `force`, which removes the whole wardrobe.
+   * Repeated seeding does not insert another copy while demo rows exist.
+   * `force` replaces demo rows only and leaves personal garments in place.
    */
   async deleteDemo(userId: string): Promise<{ deleted: number }> {
     const result = await this.prisma.garment.deleteMany({

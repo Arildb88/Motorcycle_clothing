@@ -413,6 +413,28 @@ class AppLocalizationsNb extends AppLocalizations {
       'Velg hvor du skal, når du drar eller ankommer, og analyser vær og antrekk.';
 
   @override
+  String get plannerSiteSubtitle =>
+      'Velg fjellet eller området. Ett sted er nok. Flere steder kan markere bunn og topp.';
+
+  @override
+  String get plannerPlace => 'Sted';
+
+  @override
+  String plannerPlaceNumber(int number) {
+    return 'Sted $number';
+  }
+
+  @override
+  String get plannerAddPlace => 'Legg til sted';
+
+  @override
+  String get plannerSaveDisabledSite =>
+      'Legg til et navn og velg et sted før du lagrer.';
+
+  @override
+  String get plannerIncompleteSite => 'Velg et sted før du analyserer.';
+
+  @override
   String get plannerSavedRoutes => 'Lagrede';
 
   @override
@@ -1042,7 +1064,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get activitySharedBody =>
-      'Profilen og garderoben din deles allerede på tvers av aktiviteter. Motorsykkelanbefalinger er tilgjengelige i dag.';
+      'Anbefalinger for fottur er ikke tilgjengelige ennå, og aktiviteten bruker ikke motorsykkelanbefalingen.';
 
   @override
   String get activityOpenMotorcycle => 'Åpne Motorsykkel i dag';
@@ -1072,7 +1094,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wardrobeAdd => 'Legg til plagg';
 
   @override
-  String get wardrobeLoadDemo => 'Last inn demogarderobe for motorsykkel';
+  String get wardrobeLoadDemo => 'Legg til demo-klær';
 
   @override
   String get wardrobeDeleteTitle => 'Slette plagg?';

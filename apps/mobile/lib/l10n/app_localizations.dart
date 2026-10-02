@@ -770,6 +770,42 @@ abstract class AppLocalizations {
   /// **'Choose where you ride, when you leave or arrive, then analyze weather and kit.'**
   String get plannerSubtitle;
 
+  /// No description provided for @plannerSiteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the mountain or area. One place is enough. Extra places can mark base and summit.'**
+  String get plannerSiteSubtitle;
+
+  /// No description provided for @plannerPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get plannerPlace;
+
+  /// No description provided for @plannerPlaceNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Place {number}'**
+  String plannerPlaceNumber(int number);
+
+  /// No description provided for @plannerAddPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Add place'**
+  String get plannerAddPlace;
+
+  /// No description provided for @plannerSaveDisabledSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a name and choose a place before saving.'**
+  String get plannerSaveDisabledSite;
+
+  /// No description provided for @plannerIncompleteSite.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a place before analyzing.'**
+  String get plannerIncompleteSite;
+
   /// No description provided for @plannerSavedRoutes.
   ///
   /// In en, this message translates to:
@@ -1931,7 +1967,7 @@ abstract class AppLocalizations {
   /// No description provided for @activitySharedBody.
   ///
   /// In en, this message translates to:
-  /// **'Your profile and wardrobe are already shared across activities. Motorcycle recommendations are available today.'**
+  /// **'Hiking recommendations are not available yet and do not use the motorcycle recommendation.'**
   String get activitySharedBody;
 
   /// No description provided for @activityOpenMotorcycle.
@@ -1979,7 +2015,7 @@ abstract class AppLocalizations {
   /// No description provided for @wardrobeLoadDemo.
   ///
   /// In en, this message translates to:
-  /// **'Load demo motorcycle wardrobe'**
+  /// **'Add demo clothes'**
   String get wardrobeLoadDemo;
 
   /// No description provided for @wardrobeDeleteTitle.

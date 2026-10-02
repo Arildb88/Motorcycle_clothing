@@ -23,8 +23,9 @@ class RidePlannerState {
     int? durationMin,
     this.activityType = 'motorcycle',
     this.inputs = const ActivityPlanningInputs(),
-  })  : waypoints = WaypointListOps.ensureStartAndEnd(
-          waypoints ?? [WaypointDraft.empty(), WaypointDraft.empty()],
+  })  : waypoints = WaypointListOps.ensureMinimum(
+          waypoints ?? const <WaypointDraft>[],
+          minimumPlanningWaypoints(activityType),
         ),
         anchorAt = anchorAt ?? DateTime.now(),
         durationMin = durationMin ?? defaultPlanningDurationMin(activityType);
@@ -43,10 +44,16 @@ class RidePlannerState {
 
   bool get usesRoadPreview => activityUsesRoadPreview(activityType);
 
-  bool get canAnalyze => WaypointListOps.canAnalyze(waypoints);
+  bool get canAnalyze => WaypointListOps.canAnalyze(
+        waypoints,
+        minimum: minimumPlanningWaypoints(activityType),
+      );
 
-  bool get canSave =>
-      WaypointListOps.canSave(name: routeName, waypoints: waypoints);
+  bool get canSave => WaypointListOps.canSave(
+        name: routeName,
+        waypoints: waypoints,
+        minimum: minimumPlanningWaypoints(activityType),
+      );
 
   Map<String, dynamic> preferencesJson() => {
         'avoidMotorways': avoidMotorways,

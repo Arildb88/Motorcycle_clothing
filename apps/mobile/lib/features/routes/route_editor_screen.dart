@@ -360,6 +360,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
             final w = _waypoints[i];
             final role = waypointRole(l10n, i, _waypoints.length);
             return Card(
+              key: ValueKey('editor-${w.localId}'),
               margin: const EdgeInsets.only(bottom: 12),
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -395,7 +396,6 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
                       ],
                     ),
                     PlaceSearchField(
-                      key: ValueKey('place-$i-${w.providerPlaceId ?? w.displayLabel}'),
                       search: _location.search,
                       label: role,
                       initialDisplay: w.displayLabel.isEmpty

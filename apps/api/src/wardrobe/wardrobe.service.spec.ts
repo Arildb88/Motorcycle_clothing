@@ -132,8 +132,19 @@ describe('WardrobeService', () => {
           return { count };
         },
       ),
-      count: jest.fn(async ({ where }: { where: { userId: string } }) =>
-        store.filter((g) => g.userId === where.userId).length,
+      count: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { userId: string; isDemo?: boolean };
+        }) =>
+          store.filter((g) => {
+            if (g.userId !== where.userId) return false;
+            if (where.isDemo !== undefined && g.isDemo !== where.isDemo) {
+              return false;
+            }
+            return true;
+          }).length,
       ),
     },
     garmentComponent: {
@@ -308,6 +319,27 @@ describe('WardrobeService', () => {
     const other = await service.list('user2');
     expect(other.length).toBeGreaterThanOrEqual(8);
     expect(other.every((g) => g.isDemo)).toBe(true);
+  });
+
+  it('adds demo garments beside personal ones and does not duplicate them', async () => {
+    await service.create('user1', {
+      name: 'My jacket',
+      category: 'shell_jacket',
+    });
+    const seeded = await service.seedDemo('user1', false, 'en');
+    expect(seeded.created).toBeGreaterThanOrEqual(8);
+    expect(seeded.garments.some((g) => g.name === 'My jacket' && !g.isDemo)).toBe(
+      true,
+    );
+    const demoCount = seeded.garments.filter((g) => g.isDemo).length;
+    expect(demoCount).toBe(seeded.created);
+
+    const again = await service.seedDemo('user1', false, 'en');
+    expect(again.created).toBe(0);
+    expect(again.garments.filter((g) => g.isDemo)).toHaveLength(demoCount);
+    expect(again.garments.filter((g) => !g.isDemo).map((g) => g.name)).toEqual([
+      'My jacket',
+    ]);
   });
 
   it('still deletes one garment by id and leaves the rest', async () => {

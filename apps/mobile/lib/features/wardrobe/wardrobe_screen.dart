@@ -211,14 +211,24 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             ),
                           ),
           ),
-          if (!_loading && _error == null && _items.any((g) => g.isDemo))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: OutlinedButton(
-                onPressed: _deleteDemo,
-                child: Text(l10n.wardrobeDeleteDemo),
+          if (!_loading && _error == null && _items.isNotEmpty) ...[
+            if (!_items.any((g) => g.isDemo))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: OutlinedButton(
+                  onPressed: _seedDemo,
+                  child: Text(l10n.wardrobeLoadDemo),
+                ),
               ),
-            ),
+            if (_items.any((g) => g.isDemo))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: OutlinedButton(
+                  onPressed: _deleteDemo,
+                  child: Text(l10n.wardrobeDeleteDemo),
+                ),
+              ),
+          ],
           if (_showWardrobeAd)
             const AdBannerSlot(
               surface: AdSurface.wardrobeList,

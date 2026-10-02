@@ -318,6 +318,34 @@ describe('RoutesService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('stores one alpine or snowboard place without inventing a destination', async () => {
+    const alpine = await service.create('u1', {
+      name: 'Gautefall',
+      activityType: 'alpine_skiing',
+      waypoints: [{ lat: 59.07, lon: 8.79, label: 'Gautefall' }],
+    });
+    expect(alpine.waypoints).toHaveLength(1);
+    expect(alpine.routeKind).toBe('point_to_point');
+    expect(alpine.endLabel).toBe('Gautefall');
+    const loaded = await service.get('u1', alpine.id);
+    expect(loaded.waypoints).toHaveLength(1);
+
+    const snowboard = await service.create('u1', {
+      name: 'Hovden',
+      activityType: 'snowboarding',
+      waypoints: [{ lat: 59.57, lon: 7.36, label: 'Hovden' }],
+    });
+    expect(snowboard.waypoints).toHaveLength(1);
+
+    await expect(
+      service.create('u1', {
+        name: 'Solo ride',
+        activityType: 'motorcycle',
+        waypoints: [{ lat: 58, lon: 8, label: 'Only' }],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('rejects fewer than 2 waypoints', async () => {
     await expect(
       service.create('u1', {

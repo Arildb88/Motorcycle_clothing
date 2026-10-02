@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/ads/ad_placement_policy.dart';
 import 'package:motorcycle_clothing/config/app_config.dart';
+import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
@@ -25,27 +26,50 @@ class _RoutesScreenState extends State<RoutesScreen> {
   bool _loading = true;
   String? _error;
 
+  AppActivity? _loadedFor;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final activity = context.read<ActivityContext>().currentActivity;
+    if (_loadedFor == activity) return;
+    _loadedFor = activity;
+    if (!activity.hasRecommendationEngine) {
+      setState(() {
+        _routes = [];
+        _loading = false;
+        _error = null;
+      });
+      return;
+    }
     _load();
   }
 
-  String _planningActivityType() {
+  String? _planningActivityType() {
     final activity = context.read<ActivityContext>().currentActivity;
-    if (!activity.hasRecommendationEngine) return 'motorcycle';
+    if (!activity.hasRecommendationEngine) return null;
     return activity.apiValue;
   }
 
   Future<void> _load() async {
+    final activityType = _planningActivityType();
+    if (activityType == null) {
+      if (mounted) {
+        setState(() {
+          _routes = [];
+          _loading = false;
+          _error = null;
+        });
+      }
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final api = context.read<ApiClient>();
-      final list =
-          await api.getList('/routes?activityType=${_planningActivityType()}');
+      final list = await api.getList('/routes?activityType=$activityType');
       if (mounted) {
         setState(() {
           _routes = list
@@ -64,11 +88,13 @@ class _RoutesScreenState extends State<RoutesScreen> {
   }
 
   Future<void> _openEditor({SavedRoute? existing}) async {
+    final activityType = existing?.activityType ?? _planningActivityType();
+    if (activityType == null) return;
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => RouteEditorScreen(
           existing: existing,
-          activityType: existing?.activityType ?? _planningActivityType(),
+          activityType: activityType,
         ),
       ),
     );
@@ -76,12 +102,14 @@ class _RoutesScreenState extends State<RoutesScreen> {
   }
 
   Future<void> _openPlanner({SavedRoute? existing}) async {
+    final activityType = existing?.activityType ?? _planningActivityType();
+    if (activityType == null) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => RidePlannerScreen(
           initialRoute: existing,
           savedRoutes: _routes,
-          activityType: existing?.activityType ?? _planningActivityType(),
+          activityType: activityType,
         ),
       ),
     );
@@ -124,6 +152,37 @@ class _RoutesScreenState extends State<RoutesScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final activity = context.watch<ActivityContext>().currentActivity;
+    if (!activity.hasRecommendationEngine) {
+      final name = activityLabel(l10n, activity);
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.routesTitle,
+                style: GoogleFonts.barlowCondensed(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.activityComingNext(name),
+                style: GoogleFonts.sourceSerif4(fontSize: 22),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.activitySharedBody,
+                style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

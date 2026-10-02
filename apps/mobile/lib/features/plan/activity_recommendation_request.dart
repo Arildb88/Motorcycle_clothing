@@ -70,6 +70,22 @@ int defaultPlanningDurationMin(String activityType) {
   }
 }
 
+/// Alpine and snowboard use one or more places, not a start/destination ride.
+bool activityUsesSitePins(String activityType) {
+  switch (activityType) {
+    case 'alpine_skiing':
+    case 'snowboarding':
+      return true;
+    default:
+      return false;
+  }
+}
+
+/// Road and ski-line activities need two points. A mountain site needs one.
+int minimumPlanningWaypoints(String activityType) {
+  return activityUsesSitePins(activityType) ? 1 : 2;
+}
+
 /// Road preview is for motorcycle and cycling. Alpine sites and a cross-country
 /// line are not a driving route.
 bool activityUsesRoadPreview(String activityType) {

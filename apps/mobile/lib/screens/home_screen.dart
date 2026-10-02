@@ -456,6 +456,13 @@ class _RecommendationBody extends StatelessWidget {
     return kitLine(l10n, item);
   }
 
+  String _routeLine(AppLocalizations l10n, Map<String, dynamic> route) {
+    final start = route['startLabel']?.toString();
+    final end = route['endLabel']?.toString();
+    if (start != null && start.isNotEmpty && start == end) return start;
+    return '${start ?? l10n.labelStart} → ${end ?? l10n.labelEnd}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -494,7 +501,7 @@ class _RecommendationBody extends StatelessWidget {
             ),
           ),
           Text(
-            '${route['startLabel'] ?? l10n.labelStart} → ${route['endLabel'] ?? l10n.labelEnd}',
+            _routeLine(l10n, route),
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
           if (recommendationInputSummary(l10n, data['comfort']) != null) ...[

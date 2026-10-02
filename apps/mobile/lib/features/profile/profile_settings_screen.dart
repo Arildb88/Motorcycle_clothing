@@ -287,18 +287,18 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
             (raw) =>
                 raw is Map && raw['provider']?.toString() == 'local',
           ))
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ChangePasswordScreen(),
-                    ),
-                  );
-                },
-                child: Text(l10n.authChangePassword),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
               ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordScreen(),
+                  ),
+                );
+              },
+              child: Text(l10n.authChangePassword),
             ),
           FilledButton.tonal(
             onPressed: () async => auth.logout(),

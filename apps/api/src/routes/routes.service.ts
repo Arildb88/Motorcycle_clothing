@@ -30,6 +30,14 @@ import {
   type RoutingPort,
 } from '../routing';
 
+/** Alpine and snowboard sites are one place. Road and line activities stay at two. */
+export function minimumWaypointsForActivity(activityType?: string): number {
+  if (activityType === 'alpine_skiing' || activityType === 'snowboarding') {
+    return 1;
+  }
+  return 2;
+}
+
 export type WaypointInput = {
   lat: number;
   lon: number;
@@ -174,7 +182,7 @@ export class RoutesService {
     };
 
     if (dto.waypoints !== undefined) {
-      const waypoints = this.normalizeWaypoints(dto.waypoints);
+      const waypoints = this.normalizeWaypoints(dto.waypoints, dto.activityType);
       const routeKind = this.resolveRouteKind(dto.routeKind, waypoints);
       const ends = this.endsFromWaypoints(waypoints);
       Object.assign(data, ends, {
@@ -395,7 +403,7 @@ export class RoutesService {
     endLon: number;
     waypoints?: Array<{ lat: number; lon: number }>;
   }): Array<{ lat: number; lon: number }> {
-    if (route.waypoints && route.waypoints.length >= 2) {
+    if (route.waypoints && route.waypoints.length >= 1) {
       return route.waypoints.map((w) => ({ lat: w.lat, lon: w.lon }));
     }
     return [
@@ -405,8 +413,8 @@ export class RoutesService {
   }
 
   private resolveWaypoints(dto: CreateRouteDto): WaypointInput[] {
-    if (dto.waypoints && dto.waypoints.length >= 2) {
-      return this.normalizeWaypoints(dto.waypoints);
+    if (dto.waypoints && dto.waypoints.length > 0) {
+      return this.normalizeWaypoints(dto.waypoints, dto.activityType);
     }
     if (
       dto.startLat == null ||
@@ -436,9 +444,17 @@ export class RoutesService {
     ];
   }
 
-  normalizeWaypoints(waypoints: WaypointInput[]): WaypointInput[] {
-    if (waypoints.length < 2) {
-      throw new BadRequestException('A route needs at least 2 waypoints');
+  normalizeWaypoints(
+    waypoints: WaypointInput[],
+    activityType?: string,
+  ): WaypointInput[] {
+    const minimum = minimumWaypointsForActivity(activityType);
+    if (waypoints.length < minimum) {
+      throw new BadRequestException(
+        minimum === 1
+          ? 'Choose a place'
+          : 'A route needs at least 2 waypoints',
+      );
     }
     return waypoints.map((w, i) => {
       this.assertCoords(w.lat, w.lon);
@@ -462,7 +478,7 @@ export class RoutesService {
       }
       return explicit;
     }
-    if (waypoints.length === 2) return 'point_to_point';
+    if (waypoints.length <= 2) return 'point_to_point';
     const first = waypoints[0];
     const last = waypoints[waypoints.length - 1];
     if (this.near(first.lat, first.lon, last.lat, last.lon)) return 'loop';
@@ -555,6 +571,23 @@ export class RoutesService {
     },
   >(route: T): Promise<T> {
     if (route.waypoints.length >= 2) return route;
+    if (
+      route.waypoints.length === 1 &&
+      this.near(
+        route.waypoints[0].lat,
+        route.waypoints[0].lon,
+        route.startLat,
+        route.startLon,
+      ) &&
+      this.near(
+        route.waypoints[0].lat,
+        route.waypoints[0].lon,
+        route.endLat,
+        route.endLon,
+      )
+    ) {
+      return route;
+    }
 
     let fromJson: WaypointInput[] = [];
     try {

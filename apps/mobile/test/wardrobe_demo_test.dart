@@ -69,6 +69,24 @@ void main() {
     expect(find.text('My jacket'), findsOneWidget);
   });
 
+  testWidgets('offers demo clothes when the wardrobe already has personal garments', (
+    tester,
+  ) async {
+    final api = _FakeApi([
+      _garment(id: 'mine', name: 'My jacket', isDemo: false),
+    ]);
+    await tester.pumpWidget(_harness(api));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My jacket'), findsOneWidget);
+    expect(find.text('Add demo clothes'), findsOneWidget);
+    expect(find.text('Delete demo wardrobe'), findsNothing);
+
+    await tester.pumpWidget(_harness(api, const Locale('nb')));
+    await tester.pumpAndSettle();
+    expect(find.text('Legg til demo-klær'), findsOneWidget);
+  });
+
   testWidgets('uses the Norwegian demo delete action', (tester) async {
     final api = _FakeApi([
       _garment(id: 'demo', name: 'Demo – Touringjakke', isDemo: true),

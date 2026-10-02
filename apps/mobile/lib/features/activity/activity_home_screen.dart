@@ -49,12 +49,6 @@ class _ComingSoonHome extends StatelessWidget {
               style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
             ),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () {
-                activityCtx.setCurrentActivity(AppActivity.motorcycle);
-              },
-              child: Text(l10n.activityOpenMotorcycle),
-            ),
             TextButton(
               onPressed: () async {
                 await activityCtx.setDefaultActivity(activity);

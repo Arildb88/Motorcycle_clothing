@@ -6,12 +6,13 @@ import 'package:motorcycle_clothing/services/location/location_models.dart';
 /// Coordinates are canonical once a place is selected; the UI shows [label].
 class WaypointDraft {
   WaypointDraft({
+    int? localId,
     this.providerPlaceId,
     this.label,
     this.address,
     this.lat,
     this.lon,
-  });
+  }) : localId = localId ?? _nextLocalId();
 
   factory WaypointDraft.empty() => WaypointDraft();
 
@@ -24,8 +25,9 @@ class WaypointDraft {
     );
   }
 
-  factory WaypointDraft.fromResolved(ResolvedPlace place) {
+  factory WaypointDraft.fromResolved(ResolvedPlace place, {int? localId}) {
     return WaypointDraft(
+      localId: localId,
       providerPlaceId: place.providerPlaceId,
       label: place.label,
       lat: place.lat,
@@ -34,6 +36,12 @@ class WaypointDraft {
     );
   }
 
+  static int _localSeq = 0;
+
+  static int _nextLocalId() => ++_localSeq;
+
+  /// Stable for the life of this stop so a swap moves the field with the place.
+  final int localId;
   String? providerPlaceId;
   String? label;
   String? address;
@@ -160,9 +168,10 @@ class WaypointListOps {
   static bool canSave({
     required String name,
     required List<WaypointDraft> waypoints,
+    int minimum = 2,
   }) {
     if (name.trim().isEmpty) return false;
-    if (waypoints.length < 2) return false;
+    if (waypoints.length < minimum) return false;
     return waypoints.every((w) => w.isResolved);
   }
 
@@ -177,11 +186,13 @@ class WaypointListOps {
   }
 
   /// Reverse start ↔ destination (and intermediate order).
+  ///
+  /// Copies [localId] so the search field moves with the selected place.
   static List<WaypointDraft> reverse(List<WaypointDraft> list) {
-    final base = ensureStartAndEnd(list);
-    return base.reversed
+    return list.reversed
         .map(
           (w) => WaypointDraft(
+            localId: w.localId,
             providerPlaceId: w.providerPlaceId,
             label: w.label,
             address: w.address,
@@ -222,8 +233,19 @@ class WaypointListOps {
   }
 
   /// Ready to analyze (coordinates only — name optional until save).
-  static bool canAnalyze(List<WaypointDraft> waypoints) {
-    if (waypoints.length < 2) return false;
+  static bool canAnalyze(List<WaypointDraft> waypoints, {int minimum = 2}) {
+    if (waypoints.length < minimum) return false;
     return waypoints.every((w) => w.isResolved);
+  }
+
+  static List<WaypointDraft> ensureMinimum(
+    List<WaypointDraft> list,
+    int minimum,
+  ) {
+    final next = List<WaypointDraft>.from(list);
+    while (next.length < minimum) {
+      next.add(WaypointDraft.empty());
+    }
+    return next;
   }
 }

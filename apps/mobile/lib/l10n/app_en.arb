@@ -128,6 +128,17 @@
   "unitsSaved": "Units saved",
   "plannerTitle": "Plan ride",
   "plannerSubtitle": "Choose where you ride, when you leave or arrive, then analyze weather and kit.",
+  "plannerSiteSubtitle": "Choose the mountain or area. One place is enough. Extra places can mark base and summit.",
+  "plannerPlace": "Place",
+  "plannerPlaceNumber": "Place {number}",
+  "@plannerPlaceNumber": {
+    "placeholders": {
+      "number": {"type": "int"}
+    }
+  },
+  "plannerAddPlace": "Add place",
+  "plannerSaveDisabledSite": "Add a name and choose a place before saving.",
+  "plannerIncompleteSite": "Choose a place before analyzing.",
   "plannerSavedRoutes": "Saved",
   "plannerChooseSavedRoute": "Use a saved route",
   "plannerNoSavedRoutes": "No saved routes yet. Build one here, then save it.",
@@ -403,7 +414,7 @@
       }
     }
   },
-  "activitySharedBody": "Your profile and wardrobe are already shared across activities. Motorcycle recommendations are available today.",
+  "activitySharedBody": "Hiking recommendations are not available yet and do not use the motorcycle recommendation.",
   "activityOpenMotorcycle": "Open Motorcycle today",
   "activityMakeDefault": "Make {activity} my default",
   "@activityMakeDefault": {
@@ -425,7 +436,7 @@
   "wardrobeEmptyTitle": "No garments yet",
   "wardrobeEmptyBody": "Add a few pieces you ride in, or load a demo kit for testing.",
   "wardrobeAdd": "Add garment",
-  "wardrobeLoadDemo": "Load demo motorcycle wardrobe",
+  "wardrobeLoadDemo": "Add demo clothes",
   "wardrobeDeleteTitle": "Delete garment?",
   "wardrobeDeleteBody": "Remove “{name}” from your wardrobe.",
   "wardrobeDemoBadge": "DEMO",

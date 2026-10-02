@@ -74,7 +74,7 @@ export class UpdateRouteDto {
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(2)
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => RouteWaypointInputDto)
   waypoints?: RouteWaypointInputDto[];
