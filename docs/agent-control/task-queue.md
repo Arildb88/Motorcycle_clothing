@@ -749,6 +749,117 @@ Use focused tests for policy logic if executable code is added. No unrelated bro
 ~~~~~
 
 
+### INTEGRATION-001
+
+- status: queued
+- title: Full integration and regression pass
+- source: completed CYCLING-001, ALPINE-001, XC-SKI-001 and ADS-001 foundations
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: INTEGRATION-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Run integration/regression pass for the new activity foundations
+
+Validate the completed cycling, alpine/snowboard, cross-country skiing, route/weather/elevation, recommendation and mobile ad-policy foundations together. Run the existing API test/typecheck/lint commands and Flutter analyze/tests that are supported by the repository. Add focused integration/regression tests where concrete coverage gaps are found and fix concrete regressions within the existing architecture.
+
+Do not add product features, dependencies, schema changes, providers, paid services, or broad refactors. Do not contact live external providers when deterministic mocks/fixtures exist. If a failure requires an architectural/provider/schema decision, BLOCK and report the exact boundary instead of inventing it.
+
+Update the agent report with exact commands and results. Follow queue rules.
+~~~~~
+
+### MOBILE-ACTIVITIES-001
+
+- status: queued
+- title: Mobile activity planning integration
+- source: existing multi-activity UI plus completed recommendation engines
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: MOBILE-ACTIVITIES-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Connect supported activity recommendations to the existing mobile planning flow
+
+Integrate the existing cycling, alpine skiing, snowboarding and cross-country skiing recommendation foundations into the existing Flutter activity/planning UI. Reuse existing activity values, route/planning models and API contracts. Let the user select only inputs already supported by the completed foundations, including applicable intensity/style inputs, and request/display the matching recommendation.
+
+Do not redesign navigation, add schema changes, dependencies, providers, live tracking, power-meter support, grooming data, wax advice, or new activity types. Preserve motorcycle behavior. If an existing API/mobile contract is insufficient without an unauthorized model decision, BLOCK and report it.
+
+Add focused Flutter/API contract tests for changed behavior and run Flutter analyze on touched code. Follow queue rules.
+~~~~~
+
+### RECOMMENDATION-UX-001
+
+- status: queued
+- title: Recommendation wear/pack UX
+- source: existing recommendation outputs and mobile UI
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: RECOMMENDATION-UX-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Present recommendation results clearly in the mobile app
+
+Improve the existing recommendation result presentation for supported activities using data already returned by the API. Clearly separate wear and pack items, reasons, confidence/fallback information and relevant route/weather/elevation context when available. Keep safety-relevant uncertainty visible and avoid unsupported claims.
+
+Do not change recommendation ranking/physics, invent forecast accuracy, add providers/dependencies/schema changes, or redesign unrelated screens. Preserve Norwegian localization patterns already used by the app and existing motorcycle behavior.
+
+Add focused widget/domain tests where practical and run Flutter analyze on touched code. Follow queue rules.
+~~~~~
+
+### WEATHER-VALIDATION-001
+
+- status: queued
+- title: Weather validation harness
+- source: docs/research/WEATHER_DATA_QUALITY.md
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: WEATHER-VALIDATION-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Implement the provider-neutral weather validation harness
+
+Implement the deterministic, provider-neutral measurement/data-shaping foundation described by docs/research/WEATHER_DATA_QUALITY.md using the existing MET baseline and existing weather abstractions. Support paired coordinate/elevation/valid-time observations and measurable comparison outputs that can later accept additional providers without changing production recommendation behavior.
+
+Do not subscribe to or integrate a new provider, make live-network-dependent CI tests, change the production weather provider, add paid services, expose secrets, or declare a provider superior without empirical data. Avoid schema/dependency changes unless the existing research explicitly makes them unnecessary; otherwise BLOCK.
+
+Add focused deterministic tests and update the research/report with what is actually measurable. Follow queue rules.
+~~~~~
+
+### MVP-SMOKE-001
+
+- status: queued
+- title: RideWear MVP smoke and readiness pass
+- source: completed integration/mobile/recommendation foundations
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: MVP-SMOKE-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Run an MVP smoke/readiness pass and fix concrete in-scope defects
+
+Exercise the repository-supported happy paths for auth, profile, wardrobe, route planning, motorcycle recommendations, cycling, alpine/snowboard and cross-country recommendations, plus the ads-off default. Run the strongest existing deterministic API and Flutter checks practical in the repository. Fix concrete regressions that stay within existing architecture and contracts.
+
+Do not add new features, dependencies, providers, schema migrations, paid services or broad refactors. Do not fake successful live-provider behavior. Record any manual/device/live-service checks that still require a human separately instead of claiming they passed.
+
+Leave dev and main untouched. Update the report with exact automated results, remaining manual checks and known MVP issues. Follow queue rules.
+~~~~~
+
+
 ## QUEUE-CONTROL-006 — no-claim execution
 
 Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10.
