@@ -53,7 +53,7 @@ After a from-idle human token is pushed, and before the accepting run claims it,
 
 ## Who may enqueue
 
-Only a commit pushed to `dev_test` by GitHub user `Arildb88` may add or edit a queued task. ChatGPT may draft the text. The draft is not authorized until that push is on `dev_test`.
+Only (a) a commit pushed to `dev_test` by GitHub user `Arildb88`, or (b) a ChatGPT control push made after Arild explicitly approves the concrete task(s) in chat (for example, "kjør på"), may add or edit a queued task. Cursor must never add, invent, or edit queued task text. A ChatGPT control push may contain only the task text Arild explicitly approved; it must not autonomously expand the queue. Enqueueing is not authorization: execution still requires a separate valid `next-task.md` handoff.
 
 Cursor must not append a task, rewrite a queued body, or assign a new ID.
 
