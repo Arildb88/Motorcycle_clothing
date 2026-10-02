@@ -1,47 +1,59 @@
-# ALPINE-SNOWBOARD-UNIFY-001
+# WARDROBE-SHARING-001
 
 ## Task
 
-`ALPINE-SNOWBOARD-UNIFY-001`, generation 25, authorized by the automatic final control update in `b350daaab33eb036b0dc5ea947743a4e2b354128`. The parent tip was the unclaimed from-idle token for `STABILIZATION-001` at generation 24. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`WARDROBE-SHARING-001`, generation 26, authorized by the automatic final control update that completed `ALPINE-SNOWBOARD-UNIFY-001`. The parent tip was generation 25, `handoff_state: authorized`, `active_id: ALPINE-SNOWBOARD-UNIFY-001`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/alpine-snowboard-unify-001`
-- Implementation commit: `23918a15aeb8cce7813209f75def2d10fbd58e09`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/56 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/wardrobe-sharing-001`
+- Implementation commit: `89d11e52a7ca074f05ac245d3aa8b5fd171155f3`
+- PR: into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Alpine skiing and snowboarding are one user-facing resort activity. The chooser and home menu show "Alpine & snowboard" / "Alpint & snowboard". Cross-country skiing stays separate. Hiking stays unavailable.
+Motorcycle clothes stay in their own wardrobe. A motorcycle garment cannot be tagged for another activity, and a non-motorcycle garment cannot be used by a motorcycle recommendation. Sharing is not a checkbox that can turn that boundary off.
 
-The shared planner still uses Fnugg resort discovery, the selected resort, session time, and the existing MET weather, elevation, and alpine recommendation flow. Switching between alpine skiing and snowboarding keeps that resort and does not send another resort search. Stored and requested activity values remain `alpine_skiing` and `snowboarding`. Saved resort routes from both values appear in the same list. A saved route keeps its own activity type when it is recommended.
+Cycling, alpine and snowboard, and cross-country skiing can share personal clothes in a combination the user chooses. Alpine skiing and snowboarding are one wardrobe category. One garment record stores that membership. Sharing two or more categories makes a personal garment available to the others without copying it. One checked category, or none, leaves those wardrobes separate.
 
-No blanket rule treats snowboarding as warmer or more strenuous. Personal too-cold / too-warm feedback is unchanged.
+Demo clothes follow the selected activity. Seeding and removal are idempotent for that category. A shared personal wardrobe does not pull another activity's demo set into the list or the recommendation. Replacing demo clothes does not delete personal garments. Hiking has no wardrobe and is not a sharing choice.
+
+Recommendations use only garments available to the selected activity. Existing engines are unchanged. A personal garment shared into an activity is presented to that engine with the activity's tags in memory only.
 
 ## Checks
+
+API, in `apps/api`:
+
+- `npx prisma validate` — schema valid
+- `npx prisma generate` — Prisma Client 5.22.0
+- `npx prisma migrate deploy` on empty local PostgreSQL 16 — applied `20261002120000_postgres_baseline` and `20261002195500_wardrobe_category_sharing`
+- `npx prisma migrate diff --from-migrations --to-schema-datamodel --exit-code` — no difference
+- `npm test` — 35 suites, 246 tests passed
 
 Flutter 3.47.6 / Dart 3.13.5, in `apps/mobile`:
 
 - `flutter analyze` — no issues
-- `flutter test test/alpine_snowboard_unify_test.dart test/activity_context_test.dart test/nb_localization_test.dart test/ride_planner_test.dart test/resort_discovery_test.dart test/manual_regression_flow_test.dart` — passed
+- `flutter test` — 119 tests passed
 
-API behavior did not change, so API tests were not run. Android, iOS, and live Fnugg, MET, and device GPS were not run.
+Android, iOS, and live providers were not run.
 
 ## Architecture / config
 
-Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No schema migration, new provider, dependency, or paid service. `dev` and `main` were not modified.
+Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, or paid service. `dev` and `main` were not modified.
+
+Persistence is one additive `UserProfile.sharedWardrobeCategoriesJson` column, default `[]`. Existing garments keep their activity tags. Motorcycle garments are not rewritten as generic clothes.
 
 ## Final control state
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `ALPINE-SNOWBOARD-UNIFY-001` completed and appended once to `consumed.md`
-- `WARDROBE-SHARING-001` is active
-- `active_id: WARDROBE-SHARING-001`
+- `WARDROBE-SHARING-001` completed and appended once to `consumed.md`
+- `TEST-COVERAGE-001` is active
+- `active_id: TEST-COVERAGE-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 26`
+- `handoff_generation: 27`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `WARDROBE-SHARING-001`, Generation 26, Handoff-From `ALPINE-SNOWBOARD-UNIFY-001`, Authorization `authorized`
+- `next-task.md`: `TEST-COVERAGE-001`, Generation 27, Handoff-From `WARDROBE-SHARING-001`, Authorization `authorized`
 
 ## Remaining
 
-Device and live resort checks were not run. `WARDROBE-SHARING-001` is authorized for a later run. This run stops after merge.
+Device and live-provider checks were not run. `TEST-COVERAGE-001` is authorized for a later run. This run stops after merge.
