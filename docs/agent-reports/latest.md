@@ -6,7 +6,7 @@
 
 - Branch: `feature/recommendation-explain-001`
 - Implementation commit: `4673568ae2bdf57829c1985fe2e327ac2399c037`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/63 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
