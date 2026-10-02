@@ -6,7 +6,7 @@
 
 - Branch: `feature/xc-ski-001-foundation`
 - Implementation: `32ca789b95eaaea19a2756e781b3dbcd04fc1d3e`
-- PR: pending into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/41 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
