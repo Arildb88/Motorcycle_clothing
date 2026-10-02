@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/ads/ad_placement_policy.dart';
+import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
@@ -230,8 +233,31 @@ class _RoutesScreenState extends State<RoutesScreen> {
                             ),
                           ),
           ),
+          if (_showRoutesAd)
+            const AdBannerSlot(
+              surface: AdSurface.savedRoutesList,
+              contentState: AdContentState.ready,
+              position: AdPlacementPosition.reservedFooter,
+            ),
         ],
       ),
     );
+  }
+
+  bool get _showRoutesAd => evaluateAdPlacement(
+        AdPlacementRequest(
+          adsEnabled: AppConfig.adsEnabled,
+          surface: AdSurface.savedRoutesList,
+          format: AdFormat.banner,
+          contentState: _routesAdState,
+          position: AdPlacementPosition.reservedFooter,
+        ),
+      ).show;
+
+  AdContentState get _routesAdState {
+    if (_loading) return AdContentState.loading;
+    if (_error != null) return AdContentState.error;
+    if (_routes.isEmpty) return AdContentState.empty;
+    return AdContentState.ready;
   }
 }

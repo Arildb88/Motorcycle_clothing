@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/ads/ad_placement_policy.dart';
+import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/domain/garment.dart';
+import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/wardrobe/garment_form_screen.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
@@ -216,9 +219,32 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 child: Text(l10n.wardrobeDeleteDemo),
               ),
             ),
+          if (_showWardrobeAd)
+            const AdBannerSlot(
+              surface: AdSurface.wardrobeList,
+              contentState: AdContentState.ready,
+              position: AdPlacementPosition.reservedFooter,
+            ),
         ],
       ),
     );
+  }
+
+  bool get _showWardrobeAd => evaluateAdPlacement(
+        AdPlacementRequest(
+          adsEnabled: AppConfig.adsEnabled,
+          surface: AdSurface.wardrobeList,
+          format: AdFormat.banner,
+          contentState: _wardrobeAdState,
+          position: AdPlacementPosition.reservedFooter,
+        ),
+      ).show;
+
+  AdContentState get _wardrobeAdState {
+    if (_loading) return AdContentState.loading;
+    if (_error != null) return AdContentState.error;
+    if (_items.isEmpty) return AdContentState.empty;
+    return AdContentState.ready;
   }
 }
 

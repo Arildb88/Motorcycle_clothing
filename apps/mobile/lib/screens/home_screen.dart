@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/ads/ad_placement_policy.dart';
+import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
@@ -317,9 +320,17 @@ class _HomeScreenState extends State<HomeScreen> {
             const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (_data != null)
-            SliverToBoxAdapter(child: _RecommendationBody(data: _data!))
-          else
+          else if (_data != null) ...[
+            SliverToBoxAdapter(child: _RecommendationBody(data: _data!)),
+            if (_showHomeAd)
+              const SliverToBoxAdapter(
+                child: AdBannerSlot(
+                  surface: AdSurface.activityHome,
+                  contentState: AdContentState.ready,
+                  position: AdPlacementPosition.afterPrimaryContent,
+                ),
+              ),
+          ] else
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -332,6 +343,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  bool get _showHomeAd => evaluateAdPlacement(
+        AdPlacementRequest(
+          adsEnabled: AppConfig.adsEnabled,
+          surface: AdSurface.activityHome,
+          format: AdFormat.banner,
+          contentState: _homeAdState,
+          position: AdPlacementPosition.afterPrimaryContent,
+        ),
+      ).show;
+
+  AdContentState get _homeAdState {
+    if (_loadingRoutes || _loadingRec) return AdContentState.loading;
+    if (_error != null) return AdContentState.error;
+    if (_data == null) return AdContentState.empty;
+    return AdContentState.ready;
   }
 }
 
