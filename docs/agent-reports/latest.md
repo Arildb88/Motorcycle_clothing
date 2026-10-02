@@ -1,47 +1,53 @@
-# Supabase deployment readiness
+# Final-handoff authorization protocol
 
 ## Task
 
-`DB-SUPABASE-002`. Prepare the PostgreSQL setup for a first manual Supabase deployment. Authorized by `41d2aa40c618c88d226b2a49222dfa8f56dbe5a3`.
+`QUEUE-CONTROL-002`. Harden the automation final-handoff protocol so an ordinary or mid-task push cannot start another implementation run. Authorized by `22582b0b4203726dec8f489c84ff3123cca99f65`.
 
 ## Entry check
 
-Trigger commit `41d2aa40c618c88d226b2a49222dfa8f56dbe5a3` (`chore(agent): retrigger active queue task`, GitHub user `Arildb88`) changed only `docs/agent-control/next-task.md` (`Promoted`).
+Trigger commit `22582b0b4203726dec8f489c84ff3123cca99f65` (`chore(agent): retrigger final-handoff hardening`, GitHub user `Arildb88`) changed only `docs/agent-control/next-task.md` (`Promoted`).
+
+The entry check used the rules on `dev_test` at the start of this run, before this commit replaced them:
 
 - `paused` was `false`.
-- Type was `IMPLEMENTATION`. ID was `DB-SUPABASE-002`.
+- Type was `CONTROL`. ID was `QUEUE-CONTROL-002`.
 - That ID had no row in `consumed.md`.
 - It was the only Queue item with status `active`.
-- `active_id` was `DB-SUPABASE-002`.
+- `active_id` was `QUEUE-CONTROL-002`.
 - No item was `blocked`.
-- `next-task.md` matched that item's promotable body except `Promoted: 2026-10-02T09:12:00Z`.
+- `next-task.md` matched that item's promotable body except `Promoted: 2026-10-02T09:43:00Z`.
 
-The entry check succeeded.
+The entry check succeeded. `GEO-ELEVATION-002` was already `queued` and was not executed.
 
 ## Completed work
 
-- Operator runbook: `docs/operations/SUPABASE_FIRST_DEPLOY.md`. It documents `DATABASE_URL` versus `DIRECT_URL`, session pooler versus the direct migration host, the migrate commands, the empty-public preflight, rollback, and the operator steps.
-- Static check: `scripts/check-supabase-readiness.sh`. It checks the Prisma datasource, the PostgreSQL migration lock, the baseline SQL shape, and that committed database URLs stay on local Postgres 16. It does not open a network connection, a database, or `.env`.
-- `README.md`, `SECURITY.md`, `ARCHITECTURE.md`, and the migration plan now point at that runbook. Stale "local SQLite now" lines in `ARCHITECTURE.md` match the PostgreSQL provider switch from `DB-POSTGRES-001`.
-- `.env.example` comments state the two variable roles. The Dockerfile comment states that startup `migrate deploy` needs `DIRECT_URL` on port 5432.
+Repository control protocol only. `handoff_generation` and `handoff_state` now define when a `dev_test` push may authorize a task.
+
+- An authorization handoff is the only push that may start implementation. The push must change `next-task.md`, increase `handoff_generation` by exactly 1, set `handoff_state` to `authorized`, and name a different unconsumed ID.
+- A different next ID is legal only from idle (human authorization; parent ID `none`) or from the completed task's final control update (previous ID completed and consumed in that same commit, and only when `promotion` is `automatic`).
+- Same-ID edits, `Promoted:` bumps, idle writes, blocked writes, pauses, resumes, implementation merges, and report updates are not authorizations.
+- The trigger may stay Anyone. The pushing account is not the concurrency control.
+- One run still executes at most one ID. Consumed IDs, blockers, human pause, and the ban on modifying `dev` and `main` stay in force.
+- The exact replacement Cursor Agent Instructions are in `docs/agent-control/task-queue.md` under "Replacement Cursor Agent Instructions". This run did not edit the Cursor Automation. A human pastes that block.
+
+Completion state:
+
+- `QUEUE-CONTROL-002` is `completed` and appended to `consumed.md`.
+- `paused: true`, `active_id: none`, `promotion: manual`, `handoff_generation: 0`, `handoff_state: idle`.
+- `next-task.md` is the idle body. This completion is a final close. It does not authorize another ID.
+- `GEO-ELEVATION-002` remains `queued` and has no consumed row.
 
 ## Commit / PR
 
-- Branch: `feature/supabase-deployment-readiness` from `dev_test` at `41d2aa40c618c88d226b2a49222dfa8f56dbe5a3`.
-- Implementation commit: `d3ffce5b17760458fb633a7f0d7ce957992834ff` — docs(api): document Supabase first-deploy readiness
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/31
+- Branch: `feature/queue-control-002-final-handoff` from `dev_test` at `22582b0b4203726dec8f489c84ff3123cca99f65`.
+- Implementation commit: recorded in the following ledger line after this commit is created.
+- PR: recorded after it is opened.
 - Merge target: `dev_test` only. `dev` and `main` are not modified.
 
 ## Files changed
 
-- `docs/operations/SUPABASE_FIRST_DEPLOY.md`
-- `scripts/check-supabase-readiness.sh`
-- `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
-- `ARCHITECTURE.md`
-- `SECURITY.md`
-- `README.md`
-- `apps/api/.env.example`
-- `apps/api/Dockerfile`
+- `docs/agent-control/guardrails.md`
 - `docs/agent-control/task-queue.md`
 - `docs/agent-control/consumed.md`
 - `docs/agent-control/next-task.md`
@@ -49,31 +55,38 @@ The entry check succeeded.
 
 ## Tests / checks actually run
 
-1. `bash -n scripts/check-supabase-readiness.sh`
-2. `scripts/check-supabase-readiness.sh --self-test` passed. That run checks URL rejection for a hosted host, port 6543, and `pgbouncer`, then checks the repository tree.
+No API, Flutter, build, or smoke command. The task forbids them. The check below is a local read of the control files after the edit:
+
+- Control block is `paused: true`, `active_id: none`, `promotion: manual`, `handoff_generation: 0`, `handoff_state: idle`.
+- `next-task.md` is the idle body with `Generation: 0` and `Handoff-From: none`.
+- `QUEUE-CONTROL-002` is `completed`. `GEO-ELEVATION-002` is `queued`. No item is `active` or `blocked`.
+- `consumed.md` gains one `QUEUE-CONTROL-002` row and no `GEO-ELEVATION-002` row.
+- `git diff` is limited to the control docs and this report.
 
 ## Tests intentionally not repeated
 
-No `npm test`, `npm run build`, `scripts/smoke-api.sh`, or GitHub `api-ci`. `DB-POSTGRES-001` already ran those against local Postgres 16, and this task does not change schema, application code, or that workflow. No Flutter test, Flutter analyze, or mobile build. No `prisma migrate deploy`. No connection to the hosted Supabase database.
+No `npm test`, `npm run build`, `scripts/smoke-api.sh`, GitHub `api-ci`, Flutter test, Flutter analyze, or mobile build. This task does not change application code, dependencies, schema, CI, providers, or database configuration.
 
 ## Architecture / config
 
-No schema, dependency, provider, package, or Data API change. Prisma stays the only database client. Hosted credentials are not in git. `promotion` stays `automatic`, as set by `Arildb88`. This run did not change that flag.
+No schema, dependency, provider, package, or database change. `promotion` stays `manual`. The automation prompt was not changed from this run.
 
 ## Fallback
 
-None. The required check is static and did not need Docker, Postgres, or the hosted project.
+None. The protocol is documentation. No tool or hosted service was required.
 
 ## Manual validation needed
 
-An operator follows `docs/operations/SUPABASE_FIRST_DEPLOY.md`: turn the Data API off, create the `prisma` role with an uncommitted password, confirm IPv6 or the IPv4 add-on before using the direct host, run the empty-public query, then `npx prisma migrate deploy` with URLs that stay outside git. After apply, `public` should show the baseline tables and `_prisma_migrations`, and `Garment.isDemo` should be boolean, not null, default false.
+A human replaces the Cursor implementation-agent instructions with the paste block in `docs/agent-control/task-queue.md`. Leave the trigger able to fire for Anyone. Do not treat that paste as done until it is saved in the automation.
+
+Pull request 32 (`feature/geo-elevation-002-altitude-validation`) came from the overlapping run that started when `GEO-ELEVATION-002` was promoted. This run did not merge, close, or continue it. Leave it unmerged while the queue is paused. Authorize `GEO-ELEVATION-002` later only with a from-idle handoff after a human sets `paused: false`.
 
 ## Queue
 
-`DB-SUPABASE-002` is `completed` and appended to `consumed.md`. `active_id` is `GEO-ELEVATION-002`. That item was the first queued, unconsumed item and is now `active`. `next-task.md` is its promotable body with `Promoted: 2026-10-02T09:14:47Z`. It was not implemented in this run.
+`QUEUE-CONTROL-002` is completed and consumed. `active_id` is `none`. `handoff_state` is `idle`. `handoff_generation` is `0`. The queue is paused. No queued item was promoted.
 
 ## Remaining issues
 
-- Hosted Supabase apply is still a manual operator step.
-- `GEO-ELEVATION-002` is active and was not started.
-- Later queued items were not promoted.
+- The Cursor Automation still has the previous prompt until a human pastes the replacement instructions. After this final close is on `dev_test`, a run that follows `task-queue.md` stops, because the idle file is not an authorization handoff.
+- Hosted Supabase apply remains a manual operator step from `DB-SUPABASE-002`.
+- Pull request 32 is still open. `GEO-ELEVATION-002` is queued, not consumed, and was not started by this run.
