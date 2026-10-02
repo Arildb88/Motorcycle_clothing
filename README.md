@@ -77,7 +77,7 @@ NestJS REST API (apps/api)     ← business & security boundary
 Prisma ORM
         │
         ▼
-SQLite (local development)     ← DATABASE_URL=file:./dev.db
+PostgreSQL 16 (local development)  ← DATABASE_URL and DIRECT_URL
 ```
 
 | Layer | Stack |
@@ -85,14 +85,14 @@ SQLite (local development)     ← DATABASE_URL=file:./dev.db
 | Mobile | Flutter / Dart (`apps/mobile`) |
 | API | NestJS / TypeScript (`apps/api`) |
 | ORM | Prisma |
-| Local DB | SQLite |
-| Future production DB | Portable PostgreSQL / Supabase Postgres (**not required** for local dev) |
+| Local DB | PostgreSQL 16 (`docker-compose.yml` service `postgres`) |
+| Hosted DB | Supabase PostgreSQL is an operator step after local migrate. Do not put that URL in git. |
 
 **Rules**
 
 - Flutter talks to the **NestJS API only**. Do not bypass the API for business or security logic.
 - Do not put DB credentials, OAuth client secrets, or Strava secrets in the Flutter app.
-- Optional `docker-compose.yml` Postgres/Redis is for staging-style experiments — **not** the default local path.
+- Local development uses the `postgres:16` service in `docker-compose.yml`. `DATABASE_URL` and `DIRECT_URL` are the same unpooled local URL. Do not point the API at a transaction pooler.
 
 ---
 
@@ -102,7 +102,7 @@ SQLite (local development)     ← DATABASE_URL=file:./dev.db
 Motorcycle_clothing/
 ├── apps/
 │   ├── api/                 # NestJS API, Prisma schema & migrations
-│   │   ├── prisma/          # schema.prisma, migrations/, local *.db (gitignored)
+│   │   ├── prisma/          # schema.prisma, migrations/, migrations_sqlite/ (archive)
 │   │   ├── src/             # auth, wardrobe, routes, weather, recommend, …
 │   │   ├── .env.example     # copy → .env (never commit .env)
 │   │   └── package.json
@@ -119,7 +119,7 @@ Motorcycle_clothing/
 ├── SECURITY.md
 ├── PRIVACY_ARCHITECTURE.md
 ├── RIDEWEAR_CONTEXT.md
-└── docker-compose.yml       # optional Postgres/Redis/API (not required locally)
+└── docker-compose.yml       # local Postgres 16, plus optional Redis/API
 ```
 
 Generated folders you can ignore: `node_modules/`, `build/`, `.dart_tool/`, `apps/api/dist/`, Prisma client under `node_modules/.prisma/`.
@@ -209,13 +209,16 @@ git push -u origin HEAD
 From PowerShell:
 
 ```powershell
+docker compose up -d postgres
 cd apps\api
 npm install
 npm run setup:env          # copies .env.example → .env if missing
-npx prisma generate        # Prisma schema → generated Client
-npx prisma migrate dev     # apply migrations to local SQLite
+npx prisma migrate deploy  # apply the PostgreSQL baseline to local Postgres
+npm run prisma:generate    # Prisma schema → generated Client
 npm run start:dev          # Nest watch mode
 ```
+
+`npx prisma migrate dev` stays the command for a later schema change, and only against this local database. Do not run it against a hosted Supabase project.
 
 Equivalent npm scripts:
 
@@ -254,15 +257,15 @@ Keep these three consistent:
 
 1. **Prisma schema** (`apps/api/prisma/schema.prisma`)
 2. **Generated Prisma Client** (`npx prisma generate` / `npm run prisma:generate`)
-3. **Migrated SQLite DB** (`npx prisma migrate dev`)
+3. **Migrated local Postgres** (`docker compose up -d postgres`, then `npx prisma migrate deploy`)
 
 | Symptom | Safe fix (try in order) |
 |---------|-------------------------|
 | Many TS errors for missing Prisma models/fields | `npm run prisma:generate` |
-| `P2021` / table such as `UserProfile` does not exist | `npx prisma migrate dev` (or `npm run prisma:migrate`) |
-| Still broken after migrate | Inspect migration status; **do not** delete `dev.db` as the first step |
+| `P2021` / table such as `UserProfile` does not exist | Start Postgres, then `npx prisma migrate deploy` |
+| Still broken after migrate | Inspect `npx prisma migrate status`. Do not drop the local database as the first step. |
 
-Local DB files (`*.db`) are gitignored — do not commit them.
+`apps/api/prisma/migrations_sqlite/` is the archived SQLite history. Prisma Migrate does not apply it. Do not commit a Supabase URL or password.
 
 ---
 
@@ -282,7 +285,8 @@ Never commit `.env`. Never put server secrets in Flutter.
 
 | Variable | Purpose | Local default (example file) |
 |----------|---------|------------------------------|
-| `DATABASE_URL` | Prisma SQLite URL | `file:./dev.db` |
+| `DATABASE_URL` | Prisma runtime URL for local Postgres 16 | `postgresql://motorcycle:motorcycle@localhost:5432/motorcycle` |
+| `DIRECT_URL` | Prisma Migrate URL. Same local database as `DATABASE_URL` | same as `DATABASE_URL` |
 | `PORT` | HTTP port | `3000` |
 | `JWT_SECRET` | JWT signing | dev placeholder — change for shared envs |
 | `JWT_EXPIRES_IN` | Token lifetime | `7d` |
@@ -315,19 +319,23 @@ When IdP app IDs are empty, those buttons stay disabled in the UI. With `ALLOW_D
 
 ---
 
-## 8. Database (SQLite + Prisma)
+## 8. Database (PostgreSQL 16 + Prisma)
 
-- Schema: `apps/api/prisma/schema.prisma`
-- Migrations: `apps/api/prisma/migrations/`
-- Local file DB via `DATABASE_URL=file:./dev.db` (under the Prisma working directory; gitignored)
+- Schema: `apps/api/prisma/schema.prisma` (`provider = "postgresql"`, `directUrl = env("DIRECT_URL")`)
+- Applied migrations: `apps/api/prisma/migrations/` (one PostgreSQL baseline)
+- Archived SQLite history, not applied: `apps/api/prisma/migrations_sqlite/`
+- Local database: Postgres 16 from `docker compose up -d postgres`
+- Host-side API uses `localhost`. The compose `api` service uses hostname `postgres`. Both `DATABASE_URL` and `DIRECT_URL` are set. Neither is a Supabase URL.
 
 Normal sequence after pulling schema/migration changes:
 
 ```powershell
+docker compose up -d postgres
 cd apps\api
 npm install
+npm run setup:env
+npx prisma migrate deploy
 npm run prisma:generate
-npx prisma migrate dev
 npm run start:dev
 ```
 
@@ -449,7 +457,7 @@ flutter build apk --debug
 | No Android device | Android Studio → Virtual Device Manager → start emulator; `flutter devices` |
 | Login failed / API unreachable | Ensure Nest is running; `Invoke-RestMethod http://localhost:3000/api/health`; emulator must use `10.0.2.2`, not `localhost` |
 | Prisma Client TS errors after pull | `cd apps\api` → `npm run prisma:generate` |
-| Prisma `P2021` missing table (e.g. `UserProfile`) | `npx prisma migrate dev` — **do not** delete `dev.db` first |
+| Prisma `P2021` missing table (e.g. `UserProfile`) | `docker compose up -d postgres`, then `npx prisma migrate deploy` |
 | `DATABASE_URL` / env missing | `npm run setup:env` in `apps/api` |
 | Port 3000 in use | Stop the other process, or set `PORT=3001` in `.env` and point Flutter `API_BASE_URL` at that port |
 | `flutter_secure_storage` / Android SDK 37 | Current `dev` bumps the plugin for SDK 37 lookup — pull latest `dev` rather than renaming SDK folders |
@@ -500,7 +508,7 @@ Verify against code before assuming otherwise:
 | Weather | Defaults to **mock**; MET Norway via `WEATHER_PROVIDER` when configured |
 | Personalization | Feedback foundations exist; full M5 personalization is not complete |
 | Ads | Disabled by default (`ADS_ENABLED=false`) |
-| Production DB | Still SQLite locally; Supabase/Postgres migration **not** done |
+| Production DB | Local API uses Postgres 16. Applying the baseline to hosted Supabase is a manual operator step and is not done by CI. |
 | OAuth | Facebook/Microsoft optional and config-gated; email/password works locally |
 | iOS | Supported by Flutter project; this README’s primary path is **Android emulator on Windows** |
 

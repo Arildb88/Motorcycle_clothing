@@ -115,11 +115,12 @@ When it finishes, RideWear opens on the emulator.
 |--------|-----|
 | `No such file or directory` for start script | Run `git pull` from repo root, or use the manual commands below |
 | `DATABASE_URL` not found | Run `cd apps/api && npm run setup:env` then start API again |
+| API cannot reach Postgres | From the repo root run `docker compose up -d postgres`, then `cd apps/api && npx prisma migrate deploy` |
 | `flutter: command not found` | Install Flutter and reopen Git Bash; run `flutter doctor` |
 | `No devices found` | Start an emulator in Android Studio Device Manager first |
 | App can’t reach API | Keep API window running; emulator uses `http://10.0.2.2:3000/api` |
 | Port 3000 in use | Close the other API, or change `PORT=3001` in `apps/api/.env` and update the android script URL |
-| `npm` / Prisma errors | From `apps/api`: `rm -rf node_modules && npm install && npm run setup:env && npx prisma migrate dev` |
+| `npm` / Prisma errors | From the repo root: `docker compose up -d postgres`. From `apps/api`: `rm -rf node_modules && npm install && npm run setup:env && npx prisma migrate deploy` |
 
 ---
 
@@ -127,10 +128,13 @@ When it finishes, RideWear opens on the emulator.
 
 **API**
 ```bash
-cd ~/source/repos/Motorcycle_clothing/apps/api
+cd ~/source/repos/Motorcycle_clothing
+docker compose up -d postgres
+cd apps/api
 npm install
 npm run setup:env
-npx prisma migrate dev
+npx prisma migrate deploy
+npm run prisma:generate
 npm run start:dev
 ```
 

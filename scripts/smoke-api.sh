@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# HTTP smoke checks against a freshly migrated SQLite DB.
+# HTTP smoke checks against a migrated local Postgres 16 database.
 # Prints the exact step that fails (instead of a bare exit 1).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/apps/api"
 
-export DATABASE_URL="${DATABASE_URL:-file:./smoke.db}"
+export DATABASE_URL="${DATABASE_URL:-postgresql://motorcycle:motorcycle@localhost:5432/motorcycle}"
+export DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}"
 export PORT="${PORT:-3001}"
 export JWT_SECRET="${JWT_SECRET:-smoke-secret}"
 export JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-1d}"
@@ -82,9 +83,6 @@ expect_contains() {
     fail "$label" "response missing '$needle' — body: $(head -c 500 <<<"$body")"
   fi
 }
-
-step "clean smoke database"
-rm -f prisma/smoke.db prisma/smoke.db-journal
 
 step "prisma migrate deploy"
 npx prisma migrate deploy
