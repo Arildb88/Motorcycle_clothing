@@ -1,14 +1,14 @@
 # Authorized RideWear Task
 ## Type: IMPLEMENTATION
-## ID: INTEGRATION-001
-## Generation: 11
-## Handoff-From: none
+## ID: MOBILE-ACTIVITIES-001
+## Generation: 12
+## Handoff-From: INTEGRATION-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T14:30:00Z
-## Task: Run integration/regression pass for the new activity foundations
+## Promoted: 2026-10-02T12:37:11Z
+## Task: Connect supported activity recommendations to the existing mobile planning flow
 
-Validate the completed cycling, alpine/snowboard, cross-country skiing, route/weather/elevation, recommendation and mobile ad-policy foundations together. Run the existing API test/typecheck/lint commands and Flutter analyze/tests that are supported by the repository. Add focused integration/regression tests where concrete coverage gaps are found and fix concrete regressions within the existing architecture.
+Integrate the existing cycling, alpine skiing, snowboarding and cross-country skiing recommendation foundations into the existing Flutter activity/planning UI. Reuse existing activity values, route/planning models and API contracts. Let the user select only inputs already supported by the completed foundations, including applicable intensity/style inputs, and request/display the matching recommendation.
 
-Do not add product features, dependencies, schema changes, providers, paid services, or broad refactors. Do not contact live external providers when deterministic mocks/fixtures exist. If a failure requires an architectural/provider/schema decision, BLOCK and report the exact boundary instead of inventing it.
+Do not redesign navigation, add schema changes, dependencies, providers, live tracking, power-meter support, grooming data, wax advice, or new activity types. Preserve motorcycle behavior. If an existing API/mobile contract is insufficient without an unauthorized model decision, BLOCK and report it.
 
-Update the agent report with exact commands and results. Follow queue rules.
+Add focused Flutter/API contract tests for changed behavior and run Flutter analyze on touched code. Follow queue rules.
