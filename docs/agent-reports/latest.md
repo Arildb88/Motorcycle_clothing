@@ -6,7 +6,7 @@
 
 - Branch: `feature/recommendation-ux-001-results`
 - Implementation: `35f660f0cb4cc5bbd6583f369429ef676c5cb442`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/46 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
