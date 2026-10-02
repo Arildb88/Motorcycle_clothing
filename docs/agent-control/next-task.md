@@ -1,87 +1,107 @@
 # Authorized RideWear Task
 
-## Type: RESEARCH / MIGRATION ANALYSIS ONLY
+## Type: IMPLEMENTATION
 
-## Task: Plan SQLite -> Supabase PostgreSQL migration
+## Task: Add a safe pre-approved agent task queue
 
-Prepare the safest minimal migration plan for moving the existing RideWear NestJS/Prisma persistence layer from local SQLite to the already-created Supabase PostgreSQL project.
+Implement a repository-controlled queue so the existing Cursor automation can advance through tasks that Arild/ChatGPT have explicitly pre-approved, without allowing the agent to invent work or expand scope.
 
 Read first:
 - `docs/agent-control/guardrails.md`
+- `docs/agent-control/next-task.md`
 - `docs/agent-reports/latest.md`
-- current `apps/api/prisma/schema.prisma`
-- all existing Prisma migrations and relevant API database configuration
+- `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
 
-### Architecture that must remain
+### Goal
 
-Flutter -> NestJS API -> Prisma -> PostgreSQL (Supabase)
+Keep `next-task.md` as the single active authorized task, and add a separate queue for future tasks that have already been explicitly approved.
 
-Do not introduce direct Flutter-to-Supabase database access.
-Do not add `@supabase/supabase-js` merely for database access.
-Prisma/NestJS remain the application database boundary.
+The queue must be deterministic, reviewable in Git, safe against loops, and stop on blockers.
 
-### Investigation
+### Required design
 
-Produce a concrete evidence-based plan covering:
-- current Prisma models, relations, indexes, constraints and migration history
-- SQLite-specific schema/migration SQL that needs PostgreSQL treatment
-- recommended PostgreSQL Prisma datasource/config changes
-- correct roles of `DATABASE_URL` and, if appropriate for the installed Prisma version/setup, `DIRECT_URL`
-- Supabase pooled vs direct connection usage for runtime and migrations
-- how local development should work after migration
-- how to create a clean PostgreSQL baseline without replaying incompatible SQLite SQL
-- treatment of the new `Garment.isDemo` field
-- auth/password-reset/user data implications
-- existing data migration considerations (assume Supabase is currently empty; do not invent a need to migrate disposable local dev data)
-- rollback/recovery approach
-- secret handling: what belongs in local/host environment only and must never be committed
-- exact minimal implementation sequence for a later authorized task
-- focused verification needed after conversion
+Create a minimal queue/control design under `docs/agent-control/`.
 
-### Cursor-capacity rule
+At minimum provide:
+- `task-queue.md` containing ordered pre-approved tasks with stable IDs and status.
+- Clear queue states such as `queued`, `active`, `completed`, `blocked` (use the smallest sensible representation).
+- A deterministic rule for promoting exactly one queued task to `next-task.md`.
+- A durable way to record that a task has already been consumed so the same task cannot run twice.
+- A rule that only tasks already written in the queue by an authorized human/coordinator may be promoted. Cursor must never create a new product/implementation task on its own.
+- One active task at a time.
+- If the active task is blocked, fails required checks, requires an unauthorized schema/dependency/provider/paid-service/secret/architecture decision, or otherwise needs human judgment: mark/report blocked and STOP. Do not consume the next queue item.
+- If a task succeeds: update report/control state and permit the next pre-approved queue item to become active according to the mechanism below.
 
-Do not rerun broad test suites merely to reconfirm the already-green current `dev_test` state.
+### Trigger/loop constraint
 
-This is analysis-only. Do not run `npm test`, `flutter test`, `flutter analyze`, full builds, or smoke tests unless a specific investigation step truly requires execution. Prefer static inspection of schema, migrations, config and existing recent test/report evidence.
+The existing Cursor Automation is triggered by pushes to `dev_test` by the user's GitHub identity and its current instruction checks whether `next-task.md` changed in the triggering push.
 
-For the later implementation plan, recommend targeted tests/checks first and only the minimum broader verification needed for database-sensitive changes. Avoid duplicate tests that provide no new evidence.
+Design the queue around that constraint. Do not create an uncontrolled self-trigger loop.
 
-### Deliverable
+Prefer the smallest reliable Git-based mechanism. If fully automatic queue advancement cannot be made reliable with the current trigger/identity constraints without changing Cursor Automation configuration, document the exact minimal Automation instruction/trigger change required and STOP before pretending it is automatic.
 
-Create/update:
-`docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
+Do not add external services, GitHub Actions, bots, tokens, scheduled jobs, or dependencies merely to make the queue work.
 
-The document must include:
-1. Current state
-2. Compatibility findings
-3. Target architecture/config
-4. Migration/baseline strategy
-5. Secrets/environment strategy
-6. Local development strategy
-7. Implementation sequence
-8. Minimal verification strategy
-9. Rollback/recovery
-10. Risks/open questions
+### Initial queue contents
 
-Update `docs/agent-reports/latest.md` with a concise summary of findings and the exact next implementation recommendation.
+After the queue mechanism is defined, add exactly ONE pre-approved future implementation item:
+
+ID: `DB-POSTGRES-001`
+Title: `Implement Prisma PostgreSQL foundation`
+
+Scope for that queued item must come from `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md` and include:
+- Prisma datasource -> PostgreSQL and Prisma 5.22 `directUrl`.
+- Preserve models.
+- Archive SQLite migration history and create one reviewed PostgreSQL baseline.
+- Update local development/CI/smoke configuration to Postgres 16.
+- No Supabase credentials committed.
+- Do not connect/apply to the user's hosted Supabase database automatically.
+- Targeted verification first; only database-relevant broader checks. No Flutter tests.
+- Hosted Supabase apply remains a manual/operator step after local verification and confirmation that `public` is empty.
+
+Do NOT execute DB-POSTGRES-001 during this queue-implementation task unless the queue mechanism can safely promote it only after this task has completed and the automation behavior is proven. Safety takes priority over consuming the queue.
+
+### Documentation / guardrails
+
+Update `guardrails.md` only as necessary to make queue behavior authoritative and unambiguous.
+
+Document:
+- who may enqueue work
+- promotion rules
+- success/block behavior
+- loop prevention
+- how ChatGPT/human can pause the queue
+- how to resume
+- how to inspect status
+
+### Tests / capacity rule
+
+This task should primarily change control documentation/configuration, not application production code.
+
+Do not run API/Flutter test suites, builds, analyze, or smoke tests for documentation-only changes.
+If executable repository automation code is genuinely necessary, use focused validation only and explain why.
 
 ### Explicitly out of scope
 
-- No Prisma datasource/provider change yet.
-- No schema or migration changes.
-- No connection to the user's Supabase database.
-- No database credentials/secrets.
-- No Supabase CLI setup.
-- No package/dependency changes.
-- No production code changes.
-- No Data API/client SDK.
-- No auth redesign.
-- No Flutter changes.
+- Do not implement PostgreSQL in this task unless safe post-completion promotion is actually proven.
+- No Supabase connection or secrets.
+- No production app feature.
+- No dependencies.
+- No external queue service.
+- No GitHub Actions solely for the queue.
 - Do not modify `dev` or `main`.
 
 ### Completion
 
 Work from latest `dev_test` on a focused `feature/*` branch.
-Because this is documentation/research only, do not spend capacity on unrelated tests.
-Open/merge successful documentation work only to `dev_test` according to guardrails.
-Update the report, then STOP. Do not begin the PostgreSQL implementation.
+Merge successful work only to `dev_test` according to guardrails.
+Update `docs/agent-reports/latest.md` with:
+- queue mechanism
+- files changed
+- exact automation behavior required
+- whether DB-POSTGRES-001 is queued, promoted, or intentionally waiting
+- loop prevention
+- pause/resume procedure
+- remaining limitations
+
+Then STOP unless the proven queue mechanism itself safely performs the explicitly authorized promotion.
