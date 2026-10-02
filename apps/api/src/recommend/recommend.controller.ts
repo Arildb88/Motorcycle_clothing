@@ -15,6 +15,7 @@ export class RecommendController {
     @Query('departureAt') departureAt?: string,
     @Query('intensity') intensity?: string,
     @Query('exposure') exposure?: string,
+    @Query('style') style?: string,
   ) {
     return this.recommend.forUser(
       req.user.userId,
@@ -22,6 +23,7 @@ export class RecommendController {
       departureAt,
       intensity,
       exposure,
+      style,
     );
   }
 }

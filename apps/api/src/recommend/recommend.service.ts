@@ -11,6 +11,7 @@ import { MVP_ACTIVITY_TYPE, parseRoutePreferences } from '../domain';
 import { OpenRouteServiceRoutingAdapter } from '../routing/ors-routing.adapter';
 import {
   resolveRouteWeatherSamples,
+  sampleWeatherAlongGeometry,
   type RouteWeatherSample,
 } from '../routing/route-weather-sampling';
 import type { GeoPoint, RouteLegTiming } from '../routing/routing.types';
@@ -25,6 +26,12 @@ import {
   runCyclingRecommendationPipeline,
   type CyclingKitItem,
 } from './cycling';
+import {
+  runXcRecommendationPipeline,
+  xcSampleDurationMin,
+  XC_EXPOSURE,
+  type XcKitItem,
+} from './xc';
 import {
   MOTORCYCLE_EXPOSURE,
   routeTravelAlignedWithSamples,
@@ -58,6 +65,7 @@ export class RecommendService {
     _departureAt?: string,
     intensity?: string,
     exposure?: string,
+    style?: string,
   ) {
     const route = routeId
       ? await this.routes.get(userId, routeId)
@@ -79,6 +87,10 @@ export class RecommendService {
 
     if (isAlpineDiscipline(route.activityType)) {
       return this.forAlpine(userId, route, _departureAt, exposure);
+    }
+
+    if (route.activityType === 'xc_skiing') {
+      return this.forXcSkiing(userId, route, _departureAt, intensity, style);
     }
 
     const profile = await this.prisma.userProfile.findUnique({
@@ -569,6 +581,197 @@ export class RecommendService {
     };
   }
 
+  /**
+   * Cross-country foundation. The saved waypoints are the track. ETA uses
+   * the user's duration. Ground elevation is attached per sample. Road
+   * routing, motorcycle offsets, and alpine lift weighting are not used.
+   * Classic and skate share this engine.
+   */
+  private async forXcSkiing(
+    userId: string,
+    route: {
+      id: string;
+      name: string;
+      description: string | null;
+      activityType: string;
+      routeKind: string;
+      category: string | null;
+      isFavorite: boolean;
+      isDefaultCommute: boolean;
+      startLabel: string | null;
+      endLabel: string | null;
+      startLat: number;
+      startLon: number;
+      endLat: number;
+      endLon: number;
+      typicalDurationMin: number | null;
+      waypoints?: Array<{
+        sortOrder: number;
+        lat: number;
+        lon: number;
+        label: string | null;
+      }>;
+    },
+    departureAt: string | undefined,
+    intensity: string | undefined,
+    style: string | undefined,
+  ) {
+    const departAt = parseDeparture(departureAt);
+    const durationAssumed = !(
+      route.typicalDurationMin != null && route.typicalDurationMin > 0
+    );
+    const durationMin = durationAssumed
+      ? XC_EXPOSURE.defaultDurationMin
+      : Math.round(route.typicalDurationMin as number);
+    const line =
+      route.waypoints && route.waypoints.length >= 2
+        ? [...route.waypoints]
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((waypoint) => ({ lat: waypoint.lat, lon: waypoint.lon }))
+        : [
+            { lat: route.startLat, lon: route.startLon },
+            { lat: route.endLat, lon: route.endLon },
+          ];
+    const sampled = sampleWeatherAlongGeometry({
+      points: line,
+      durationMin,
+      departAt,
+      verticesOnly: true,
+    });
+    const elevation = await lookupSampleAltitudes(
+      this.elevations,
+      sampled.map((sample) => ({ lat: sample.lat, lon: sample.lon })),
+    );
+    const requests = sampled.map((sample, index) => ({
+      lat: sample.lat,
+      lon: sample.lon,
+      at: sample.at,
+      timeProgress: sample.timeProgress,
+      altitudeM: elevation.points[index]?.elevationM ?? null,
+    }));
+    const fetched =
+      requests.length === 0
+        ? null
+        : await this.weather.forRouteSamples(
+            requests.map((request) => ({
+              lat: request.lat,
+              lon: request.lon,
+              at: request.at,
+              altitudeM: request.altitudeM,
+            })),
+          );
+    const points = requests.flatMap((request, index) => {
+      const point = fetched?.points[index];
+      if (!point) return [];
+      const next: typeof point = {
+        ...point,
+        lat: request.lat,
+        lon: request.lon,
+        forecastAt: request.at.toISOString(),
+      };
+      if (request.altitudeM == null) {
+        delete next.groundElevationM;
+      } else {
+        next.groundElevationM = Math.round(request.altitudeM);
+      }
+      return [next];
+    });
+    const temps = points.map((point) => point.airTempC);
+    const rains = points.map((point) => point.precipitationProbPct);
+    const precips = points.map((point) => point.precipitationMm);
+    const winds = points.map((point) => point.windSpeedMs);
+    const weather = {
+      provider: fetched?.provider ?? 'none',
+      sampledAt: fetched?.sampledAt ?? new Date().toISOString(),
+      points,
+      minTempC: temps.length > 0 ? Math.min(...temps) : 0,
+      maxTempC: temps.length > 0 ? Math.max(...temps) : 0,
+      maxRainProbPct: rains.length > 0 ? Math.max(...rains) : 0,
+      maxPrecipMm: precips.length > 0 ? Math.max(...precips) : 0,
+      maxWindMs: winds.length > 0 ? Math.max(...winds) : 0,
+      elevation: elevation.attribution
+        ? {
+            provider: elevation.provider,
+            attribution: elevation.attribution,
+          }
+        : null,
+    };
+    const garments = await this.prisma.garment.findMany({
+      where: { userId },
+      include: { components: true },
+    });
+    const engine = runXcRecommendationPipeline({
+      weather,
+      wardrobe: garments.map((garment) => this.toGarmentInput(garment)),
+      durationMin,
+      durationAssumed,
+      intensity,
+      style,
+      sampleDurationMin: xcSampleDurationMin(
+        requests.map((request) => request.timeProgress),
+        durationMin,
+      ),
+    });
+    const items = [
+      ...engine.wear.map((item) => this.kitLabel(item)),
+      ...engine.pack.map((item) => `Pack: ${this.kitLabel(item)}`),
+    ];
+    return {
+      route: {
+        id: route.id,
+        name: route.name,
+        description: route.description,
+        activityType: route.activityType,
+        routeKind: route.routeKind,
+        category: route.category,
+        isFavorite: route.isFavorite,
+        isDefaultCommute: route.isDefaultCommute,
+        startLabel: route.startLabel,
+        endLabel: route.endLabel,
+        typicalDurationMin: route.typicalDurationMin,
+        waypoints: route.waypoints?.map((waypoint) => ({
+          sortOrder: waypoint.sortOrder,
+          lat: waypoint.lat,
+          lon: waypoint.lon,
+          label: waypoint.label,
+        })),
+      },
+      departureAt: departureAt ?? new Date().toISOString(),
+      weather,
+      comfort: {
+        coldSensitivity: null,
+        personalSampleCount: 0,
+        personalWeight: 0,
+        personalColdBiasC: 0,
+        intensity: engine.intensity,
+        intensityAssumed: engine.intensityAssumed,
+        style: engine.style,
+        durationAssumed: engine.durationAssumed,
+      },
+      recommendation: {
+        engine: engine.engine,
+        effectiveTempC: engine.exposure.xcExposureSustainedC,
+        exposure: engine.exposure,
+        demand: engine.demand,
+        wear: engine.wear,
+        pack: engine.pack,
+        reasons: engine.reasons,
+        confidence: engine.confidence,
+        items,
+        reasonCodes: engine.reasons.map((reason) => reason.code),
+        voice: engine.personalization.voice,
+        elevation: engine.elevation,
+        style: engine.style,
+        line: engine.line,
+      },
+      personalization: {
+        ...engine.personalization,
+        reason:
+          'Cross-country foundation does not apply motorcycle personal offsets, alpine lift weighting, or road routing',
+      },
+    };
+  }
+
   private async roadGeometryFor(
     route: { preferencesJson?: string | null },
     waypoints: GeoPoint[],
@@ -611,7 +814,9 @@ export class RecommendService {
     return segments.length > 0 ? segments : undefined;
   }
 
-  private kitLabel(item: KitItem | CyclingKitItem | AlpineKitItem): string {
+  private kitLabel(
+    item: KitItem | CyclingKitItem | AlpineKitItem | XcKitItem,
+  ): string {
     if (item.source === 'wardrobe' && item.garmentName) {
       const configs = item.configuration
         .map((c) => c.code.toLowerCase().replace(/_/g, ' '))
