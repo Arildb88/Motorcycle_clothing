@@ -242,4 +242,99 @@ describe('RecommendService cycling foundation', () => {
       },
     });
   });
+
+  it('reads wardrobe and thermal feedback while route weather is still in flight', async () => {
+    let release: (value?: void) => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const order: string[] = [];
+    const forRouteSamples = jest.fn(async () => {
+      order.push('weather-start');
+      await gate;
+      order.push('weather-end');
+      return {
+        provider: 'met',
+        sampledAt: '2026-10-02T12:00:00.000Z',
+        points: [
+          {
+            lat: 59.91,
+            lon: 10.75,
+            airTempC: 11,
+            precipitationProbPct: 0,
+            precipitationMm: 0,
+            windSpeedMs: 2,
+          },
+        ],
+        minTempC: 11,
+        maxTempC: 11,
+        maxRainProbPct: 0,
+        maxPrecipMm: 0,
+        maxWindMs: 2,
+      };
+    });
+    const recommend = new RecommendService(
+      {
+        get: jest.fn(() => route),
+        touchLastUsed: jest.fn(() => undefined),
+        weatherPointsFor: jest.fn(() => [
+          { lat: 59.91, lon: 10.75 },
+          { lat: 59.95, lon: 10.8 },
+        ]),
+      } as never,
+      { forRouteSamples } as never,
+      {
+        userProfile: {
+          findUnique: jest.fn(() => {
+            order.push('profile');
+            return null;
+          }),
+        },
+        personalOffset: {
+          findUnique: jest.fn(() => {
+            order.push('offset');
+            return null;
+          }),
+        },
+        garment: {
+          findMany: jest.fn(() => {
+            order.push('wardrobe');
+            return [];
+          }),
+        },
+      } as never,
+      {
+        isConfigured: true,
+        roadWeatherSource: jest.fn(() => ({
+          points: [
+            { lat: 59.91, lon: 10.75 },
+            { lat: 59.95, lon: 10.8 },
+          ],
+          distanceM: 4000,
+          durationMin: 20,
+          legs: null,
+        })),
+      } as never,
+      {
+        groundElevations: jest.fn(
+          (points: Array<{ lat: number; lon: number }>) => ({
+            provider: 'none',
+            attribution: null,
+            points: points.map((point) => ({ ...point, elevationM: null })),
+          }),
+        ),
+      },
+    );
+
+    const pending = recommend.forUser('user-1', 'route-bike');
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(order).toContain('weather-start');
+    expect(order).toContain('offset');
+    expect(order).toContain('wardrobe');
+    expect(order).not.toContain('weather-end');
+    release();
+    const result = await pending;
+    expect(result.recommendation.engine).toBe('cycling_v1');
+    expect(order).toContain('weather-end');
+  });
 });

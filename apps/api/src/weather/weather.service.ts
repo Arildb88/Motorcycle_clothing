@@ -18,6 +18,11 @@ import {
 @Injectable()
 export class WeatherService {
   private readonly logger = new Logger(WeatherService.name);
+  /** Locationforecast downloads already started for a place. Not a result cache. */
+  private readonly metSeriesInFlight = new Map<
+    string,
+    Promise<MetSeriesEntry[] | null>
+  >();
 
   constructor(
     private readonly config: ConfigService,
@@ -34,10 +39,9 @@ export class WeatherService {
     // Always include start, mid (if multiple), end
     const sampled = this.samplePoints(samples);
 
-    const weatherPoints: WeatherPoint[] = [];
-    for (const p of sampled) {
-      weatherPoints.push(await this.pointWeather(p.lat, p.lon, provider));
-    }
+    const weatherPoints = await Promise.all(
+      sampled.map((p) => this.pointWeather(p.lat, p.lon, provider)),
+    );
 
     return this.summarize(provider, weatherPoints);
   }
@@ -58,19 +62,20 @@ export class WeatherService {
     const usable =
       samples.length > 0 ? samples : [{ lat: 59.9139, lon: 10.7522 }];
 
-    const weatherPoints: WeatherPoint[] = [];
-    for (const sample of usable) {
-      const point = await this.pointWeather(
-        sample.lat,
-        sample.lon,
-        provider,
-        sample.at,
-        sample.altitudeM,
-      );
-      weatherPoints.push(
-        sample.at ? { ...point, forecastAt: sample.at.toISOString() } : point,
-      );
-    }
+    const weatherPoints = await Promise.all(
+      usable.map(async (sample) => {
+        const point = await this.pointWeather(
+          sample.lat,
+          sample.lon,
+          provider,
+          sample.at,
+          sample.altitudeM,
+        );
+        return sample.at
+          ? { ...point, forecastAt: sample.at.toISOString() }
+          : point;
+      }),
+    );
 
     return this.summarize(provider, weatherPoints);
   }
@@ -96,6 +101,9 @@ export class WeatherService {
     const variesByTime = provider === 'met';
     const seriesByPlace = new Map<string, Promise<MetSeriesEntry[] | null>>();
     const mockByPlace = new Map<string, WeatherPoint>();
+    if (variesByTime) {
+      await this.prefetchMetSeries(groups, seriesByPlace);
+    }
 
     const rows: DepartureSampleConditions[][] = [];
     for (const group of groups) {
@@ -269,8 +277,45 @@ export class WeatherService {
   }
 
   /**
+   * Start one locationforecast per distinct place before samples are read.
+   * Hours at the same place then share that download.
+   */
+  private prefetchMetSeries(
+    groups: Array<
+      Array<{
+        lat: number;
+        lon: number;
+        at?: Date;
+        altitudeM?: number | null;
+      }>
+    >,
+    memo: Map<string, Promise<MetSeriesEntry[] | null>>,
+  ): Promise<unknown> {
+    const seen = new Set<string>();
+    const starters: Array<Promise<MetSeriesEntry[] | null>> = [];
+    for (const group of groups) {
+      for (const sample of group) {
+        if (!sample.at || Number.isNaN(sample.at.getTime())) continue;
+        const key = weatherSeriesCacheKey({
+          provider: 'met',
+          lat: sample.lat,
+          lon: sample.lon,
+          altitudeM: sample.altitudeM,
+        });
+        if (seen.has(key)) continue;
+        seen.add(key);
+        starters.push(
+          this.metSeriesFor(sample.lat, sample.lon, sample.altitudeM, memo),
+        );
+      }
+    }
+    return Promise.all(starters);
+  }
+
+  /**
    * Locationforecast for one place, reused across departure hours.
    * A failed or empty payload is not cached, so the next request can retry.
+   * An in-flight download is shared so overlapping samples do not fetch twice.
    */
   private metSeriesFor(
     lat: number,
@@ -284,10 +329,18 @@ export class WeatherService {
       lon,
       altitudeM,
     });
-    const pending = memo.get(key);
-    if (pending) return pending;
-    const loading = this.loadMetSeries(lat, lon, altitudeM, key);
+    const pending = memo.get(key) ?? this.metSeriesInFlight.get(key);
+    if (pending) {
+      memo.set(key, pending);
+      return pending;
+    }
+    const loading = this.loadMetSeries(lat, lon, altitudeM, key).finally(() => {
+      if (this.metSeriesInFlight.get(key) === loading) {
+        this.metSeriesInFlight.delete(key);
+      }
+    });
     memo.set(key, loading);
+    this.metSeriesInFlight.set(key, loading);
     return loading;
   }
 
@@ -315,14 +368,13 @@ export class WeatherService {
         headers: { 'User-Agent': userAgent, Accept: 'application/json' },
         timeout: 8000,
       });
-      const timeseries = data?.properties?.timeseries;
-      if (!Array.isArray(timeseries) || timeseries.length === 0) return null;
+      const timeseries = data?.properties?.timeseries ?? [];
+      // An empty or unusable payload is not a forecast and is not cached.
+      if (!Array.isArray(timeseries) || timeseries.length === 0) return [];
       await this.storeJson(key, timeseries);
       return timeseries as MetSeriesEntry[];
     } catch {
-      this.logger.warn(
-        `MET fetch failed for ${lat},${lon}; comparison has no series`,
-      );
+      this.logger.warn(`MET fetch failed for ${lat},${lon}`);
       return null;
     }
   }
@@ -357,51 +409,33 @@ export class WeatherService {
     at?: Date,
     altitudeM?: number | null,
   ): Promise<WeatherPoint> {
-    const userAgent = this.config.get(
-      'MET_USER_AGENT',
-      'MotorcycleClothingApp/0.1 (dev)',
-    );
-    try {
-      const url = metLocationForecastUrl(lat, lon, altitudeM);
-      const { data } = await axios.get(url, {
-        headers: { 'User-Agent': userAgent, Accept: 'application/json' },
-        timeout: 8000,
-      });
-      const timeseries = data?.properties?.timeseries ?? [];
-      const index = selectMetTimeseriesIndex(
-        timeseries.map((entry: { time?: string }) => entry?.time),
-        at,
-      );
-      const series = timeseries[index]?.data;
-      const instant = series?.instant?.details;
-      // An empty payload is a provider miss. Caching it as 0 °C would dress
-      // the rider for a calm freeze that MET did not report.
-      if (
-        !Array.isArray(timeseries) ||
-        timeseries.length === 0 ||
-        instant?.air_temperature == null
-      ) {
-        this.logger.warn(
-          `MET fetch returned no temperature for ${lat},${lon}; using mock`,
-        );
-        return this.mockWeather(lat, lon);
-      }
-      const next1 = series?.next_1_hours ?? series?.next_6_hours ?? {};
-      return {
-        lat,
-        lon,
-        airTempC: Number(instant.air_temperature),
-        precipitationProbPct: Number(
-          next1?.details?.probability_of_precipitation ?? 0,
-        ),
-        precipitationMm: Number(next1?.details?.precipitation_amount ?? 0),
-        windSpeedMs: Number(instant.wind_speed ?? 0),
-        symbol: next1?.summary?.symbol_code,
-      };
-    } catch (err) {
+    const series = await this.metSeriesFor(lat, lon, altitudeM, new Map());
+    if (series == null) {
       this.logger.warn(`MET fetch failed for ${lat},${lon}; using mock`);
       return this.mockWeather(lat, lon);
     }
+    const point =
+      series.length === 0
+        ? null
+        : metPointFromEntry(
+            series[
+              selectMetTimeseriesIndex(
+                series.map((entry) => entry.time),
+                at,
+              )
+            ],
+            lat,
+            lon,
+          );
+    // An empty payload is a provider miss. Caching it as 0 °C would dress
+    // the rider for a calm freeze that MET did not report.
+    if (!point) {
+      this.logger.warn(
+        `MET fetch returned no temperature for ${lat},${lon}; using mock`,
+      );
+      return this.mockWeather(lat, lon);
+    }
+    return point;
   }
 }
 

@@ -114,8 +114,9 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
   }
 
   void _update(RidePlannerState next) {
+    final refresh = roadPreviewRequestChanged(_state, next);
     setState(() => _state = next);
-    _refreshGeometry();
+    if (refresh) _refreshGeometry();
   }
 
   /// Same resort, time, and weather flow. Only the stored discipline changes.

@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: PERFORMANCE-001
+active_id: SECURITY-HARDENING-001
 promotion: automatic
-handoff_generation: 35
+handoff_generation: 36
 handoff_state: authorized
 ```
 
@@ -84,6 +84,8 @@ Generation `32` is spent: `DEPARTURE-COMPARE-001` completed and the automatic fi
 Generation `33` is spent: `RECOMMENDATION-EXPLAIN-001` completed and the automatic final control update authorizes `THERMAL-FEEDBACK-001` at generation `34`. Do not reuse generation `33`. Do not execute `RECOMMENDATION-EXPLAIN-001` again.
 
 Generation `34` is spent: `THERMAL-FEEDBACK-001` completed and the automatic final control update authorizes `PERFORMANCE-001` at generation `35`. Do not reuse generation `34`. Do not execute `THERMAL-FEEDBACK-001` again.
+
+Generation `35` is spent: `PERFORMANCE-001` completed and the automatic final control update authorizes `SECURITY-HARDENING-001` at generation `36`. Do not reuse generation `35`. Do not execute `PERFORMANCE-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1582,7 +1584,7 @@ Requirements:
 
 ### PERFORMANCE-001
 
-- status: active
+- status: completed
 - title: Measure and fix obvious MVP performance waste
 - source: approved final pre-release hardening plan
 
@@ -1618,7 +1620,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### SECURITY-HARDENING-001
 
-- status: queued
+- status: active
 - title: Security hardening audit and safe fixes
 - source: explicitly approved security hardening work
 
