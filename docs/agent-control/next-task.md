@@ -2,68 +2,73 @@
 
 ## Type: IMPLEMENTATION
 
-## Task: Altitude-aware route weather foundation
+## Task: Clearly marked demo wardrobe with safe removal
 
-Implement the first evidence-backed follow-up from the weather/geo research: obtain reliable ground elevation for route weather sample coordinates and pass that altitude to MET Locationforecast so temperature/weather is evaluated at the sample point's terrain height.
+Improve the existing demo wardrobe experience so demo garments are visually obvious and can be removed together without deleting any user-created wardrobe items.
 
 Read first:
 - `docs/agent-control/guardrails.md`
-- `docs/research/WEATHER_DATA_QUALITY.md`
-- `docs/architecture/GEO_DATA_STRATEGY.md`
+- `docs/agent-control/next-task.md`
 - `docs/agent-reports/latest.md`
-
-### Goal
-
-For the existing motorcycle recommendation flow:
-
-road geometry -> route weather samples + ETA -> ground elevation -> MET(lat, lon, altitude, ETA)
-
-Keep the design provider-independent so Cycling, Alpine/Snowboard and Cross-country can reuse elevation later.
 
 ### Required investigation before coding
 
-Inspect current `dev_test` and the research documents. Choose the best already-researched free/open Norway-first elevation source/approach that is legally and technically suitable for this implementation.
+Inspect the current wardrobe/demo implementation on latest `dev_test` before choosing an implementation.
 
-If the research does not support a sufficiently clear provider/endpoint/licensing choice, STOP and report the exact decision/evidence still needed. Do not invent a provider.
+Determine how demo wardrobe items are currently created, stored, updated and deleted.
+
+Use the smallest reliable existing mechanism to identify demo-created garments. Do NOT identify demo items only by their display name.
+
+If the current data model cannot reliably preserve demo identity after a garment is renamed/edited without a DB/schema migration, STOP and report the exact minimal schema change that would be required. Do not create a migration in this task.
+
+### User-visible behavior
+
+- Demo garments must have clear, natural demo names, for example `Demo – Touring jacket`, `Demo – Motorcycle trousers`, etc., localized appropriately.
+- Demo garments must also show a small visible `DEMO` marker/badge in the wardrobe UI so they are immediately distinguishable from real garments.
+- When at least one demo-created garment exists, show a bottom action/button for deleting the demo wardrobe.
+- Norwegian Bokmål text: `Slett demo-garderobe`.
+- Provide the corresponding English localization.
+- Pressing the delete action must show a confirmation dialog explaining that only garments added by the demo wardrobe will be removed and the user's own garments will remain.
+- After confirmation, delete only demo-created garments.
+- User-created garments must never be deleted by this action.
+- Demo identity must remain reliable even if the user edits/renames a demo garment.
+- When no demo garments remain, the delete-demo action should no longer be shown.
+- Preserve existing load-demo behavior and normal wardrobe editing unless a minimal adjustment is required for the above.
 
 ### Implementation requirements
 
-If the prerequisite is satisfied:
-
-- Introduce/extend a provider-independent server-side elevation abstraction/port rather than coupling recommendation logic to a vendor.
-- Implement the smallest production adapter needed for the chosen elevation source.
-- Keep all provider access server-side.
-- Enrich existing route weather samples with ground altitude before MET lookup.
-- Pass altitude to MET Locationforecast using the documented parameter/format.
-- Preserve ETA-based forecast selection.
-- Preserve safe fallback: if elevation lookup fails/unavailable, weather recommendations must still work using the existing lat/lon behavior rather than failing the whole recommendation.
-- Use bounded batching/caching where appropriate; do not create one uncontrolled external request per dense geometry vertex.
-- Dense route geometry remains ephemeral and must not be persisted.
-- Add focused tests for altitude propagation, fallback, caching/batching behavior where applicable, and unchanged ETA behavior.
-- Keep existing provider-neutral domain boundaries.
+- Follow existing Flutter/NestJS/domain patterns; do not invent a parallel wardrobe architecture.
+- Reuse existing data fields/metadata if they provide reliable demo identity.
+- Keep display naming separate from technical demo identification.
+- Add/update Norwegian Bokmål and English localization through the existing ARB/gen-l10n system. Do not edit generated localization files manually.
+- Add focused tests for:
+  - demo identification
+  - user garments surviving demo deletion
+  - renamed/edited demo garments still being removable
+  - delete action visibility when demo items exist / disappear when none remain
+  - confirmation flow where practical in the existing test structure
+- Keep the UI consistent with the current wardrobe screen.
 
 ### Explicitly out of scope
 
-- No Cycling/Alpine/XC implementation yet.
-- No ski resort UI/data integration.
-- No paid provider.
-- No ads/ad SDK.
-- No DB/schema migration.
-- No dependency upgrades unless absolutely required by the selected official API; if a new dependency appears necessary, STOP and report rather than adding it.
-- No routing-provider change.
-- No unrelated UI changes.
-- No live traffic/navigation/rerouting.
+- No DB/schema migration in this task.
+- No unrelated wardrobe redesign.
+- No recommendation-engine changes.
+- No routing/weather/elevation changes.
+- No dependency/package upgrades.
+- No ads.
+- No Cycling/Alpine/XC implementation.
 - Do not modify `dev` or `main`.
 
 ### Verification
 
-Run:
-- relevant focused API tests
-- `npm test`
-- `npm run build`
-- existing API smoke test if applicable
+Run the relevant focused tests plus the normal checks required for changed packages.
 
-If Flutter code is unexpectedly required, STOP and report why before changing it. This task should be server-side.
+For Flutter changes, at minimum run:
+- `flutter analyze`
+- `flutter test`
+
+If API code is changed, also run relevant API tests/build required by guardrails.
 
 All required checks must pass before merge.
 
@@ -74,13 +79,13 @@ Follow `docs/agent-control/guardrails.md`.
 Use a `feature/*` or `fix/*` branch from latest `dev_test`.
 PR and merge successful work only to `dev_test`.
 Update `docs/agent-reports/latest.md` with:
-- selected elevation source and why
-- licensing/attribution/config implications
+- how demo items are technically identified
 - branch/commit/PR
 - files changed
-- tests/build/smoke results
-- fallback behavior
+- localization changes
+- tests/analyze/build results
+- deletion safety behavior
 - manual validation recommended
 - remaining issues
 
-Then STOP. Do not begin Cycling, skiing, ads, or another task.
+Then STOP. Do not begin another task.
