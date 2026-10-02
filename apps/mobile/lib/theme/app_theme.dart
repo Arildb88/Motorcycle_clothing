@@ -29,7 +29,7 @@ class AppTheme {
         foregroundColor: asphalt,
         centerTitle: false,
       ),
-      textTheme: GoogleFonts.dmSansTextTheme(base.textTheme).apply(
+      textTheme: _dmSansTextTheme(base.textTheme).apply(
         bodyColor: asphalt,
         displayColor: asphalt,
       ),
@@ -63,4 +63,28 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// google_fonts 9 types its text-theme helper as material_ui's TextTheme.
+/// RideWear still applies DM Sans onto Flutter's own TextTheme.
+TextTheme _dmSansTextTheme(TextTheme textTheme) {
+  TextStyle? face(TextStyle? style) =>
+      style == null ? null : GoogleFonts.dmSans(textStyle: style);
+  return TextTheme(
+    displayLarge: face(textTheme.displayLarge),
+    displayMedium: face(textTheme.displayMedium),
+    displaySmall: face(textTheme.displaySmall),
+    headlineLarge: face(textTheme.headlineLarge),
+    headlineMedium: face(textTheme.headlineMedium),
+    headlineSmall: face(textTheme.headlineSmall),
+    titleLarge: face(textTheme.titleLarge),
+    titleMedium: face(textTheme.titleMedium),
+    titleSmall: face(textTheme.titleSmall),
+    bodyLarge: face(textTheme.bodyLarge),
+    bodyMedium: face(textTheme.bodyMedium),
+    bodySmall: face(textTheme.bodySmall),
+    labelLarge: face(textTheme.labelLarge),
+    labelMedium: face(textTheme.labelMedium),
+    labelSmall: face(textTheme.labelSmall),
+  );
 }
