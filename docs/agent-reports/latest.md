@@ -1,35 +1,37 @@
-# UX-POLISH-001
+# DEPARTURE-COMPARE-001
 
 ## Task
 
-`UX-POLISH-001`, generation 31, authorized by the automatic final control update that completed `XC-TRAIL-SYNC-001`. The parent tip held that token at generation 30 with `XC-TRAIL-SYNC-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`DEPARTURE-COMPARE-001`, generation 32, authorized by the automatic final control update that completed `UX-POLISH-001`. The parent tip held that token at generation 31 with `UX-POLISH-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/ux-polish-001`
-- Implementation commit: `d51e2952a5d8e3bfbb3818d727ace1c2ad85c515`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/61 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/departure-compare-001`
+- Implementation commit: `3cf1b110f45852a925521eb2895a478a470136fd`
+- PR: into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Focused MVP polish. Navigation, architecture, and visual identity are unchanged.
+Route activities can compare a few nearby departure times. The chosen departure stays labeled. Nothing is ranked as best.
 
-- A failed profile load stays on screen with the localized error and a retry button. It no longer leaves a spinner after the request fails.
-- A failed wardrobe load offers the same retry. Sharing and garment checkboxes use the standard touch height.
-- Strava sync and disconnect sit on their own row so the labels can wrap on a narrow screen.
-- Ride analysis uses the profile temperature and wind units, including mountain site lines. Metric display stays the default when no preference is loaded.
-- Alpine, snowboard, and cross-country planners no longer show the road heading "Route options" or the commute hint. The saved name field is labeled "Name" / "Navn" for those activities. Road activities still say "Route name" and "e.g. Work commute".
-- Departure and arrival share the row width, without a second selected icon, so a 320px-wide planner does not overflow.
-- Filled, outlined, and text buttons keep a 48dp minimum. Spinners on dark filled buttons use the light foreground color on login, password, reset, and analyze.
-- Login validation stays on the form. Stacked auth and garment fields keep the floating label clear of the outline above.
-- Norwegian imperial labels say "Engelske mil" and "Engelske mil (mi)".
+- Motorcycle, cycling, and cross-country reuse the route samples already built for the recommendation. Only the sample clock moves.
+- Two to four nearby hours are shown. A past hour is omitted unless it is the chosen departure.
+- Each row shows temperature, rain probability, precipitation, and wind, plus the forecast time those figures apply to.
+- A time outside the published forecast stays unavailable. Missing sample times are listed. Mock weather does not pretend the hours differ.
+- One MET locationforecast covers every departure at a place. The existing per-hour cache is filled for in-range samples so the chosen departure is not fetched again.
+- Alpine and snowboard stay site forecasts and do not show the comparison.
 
 ## Checks
+
+API, focused:
+
+- `departure-compare`, `met-timeseries`, `weather.service`, and `alpine-recommend` — 23 tests passed
+- `nest build` passed
 
 Flutter, in `apps/mobile`:
 
 - `flutter analyze` — no issues
-- `flutter test` — 139 tests passed
+- `flutter test test/ride_analysis_result_test.dart` — 7 tests passed
 
-Android, iOS, and a physical or emulator visual pass were not run. Spacing, wrapping, and contrast on a real device still need a human look.
+Android, iOS, and a live MET call were not run.
 
 ## Architecture / config
 
@@ -39,15 +41,15 @@ Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new p
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `UX-POLISH-001` completed and appended once to `consumed.md`
-- `DEPARTURE-COMPARE-001` is active
-- `active_id: DEPARTURE-COMPARE-001`
+- `DEPARTURE-COMPARE-001` completed and appended once to `consumed.md`
+- `RECOMMENDATION-EXPLAIN-001` is active
+- `active_id: RECOMMENDATION-EXPLAIN-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 32`
+- `handoff_generation: 33`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `DEPARTURE-COMPARE-001`, Generation 32, Handoff-From `UX-POLISH-001`, Authorization `authorized`
+- `next-task.md`: `RECOMMENDATION-EXPLAIN-001`, Generation 33, Handoff-From `DEPARTURE-COMPARE-001`, Authorization `authorized`
 
 ## Remaining
 
-Device and emulator visual review was not run. `DEPARTURE-COMPARE-001` is authorized for a later run. This run stops after merge.
+A device pass of the comparison block was not run. `RECOMMENDATION-EXPLAIN-001` is authorized for a later run. This run stops after merge.
