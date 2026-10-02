@@ -6,7 +6,7 @@
 
 - Branch: `feature/alpine-snowboard-unify-001`
 - Implementation commit: `23918a15aeb8cce7813209f75def2d10fbd58e09`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/56 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
