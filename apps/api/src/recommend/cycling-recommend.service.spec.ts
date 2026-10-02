@@ -148,7 +148,7 @@ describe('RecommendService cycling foundation', () => {
     );
 
     expect(personalOffset).not.toHaveBeenCalled();
-    expect(userProfile).not.toHaveBeenCalled();
+    expect(userProfile).toHaveBeenCalled();
     expect(roadWeatherSource).toHaveBeenCalledWith(
       expect.objectContaining({ travelProfile: 'cycling' }),
     );

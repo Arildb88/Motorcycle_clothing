@@ -88,6 +88,9 @@ model UserProfile {
   showActivityChooserOnLaunch Boolean @default(true)
   /// JSON array of ActivityType
   interestedActivitiesJson   String  @default("[\"motorcycle\"]")
+  /// JSON array of shareable wardrobe categories that share personal garments.
+  /// motorcycle is never stored. Fewer than two entries keeps those wardrobes separate.
+  sharedWardrobeCategoriesJson String @default("[]")
   onboardingCompleted        Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

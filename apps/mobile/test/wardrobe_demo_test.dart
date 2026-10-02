@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/features/wardrobe/wardrobe_screen.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -32,7 +34,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text(
-        'Only garments added from the demo wardrobe will be removed. Your own garments stay.',
+        'Only demo clothes for this activity are removed. Your own garments stay.',
       ),
       findsOneWidget,
     );
@@ -100,9 +102,17 @@ void main() {
   });
 }
 
-Widget _harness(ApiClient api, [Locale locale = const Locale('en')]) {
-  return Provider<ApiClient>.value(
-    value: api,
+Widget _harness(
+  ApiClient api, [
+  Locale locale = const Locale('en'),
+  AppActivity activity = AppActivity.motorcycle,
+]) {
+  final context = ActivityContext()..setCurrentActivity(activity);
+  return MultiProvider(
+    providers: [
+      Provider<ApiClient>.value(value: api),
+      ChangeNotifierProvider<ActivityContext>.value(value: context),
+    ],
     child: MaterialApp(
       theme: AppTheme.light(),
       locale: locale,
@@ -151,8 +161,28 @@ class _FakeApi extends ApiClient {
   }
 
   @override
+  Future<Map<String, dynamic>> get(String path, {bool auth = true}) async {
+    if (path == '/wardrobe/sharing') {
+      return {
+        'sharedCategories': <String>[],
+        'shareableCategories': ['cycling', 'alpine_snowboard', 'xc_skiing'],
+        'isolatedCategories': ['motorcycle'],
+      };
+    }
+    throw UnsupportedError(path);
+  }
+
+  @override
+  Future<Map<String, dynamic>> patch(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    throw UnsupportedError(path);
+  }
+
+  @override
   Future<Map<String, dynamic>> delete(String path) async {
-    if (path != '/wardrobe/actions/demo') {
+    if (!path.startsWith('/wardrobe/actions/demo')) {
       throw UnsupportedError(path);
     }
     demoDeletes += 1;

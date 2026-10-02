@@ -193,7 +193,7 @@ describe('activity foundation integration', () => {
     expect(motorcycle.route.activityType).toBe('motorcycle');
     expect(motorcycle.comfort.personalColdBiasC).toBe(-1);
     expect(personalOffset).toHaveBeenCalledTimes(1);
-    expect(userProfile).toHaveBeenCalledTimes(1);
+    expect(userProfile).toHaveBeenCalledTimes(5);
     expect(
       altitudes(forRouteSamples, 0).every((height) => height === 120),
     ).toBe(true);
@@ -203,7 +203,7 @@ describe('activity foundation integration', () => {
     expect(cycling.comfort.intensity).toBe('steady');
     expect(cycling.recommendation.geometry).toBe('cycling_profile');
     expect(personalOffset).toHaveBeenCalledTimes(1);
-    expect(userProfile).toHaveBeenCalledTimes(1);
+    expect(userProfile).toHaveBeenCalledTimes(5);
     expect(altitudes(forRouteSamples, 1).every((height) => height === 90)).toBe(
       true,
     );
@@ -231,7 +231,7 @@ describe('activity foundation integration', () => {
     expect(xc.comfort.intensity).toBe('easy');
     expect(altitudes(forRouteSamples, 4)).toEqual([220, null]);
     expect(personalOffset).toHaveBeenCalledTimes(1);
-    expect(userProfile).toHaveBeenCalledTimes(1);
+    expect(userProfile).toHaveBeenCalledTimes(5);
 
     expect(roadWeatherSource).toHaveBeenCalledTimes(2);
     expect(roadWeatherSource).toHaveBeenNthCalledWith(

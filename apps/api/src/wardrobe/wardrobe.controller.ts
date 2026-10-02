@@ -16,6 +16,7 @@ import type { AuthRequest } from '../auth/jwt-auth.guard';
 import { demoLanguage } from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
 import { UpdateGarmentDto } from './dto/update-garment.dto';
+import { UpdateWardrobeSharingDto } from './dto/update-wardrobe-sharing.dto';
 
 @Controller('wardrobe')
 @UseGuards(JwtAuthGuard)
@@ -27,9 +28,22 @@ export class WardrobeController {
     return this.wardrobe.meta();
   }
 
+  @Get('sharing')
+  getSharing(@Req() req: AuthRequest) {
+    return this.wardrobe.getSharing(req.user.userId);
+  }
+
+  @Patch('sharing')
+  updateSharing(
+    @Req() req: AuthRequest,
+    @Body() dto: UpdateWardrobeSharingDto,
+  ) {
+    return this.wardrobe.updateSharing(req.user.userId, dto.sharedCategories);
+  }
+
   @Get()
-  list(@Req() req: AuthRequest) {
-    return this.wardrobe.list(req.user.userId);
+  list(@Req() req: AuthRequest, @Query('activity') activity?: string) {
+    return this.wardrobe.list(req.user.userId, activity);
   }
 
   @Get(':id')
@@ -52,8 +66,11 @@ export class WardrobeController {
   }
 
   @Delete('actions/demo')
-  deleteDemo(@Req() req: AuthRequest) {
-    return this.wardrobe.deleteDemo(req.user.userId);
+  deleteDemo(
+    @Req() req: AuthRequest,
+    @Query('activity') activity?: string,
+  ) {
+    return this.wardrobe.deleteDemo(req.user.userId, activity ?? '');
   }
 
   @Delete(':id')
@@ -64,11 +81,13 @@ export class WardrobeController {
   @Post('actions/seed-demo')
   seedDemo(
     @Req() req: AuthRequest,
+    @Query('activity') activity?: string,
     @Query('force') force?: string,
     @Query('lang') lang?: string,
   ) {
     return this.wardrobe.seedDemo(
       req.user.userId,
+      activity ?? '',
       force === 'true' || force === '1',
       demoLanguage(lang),
     );

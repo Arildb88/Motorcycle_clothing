@@ -1221,7 +1221,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wardrobeDeleteDemoBody =>
-      'Only garments added from the demo wardrobe will be removed. Your own garments stay.';
+      'Only demo clothes for this activity are removed. Your own garments stay.';
+
+  @override
+  String get wardrobeSharingTitle => 'Share personal clothes';
+
+  @override
+  String get wardrobeSharingBody =>
+      'Motorcycle clothes can never be shared. Choose two or more activities to share personal garments. Demo clothes stay with their activity.';
+
+  @override
+  String get wardrobeMotorcycleIsolated =>
+      'Motorcycle clothes stay in their own wardrobe.';
+
+  @override
+  String get wardrobeHikingUnavailable =>
+      'Hiking does not have a wardrobe yet.';
+
+  @override
+  String get wardrobeActivityMembership => 'Available for';
+
+  @override
+  String get garmentMotorcycleLocked =>
+      'This piece stays in the motorcycle wardrobe and is not shared.';
 
   @override
   String get garmentEditTitle => 'Edit garment';

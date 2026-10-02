@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/garment.dart';
+import 'package:motorcycle_clothing/domain/wardrobe_sharing.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 
 class GarmentFormScreen extends StatefulWidget {
-  const GarmentFormScreen({super.key, this.existing});
+  const GarmentFormScreen({
+    super.key,
+    this.existing,
+    this.activity = 'motorcycle',
+  });
 
   final Garment? existing;
+  final String activity;
 
   @override
   State<GarmentFormScreen> createState() => _GarmentFormScreenState();
@@ -33,6 +39,8 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
   double _breath = 3;
   bool _busy = false;
   bool _advanced = false;
+  bool _motorcycleLocked = true;
+  final Set<String> _membership = {};
 
   bool get _isEdit => widget.existing != null;
 
@@ -56,6 +64,16 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       _thermalLiner = g.components.any((c) => c.kind == 'thermal_liner');
       _waterproofLiner =
           g.components.any((c) => c.kind == 'waterproof_liner');
+      _motorcycleLocked = tagsAreMotorcycleOnly(g.activityTags);
+      if (!_motorcycleLocked) {
+        _membership.addAll(categoriesForActivityTags(g.activityTags));
+      }
+    } else {
+      final category = wardrobeCategoryForActivity(widget.activity);
+      _motorcycleLocked = category == null || category == 'motorcycle';
+      if (!_motorcycleLocked && category != null) {
+        _membership.add(category);
+      }
     }
   }
 
@@ -138,6 +156,14 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
   }
 
   Future<void> _save() async {
+    if (!_motorcycleLocked && _membership.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).wardrobeActivityMembership),
+        ),
+      );
+      return;
+    }
     if (_name.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).garmentNameRequired)),
@@ -160,7 +186,7 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       'brand': _brand.text.trim().isEmpty ? null : _brand.text.trim(),
       'model': _model.text.trim().isEmpty ? null : _model.text.trim(),
       'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-      'activityTags': ['motorcycle'],
+      'activityTags': _activityTags(),
       'components': components,
     };
     if (_isEdit || _advanced) {
@@ -206,6 +232,29 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: 12),
+          Text(
+            _motorcycleLocked
+                ? l10n.garmentMotorcycleLocked
+                : l10n.wardrobeActivityMembership,
+          ),
+          if (!_motorcycleLocked)
+            for (final category in shareableWardrobeCategories)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(_membershipLabel(l10n, category)),
+                value: _membership.contains(category),
+                onChanged: (value) {
+                  setState(() {
+                    if (value ?? false) {
+                      _membership.add(category);
+                    } else if (_membership.length > 1) {
+                      _membership.remove(category);
+                    }
+                  });
+                },
+              ),
           const SizedBox(height: 12),
           TextField(
             controller: _name,
@@ -335,6 +384,24 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
         ],
       ),
     );
+  }
+
+  List<String> _activityTags() {
+    if (_motorcycleLocked) return const ['motorcycle'];
+    return activityTagsForCategories(_membership);
+  }
+
+  String _membershipLabel(AppLocalizations l10n, String category) {
+    switch (category) {
+      case 'cycling':
+        return l10n.activityCycling;
+      case 'alpine_snowboard':
+        return l10n.activityAlpineAndSnowboard;
+      case 'xc_skiing':
+        return l10n.activityXcSkiing;
+      default:
+        return category;
+    }
   }
 
   Widget _tier(String label, double value, ValueChanged<double> onChanged) {

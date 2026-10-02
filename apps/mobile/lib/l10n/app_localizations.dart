@@ -2231,8 +2231,44 @@ abstract class AppLocalizations {
   /// No description provided for @wardrobeDeleteDemoBody.
   ///
   /// In en, this message translates to:
-  /// **'Only garments added from the demo wardrobe will be removed. Your own garments stay.'**
+  /// **'Only demo clothes for this activity are removed. Your own garments stay.'**
   String get wardrobeDeleteDemoBody;
+
+  /// No description provided for @wardrobeSharingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share personal clothes'**
+  String get wardrobeSharingTitle;
+
+  /// No description provided for @wardrobeSharingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle clothes can never be shared. Choose two or more activities to share personal garments. Demo clothes stay with their activity.'**
+  String get wardrobeSharingBody;
+
+  /// No description provided for @wardrobeMotorcycleIsolated.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle clothes stay in their own wardrobe.'**
+  String get wardrobeMotorcycleIsolated;
+
+  /// No description provided for @wardrobeHikingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiking does not have a wardrobe yet.'**
+  String get wardrobeHikingUnavailable;
+
+  /// No description provided for @wardrobeActivityMembership.
+  ///
+  /// In en, this message translates to:
+  /// **'Available for'**
+  String get wardrobeActivityMembership;
+
+  /// No description provided for @garmentMotorcycleLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This piece stays in the motorcycle wardrobe and is not shared.'**
+  String get garmentMotorcycleLocked;
 
   /// No description provided for @garmentEditTitle.
   ///

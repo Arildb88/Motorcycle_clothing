@@ -10,6 +10,7 @@ describe('WardrobeService', () => {
   let service: WardrobeService;
   const store: Record<string, unknown>[] = [];
   const components: Record<string, unknown>[] = [];
+  const profiles = new Map<string, string>();
   let seq = 0;
 
   const prismaMock = {
@@ -165,11 +166,39 @@ describe('WardrobeService', () => {
         },
       ),
     },
+    userProfile: {
+      findUnique: jest.fn(async ({ where }: { where: { userId: string } }) => {
+        if (!profiles.has(where.userId)) return null;
+        return {
+          userId: where.userId,
+          sharedWardrobeCategoriesJson: profiles.get(where.userId),
+        };
+      }),
+      upsert: jest.fn(
+        async ({
+          where,
+          update,
+          create,
+        }: {
+          where: { userId: string };
+          update: { sharedWardrobeCategoriesJson?: string };
+          create: { sharedWardrobeCategoriesJson?: string };
+        }) => {
+          const json =
+            update.sharedWardrobeCategoriesJson ??
+            create.sharedWardrobeCategoriesJson ??
+            '[]';
+          profiles.set(where.userId, json);
+          return { userId: where.userId, sharedWardrobeCategoriesJson: json };
+        },
+      ),
+    },
   };
 
   beforeEach(async () => {
     store.length = 0;
     components.length = 0;
+    profiles.clear();
     seq = 0;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -260,23 +289,20 @@ describe('WardrobeService', () => {
   });
 
   it('seeds demo garments as isDemo and keeps normal creates false', async () => {
-    const seeded = await service.seedDemo('user1', false, 'nb');
+    const seeded = await service.seedDemo('user1', 'motorcycle', false, 'nb');
     expect(seeded.created).toBeGreaterThanOrEqual(8);
     expect(seeded.garments.every((g) => g.isDemo)).toBe(true);
     expect(seeded.garments.some((g) => g.name === 'Demo – Touringjakke')).toBe(
       true,
     );
-    const tags = seeded.garments.flatMap((g) => g.activityTags);
-    expect(tags).toEqual(
-      expect.arrayContaining([
-        'motorcycle',
-        'cycling',
-        'alpine_skiing',
-        'snowboarding',
-        'xc_skiing',
-      ]),
+    expect(
+      seeded.garments.every((g) =>
+        g.activityTags.every((tag) => tag === 'motorcycle'),
+      ),
+    ).toBe(true);
+    expect(seeded.garments.flatMap((g) => g.activityTags)).not.toContain(
+      'hiking',
     );
-    expect(tags).not.toContain('hiking');
 
     const personal = await service.create('user1', {
       name: 'My jacket',
@@ -284,7 +310,7 @@ describe('WardrobeService', () => {
     });
     expect(personal.isDemo).toBe(false);
 
-    const english = await service.seedDemo('user2', false, 'en');
+    const english = await service.seedDemo('user2', 'motorcycle', false, 'en');
     expect(
       english.garments.some((g) => g.name === 'Demo – Touring jacket'),
     ).toBe(true);
@@ -298,7 +324,7 @@ describe('WardrobeService', () => {
     } as CreateGarmentDto);
     expect(created.isDemo).toBe(false);
 
-    const seeded = await service.seedDemo('user2', false, 'en');
+    const seeded = await service.seedDemo('user2', 'motorcycle', false, 'en');
     const demo = seeded.garments[0];
     const updated = await service.update('user2', demo.id, {
       name: 'Renamed jacket',
@@ -313,14 +339,14 @@ describe('WardrobeService', () => {
   });
 
   it('deletes only the authenticated user demo rows', async () => {
-    await service.seedDemo('user1', false, 'en');
+    await service.seedDemo('user1', 'motorcycle', false, 'en');
     const personal = await service.create('user1', {
       name: 'My jacket',
       category: 'shell_jacket',
     });
-    await service.seedDemo('user2', false, 'en');
+    await service.seedDemo('user2', 'motorcycle', false, 'en');
 
-    const removed = await service.deleteDemo('user1');
+    const removed = await service.deleteDemo('user1', 'motorcycle');
     expect(removed.deleted).toBeGreaterThanOrEqual(8);
 
     const mine = await service.list('user1');
@@ -337,7 +363,7 @@ describe('WardrobeService', () => {
       name: 'My jacket',
       category: 'shell_jacket',
     });
-    const seeded = await service.seedDemo('user1', false, 'en');
+    const seeded = await service.seedDemo('user1', 'motorcycle', false, 'en');
     expect(seeded.created).toBeGreaterThanOrEqual(8);
     expect(seeded.garments.some((g) => g.name === 'My jacket' && !g.isDemo)).toBe(
       true,
@@ -345,7 +371,7 @@ describe('WardrobeService', () => {
     const demoCount = seeded.garments.filter((g) => g.isDemo).length;
     expect(demoCount).toBe(seeded.created);
 
-    const again = await service.seedDemo('user1', false, 'en');
+    const again = await service.seedDemo('user1', 'motorcycle', false, 'en');
     expect(again.created).toBe(0);
     expect(again.garments.filter((g) => g.isDemo)).toHaveLength(demoCount);
     expect(again.garments.filter((g) => !g.isDemo).map((g) => g.name)).toEqual([
@@ -353,8 +379,106 @@ describe('WardrobeService', () => {
     ]);
   });
 
+  it('rejects motorcycle sharing and hiking wardrobe tags', async () => {
+    await expect(
+      service.create('user1', {
+        name: 'Mixed',
+        category: 'shell_jacket',
+        activityTags: ['motorcycle', 'cycling'],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.create('user1', {
+        name: 'Hike',
+        category: 'shell_jacket',
+        activityTags: ['hiking'],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.updateSharing('user1', ['motorcycle', 'cycling']),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('shares personal non-motorcycle clothes only in the chosen combination', async () => {
+    const cycling = await service.create('user1', {
+      name: 'My jersey',
+      category: 'base_layer',
+      activityTags: ['cycling'],
+    });
+    const resort = await service.create('user1', {
+      name: 'My alpine shell',
+      category: 'shell_jacket',
+      activityTags: ['alpine_skiing'],
+    });
+    expect(resort.activityTags).toEqual(['alpine_skiing', 'snowboarding']);
+    const motorcycle = await service.create('user1', {
+      name: 'My motorcycle jacket',
+      category: 'shell_jacket',
+    });
+
+    const separate = await service.list('user1', 'xc_skiing');
+    expect(separate.map((g) => g.id)).not.toContain(cycling.id);
+    expect(separate.map((g) => g.id)).not.toContain(motorcycle.id);
+
+    await service.updateSharing('user1', ['xc_skiing', 'cycling']);
+    const shared = await service.list('user1', 'xc_skiing');
+    expect(shared.map((g) => g.name)).toContain('My jersey');
+    expect(shared.map((g) => g.name)).not.toContain('My alpine shell');
+    expect(shared.map((g) => g.name)).not.toContain('My motorcycle jacket');
+
+    const motorcycleList = await service.list('user1', 'motorcycle');
+    expect(motorcycleList.map((g) => g.id)).toEqual([motorcycle.id]);
+    const resortList = await service.list('user1', 'snowboarding');
+    expect(resortList.map((g) => g.name)).toEqual(['My alpine shell']);
+  });
+
+  it('keeps demo seeding idempotent per category and preserves personal garments', async () => {
+    const personal = await service.create('user1', {
+      name: 'My jacket',
+      category: 'shell_jacket',
+    });
+    const motorcycle = await service.seedDemo('user1', 'motorcycle', false, 'en');
+    const cycling = await service.seedDemo('user1', 'cycling', false, 'nb');
+    const resort = await service.seedDemo('user1', 'alpine_skiing', false, 'nb');
+    expect(cycling.created).toBeGreaterThan(0);
+    expect(resort.garments.some((g) => g.name === 'Demo – Alpin ulltrøye')).toBe(
+      true,
+    );
+    const repeat = await service.seedDemo('user1', 'snowboarding', false, 'en');
+    expect(repeat.created).toBe(0);
+    expect(repeat.garments.filter((g) => g.isDemo)).toHaveLength(
+      motorcycle.created + cycling.created + resort.created,
+    );
+
+    await service.updateSharing('user1', [
+      'cycling',
+      'alpine_snowboard',
+      'xc_skiing',
+    ]);
+    const cyclingView = await service.list('user1', 'cycling');
+    expect(
+      cyclingView.some((g) => g.isDemo && g.activityTags.includes('alpine_skiing')),
+    ).toBe(false);
+    expect(
+      cyclingView.some((g) => g.isDemo && g.activityTags.includes('cycling')),
+    ).toBe(true);
+    expect(cyclingView.some((g) => g.id === personal.id)).toBe(false);
+
+    const removed = await service.deleteDemo('user1', 'cycling');
+    expect(removed.deleted).toBe(cycling.created);
+    const left = await service.list('user1');
+    expect(left.some((g) => g.id === personal.id && !g.isDemo)).toBe(true);
+    expect(left.some((g) => g.isDemo && g.activityTags.includes('cycling'))).toBe(
+      false,
+    );
+    expect(
+      left.some((g) => g.isDemo && g.activityTags.includes('motorcycle')),
+    ).toBe(true);
+    expect(left.some((g) => g.name === 'Demo – Alpin ulltrøye')).toBe(true);
+  });
+
   it('still deletes one garment by id and leaves the rest', async () => {
-    const seeded = await service.seedDemo('user1', false, 'en');
+    const seeded = await service.seedDemo('user1', 'motorcycle', false, 'en');
     const personal = await service.create('user1', {
       name: 'Mine',
       category: 'gloves',

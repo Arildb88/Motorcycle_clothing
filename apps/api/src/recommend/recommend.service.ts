@@ -7,7 +7,13 @@ import { lookupSampleAltitudes } from '../elevation/lookup-sample-altitudes';
 import { RoutesService } from '../routes/routes.service';
 import { WeatherService } from '../weather/weather.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MVP_ACTIVITY_TYPE, parseRoutePreferences } from '../domain';
+import {
+  MVP_ACTIVITY_TYPE,
+  parseActivityTags,
+  parseRoutePreferences,
+  parseStoredSharedCategories,
+  prepareRecommendationWardrobe,
+} from '../domain';
 import { OpenRouteServiceRoutingAdapter } from '../routing/ors-routing.adapter';
 import {
   resolveRouteWeatherSamples,
@@ -152,11 +158,11 @@ export class RecommendService {
       sampled.appliedLegs,
     );
 
-    const garments = await this.prisma.garment.findMany({
-      where: { userId },
-      include: { components: true },
-    });
-    const wardrobe = garments.map((g) => this.toGarmentInput(g));
+    const wardrobe = await this.loadActivityWardrobe(
+      userId,
+      MVP_ACTIVITY_TYPE,
+      profile,
+    );
 
     const engine = runMotorcycleRecommendationPipeline({
       weather,
@@ -320,13 +326,9 @@ export class RecommendService {
       road?.distanceM,
       sampled.appliedLegs,
     );
-    const garments = await this.prisma.garment.findMany({
-      where: { userId },
-      include: { components: true },
-    });
     const engine = runCyclingRecommendationPipeline({
       weather,
-      wardrobe: garments.map((garment) => this.toGarmentInput(garment)),
+      wardrobe: await this.loadActivityWardrobe(userId, 'cycling'),
       rideDurationMin: sampled.durationMin,
       intensity,
       routeTravelSegments,
@@ -493,17 +495,13 @@ export class RecommendService {
         },
       ];
     });
-    const garments = await this.prisma.garment.findMany({
-      where: { userId },
-      include: { components: true },
-    });
     const engine = runAlpineRecommendationPipeline({
       discipline,
       exposureMode: exposure,
       durationMin: route.typicalDurationMin ?? 240,
       plan,
       samples,
-      wardrobe: garments.map((garment) => this.toGarmentInput(garment)),
+      wardrobe: await this.loadActivityWardrobe(userId, discipline),
     });
     const temps = samples.map((sample) => sample.weather.airTempC);
     const rains = samples.map((sample) => sample.weather.precipitationProbPct);
@@ -696,13 +694,9 @@ export class RecommendService {
           }
         : null,
     };
-    const garments = await this.prisma.garment.findMany({
-      where: { userId },
-      include: { components: true },
-    });
     const engine = runXcRecommendationPipeline({
       weather,
-      wardrobe: garments.map((garment) => this.toGarmentInput(garment)),
+      wardrobe: await this.loadActivityWardrobe(userId, 'xc_skiing'),
       durationMin,
       durationAssumed,
       intensity,
@@ -826,6 +820,35 @@ export class RecommendService {
     return item.genericLabel ?? item.slot;
   }
 
+  private async loadActivityWardrobe(
+    userId: string,
+    activity: string,
+    profile?: { sharedWardrobeCategoriesJson?: string | null } | null,
+  ): Promise<GarmentInput[]> {
+    const resolved =
+      profile !== undefined
+        ? profile
+        : await this.prisma.userProfile.findUnique({ where: { userId } });
+    const garments = await this.prisma.garment.findMany({
+      where: { userId },
+      include: { components: true },
+    });
+    const shared = parseStoredSharedCategories(
+      resolved?.sharedWardrobeCategoriesJson,
+    );
+    const tagged = garments.map((garment) => ({
+      ...this.toGarmentInput(garment),
+      isDemo: garment.isDemo === true,
+    }));
+    return prepareRecommendationWardrobe(tagged, activity, shared).map(
+      (garment) => {
+        const { isDemo, ...input } = garment;
+        void isDemo;
+        return input;
+      },
+    );
+  }
+
   private toGarmentInput(g: {
     id: string;
     name: string;
@@ -850,13 +873,7 @@ export class RecommendService {
       breathabilityDelta: number;
     }>;
   }): GarmentInput {
-    let activityTags: string[] = [MVP_ACTIVITY_TYPE];
-    try {
-      const parsed = JSON.parse(g.activityTagsJson);
-      if (Array.isArray(parsed)) activityTags = parsed.map(String);
-    } catch {
-      /* keep default */
-    }
+    const activityTags = parseActivityTags(g.activityTagsJson);
     return {
       id: g.id,
       name: g.name,

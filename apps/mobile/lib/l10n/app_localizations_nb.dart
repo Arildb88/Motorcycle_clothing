@@ -1223,7 +1223,28 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wardrobeDeleteDemoBody =>
-      'Bare plagg som er lagt inn fra demogarderoben fjernes. Dine egne plagg blir værende.';
+      'Bare demoklær for denne aktiviteten fjernes. Dine egne plagg blir værende.';
+
+  @override
+  String get wardrobeSharingTitle => 'Del personlige klær';
+
+  @override
+  String get wardrobeSharingBody =>
+      'Mc-klær kan aldri deles. Velg to eller flere aktiviteter for å dele personlige plagg. Demoklær følger sin aktivitet.';
+
+  @override
+  String get wardrobeMotorcycleIsolated =>
+      'Mc-klær blir i sitt eget garderobeskap.';
+
+  @override
+  String get wardrobeHikingUnavailable => 'Tur har ikke en garderobe ennå.';
+
+  @override
+  String get wardrobeActivityMembership => 'Tilgjengelig for';
+
+  @override
+  String get garmentMotorcycleLocked =>
+      'Dette plagget blir i mc-garderoben og deles ikke.';
 
   @override
   String get garmentEditTitle => 'Rediger plagg';

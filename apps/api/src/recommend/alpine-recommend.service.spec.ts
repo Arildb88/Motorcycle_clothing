@@ -134,7 +134,7 @@ describe('RecommendService alpine foundation', () => {
 
     expect(roadWeatherSource).not.toHaveBeenCalled();
     expect(personalOffset).not.toHaveBeenCalled();
-    expect(userProfile).not.toHaveBeenCalled();
+    expect(userProfile).toHaveBeenCalled();
     const samples = forRouteSamples.mock.calls[0][0] as Array<{
       lat: number;
       lon: number;

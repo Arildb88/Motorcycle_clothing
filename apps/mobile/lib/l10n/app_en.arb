@@ -482,7 +482,13 @@
   "wardrobeDemoBadge": "DEMO",
   "wardrobeDeleteDemo": "Delete demo wardrobe",
   "wardrobeDeleteDemoTitle": "Delete demo wardrobe?",
-  "wardrobeDeleteDemoBody": "Only garments added from the demo wardrobe will be removed. Your own garments stay.",
+  "wardrobeDeleteDemoBody": "Only demo clothes for this activity are removed. Your own garments stay.",
+  "wardrobeSharingTitle": "Share personal clothes",
+  "wardrobeSharingBody": "Motorcycle clothes can never be shared. Choose two or more activities to share personal garments. Demo clothes stay with their activity.",
+  "wardrobeMotorcycleIsolated": "Motorcycle clothes stay in their own wardrobe.",
+  "wardrobeHikingUnavailable": "Hiking does not have a wardrobe yet.",
+  "wardrobeActivityMembership": "Available for",
+  "garmentMotorcycleLocked": "This piece stays in the motorcycle wardrobe and is not shared.",
   "@wardrobeDeleteBody": {
     "placeholders": {
       "name": {

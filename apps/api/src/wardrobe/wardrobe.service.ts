@@ -14,19 +14,24 @@ import {
   GarmentCategory,
   GarmentComponentKind,
   MVP_ACTIVITY_TYPE,
+  SHAREABLE_WARDROBE_CATEGORIES,
+  WardrobeCategory,
   clampTier,
   defaultsForCategory,
-  isActivityType,
+  demoGarmentMatchesCategory,
+  demoSeedsForCategory,
+  expandDemoGarment,
+  isGarmentAvailableForActivity,
   isGarmentCategory,
   isGarmentComponentKind,
   isGarmentMaterial,
+  normalizeGarmentActivityTags,
+  parseActivityTags,
+  parseStoredSharedCategories,
   presetById,
+  wardrobeCategoryForActivity,
 } from '../domain';
-import {
-  DemoLanguage,
-  demoWardrobe,
-  expandDemoGarment,
-} from '../domain';
+import { DemoLanguage } from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
 import { UpdateGarmentDto } from './dto/update-garment.dto';
 
@@ -76,13 +81,52 @@ type ComponentInput = {
 export class WardrobeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(userId: string): Promise<GarmentResponse[]> {
+  async list(userId: string, activity?: string): Promise<GarmentResponse[]> {
     const rows = await this.prisma.garment.findMany({
       where: { userId },
       include: { components: true },
       orderBy: [{ layer: 'asc' }, { category: 'asc' }, { name: 'asc' }],
     });
-    return rows.map((g) => this.toResponse(g));
+    const garments = rows.map((g) => this.toResponse(g));
+    if (!activity) return garments;
+    if (activity === 'hiking') return [];
+    if (!wardrobeCategoryForActivity(activity)) {
+      throw new BadRequestException(`Invalid activity: ${activity}`);
+    }
+    const shared = await this.readSharedCategories(userId);
+    return garments.filter((garment) =>
+      isGarmentAvailableForActivity(garment, activity, shared),
+    );
+  }
+
+  async getSharing(userId: string) {
+    return {
+      sharedCategories: await this.readSharedCategories(userId),
+      shareableCategories: [...SHAREABLE_WARDROBE_CATEGORIES],
+      isolatedCategories: ['motorcycle'],
+    };
+  }
+
+  async updateSharing(userId: string, sharedCategories: string[]) {
+    for (const category of sharedCategories) {
+      if (
+        !(SHAREABLE_WARDROBE_CATEGORIES as readonly string[]).includes(
+          category,
+        )
+      ) {
+        throw new BadRequestException(
+          'Only cycling, alpine & snowboard, and cross-country skiing can share a wardrobe',
+        );
+      }
+    }
+    const normalized = parseStoredSharedCategories(sharedCategories);
+    const sharedWardrobeCategoriesJson = JSON.stringify(normalized);
+    await this.prisma.userProfile.upsert({
+      where: { userId },
+      update: { sharedWardrobeCategoriesJson },
+      create: { userId, sharedWardrobeCategoriesJson },
+    });
+    return this.getSharing(userId);
   }
 
   async get(userId: string, id: string): Promise<GarmentResponse> {
@@ -253,20 +297,20 @@ export class WardrobeService {
 
   async seedDemo(
     userId: string,
+    activity: string,
     force = false,
     language: DemoLanguage = 'en',
   ): Promise<{ created: number; garments: GarmentResponse[] }> {
-    const demoCount = await this.prisma.garment.count({
-      where: { userId, isDemo: true },
-    });
-    if (demoCount > 0 && !force) {
+    const category = this.requireWardrobeActivity(activity);
+    const existing = await this.demoRowsForCategory(userId, category);
+    if (existing.length > 0 && !force) {
       return { created: 0, garments: await this.list(userId) };
     }
-    if (demoCount > 0 && force) {
-      await this.prisma.garment.deleteMany({ where: { userId, isDemo: true } });
+    for (const row of existing) {
+      await this.prisma.garment.delete({ where: { id: row.id } });
     }
 
-    const seeds = demoWardrobe(language);
+    const seeds = demoSeedsForCategory(category, language);
     for (const seed of seeds) {
       const expanded = expandDemoGarment(seed);
       await this.prisma.garment.create({
@@ -287,15 +331,19 @@ export class WardrobeService {
   }
 
   /**
-   * Deletes only this user's demo-seeded garments.
-   * Repeated seeding does not insert another copy while demo rows exist.
-   * `force` replaces demo rows only and leaves personal garments in place.
+   * Deletes demo garments for one wardrobe category.
+   * Personal garments and other categories' demo garments stay.
    */
-  async deleteDemo(userId: string): Promise<{ deleted: number }> {
-    const result = await this.prisma.garment.deleteMany({
-      where: { userId, isDemo: true },
-    });
-    return { deleted: result.count };
+  async deleteDemo(
+    userId: string,
+    activity: string,
+  ): Promise<{ deleted: number }> {
+    const category = this.requireWardrobeActivity(activity);
+    const existing = await this.demoRowsForCategory(userId, category);
+    for (const row of existing) {
+      await this.prisma.garment.delete({ where: { id: row.id } });
+    }
+    return { deleted: existing.length };
   }
 
   meta() {
@@ -355,14 +403,47 @@ export class WardrobeService {
   }
 
   private normalizeActivityTags(tags?: string[]): ActivityType[] {
-    if (!tags || tags.length === 0) return [MVP_ACTIVITY_TYPE];
-    const normalized = tags.map((t) => t.trim()).filter(Boolean);
-    for (const t of normalized) {
-      if (!isActivityType(t)) {
-        throw new BadRequestException(`Invalid activity type: ${t}`);
-      }
+    try {
+      return normalizeGarmentActivityTags(tags);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid activity';
+      throw new BadRequestException(message);
     }
-    return [...new Set(normalized)] as ActivityType[];
+  }
+
+  private requireWardrobeActivity(activity: string) {
+    if (activity === 'hiking') {
+      throw new BadRequestException('Hiking has no wardrobe');
+    }
+    const category = wardrobeCategoryForActivity(activity);
+    if (!category) {
+      throw new BadRequestException(`Invalid activity: ${activity}`);
+    }
+    return category;
+  }
+
+  private async readSharedCategories(userId: string) {
+    const profile = await this.prisma.userProfile.findUnique({
+      where: { userId },
+    });
+    return parseStoredSharedCategories(profile?.sharedWardrobeCategoriesJson);
+  }
+
+  private async demoRowsForCategory(
+    userId: string,
+    category: WardrobeCategory,
+  ) {
+    const rows = await this.prisma.garment.findMany({
+      where: { userId, isDemo: true },
+    });
+    return rows.filter(
+      (row) =>
+        row.isDemo === true &&
+        demoGarmentMatchesCategory(
+          parseActivityTags(row.activityTagsJson),
+          category,
+        ),
+    );
   }
 
   private toResponse(g: {
@@ -395,13 +476,7 @@ export class WardrobeService {
       breathabilityDelta: number;
     }>;
   }): GarmentResponse {
-    let activityTags: string[] = [MVP_ACTIVITY_TYPE];
-    try {
-      const parsed = JSON.parse(g.activityTagsJson);
-      if (Array.isArray(parsed)) activityTags = parsed.map(String);
-    } catch {
-      /* keep default */
-    }
+    const activityTags = parseActivityTags(g.activityTagsJson);
     return {
       id: g.id,
       name: g.name,
