@@ -1,14 +1,14 @@
 # Authorized RideWear Task
 ## Type: IMPLEMENTATION
-## ID: WEATHER-VALIDATION-001
-## Generation: 14
-## Handoff-From: RECOMMENDATION-UX-001
+## ID: MVP-SMOKE-001
+## Generation: 15
+## Handoff-From: WEATHER-VALIDATION-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T13:01:48Z
-## Task: Implement the provider-neutral weather validation harness
+## Promoted: 2026-10-02T13:12:57Z
+## Task: Run an MVP smoke/readiness pass and fix concrete in-scope defects
 
-Implement the deterministic, provider-neutral measurement/data-shaping foundation described by docs/research/WEATHER_DATA_QUALITY.md using the existing MET baseline and existing weather abstractions. Support paired coordinate/elevation/valid-time observations and measurable comparison outputs that can later accept additional providers without changing production recommendation behavior.
+Exercise the repository-supported happy paths for auth, profile, wardrobe, route planning, motorcycle recommendations, cycling, alpine/snowboard and cross-country recommendations, plus the ads-off default. Run the strongest existing deterministic API and Flutter checks practical in the repository. Fix concrete regressions that stay within existing architecture and contracts.
 
-Do not subscribe to or integrate a new provider, make live-network-dependent CI tests, change the production weather provider, add paid services, expose secrets, or declare a provider superior without empirical data. Avoid schema/dependency changes unless the existing research explicitly makes them unnecessary; otherwise BLOCK.
+Do not add new features, dependencies, providers, schema migrations, paid services or broad refactors. Do not fake successful live-provider behavior. Record any manual/device/live-service checks that still require a human separately instead of claiming they passed.
 
-Add focused deterministic tests and update the research/report with what is actually measurable. Follow queue rules.
+Leave dev and main untouched. Update the report with exact automated results, remaining manual checks and known MVP issues. Follow queue rules.
