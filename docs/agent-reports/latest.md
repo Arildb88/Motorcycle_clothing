@@ -6,7 +6,7 @@
 
 - Branch: `feature/dependency-maintenance-001`
 - Implementation: `93864eca10bcb05f5d16e2be6e5780de6d236511`
-- PR: opened against `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/54 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Inventory
 
