@@ -6,7 +6,7 @@
 
 - Branch: `feature/manual-regression-001`
 - Implementation: `dd83c2188daf7c3e2953aa116c52fd623342b6aa`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/49 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
