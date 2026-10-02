@@ -1,27 +1,23 @@
 # Authorized RideWear Task
-## Type: VALIDATION_AND_FIX
-## ID: TEST-COVERAGE-001
-## Generation: 28
-## Handoff-From: none
+## Type: UX_AND_COMPLIANCE
+## ID: FNUGG-ATTRIBUTION-001
+## Generation: 29
+## Handoff-From: TEST-COVERAGE-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T21:49:00Z
-## Task: Close meaningful automated-test gaps in critical RideWear MVP flows
+## Promoted: 2026-10-02T22:18:00Z
+## Task: Add clear Fnugg attribution wherever RideWear presents Fnugg-sourced resort data
 
-Review existing automated coverage after STABILIZATION-001 and add tests only where important MVP behavior remains materially unprotected.
-
-Prioritize:
-- Authentication/profile/password/logout.
-- Wardrobe and demo-garment coexistence/idempotency.
-- Motorcycle/cycling planning and recommendation inputs.
-- Alpine/snowboard resort discovery and selection.
-- Cross-country trail/manual planning.
-- Weather/elevation/provider error and empty states.
-- Norwegian Unicode/location handling and important state/race regressions.
+Implement attribution for the existing Fnugg integration.
 
 Requirements:
-- Prefer deterministic unit/widget/integration/API tests over brittle snapshot or timing-dependent tests.
-- Do not chase a numeric coverage percentage or add tests that only execute lines without checking behavior.
-- Fix small reproducible defects uncovered by the new tests when they fit existing architecture.
-- No new product features, providers, schema migrations, paid services or broad refactors.
-
-Run relevant/full Flutter and API suites and Flutter analyze. Keep dev and main untouched. Follow queue rules.
+- Verify the current official Fnugg API/terms immediately before implementation and follow the applicable attribution wording/link requirements.
+- Wherever user-visible resort/facility/conditions data originates from Fnugg, show a clear but visually unobtrusive attribution in proximity to that data.
+- Attribution must not be hidden as microtext or made materially less readable than surrounding secondary text.
+- Link Fnugg attribution to the relevant Fnugg destination when the integration provides a reliable relevant URL; otherwise use the official Fnugg destination allowed by the terms.
+- Keep RideWear-fetched MET weather clearly distinct from Fnugg-sourced data; do not label RideWear's direct MET data as Fnugg data.
+- If RideWear displays Fnugg fields whose terms require additional weather/conditions attribution (for example Yr/Meteorologisk institutt/NRK), implement the currently required wording rather than guessing.
+- Preserve provider-neutral backend boundaries and existing alpine/snowboard behavior.
+- Add focused Flutter tests for attribution visibility and relevant link/conditional behavior.
+- Run Flutter analyze/tests and API tests if server/provider mapping changes.
+- No new provider, paid service, schema migration or unrelated redesign.
+- Keep dev and main untouched. Follow queue rules.
