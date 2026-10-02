@@ -25,7 +25,7 @@ handoff_state: idle
 
 ### Generation baseline
 
-Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` then reset the control block to `0` and left that task body in `next-task.md`. `QUEUE-CONTROL-003` restores the idle baseline to `1` and does not reuse generation `1`. The next from-idle human authorization must use Generation `2`. `GEO-ELEVATION-002` stays queued and unconsumed. This repair does not authorize it.
+Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `QUEUE-CONTROL-003` restored the idle baseline to `1` and did not reuse it. Generation `2` is also spent: `GEO-ELEVATION-002` completed at that generation and is consumed. The idle baseline remains `2`. The next from-idle human authorization must use Generation `3`. Do not reset the baseline downwards. `ROUTING-WEATHER-002` stays queued and unconsumed. `QUEUE-CONTROL-004` does not authorize it.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -72,38 +72,44 @@ The accepting run claims the task only after those checks pass. The claim sets t
 
 ### 2. Cursor to Cursor, automatic final control update
 
-Cursor may authorize a different next ID only after the current task has fully succeeded: implementation, required checks, PR and merge bookkeeping, then this final control commit. The same run must not execute the newly authorized ID.
+Cursor may authorize a different next ID only when `promotion` is `automatic`, and only by landing a complete pre-merge control state onto `dev_test`. The implementation run prepares that state on its feature or fix branch after required checks pass, merges that branch, and stops. It must not execute the newly authorized ID and must not write to the repository after the merge.
 
-This kind is allowed only when `promotion` is `automatic`. While `promotion` is `manual`, completion is a final close and must not authorize another ID.
+`promotion` is `manual` now. This section does not enable automatic promotion. While `promotion` is `manual`, the pre-merge close is the idle success-close in the Success section. Landing it on `dev_test` is not an authorization handoff.
 
-The final control commit is an automatic authorization only when it atomically does all of the following:
+Compare the new `dev_test` tip with the previous `dev_test` tip: the first parent of a merge commit, or the tip before a fast-forward push. Feature-branch commits are not handoffs and do not change authoritative queue state. `dev_test` remains authoritative until the PR is merged.
 
-1. The parent next-task ID is a real task ID, called PREV. The parent `active_id` was PREV, the parent `handoff_state` was `authorized`, and the parent was not paused.
-2. PREV becomes `completed` in this commit.
+The landed range is an automatic authorization only when `promotion` is `automatic` and the new tip, relative to that previous tip, shows all of the following:
+
+1. The previous next-task ID is a real task ID, called PREV. The previous `active_id` was PREV or the previous tip still held PREV's unclaimed token, the previous `handoff_state` was `authorized` or the previous tip was the from-idle token for PREV, and the previous tip was not paused.
+2. PREV is `completed` on the new tip.
 3. `consumed.md` gains exactly one new row, and that row is PREV.
-4. Exactly one queued unconsumed ID, the first such item in the Queue section, becomes `active`. `active_id` becomes that ID. No item is `blocked`. No other item becomes `active`.
-5. `handoff_generation` becomes exactly the parent generation plus 1. `handoff_state` becomes `authorized`.
-6. `next-task.md` is that new item's promotable body plus `Generation:` set to the new generation, `Handoff-From:` set to PREV, `Authorization:` set to `authorized`, and `Promoted:` set to the UTC time of the commit. Place them after the ID line in that order: `Generation`, `Handoff-From`, `Authorization`, `Promoted`.
-7. The report and control state are updated in this same commit.
+4. Exactly one queued unconsumed ID, the first such item in the Queue section, is `active`. `active_id` is that ID. No item is `blocked`. No other item is `active`.
+5. `handoff_generation` is exactly the previous generation plus 1. `handoff_state` is `authorized`.
+6. `next-task.md` is that new item's promotable body plus `Generation:` set to the new generation, `Handoff-From:` set to PREV, `Authorization:` set to `authorized`, and `Promoted:` set to the UTC time the branch commit was prepared. Place them after the ID line in that order: `Generation`, `Handoff-From`, `Authorization`, `Promoted`.
+7. The report and control state on the new tip include that completion.
 
-If `promotion` is `automatic` and no queued unconsumed item exists, the completion commit is a final close instead. It must not invent an ID.
+A new Automation run triggered by that landing must validate this range itself before executing the new ID. The run that merged the PR must already have stopped.
 
-Reject every other push before any repository write. Rejected pushes include a same-ID edit, a `Promoted:` bump, an idle or blocked `next-task.md`, a generation change other than exactly plus 1, an ID swap that does not meet one of the two kinds above, a manual-promotion completion that writes a new ID, a claim commit, a pause, a resume, an implementation commit, a PR update, a report-only update, a merge that is not the automatic final control commit, and any push while `paused` is `true`.
+If `promotion` is `automatic` and no queued unconsumed item exists, the pre-merge close is an idle final close instead. It must not invent an ID. Landing that idle close is not an authorization.
 
-A trigger caused by a rejected push stops with no repository writes.
+Reject every other push before any repository write. Rejected pushes include a same-ID edit, a `Promoted:` bump, an idle or blocked `next-task.md`, a generation change other than exactly plus 1, an ID swap that does not meet one of the two handoff kinds, a manual-mode landing even when it carries the idle success-close, a claim commit, a pause, a resume, an implementation commit, a PR update, a report-only update, and any push while `paused` is `true`.
 
-A final close records completion and does not authorize another ID. `handoff_state` becomes `idle`, `handoff_generation` stays the same, `active_id` becomes `none`, and `next-task.md` becomes the idle body with `## Authorization: none`. A block sets `handoff_state` to `blocked`, keeps the same generation, and does not append `consumed.md`.
+A trigger caused by a rejected push stops with no repository writes. A manual-mode merge is one of those rejected pushes. No success-close write is required after it, and none is allowed as part of completion.
 
-Before merging or otherwise finalizing a task on `dev_test`, fetch `dev_test` again. Stop without merging if ownership was superseded or the queue was paused. In particular, stop when any of these is true:
+A final close records completion and does not authorize another ID. `handoff_state` is `idle`, `handoff_generation` stays the same, `active_id` is `none`, `promotion` stays unchanged, and `next-task.md` is the idle body with `## Authorization: none`. A block sets `handoff_state` to `blocked`, keeps the same generation, and does not append `consumed.md`.
+
+`dev_test` is authoritative. A `consumed.md` row, `completed` status, or idle body that exists only on an unmerged feature or fix branch does not complete the task and does not authorize another one. If required checks fail or the PR cannot merge, do not merge, do not start another task, and do not treat that branch as the queue state. Apply the Block rule only in a change that does not append `consumed.md` and does not authorize another ID. If that blocker cannot land, report it and stop.
+
+Before merging into `dev_test`, fetch `dev_test` again. Judge ownership from that fetched tip, not from the feature branch's success-close. Stop without merging if ownership was superseded or the queue was paused. In particular, stop when any of these is true on the fetched tip:
 
 - `paused` is `true`.
 - The token ID already has a row in `consumed.md`.
 - `active_id` is a different ID than this token.
 - `handoff_generation` is greater than this token's generation.
 - `handoff_state` is `blocked`, or any item is `blocked`.
-- `next-task.md` on the fetched branch names a different ID or a different generation than this token.
+- `next-task.md` names a different ID or a different generation than this token.
 
-Continue only when the fetched branch still carries this token, `paused` is `false`, the ID is unconsumed, and either the queue is still unclaimed (`active_id: none` and the item is still `queued`) or this same ID is already `active` at this same generation. Do not overwrite a newer handoff.
+Continue only when the fetched tip still carries this token, `paused` is `false`, the ID is unconsumed there, and either the queue is still unclaimed (`active_id: none` and the item is still `queued`) or this same ID is already `active` at this same generation. Do not overwrite a newer handoff.
 
 ## Promotion
 
@@ -120,8 +126,8 @@ Manual mode is the mode in force:
 Automatic mode is not enabled:
 
 - Cursor must not set `promotion: automatic`.
-- After a human sets it in their own push, a completing run may authorize the next ID only inside the final control update above, and only when `paused` is `false` and a queued unconsumed item exists.
-- That same run must not implement the authorized ID.
+- After a human sets it in their own push, a completing run may put the next authorization on its feature or fix branch only after required checks pass, and only when `paused` is `false` and a queued unconsumed item exists. Landing that branch on `dev_test` is the handoff.
+- That same run must merge and stop. It must not implement the authorized ID and must not write after the merge.
 
 ## Agent entry check
 
@@ -131,15 +137,15 @@ Stop with no repository writes unless the triggering push is one of the two auth
 
 For a from-idle human authorization, do not reject the token only because `active_id` is still `none`, the item is still `queued`, or the control block `handoff_generation` is still the parent generation. Those are expected until the accepting run claims the task. Do reject it when the token checks fail, the ID is not queued and unconsumed, another item is active or blocked, or the parent was not idle.
 
-For an automatic final control update, require the atomic conditions above, including `active_id` equal to the new ID and `handoff_state: authorized` in that same commit.
+For an automatic final control update, require the landed `dev_test` range above, including `active_id` equal to the new ID and `handoff_state: authorized` on the new tip. A manual-mode merge that leaves the idle success-close is not that update. Stop with no writes. Do not add another completion commit.
 
 Also stop with no repository writes when any of these is true:
 
 - `paused` is `true`.
-- The ID already has a row in `consumed.md`.
+- The ID already has a row in `consumed.md` on `dev_test`. A row that exists only on an unmerged branch does not count.
 - `next-task.md` has `Type: NONE`, its ID is `none`, it has no ID, or `## Authorization:` is not `authorized`.
-- The push is a claim, a same-ID edit, a `Promoted:`-only edit, an implementation commit, a report update, or a merge that is not an automatic final control update.
-- The parent had an active or blocked task and this push tries to name a different ID without completing that task in the same automatic final control update.
+- The push is a claim, a same-ID edit, a `Promoted:`-only edit, an implementation commit, a report update, or a manual-mode merge.
+- The parent had an active or blocked task and this push tries to name a different ID without landing the automatic final control update.
 
 `QUEUE-CONTROL-001` is the queue-setup task that created this file. It has no Queue item. It is consumed. If `next-task.md` asks to add this queue again, stop.
 
@@ -147,19 +153,26 @@ This check is what stops ordinary and mid-task pushes when the trigger remains A
 
 ## Success
 
-When the active task's required checks pass and `promotion` is `manual`, the implementation agent does all of the following in its completion update, then stops:
+Manual mode is the mode in force. After the token is validated and the task is claimed, implement on the feature or fix branch and run every required focused check. Only after those checks pass, prepare the success-close on that same branch, before the final merge. The PR must contain both the implementation and this close. Required PR checks run against that complete branch. There is no required repository write after the merge. The run stops after merge.
+
+The manual pre-merge success-close contains all of the following and authorizes no different task:
 
 1. Set that item's status to `completed`.
-2. Set `active_id` to `none`.
-3. Append one row to `consumed.md`. Do not edit or delete older rows.
-4. Leave `handoff_generation` unchanged at the accepted token generation. Set `handoff_state` to `idle`.
-5. Replace `next-task.md` with the idle body below, using that same generation, `Handoff-From: none`, and `Authorization: none`.
-6. Do not authorize a different ID.
-7. Do not set `paused` to `false`. Set `paused` to `true` only when the authorized task text says to.
+2. Append that ID exactly once to `consumed.md`. Do not edit or delete older rows.
+3. Set `active_id` to `none`.
+4. Set `handoff_state` to `idle`. Leave `handoff_generation` at the accepted token generation.
+5. Leave `promotion` as `manual`.
+6. Replace `next-task.md` with the idle body below, using that same generation, `Handoff-From: none`, and `Authorization: none`.
+7. Update `docs/agent-reports/latest.md` with the implementation, the checks that ran, PR information when it already exists, and this completion state.
+8. Do not set `paused` to `false`. Set `paused` to `true` only when the authorized task text says to.
 
-The idle `next-task.md` permits a later human authorization. It is not itself a task. The completion push is a final close, not an authorization handoff.
+Push that branch. Re-fetch `dev_test` and apply the concurrency check above. Merge only if ownership was not superseded or paused. Then stop. The merge push is not a new authorization. An Automation run caused by it stops with no writes.
 
-When `promotion` is `automatic`, the completion update is the atomic final control commit defined above. Do not implement the ID that commit authorizes.
+Until that merge lands, `dev_test` stays authoritative. The success-close on the feature branch does not by itself consume the ID. If PR checks fail or the merge cannot happen, do not merge, do not start another task, and do not report the unmerged branch as completed queue state. Use the Block rule when a blocker must be recorded. That block must not append `consumed.md`.
+
+The idle `next-task.md` permits a later human authorization. It is not itself a task.
+
+When `promotion` is `automatic`, use the same pre-merge timing. After checks pass, the branch tip atomically contains the Cursor-to-Cursor update defined above, or an idle close when no queued unconsumed item exists. PR checks run against that tip. After it merges, stop. Do not execute the ID that landing authorizes, and do not write again. A later Automation run may execute that ID only after it independently validates the landed range.
 
 ## Block
 
@@ -180,7 +193,7 @@ Pause: set `paused: true` in a commit pushed to `dev_test` by `Arildb88`. Agents
 
 Resume: set `paused: false` in a commit pushed by `Arildb88`. Clearing the flag does not start work and does not change `handoff_generation`. The next push that starts work must be a from-idle human authorization. Bumping `Promoted:` on an ID that is already active is not that handoff.
 
-`QUEUE-CONTROL-002` left the queue paused. Later human commits set `paused: false`. `QUEUE-CONTROL-003` keeps `paused: false` and `promotion: manual`. It does not authorize a product task. Product work starts only from a later from-idle human authorization.
+`QUEUE-CONTROL-002` left the queue paused. Later human commits set `paused: false`. `QUEUE-CONTROL-003` and `QUEUE-CONTROL-004` keep `paused: false` and `promotion: manual`. Neither authorizes a product task. Product work starts only from a later from-idle human authorization.
 
 ## Inspect
 
@@ -194,10 +207,10 @@ Read the Control block, each Queue status, `consumed.md`, and `next-task.md`.
 
 ## Loop prevention
 
-- One authorization at a time. Only a from-idle human token or an automatic final control commit creates it.
+- One authorization at a time. Only a from-idle human token or a landed automatic final control state creates it.
 - Cursor never enqueues, never writes a next-task token while `promotion` is `manual`, and never invents an ID.
-- The trigger may remain Anyone. A push that is not an authorization handoff stops with no writes. That includes implementation commits, PR updates, report updates, claim commits, same-ID edits, `Promoted:`-only edits, and merges that are not the automatic final control commit.
-- A final close leaves the idle file and the same generation, so the completion push cannot start another implementation.
+- The trigger may remain Anyone. A push that is not an authorization handoff stops with no writes. That includes implementation commits, PR updates, report updates, claim commits, same-ID edits, `Promoted:`-only edits, and a manual-mode merge that already contains the idle success-close.
+- A manual final close leaves the idle file and the same generation. Landing it does not start another implementation, and the completing run does not write after that landing.
 - A consumed ID cannot be promoted or executed again.
 - A blocked item is not consumed and is not skipped. The queue waits. A token must not replace it.
 - `paused: true` stops the run before writes.
@@ -212,6 +225,7 @@ Observed overlap on 2026-10-02 for automation `af62016d-be2e-11f1-bb68-864e54d14
 - `DB-SUPABASE-002` completed in `3a85248f8575bb6a7e096c7cd18087f1bcccf926`. That commit wrote `GEO-ELEVATION-002` into `next-task.md` while `promotion` was `automatic`.
 - A second run started from that push and opened pull request 32 on `feature/geo-elevation-002-altitude-validation`.
 - Generation `1` was later published for `GEO-ELEVATION-002` and then left inconsistent with an idle control block. That body is not an authorization. Generation `1` stays spent.
+- `GEO-ELEVATION-002` at generation `2` merged in pull request 35 before its manual success-close. The merge push started another run, which correctly wrote nothing. The task stayed active until a later repair. `QUEUE-CONTROL-004` puts the success-close on the feature branch before merge so no post-merge write is required.
 - An actor filter does not fix that. Anyone and an `Arildb88`-only trigger both start a run when an allowed account pushes a non-final `next-task.md` change. The entry check has to reject that push.
 - Historical note: when the trigger was limited to `Arildb88`, the `app/cursor` merge of pull request 27 (`6cb14cde2a3a0236c27e7f0bc17d26f423ca0074`) did not start a run. The next run waited for `5e184549b3ea8413bcd856b4c433f9419d82a8b0`. That is not the concurrency control.
 
@@ -234,7 +248,7 @@ There are exactly two valid handoffs:
 
 A. From-idle human/ChatGPT authorization. One commit changes docs/agent-control/next-task.md and does not change docs/agent-control/task-queue.md or docs/agent-control/consumed.md. The parent is idle: paused false, handoff_state idle, active_id none, next-task ID none, no blocked item. The new file names a different task ID that is already queued and unconsumed, Generation is exactly the parent handoff_generation plus 1, Handoff-From is none, and Authorization is authorized. The queue item does not need to be active in that commit.
 
-B. Cursor-to-Cursor automatic final control update, and only when promotion is automatic. The same commit marks the previous ID completed, appends that ID to consumed.md, activates exactly one next queued ID, increments generation by exactly 1, writes that next-task.md token with Handoff-From set to the completed ID and Authorization authorized, and updates the report. Do not execute that new ID in the run that wrote the commit.
+B. Cursor-to-Cursor automatic final control update, and only when promotion is automatic. Compare the new dev_test tip with the previous dev_test tip. The landed state marks the previous ID completed, appends that ID to consumed.md, activates exactly one next queued ID, increments generation by exactly 1, writes that next-task.md token with Handoff-From set to the completed ID and Authorization authorized, and updates the report. The run that merged it must already have stopped. A new run may execute the new ID only after it validates this landing itself.
 
 A change to docs/agent-control/next-task.md is required for a handoff and is not sufficient. Reject all of the following before any edit:
 
@@ -248,7 +262,7 @@ A change to docs/agent-control/next-task.md is required for a handoff and is not
 - promotion is manual, and the push tries to authorize a different ID from a completion commit.
 - The ID is consumed, or it is not queued and unconsumed for a from-idle token.
 - The push changes task-queue.md or consumed.md but is not the automatic final control update.
-- The push is an implementation commit, PR update, report update, claim commit, or merge that is not handoff B.
+- The push is an implementation commit, PR update, report update, claim commit, or a manual-mode merge. A manual success-close merge is idle and is not handoff B. Do not write a follow-up commit for it.
 
 The trigger may remain Anyone. Do not treat the pushing GitHub account as proof of authorization.
 
@@ -259,7 +273,7 @@ Apply the Agent entry check in docs/agent-control/task-queue.md. STOP with no re
 In particular:
 
 - Never execute an idle next-task.md.
-- Never execute a consumed task ID.
+- Never execute a consumed task ID. Consumed means a row on dev_test. An unmerged feature branch does not consume the ID.
 - Never execute a from-idle token unless the parent was idle and the token checks pass.
 - For a from-idle token, active_id may still be none and the item may still be queued. Claim it only after validation. Do not treat that missing claim as a reason to invent a different task.
 - Never execute work while the queue is paused.
@@ -279,9 +293,9 @@ If the entry check succeeds:
 5. Create the required feature/* or fix/* branch.
 6. Do not expand scope or invent features.
 7. Never modify or merge into dev or main.
-8. Before merging or finalizing on dev_test, fetch dev_test again. Stop without merging if paused is true, the token ID is consumed, active_id is a different ID, handoff_generation is greater than this token, handoff_state is blocked, or next-task.md names a different ID or generation. Continue only if this token is still present and the ID is still unclaimed or already claimed as this same ID at this same generation.
-9. Run only tests or checks that provide new evidence for the task. Prefer focused tests. Do not rerun broad suites merely because they passed recently. Run broader verification only when the task materially affects that area or next-task.md explicitly requires it.
-10. Never expose or commit secrets.
+8. Run only tests or checks that provide new evidence for the task. Prefer focused tests. Do not rerun broad suites merely because they passed recently. Run broader verification only when the task materially affects that area or next-task.md explicitly requires it. Do this before success-close bookkeeping.
+9. Never expose or commit secrets.
+10. Before merging into dev_test, fetch dev_test again. Judge that tip, not the feature branch's bookkeeping. Stop without merging if paused is true, the token ID is consumed on dev_test, active_id is a different ID, handoff_generation is greater than this token, handoff_state is blocked, or next-task.md names a different ID or generation. Continue only if this token is still present and the ID is still unclaimed or already claimed as this same ID at this same generation.
 
 BLOCKED TASK
 
@@ -293,21 +307,18 @@ SUCCESS
 
 If the task succeeds and promotion is manual:
 
-1. Commit the implementation.
-2. Open a PR targeting dev_test.
-3. Merge only into dev_test when guardrails.md permits it and every required check has passed.
-4. Apply the Success rule from task-queue.md in that completion update:
-   - mark the current ID completed
-   - append it to consumed.md
-   - set active_id to none
-   - set handoff_state to idle
-   - leave handoff_generation unchanged
-   - write the idle next-task.md with Authorization none
-5. Do not authorize another ID while promotion is manual.
-6. Update docs/agent-reports/latest.md with the completed work, the tests and checks actually run, the tests intentionally not repeated, the commit and PR, architecture decisions, fallbacks, manual validation needed, and remaining issues.
-7. STOP.
+1. Run the required checks first. Only after they pass, commit the success-close on the same feature or fix branch. Do not wait until after the merge.
+2. That close marks the current ID completed, appends it once to consumed.md, sets active_id to none, sets handoff_state to idle, leaves handoff_generation unchanged, leaves promotion manual, and writes the idle next-task.md with Authorization none and the same Generation.
+3. Update docs/agent-reports/latest.md on that same branch with the implementation, checks, PR information when available, and the completion state.
+4. Do not authorize another ID.
+5. Push the branch. The PR into dev_test must contain both the implementation and this success-close. Required checks must pass against that complete branch.
+6. Re-fetch dev_test and apply the ownership check. Merge only if this task and generation were not superseded or paused.
+7. Merge only into dev_test.
+8. STOP. Do not write to the repository after the merge. The merge is not a new authorization. If a later run is triggered by the merge, it must stop with no writes.
 
-If the task succeeds and promotion is automatic, write the atomic final control update from task-queue.md instead of the idle close, then STOP. Do not implement the ID that commit authorizes. If no queued unconsumed item remains, write the idle close and STOP.
+Until the PR merges, dev_test remains authoritative. If checks fail or the merge cannot happen, do not merge, do not start another task, and do not treat the unmerged branch as completed queue state.
+
+If the task succeeds and promotion is automatic, put the atomic final control update from task-queue.md on that same branch after checks pass, instead of the idle close. The PR checks run against that state. Merge it, then STOP. Do not execute the next ID and do not write again. A new run may execute that ID only after it validates the landed dev_test range as handoff B. If no queued unconsumed item remains, write the idle close instead and STOP.
 
 LOOP PREVENTION
 
@@ -321,7 +332,8 @@ LOOP PREVENTION
 - paused: true stops all work.
 - An idle next-task.md causes an immediate STOP.
 - A triggering push that is not an authorization handoff causes an immediate STOP with no repository writes.
-- A same-ID, Promoted-only, claim, implementation, report, or ordinary merge push causes an immediate STOP.
+- A same-ID, Promoted-only, claim, implementation, report, or manual-mode merge push causes an immediate STOP with no repository writes.
+- Do not write success-close bookkeeping after the PR has merged.
 
 Never start arbitrary work from your own commits, PRs, reports, or merges.
 
