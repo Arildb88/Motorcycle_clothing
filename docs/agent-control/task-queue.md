@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: ALPINE-SNOWBOARD-UNIFY-001
+active_id: WARDROBE-SHARING-001
 promotion: automatic
-handoff_generation: 25
+handoff_generation: 26
 handoff_state: authorized
 ```
 
@@ -64,6 +64,8 @@ Generation `22` is spent: `DEPENDENCY-MAINTENANCE-001` completed and the automat
 Generation `23` is spent: `STABILIZATION-001` was authorized at that generation and recovered without being consumed. Do not reuse generation `23`.
 
 Generation `24` is spent: `STABILIZATION-001` was authorized from idle and completed. The automatic final control update authorizes `ALPINE-SNOWBOARD-UNIFY-001` at generation `25`. Do not reuse generation `24`. Do not execute `STABILIZATION-001` again.
+
+Generation `25` is spent: `ALPINE-SNOWBOARD-UNIFY-001` completed and the automatic final control update authorizes `WARDROBE-SHARING-001` at generation `26`. Do not reuse generation `25`. Do not execute `ALPINE-SNOWBOARD-UNIFY-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1207,7 +1209,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### ALPINE-SNOWBOARD-UNIFY-001
 
-- status: active
+- status: completed
 - title: Unify alpine skiing and snowboard user flow
 - source: explicitly approved product simplification
 
@@ -1250,7 +1252,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### WARDROBE-SHARING-001
 
-- status: queued
+- status: active
 - title: Activity-aware wardrobe isolation and sharing
 - source: explicitly approved wardrobe product rules
 
@@ -1460,4 +1462,4 @@ Keep dev and main untouched. Follow queue rules.
 
 ## QUEUE-CONTROL-006 — no-claim execution
 
-Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorized `RECOMMENDATION-UX-001` at generation 13 and that task completed. The automatic final control update authorized `WEATHER-VALIDATION-001` at generation 14 and that task completed. The automatic final control update authorized `MVP-SMOKE-001` at generation 15 and that task completed. No queued unconsumed item remained, so the final close is idle at generation 15. `MANUAL-REGRESSION-001` was later authorized from idle at generation 16 and completed. No queued unconsumed item remained, so the final close is idle at generation 16. `MANUAL-REGRESSION-002` was authorized from idle at generation 17 and recovered without being consumed. It was authorized again from idle at generation 18 and completed. The automatic final control update authorizes `ALPINE-RESORTS-001` at generation 19. `MANUAL-REGRESSION-002` was authorized from idle at generation 17 and recovered without being consumed. It was authorized again from idle at generation 18 and completed. The automatic final control update authorizes `ALPINE-RESORTS-001` at generation 19. `ALPINE-RESORTS-001` at generation 19 completed. The automatic final control update authorizes `XC-TRAIL-DISCOVERY-001` at generation 20. `XC-TRAIL-DISCOVERY-001` at generation 20 completed. The automatic final control update authorizes `DEMO-WARDROBE-ACTIVITY-001` at generation 21. `DEMO-WARDROBE-ACTIVITY-001` at generation 21 completed. The automatic final control update authorizes `DEPENDENCY-MAINTENANCE-001` at generation 22. `DEPENDENCY-MAINTENANCE-001` at generation 22 completed. The automatic final control update authorizes `STABILIZATION-001` at generation 23. Generation 23 was recovered without consuming `STABILIZATION-001`. `STABILIZATION-001` was authorized again from idle at generation 24 and completed. The automatic final control update authorizes `ALPINE-SNOWBOARD-UNIFY-001` at generation 25.
+Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorized `RECOMMENDATION-UX-001` at generation 13 and that task completed. The automatic final control update authorized `WEATHER-VALIDATION-001` at generation 14 and that task completed. The automatic final control update authorized `MVP-SMOKE-001` at generation 15 and that task completed. No queued unconsumed item remained, so the final close is idle at generation 15. `MANUAL-REGRESSION-001` was later authorized from idle at generation 16 and completed. No queued unconsumed item remained, so the final close is idle at generation 16. `MANUAL-REGRESSION-002` was authorized from idle at generation 17 and recovered without being consumed. It was authorized again from idle at generation 18 and completed. The automatic final control update authorizes `ALPINE-RESORTS-001` at generation 19. `MANUAL-REGRESSION-002` was authorized from idle at generation 17 and recovered without being consumed. It was authorized again from idle at generation 18 and completed. The automatic final control update authorizes `ALPINE-RESORTS-001` at generation 19. `ALPINE-RESORTS-001` at generation 19 completed. The automatic final control update authorizes `XC-TRAIL-DISCOVERY-001` at generation 20. `XC-TRAIL-DISCOVERY-001` at generation 20 completed. The automatic final control update authorizes `DEMO-WARDROBE-ACTIVITY-001` at generation 21. `DEMO-WARDROBE-ACTIVITY-001` at generation 21 completed. The automatic final control update authorizes `DEPENDENCY-MAINTENANCE-001` at generation 22. `DEPENDENCY-MAINTENANCE-001` at generation 22 completed. The automatic final control update authorizes `STABILIZATION-001` at generation 23. Generation 23 was recovered without consuming `STABILIZATION-001`. `STABILIZATION-001` was authorized again from idle at generation 24 and completed. The automatic final control update authorizes `ALPINE-SNOWBOARD-UNIFY-001` at generation 25. `ALPINE-SNOWBOARD-UNIFY-001` at generation 25 completed. The automatic final control update authorizes `WARDROBE-SHARING-001` at generation 26.

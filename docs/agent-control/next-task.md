@@ -1,35 +1,59 @@
 # Authorized RideWear Task
-## Type: PRODUCT_SIMPLIFICATION
-## ID: ALPINE-SNOWBOARD-UNIFY-001
-## Generation: 25
-## Handoff-From: STABILIZATION-001
+## Type: PRODUCT_FEATURE
+## ID: WARDROBE-SHARING-001
+## Generation: 26
+## Handoff-From: ALPINE-SNOWBOARD-UNIFY-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T19:41:19Z
-## Task: Present alpine skiing and snowboarding as one shared resort activity flow while preserving useful internal distinctions
+## Promoted: 2026-10-02T19:51:43Z
+## Task: Make wardrobes activity-aware, keep motorcycle isolated, and make demo garments activity-specific
 
-Simplify the RideWear user experience so alpine skiing and snowboarding no longer appear as unnecessarily separate planning categories.
+Implement the approved RideWear wardrobe rules.
 
-Product behavior:
-- Present one shared user-facing activity entry for resort snow sports, preferably localized as "Alpint & snowboard" / "Alpine & snowboard" where appropriate.
-- Use the same resort discovery, selected resort, time, MET weather/elevation and recommendation planning flow for both.
-- Do not duplicate planner screens or resort-provider calls merely to distinguish skiing from snowboarding.
-- Preserve the existing Fnugg-backed resort discovery and attribution.
-- Preserve current personal thermal-profile behavior so user feedback/personalization can account for whether a person tends to run warmer or colder.
-- Do not encode an unsupported blanket rule that snowboard is always warmer or more strenuous than alpine skiing.
+Hard motorcycle boundary:
+- Motorcycle clothing is its own wardrobe domain and must always remain separate from every non-motorcycle activity.
+- A motorcycle garment must never become available to cycling, alpine/snowboard, cross-country skiing or other non-motorcycle activities through wardrobe sharing.
+- Non-motorcycle garments must never become available to motorcycle through wardrobe sharing.
+- This boundary is a product invariant, not merely a default checkbox.
 
-Internal compatibility:
-- Do not remove or destructively migrate existing ALPINE_SKIING / SNOWBOARDING domain values merely for UI simplification.
-- Keep existing stored/API data compatible.
-- If an existing internal distinction can be retained cheaply for future recommendation tuning/analytics, retain it without forcing the user through two separate planner categories.
-- Do not add a schema migration for this simplification.
+User-controlled sharing for non-motorcycle activities:
+- Let the user choose whether supported non-motorcycle activity wardrobes stay separate or share garments.
+- Provide a clear selection UI where the user can choose which compatible activity categories share a wardrobe/garment availability.
+- Cycling, alpine & snowboard, and cross-country skiing may be shared in combinations chosen by the user.
+- Do not force all non-motorcycle categories into one wardrobe.
+- Prefer one garment record with activity availability/membership over silently creating duplicate garment copies.
+- Preserve room for additional non-motorcycle activities later without weakening the motorcycle isolation invariant.
+- Hiking remains unavailable and must not be remapped to another activity.
 
-Scope:
-- Update home/activity selection and relevant labels/navigation so users see one coherent resort-snow-sports choice.
-- Reuse existing alpine/snowboard recommendation capabilities rather than adding a new recommendation engine.
-- Ensure hiking remains unavailable and cross-country skiing remains a separate activity.
-- Preserve Norwegian Unicode/localization.
-- Add/update focused Flutter tests for the unified entry and shared planner behavior.
-- Run Flutter analyze and relevant tests; run API tests only if API behavior changes.
-- No new provider, paid service, dependency, schema migration or broad architecture change.
+Demo garments:
+- Demo clothing must follow the currently selected activity/category.
+- Motorcycle receives only motorcycle-relevant demo garments.
+- Cycling receives cycling-relevant demo garments.
+- Alpine & snowboard receives its own resort-snow-sports demo set.
+- Cross-country skiing receives its own cross-country demo set.
+- Demo garments from one activity must not appear as that activity's demo wardrobe in another category merely because personal wardrobes can be shared.
+- Demo seeding remains clearly marked as demo, separate from personal garments, and idempotent per intended activity/category.
+- Replacing/removing demo garments must not delete personal garments.
 
-Keep dev and main untouched. Follow queue rules.
+Recommendation behavior:
+- Recommendations may use only garments available to the selected activity under these rules.
+- Motorcycle recommendations may use only motorcycle garments.
+- Non-motorcycle recommendations may use personal garments shared with that activity plus that activity's relevant demo garments.
+- Do not invent a new recommendation engine; integrate with the existing activity/recommendation architecture.
+
+Persistence and compatibility:
+- Inspect the current garment/wardrobe schema before implementation.
+- Preserve existing user garments and existing activity data.
+- A schema migration is allowed only if it is the smallest safe change required to persist the approved sharing model; include a deterministic migration/backfill that preserves current data and motorcycle isolation.
+- Do not destructively reinterpret existing motorcycle garments as generic clothing.
+- If existing data cannot be migrated safely without a product decision, BLOCK and report the exact ambiguity rather than guessing.
+
+Tests:
+- Add deterministic tests proving motorcycle cannot share in either direction.
+- Test separate and shared non-motorcycle combinations.
+- Test recommendation garment filtering by selected activity.
+- Test activity-specific, idempotent demo seeding and that personal garments survive demo replacement/removal.
+- Test relevant UI selection/localization and Norwegian text.
+- Run Prisma generate/validate and API migration/tests if persistence changes.
+- Run relevant/full Flutter tests and Flutter analyze.
+
+No new external provider, paid service or unrelated feature. Keep dev and main untouched. Follow queue rules.
