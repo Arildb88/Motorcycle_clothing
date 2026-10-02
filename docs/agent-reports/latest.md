@@ -6,7 +6,7 @@
 
 - Branch: `feature/ux-polish-001`
 - Implementation commit: `d51e2952a5d8e3bfbb3818d727ace1c2ad85c515`
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/61 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
