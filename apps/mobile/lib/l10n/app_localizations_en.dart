@@ -416,6 +416,65 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose the mountain or area. One place is enough. Extra places can mark base and summit.';
 
   @override
+  String get plannerResortSubtitle =>
+      'Which ski resort will you use? Search by name, or find resorts near you or near a place.';
+
+  @override
+  String get plannerResortName => 'Ski resort';
+
+  @override
+  String get plannerResortNearby => 'Find resorts nearby';
+
+  @override
+  String get plannerResortNearPlace => 'Near a place';
+
+  @override
+  String get plannerResortEmpty => 'No ski resorts found.';
+
+  @override
+  String get plannerResortUnavailable =>
+      'Ski resort search is temporarily unavailable.';
+
+  @override
+  String get plannerResortAttribution => 'Resort information from Fnugg.no';
+
+  @override
+  String get plannerResortSelected => 'Selected resort';
+
+  @override
+  String plannerResortStraightLineKm(String distance) {
+    return '$distance km in a straight line';
+  }
+
+  @override
+  String plannerResortStraightLineMeters(int meters) {
+    return '$meters m in a straight line';
+  }
+
+  @override
+  String get plannerResortLocationDenied =>
+      'Location permission was denied. You can still search for a ski resort by name.';
+
+  @override
+  String get plannerResortLocationDeniedForever =>
+      'Location permission is blocked. Enable it in system settings, or search for a ski resort by name.';
+
+  @override
+  String get plannerResortLocationDisabled =>
+      'Location services are off. Turn them on, or search for a ski resort by name.';
+
+  @override
+  String get plannerResortLocationTemporary =>
+      'Could not read your location right now. Try again or search for a ski resort.';
+
+  @override
+  String get plannerIncompleteResort => 'Choose a ski resort before analyzing.';
+
+  @override
+  String get plannerSaveDisabledResort =>
+      'Add a name and choose a ski resort before saving.';
+
+  @override
   String get plannerPlace => 'Place';
 
   @override

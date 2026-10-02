@@ -776,6 +776,102 @@ abstract class AppLocalizations {
   /// **'Choose the mountain or area. One place is enough. Extra places can mark base and summit.'**
   String get plannerSiteSubtitle;
 
+  /// No description provided for @plannerResortSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which ski resort will you use? Search by name, or find resorts near you or near a place.'**
+  String get plannerResortSubtitle;
+
+  /// No description provided for @plannerResortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Ski resort'**
+  String get plannerResortName;
+
+  /// No description provided for @plannerResortNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Find resorts nearby'**
+  String get plannerResortNearby;
+
+  /// No description provided for @plannerResortNearPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Near a place'**
+  String get plannerResortNearPlace;
+
+  /// No description provided for @plannerResortEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No ski resorts found.'**
+  String get plannerResortEmpty;
+
+  /// No description provided for @plannerResortUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Ski resort search is temporarily unavailable.'**
+  String get plannerResortUnavailable;
+
+  /// No description provided for @plannerResortAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resort information from Fnugg.no'**
+  String get plannerResortAttribution;
+
+  /// No description provided for @plannerResortSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected resort'**
+  String get plannerResortSelected;
+
+  /// No description provided for @plannerResortStraightLineKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km in a straight line'**
+  String plannerResortStraightLineKm(String distance);
+
+  /// No description provided for @plannerResortStraightLineMeters.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m in a straight line'**
+  String plannerResortStraightLineMeters(int meters);
+
+  /// No description provided for @plannerResortLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission was denied. You can still search for a ski resort by name.'**
+  String get plannerResortLocationDenied;
+
+  /// No description provided for @plannerResortLocationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Enable it in system settings, or search for a ski resort by name.'**
+  String get plannerResortLocationDeniedForever;
+
+  /// No description provided for @plannerResortLocationDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services are off. Turn them on, or search for a ski resort by name.'**
+  String get plannerResortLocationDisabled;
+
+  /// No description provided for @plannerResortLocationTemporary.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read your location right now. Try again or search for a ski resort.'**
+  String get plannerResortLocationTemporary;
+
+  /// No description provided for @plannerIncompleteResort.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a ski resort before analyzing.'**
+  String get plannerIncompleteResort;
+
+  /// No description provided for @plannerSaveDisabledResort.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a name and choose a ski resort before saving.'**
+  String get plannerSaveDisabledResort;
+
   /// No description provided for @plannerPlace.
   ///
   /// In en, this message translates to:

@@ -417,6 +417,66 @@ class AppLocalizationsNb extends AppLocalizations {
       'Velg fjellet eller området. Ett sted er nok. Flere steder kan markere bunn og topp.';
 
   @override
+  String get plannerResortSubtitle =>
+      'Hvilket skianlegg skal du bruke? Søk på navn, eller finn anlegg nær deg eller nær et sted.';
+
+  @override
+  String get plannerResortName => 'Skianlegg';
+
+  @override
+  String get plannerResortNearby => 'Finn skianlegg i nærheten';
+
+  @override
+  String get plannerResortNearPlace => 'Nær et sted';
+
+  @override
+  String get plannerResortEmpty => 'Fant ingen skianlegg.';
+
+  @override
+  String get plannerResortUnavailable =>
+      'Søk etter skianlegg er midlertidig utilgjengelig.';
+
+  @override
+  String get plannerResortAttribution =>
+      'Informasjon om skianlegg er hentet fra Fnugg.no';
+
+  @override
+  String get plannerResortSelected => 'Valgt skianlegg';
+
+  @override
+  String plannerResortStraightLineKm(String distance) {
+    return '$distance km i luftlinje';
+  }
+
+  @override
+  String plannerResortStraightLineMeters(int meters) {
+    return '$meters m i luftlinje';
+  }
+
+  @override
+  String get plannerResortLocationDenied =>
+      'Posisjonstillatelse ble avslått. Du kan fortsatt søke etter et skianlegg.';
+
+  @override
+  String get plannerResortLocationDeniedForever =>
+      'Posisjonstillatelse er blokkert. Skru den på i innstillinger, eller søk etter et skianlegg.';
+
+  @override
+  String get plannerResortLocationDisabled =>
+      'Posisjonstjenester er av. Skru dem på, eller søk etter et skianlegg.';
+
+  @override
+  String get plannerResortLocationTemporary =>
+      'Klarte ikke å hente posisjonen nå. Prøv igjen eller søk etter et skianlegg.';
+
+  @override
+  String get plannerIncompleteResort => 'Velg et skianlegg før du analyserer.';
+
+  @override
+  String get plannerSaveDisabledResort =>
+      'Legg til et navn og velg et skianlegg før du lagrer.';
+
+  @override
   String get plannerPlace => 'Sted';
 
   @override

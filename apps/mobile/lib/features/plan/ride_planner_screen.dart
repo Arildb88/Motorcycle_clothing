@@ -6,8 +6,11 @@ import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/features/plan/ride_analysis_result_screen.dart';
+import 'package:motorcycle_clothing/features/plan/resort_discovery.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_models.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
+import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
+import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
@@ -69,15 +72,17 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     super.initState();
     final initial = widget.initialRoute;
     if (initial != null) {
-      final wps =
-          initial.waypoints.map(WaypointDraft.fromRouteWaypoint).toList();
+      final wps = initial.waypoints
+          .map(WaypointDraft.fromRouteWaypoint)
+          .toList();
       _state = RidePlannerState(
         routeId: initial.id,
         routeName: initial.name,
         waypoints: wps,
         durationMin: initial.typicalDurationMin,
         avoidMotorways: initial.avoidMotorways,
-        roundTrip: initial.routeKind == 'loop' ||
+        roundTrip:
+            initial.routeKind == 'loop' ||
             WaypointListOps.looksLikeRoundTrip(wps),
         activityType: initial.activityType,
         inputs: widget.initialInputs,
@@ -208,6 +213,38 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     }
   }
 
+  String? get _selectedResortId {
+    if (_state.waypoints.isEmpty) return null;
+    final id = _state.waypoints.first.providerPlaceId;
+    const prefix = 'fnugg:';
+    if (id == null || !id.startsWith(prefix)) return null;
+    final raw = id.substring(prefix.length);
+    return raw.isEmpty ? null : raw;
+  }
+
+  String? get _selectedResortName {
+    if (_state.waypoints.isEmpty || !_state.waypoints.first.isResolved) {
+      return null;
+    }
+    final label = _state.waypoints.first.displayLabel;
+    return label.isEmpty ? null : label;
+  }
+
+  void _selectResort(SkiResort resort) {
+    final draft = WaypointDraft.fromResolved(
+      ResolvedPlace(
+        providerPlaceId: resort.providerPlaceId,
+        label: resort.name,
+        lat: resort.lat,
+        lon: resort.lon,
+      ),
+    );
+    if (_nameCtrl.text.trim().isEmpty) {
+      _nameCtrl.text = resort.name;
+    }
+    _update(_state.copyWith(waypoints: [draft], routeName: _nameCtrl.text));
+  }
+
   String _locationFailureMessage(
     AppLocalizations l10n,
     DeviceLocationFailure failure,
@@ -294,14 +331,15 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     if (chosen == null || !mounted) return;
     final wps = chosen.waypoints.map(WaypointDraft.fromRouteWaypoint).toList();
     _nameCtrl.text = chosen.name;
-      _update(
+    _update(
       RidePlannerState(
         routeId: chosen.id,
         routeName: chosen.name,
         waypoints: wps,
         durationMin: chosen.typicalDurationMin,
         avoidMotorways: chosen.avoidMotorways,
-        roundTrip: chosen.routeKind == 'loop' ||
+        roundTrip:
+            chosen.routeKind == 'loop' ||
             WaypointListOps.looksLikeRoundTrip(wps),
         planningMode: _state.planningMode,
         leaveNow: _state.leaveNow,
@@ -331,7 +369,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     if (!_state.canSave) {
       setState(
         () => _error = activityUsesSitePins(_state.activityType)
-            ? l10n.plannerSaveDisabledSite
+            ? l10n.plannerSaveDisabledResort
             : l10n.plannerSaveDisabledHint,
       );
       return;
@@ -343,16 +381,19 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     try {
       await _ensureRouteId(context.read<ApiClient>());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.plannerRouteSaved)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.plannerRouteSaved)));
     } on ApiException catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -364,7 +405,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     if (!_state.canAnalyze) {
       setState(
         () => _error = activityUsesSitePins(_state.activityType)
-            ? l10n.plannerIncompleteSite
+            ? l10n.plannerIncompleteResort
             : l10n.plannerIncompleteRoute,
       );
       return;
@@ -386,7 +427,8 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
       }
       final planBody = _state.planRequestBody();
       await api.post('/routes/$routeId/plan', planBody, auth: true);
-      final departureIso = (planBody['departureAt'] as String?) ??
+      final departureIso =
+          (planBody['departureAt'] as String?) ??
           DateTime.now().toUtc().toIso8601String();
       final data = await api.get(
         Uri(
@@ -419,10 +461,10 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         .toList();
     final timeLabel =
         _state.leaveNow && _state.planningMode == PlanningMode.departure
-            ? l10n.leaveNow
-            : DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
-                .add_Hm()
-                .format(_state.anchorAt);
+        ? l10n.leaveNow
+        : DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
+              .add_Hm()
+              .format(_state.anchorAt);
 
     return Scaffold(
       appBar: AppBar(
@@ -441,7 +483,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           Text(
-            sitePins ? l10n.plannerSiteSubtitle : l10n.plannerSubtitle,
+            sitePins ? l10n.plannerResortSubtitle : l10n.plannerSubtitle,
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
           ),
           const SizedBox(height: 12),
@@ -463,174 +505,194 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          ...List.generate(_state.waypoints.length, (i) {
-            final w = _state.waypoints[i];
-            final role = sitePins
-                ? (_state.waypoints.length == 1
-                    ? l10n.plannerPlace
-                    : l10n.plannerPlaceNumber(i + 1))
-                : waypointRole(l10n, i, _state.waypoints.length);
-            return Padding(
-              key: ValueKey('plan-${w.localId}'),
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          role,
-                          style: GoogleFonts.barlowCondensed(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+          if (sitePins)
+            ResortDiscoverySection(
+              directory: context.read<ResortDirectory>(),
+              deviceLocation: _deviceLocation,
+              places: _location.search,
+              selectedResortId: _selectedResortId,
+              selectedResortName: _selectedResortName,
+              onSelected: _selectResort,
+            )
+          else ...[
+            ...List.generate(_state.waypoints.length, (i) {
+              final w = _state.waypoints[i];
+              final role = sitePins
+                  ? (_state.waypoints.length == 1
+                        ? l10n.plannerPlace
+                        : l10n.plannerPlaceNumber(i + 1))
+                  : waypointRole(l10n, i, _state.waypoints.length);
+              return Padding(
+                key: ValueKey('plan-${w.localId}'),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            role,
+                            style: GoogleFonts.barlowCondensed(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        tooltip: l10n.plannerMoveUp,
-                        onPressed: () {
-                          final next =
-                              WaypointListOps.move(_state.waypoints, i, -1);
-                          if (next != null) {
-                            _update(_state.copyWith(waypoints: next));
-                          }
-                        },
-                        icon: const Icon(Icons.arrow_upward),
-                      ),
-                      IconButton(
-                        tooltip: l10n.plannerMoveDown,
-                        onPressed: () {
-                          final next =
-                              WaypointListOps.move(_state.waypoints, i, 1);
-                          if (next != null) {
-                            _update(_state.copyWith(waypoints: next));
-                          }
-                        },
-                        icon: const Icon(Icons.arrow_downward),
-                      ),
-                      if (_state.waypoints.length > 2)
                         IconButton(
-                          tooltip: l10n.plannerRemoveStop,
+                          tooltip: l10n.plannerMoveUp,
                           onPressed: () {
-                            final next = WaypointListOps.removeAt(
+                            final next = WaypointListOps.move(
                               _state.waypoints,
                               i,
+                              -1,
                             );
                             if (next != null) {
                               _update(_state.copyWith(waypoints: next));
                             }
                           },
-                          icon: const Icon(Icons.delete_outline),
+                          icon: const Icon(Icons.arrow_upward),
+                        ),
+                        IconButton(
+                          tooltip: l10n.plannerMoveDown,
+                          onPressed: () {
+                            final next = WaypointListOps.move(
+                              _state.waypoints,
+                              i,
+                              1,
+                            );
+                            if (next != null) {
+                              _update(_state.copyWith(waypoints: next));
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_downward),
+                        ),
+                        if (_state.waypoints.length > 2)
+                          IconButton(
+                            tooltip: l10n.plannerRemoveStop,
+                            onPressed: () {
+                              final next = WaypointListOps.removeAt(
+                                _state.waypoints,
+                                i,
+                              );
+                              if (next != null) {
+                                _update(_state.copyWith(waypoints: next));
+                              }
+                            },
+                            icon: const Icon(Icons.delete_outline),
+                          ),
+                      ],
+                    ),
+                    if (i == 0) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            tapTargetSize: MaterialTapTargetSize.padded,
+                          ),
+                          onPressed: _locating ? null : _useCurrentLocation,
+                          icon: _locating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.my_location, size: 18),
+                          label: Text(l10n.plannerUseCurrentLocation),
+                        ),
+                      ),
+                      if (_locationError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            _locationError!,
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                     ],
-                  ),
-                  if (i == 0) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(48, 48),
-                          tapTargetSize: MaterialTapTargetSize.padded,
-                        ),
-                        onPressed: _locating ? null : _useCurrentLocation,
-                        icon: _locating
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.my_location, size: 18),
-                        label: Text(l10n.plannerUseCurrentLocation),
-                      ),
-                    ),
-                    if (_locationError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          _locationError!,
-                          style: TextStyle(
-                            color: Colors.red.shade700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                  PlaceSearchField(
-                    search: _location.search,
-                    label: role,
-                    initialDisplay:
-                        w.displayLabel.isEmpty ? null : w.displayLabel,
-                    onSelected: (place) {
-                      final next = List<WaypointDraft>.from(_state.waypoints);
-                      next[i] = WaypointDraft.fromResolved(
-                        place,
-                        localId: next[i].localId,
-                      );
-                      var updated = _state.copyWith(waypoints: next);
-                      if (updated.roundTrip && i == 0) {
-                        updated = updated.copyWith(
-                          waypoints: WaypointListOps.applyRoundTrip(
-                            next,
-                            enabled: true,
-                          ),
+                    PlaceSearchField(
+                      search: _location.search,
+                      label: role,
+                      initialDisplay: w.displayLabel.isEmpty
+                          ? null
+                          : w.displayLabel,
+                      onSelected: (place) {
+                        final next = List<WaypointDraft>.from(_state.waypoints);
+                        next[i] = WaypointDraft.fromResolved(
+                          place,
+                          localId: next[i].localId,
                         );
-                      }
-                      _update(updated);
-                    },
-                    onCleared: () {
-                      final next = List<WaypointDraft>.from(_state.waypoints);
-                      next[i].clearPlace();
-                      _update(_state.copyWith(waypoints: next));
-                    },
-                  ),
-                ],
-              ),
-            );
-          }),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => _update(
-                  _state.copyWith(
-                    waypoints: WaypointListOps.addStop(_state.waypoints),
-                  ),
+                        var updated = _state.copyWith(waypoints: next);
+                        if (updated.roundTrip && i == 0) {
+                          updated = updated.copyWith(
+                            waypoints: WaypointListOps.applyRoundTrip(
+                              next,
+                              enabled: true,
+                            ),
+                          );
+                        }
+                        _update(updated);
+                      },
+                      onCleared: () {
+                        final next = List<WaypointDraft>.from(_state.waypoints);
+                        next[i].clearPlace();
+                        _update(_state.copyWith(waypoints: next));
+                      },
+                    ),
+                  ],
                 ),
-                icon: const Icon(Icons.add),
-                label: Text(
-                  sitePins ? l10n.plannerAddPlace : l10n.plannerAddStop,
-                ),
-              ),
-              if (_state.waypoints.length >= 2)
+              );
+            }),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
                 OutlinedButton.icon(
                   onPressed: () => _update(
                     _state.copyWith(
-                      waypoints: WaypointListOps.reverse(_state.waypoints),
+                      waypoints: WaypointListOps.addStop(_state.waypoints),
                     ),
                   ),
-                  icon: const Icon(Icons.swap_vert),
-                  label: Text(l10n.plannerReverse),
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    sitePins ? l10n.plannerAddPlace : l10n.plannerAddStop,
+                  ),
                 ),
-              if (!sitePins)
-                FilterChip(
-                  label: Text(l10n.plannerRoundTrip),
-                  selected: _state.roundTrip,
-                  onSelected: (v) {
-                    _update(
+                if (_state.waypoints.length >= 2)
+                  OutlinedButton.icon(
+                    onPressed: () => _update(
                       _state.copyWith(
-                        roundTrip: v,
-                        waypoints: WaypointListOps.applyRoundTrip(
-                          _state.waypoints,
-                          enabled: v,
-                        ),
+                        waypoints: WaypointListOps.reverse(_state.waypoints),
                       ),
-                    );
-                  },
-                ),
-            ],
-          ),
+                    ),
+                    icon: const Icon(Icons.swap_vert),
+                    label: Text(l10n.plannerReverse),
+                  ),
+                if (!sitePins)
+                  FilterChip(
+                    label: Text(l10n.plannerRoundTrip),
+                    selected: _state.roundTrip,
+                    onSelected: (v) {
+                      _update(
+                        _state.copyWith(
+                          roundTrip: v,
+                          waypoints: WaypointListOps.applyRoundTrip(
+                            _state.waypoints,
+                            enabled: v,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
           Text(
             l10n.plannerWhenSection,
@@ -712,9 +774,8 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
           ActivityPlanningControls(
             activityType: _state.activityType,
             inputs: _state.inputs,
-            onChanged: (next) => setState(
-              () => _state = _state.copyWith(inputs: next),
-            ),
+            onChanged: (next) =>
+                setState(() => _state = _state.copyWith(inputs: next)),
           ),
           if (!_state.usesRoadPreview) ...[
             Text(l10n.plannerSessionLength),

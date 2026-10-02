@@ -129,6 +129,32 @@
   "plannerTitle": "Plan ride",
   "plannerSubtitle": "Choose where you ride, when you leave or arrive, then analyze weather and kit.",
   "plannerSiteSubtitle": "Choose the mountain or area. One place is enough. Extra places can mark base and summit.",
+  "plannerResortSubtitle": "Which ski resort will you use? Search by name, or find resorts near you or near a place.",
+  "plannerResortName": "Ski resort",
+  "plannerResortNearby": "Find resorts nearby",
+  "plannerResortNearPlace": "Near a place",
+  "plannerResortEmpty": "No ski resorts found.",
+  "plannerResortUnavailable": "Ski resort search is temporarily unavailable.",
+  "plannerResortAttribution": "Resort information from Fnugg.no",
+  "plannerResortSelected": "Selected resort",
+  "plannerResortStraightLineKm": "{distance} km in a straight line",
+  "@plannerResortStraightLineKm": {
+    "placeholders": {
+      "distance": {"type": "String"}
+    }
+  },
+  "plannerResortStraightLineMeters": "{meters} m in a straight line",
+  "@plannerResortStraightLineMeters": {
+    "placeholders": {
+      "meters": {"type": "int"}
+    }
+  },
+  "plannerResortLocationDenied": "Location permission was denied. You can still search for a ski resort by name.",
+  "plannerResortLocationDeniedForever": "Location permission is blocked. Enable it in system settings, or search for a ski resort by name.",
+  "plannerResortLocationDisabled": "Location services are off. Turn them on, or search for a ski resort by name.",
+  "plannerResortLocationTemporary": "Could not read your location right now. Try again or search for a ski resort.",
+  "plannerIncompleteResort": "Choose a ski resort before analyzing.",
+  "plannerSaveDisabledResort": "Add a name and choose a ski resort before saving.",
   "plannerPlace": "Place",
   "plannerPlaceNumber": "Place {number}",
   "@plannerPlaceNumber": {

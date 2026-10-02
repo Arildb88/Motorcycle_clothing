@@ -18,6 +18,8 @@ import 'package:motorcycle_clothing/services/location/api_location_search_servic
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/services/location/fake_location_services.dart';
+import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
+import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
 import 'package:motorcycle_clothing/state/locale_controller.dart';
@@ -69,21 +71,15 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(search.pending, 2);
 
-    search.complete(
-      1,
-      const [
-        PlaceSuggestion(
-          providerPlaceId: 'airport',
-          primaryText: 'Kristiansand lufthavn, Kjevik',
-        ),
-      ],
-    );
+    search.complete(1, const [
+      PlaceSuggestion(
+        providerPlaceId: 'airport',
+        primaryText: 'Kristiansand lufthavn, Kjevik',
+      ),
+    ]);
     await tester.pump();
     expect(find.text('Kristiansand lufthavn, Kjevik'), findsOneWidget);
-    expect(
-      find.text('Place search is temporarily unavailable.'),
-      findsNothing,
-    );
+    expect(find.text('Place search is temporarily unavailable.'), findsNothing);
 
     search.fail(
       0,
@@ -94,10 +90,7 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Kristiansand lufthavn, Kjevik'), findsOneWidget);
-    expect(
-      find.text('Place search is temporarily unavailable.'),
-      findsNothing,
-    );
+    expect(find.text('Place search is temporarily unavailable.'), findsNothing);
   });
 
   testWidgets('the latest provider failure still shows the real error', (
@@ -128,13 +121,14 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final api = _FlowApi();
-    await _pumpPlanner(
-      tester,
-      search: _PlaceCatalog(),
-      api: api,
-    );
+    await _pumpPlanner(tester, search: _PlaceCatalog(), api: api);
 
-    await _choosePlace(tester, 'Start', 'Kristiansand', 'Kristiansand lufthavn, Kjevik');
+    await _choosePlace(
+      tester,
+      'Start',
+      'Kristiansand',
+      'Kristiansand lufthavn, Kjevik',
+    );
     await _choosePlace(
       tester,
       'Destination',
@@ -197,14 +191,15 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await _pumpPlanner(tester, activityType: 'alpine_skiing');
-    expect(find.text('Place'), findsWidgets);
+    expect(find.text('Ski resort'), findsOneWidget);
+    expect(find.text('Resort information from Fnugg.no'), findsOneWidget);
     expect(find.text('Destination'), findsNothing);
     expect(find.text('Avoid motorways'), findsNothing);
     expect(find.text('Lifts'), findsOneWidget);
     expect(find.byType(RouteMapPreview), findsNothing);
 
     await _pumpPlanner(tester, activityType: 'snowboarding');
-    expect(find.text('Place'), findsWidgets);
+    expect(find.text('Ski resort'), findsOneWidget);
     expect(find.text('Staying at the base'), findsOneWidget);
 
     await _pumpPlanner(tester, activityType: 'cycling');
@@ -277,8 +272,12 @@ void main() {
         providers: [
           Provider<ApiClient>.value(value: api),
           ChangeNotifierProvider<AuthState>(create: (_) => AuthState(api)),
-          ChangeNotifierProvider<ActivityContext>(create: (_) => ActivityContext()),
-          ChangeNotifierProvider<LocaleController>(create: (_) => LocaleController()),
+          ChangeNotifierProvider<ActivityContext>(
+            create: (_) => ActivityContext(),
+          ),
+          ChangeNotifierProvider<LocaleController>(
+            create: (_) => LocaleController(),
+          ),
           ChangeNotifierProvider<UnitPreferencesController>(
             create: (_) => UnitPreferencesController(),
           ),
@@ -325,11 +324,13 @@ void main() {
     );
 
     expect(
-      Uri.parse('http://example.test${locationPlacesPath('Ærøy')}').queryParameters['q'],
+      Uri.parse('http://example.test${locationPlacesPath('Ærøy')}')
+          .queryParameters['q'],
       'Ærøy',
     );
     expect(
-      Uri.parse('http://example.test${locationPlacesPath('Øvre Åmot')}').queryParameters['q'],
+      Uri.parse('http://example.test${locationPlacesPath('Øvre Åmot')}')
+          .queryParameters['q'],
       'Øvre Åmot',
     );
   });
@@ -350,11 +351,7 @@ void main() {
   ) async {
     Future<void> check(String activityType, String label) async {
       final search = _HoldingSearch();
-      await _pumpPlanner(
-        tester,
-        activityType: activityType,
-        search: search,
-      );
+      await _pumpPlanner(tester, activityType: activityType, search: search);
       final field = _fieldFinder(label);
       await tester.enterText(field, 'Kr');
       await tester.pump(const Duration(milliseconds: 400));
@@ -362,15 +359,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       expect(search.pending, 2);
 
-      search.complete(
-        1,
-        const [
-          PlaceSuggestion(
-            providerPlaceId: 'airport',
-            primaryText: 'Kristiansand lufthavn, Kjevik',
-          ),
-        ],
-      );
+      search.complete(1, const [
+        PlaceSuggestion(
+          providerPlaceId: 'airport',
+          primaryText: 'Kristiansand lufthavn, Kjevik',
+        ),
+      ]);
       await tester.pump();
       expect(find.text('Kristiansand lufthavn, Kjevik'), findsOneWidget);
       expect(
@@ -400,7 +394,6 @@ void main() {
 
     await check('motorcycle', 'Start');
     await check('motorcycle', 'Destination');
-    await check('alpine_skiing', 'Place');
   });
 
   testWidgets('a newer provider failure still replaces selectable results', (
@@ -427,10 +420,7 @@ void main() {
   ) async {
     final search = _RecordingSearch(
       hits: const [
-        PlaceSuggestion(
-          providerPlaceId: 'alesund',
-          primaryText: 'Ålesund',
-        ),
+        PlaceSuggestion(providerPlaceId: 'alesund', primaryText: 'Ålesund'),
       ],
     );
     await tester.pumpWidget(_searchHarness(search));
@@ -439,10 +429,7 @@ void main() {
     expect(search.queries, ['Ålesund']);
     expect(_fieldText(tester, 'Start'), 'Ålesund');
     expect(find.text('Ålesund'), findsWidgets);
-    expect(
-      find.text('Place search is temporarily unavailable.'),
-      findsNothing,
-    );
+    expect(find.text('Place search is temporarily unavailable.'), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'Ærøy');
     await tester.pump(const Duration(milliseconds: 400));
@@ -510,7 +497,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(_fieldText(tester, 'Start'), 'Current location');
     expect(
-      find.text('Location permission was denied. You can still search for a start place.'),
+      find.text(
+        'Location permission was denied. You can still search for a start place.',
+      ),
       findsNothing,
     );
 
@@ -563,18 +552,37 @@ void main() {
         failure: DeviceLocationFailure.serviceDisabled,
       ),
     );
-    final alpineButton = find.text('Use current location');
+    final alpineButton = find.text('Find resorts nearby');
     await tester.ensureVisible(alpineButton);
     await tester.tap(alpineButton);
     await tester.pump();
     expect(
-      find.text('Location services are off. Turn them on, or search for a start place.'),
+      find.text(
+        'Location services are off. Turn them on, or search for a ski resort by name.',
+      ),
       findsOneWidget,
     );
 
+    final resorts = _NearbyResorts(const [
+      SkiResort(
+        id: '5',
+        name: 'SkiStar Hemsedal',
+        lat: 60.86,
+        lon: 8.52,
+        straightLineDistanceM: 12000,
+      ),
+      SkiResort(
+        id: '141',
+        name: 'Ål Skisenter',
+        lat: 60.63,
+        lon: 8.56,
+        straightLineDistanceM: 18000,
+      ),
+    ]);
     await _pumpPlanner(
       tester,
       activityType: 'snowboarding',
+      resorts: resorts,
       deviceLocation: FakeDeviceLocationService(
         place: const ResolvedPlace(
           providerPlaceId: 'device:60.5,8.2',
@@ -584,12 +592,16 @@ void main() {
         ),
       ),
     );
-    final snowButton = find.text('Use current location');
+    final snowButton = find.text('Find resorts nearby');
     await tester.ensureVisible(snowButton);
     await tester.tap(snowButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 20));
-    expect(_fieldText(tester, 'Place'), 'Current location');
+    expect(resorts.lastNearby?.lat, 60.5);
+    expect(resorts.lastNearby?.lon, 8.2);
+    expect(find.text('SkiStar Hemsedal'), findsOneWidget);
+    expect(find.text('Ål Skisenter'), findsOneWidget);
+    expect(find.text('Place'), findsNothing);
   });
 }
 
@@ -604,6 +616,7 @@ Future<void> _pumpPlanner(
   String activityType = 'motorcycle',
   LocationSearchService? search,
   DeviceLocationService? deviceLocation,
+  ResortDirectory? resorts,
   ApiClient? api,
 }) async {
   await tester.pumpWidget(
@@ -617,6 +630,9 @@ Future<void> _pumpPlanner(
         ),
         Provider<DeviceLocationService>.value(
           value: deviceLocation ?? FakeDeviceLocationService(),
+        ),
+        Provider<ResortDirectory>.value(
+          value: resorts ?? _NearbyResorts(const []),
         ),
         if (api != null) Provider<ApiClient>.value(value: api),
       ],
@@ -805,7 +821,9 @@ class _FlowApi extends ApiClient {
     }
     if (path.contains('/plan')) {
       planned = body;
-      return {'plan': {'id': 'plan-1'}};
+      return {
+        'plan': {'id': 'plan-1'},
+      };
     }
     throw UnsupportedError(path);
   }
@@ -840,6 +858,25 @@ class _FlowApi extends ApiClient {
         'pack': <Map<String, dynamic>>[],
       },
     };
+  }
+}
+
+class _NearbyResorts implements ResortDirectory {
+  _NearbyResorts(this.hits);
+
+  final List<SkiResort> hits;
+  ({double lat, double lon})? lastNearby;
+
+  @override
+  Future<List<SkiResort>> searchByName(String query) async => const [];
+
+  @override
+  Future<List<SkiResort>> nearby({
+    required double lat,
+    required double lon,
+  }) async {
+    lastNearby = (lat: lat, lon: lon);
+    return hits;
   }
 }
 

@@ -129,6 +129,32 @@
   "plannerTitle": "Planlegg tur",
   "plannerSubtitle": "Velg hvor du skal, når du drar eller ankommer, og analyser vær og antrekk.",
   "plannerSiteSubtitle": "Velg fjellet eller området. Ett sted er nok. Flere steder kan markere bunn og topp.",
+  "plannerResortSubtitle": "Hvilket skianlegg skal du bruke? Søk på navn, eller finn anlegg nær deg eller nær et sted.",
+  "plannerResortName": "Skianlegg",
+  "plannerResortNearby": "Finn skianlegg i nærheten",
+  "plannerResortNearPlace": "Nær et sted",
+  "plannerResortEmpty": "Fant ingen skianlegg.",
+  "plannerResortUnavailable": "Søk etter skianlegg er midlertidig utilgjengelig.",
+  "plannerResortAttribution": "Informasjon om skianlegg er hentet fra Fnugg.no",
+  "plannerResortSelected": "Valgt skianlegg",
+  "plannerResortStraightLineKm": "{distance} km i luftlinje",
+  "@plannerResortStraightLineKm": {
+    "placeholders": {
+      "distance": {"type": "String"}
+    }
+  },
+  "plannerResortStraightLineMeters": "{meters} m i luftlinje",
+  "@plannerResortStraightLineMeters": {
+    "placeholders": {
+      "meters": {"type": "int"}
+    }
+  },
+  "plannerResortLocationDenied": "Posisjonstillatelse ble avslått. Du kan fortsatt søke etter et skianlegg.",
+  "plannerResortLocationDeniedForever": "Posisjonstillatelse er blokkert. Skru den på i innstillinger, eller søk etter et skianlegg.",
+  "plannerResortLocationDisabled": "Posisjonstjenester er av. Skru dem på, eller søk etter et skianlegg.",
+  "plannerResortLocationTemporary": "Klarte ikke å hente posisjonen nå. Prøv igjen eller søk etter et skianlegg.",
+  "plannerIncompleteResort": "Velg et skianlegg før du analyserer.",
+  "plannerSaveDisabledResort": "Legg til et navn og velg et skianlegg før du lagrer.",
   "plannerPlace": "Sted",
   "plannerPlaceNumber": "Sted {number}",
   "@plannerPlaceNumber": {

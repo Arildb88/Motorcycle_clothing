@@ -6,6 +6,8 @@ import 'package:motorcycle_clothing/config/app_config.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
+import 'package:motorcycle_clothing/services/resorts/api_resort_directory.dart';
+import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/state/auth_state.dart';
@@ -26,6 +28,7 @@ Future<void> main() async {
   }
   final api = ApiClient(baseUrl: AppConfig.apiBaseUrl);
   final location = LocationServices(api: api);
+  final resorts = ApiResortDirectory.fromClient(api);
   final deviceLocation = GeolocatorDeviceLocationService();
   final auth = AuthState(api);
   final activity = ActivityContext();
@@ -39,6 +42,7 @@ Future<void> main() async {
     MotorcycleClothingApp(
       api: api,
       location: location,
+      resorts: resorts,
       deviceLocation: deviceLocation,
       auth: auth,
       activity: activity,
@@ -53,6 +57,7 @@ class MotorcycleClothingApp extends StatelessWidget {
     super.key,
     required this.api,
     required this.location,
+    required this.resorts,
     required this.deviceLocation,
     required this.auth,
     required this.activity,
@@ -62,6 +67,7 @@ class MotorcycleClothingApp extends StatelessWidget {
 
   final ApiClient api;
   final LocationServices location;
+  final ResortDirectory resorts;
   final DeviceLocationService deviceLocation;
   final AuthState auth;
   final ActivityContext activity;
@@ -74,6 +80,7 @@ class MotorcycleClothingApp extends StatelessWidget {
       providers: [
         Provider.value(value: api),
         Provider.value(value: location),
+        Provider<ResortDirectory>.value(value: resorts),
         Provider<DeviceLocationService>.value(value: deviceLocation),
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: activity),
@@ -157,9 +164,7 @@ class _AppGateState extends State<_AppGate> {
       return const LoginScreen();
     }
     if (!activity.onboardingCompleted) {
-      return OnboardingScreen(
-        onDone: () => setState(() {}),
-      );
+      return OnboardingScreen(onDone: () => setState(() {}));
     }
     if (activity.shouldShowChooserOnLaunch()) {
       return ActivityChooserScreen(
