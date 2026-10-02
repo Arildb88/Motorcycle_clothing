@@ -7,7 +7,7 @@ Cursor must not add a product or implementation task to this file.
 ## Control
 
 ```text
-paused: false
+paused: true
 active_id: GEO-ELEVATION-002
 promotion: automatic
 ```
