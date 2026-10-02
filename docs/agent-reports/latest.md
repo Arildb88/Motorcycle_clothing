@@ -31,8 +31,8 @@ Success rule applied on this branch:
 ## Commit / PR
 
 - Branch: `feature/queue-trigger-test-001` from `dev_test` at `f791ef4b46cae02f220310d5df3493131997fc8b`.
-- Implementation commit: recorded after the queue-state commit, in the follow-up note below.
-- PR: opened against `dev_test` after that commit.
+- Implementation commit: `d50d130397ee22fae6c8fcc1cc6e1b8fbdf6b04b` — docs: complete queue trigger verification
+- PR: opened against `dev_test` from this branch. The URL is added when the pull request exists.
 - Merge: fast-forward into `dev_test` only. `dev` and `main` are not modified.
 
 ## Files changed
