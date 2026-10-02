@@ -128,6 +128,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
     final identities =
         (_me!['authIdentities'] as List? ?? const []).cast<dynamic>();
+    final canChangePassword = identities.any(
+      (raw) => raw is Map && raw['provider']?.toString() == 'local',
+    );
     final connections =
         (_me!['connectedAccounts'] as List? ?? const []).cast<dynamic>();
     final strava = connections.cast<Map>().where((c) => c['provider'] == 'strava');
@@ -283,10 +286,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           FilledButton(onPressed: _saveBasics, child: Text(l10n.profileSave)),
           const SizedBox(height: 16),
           Text(l10n.profileAccount.toUpperCase(), style: _sectionStyle),
-          if (identities.any(
-            (raw) =>
-                raw is Map && raw['provider']?.toString() == 'local',
-          ))
+          if (canChangePassword)
             FilledButton(
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
@@ -300,7 +300,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               },
               child: Text(l10n.authChangePassword),
             ),
+          if (canChangePassword) const SizedBox(height: 12),
           FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+            ),
             onPressed: () async => auth.logout(),
             child: Text(l10n.profileSignOut),
           ),

@@ -43,10 +43,12 @@ class GeolocatorDeviceLocationService implements DeviceLocationService {
       }
 
       var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.unableToDetermine) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.unableToDetermine) {
         return DeviceLocationResult.err(DeviceLocationFailure.permissionDenied);
       }
       if (permission == LocationPermission.deniedForever) {

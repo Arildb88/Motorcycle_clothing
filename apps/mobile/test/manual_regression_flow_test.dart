@@ -14,6 +14,7 @@ import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/screens/routes_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
+import 'package:motorcycle_clothing/services/location/api_location_search_service.dart';
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/services/location/fake_location_services.dart';
@@ -297,26 +298,325 @@ void main() {
     expect(button, findsOneWidget);
     expect(find.widgetWithText(TextButton, 'Change password'), findsNothing);
     expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+
+    final signOut = find.widgetWithText(FilledButton, 'Sign out');
+    expect(signOut, findsOneWidget);
+    expect(tester.getSize(signOut).height, greaterThanOrEqualTo(48));
+    final gap = tester.getTopLeft(signOut).dy - tester.getBottomLeft(button).dy;
+    expect(gap, greaterThanOrEqualTo(12));
   });
+
+  test('norwegian place queries are percent-encoded once', () {
+    final tromso = locationPlacesPath('Tromsø');
+    expect(tromso, contains('%C3%B8'));
+    expect(tromso, isNot(contains('%25')));
+    expect(tromso.toLowerCase(), isNot(contains('tromso')));
+    expect(
+      Uri.parse('http://example.test$tromso').queryParameters['q'],
+      'Tromsø',
+    );
+
+    final alesund = locationPlacesPath('Ålesund');
+    expect(alesund, contains('%C3%85'));
+    expect(alesund, isNot(contains('Alesund')));
+    expect(
+      Uri.parse('http://example.test$alesund').queryParameters['q'],
+      'Ålesund',
+    );
+
+    expect(
+      Uri.parse('http://example.test${locationPlacesPath('Ærøy')}').queryParameters['q'],
+      'Ærøy',
+    );
+    expect(
+      Uri.parse('http://example.test${locationPlacesPath('Øvre Åmot')}').queryParameters['q'],
+      'Øvre Åmot',
+    );
+  });
+
+  test('selected norwegian labels stay richer than the short locality', () {
+    expect(
+      preserveSelectedPlaceLabel(
+        typedQuery: 'Ål',
+        suggestionLabel: 'Ålesund, Møre og Romsdal',
+        resolvedLabel: 'Ål',
+      ),
+      'Ålesund, Møre og Romsdal',
+    );
+  });
+
+  testWidgets('planner fields drop a stale search error when results arrive', (
+    tester,
+  ) async {
+    Future<void> check(String activityType, String label) async {
+      final search = _HoldingSearch();
+      await _pumpPlanner(
+        tester,
+        activityType: activityType,
+        search: search,
+      );
+      final field = _fieldFinder(label);
+      await tester.enterText(field, 'Kr');
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.enterText(field, 'Krist');
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(search.pending, 2);
+
+      search.complete(
+        1,
+        const [
+          PlaceSuggestion(
+            providerPlaceId: 'airport',
+            primaryText: 'Kristiansand lufthavn, Kjevik',
+          ),
+        ],
+      );
+      await tester.pump();
+      expect(find.text('Kristiansand lufthavn, Kjevik'), findsOneWidget);
+      expect(
+        find.text('Place search is temporarily unavailable.'),
+        findsNothing,
+      );
+
+      search.fail(
+        0,
+        LocationProviderException(
+          'Place search is temporarily unavailable.',
+          code: 'GEOCODING_UNAVAILABLE',
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Kristiansand lufthavn, Kjevik'), findsOneWidget);
+      expect(
+        find.text('Place search is temporarily unavailable.'),
+        findsNothing,
+      );
+    }
+
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await check('motorcycle', 'Start');
+    await check('motorcycle', 'Destination');
+    await check('alpine_skiing', 'Place');
+  });
+
+  testWidgets('a newer provider failure still replaces selectable results', (
+    tester,
+  ) async {
+    final search = _HoldingSearch();
+    await _pumpPlanner(tester, search: search);
+    await tester.enterText(_fieldFinder('Destination'), 'Arendal');
+    await tester.pump(const Duration(milliseconds: 400));
+    search.fail(
+      0,
+      LocationProviderException('down', code: 'GEOCODING_UNAVAILABLE'),
+    );
+    await tester.pump();
+    expect(
+      find.text('Place search is temporarily unavailable.'),
+      findsOneWidget,
+    );
+    expect(find.text('Arendal Trefoldighetskirke'), findsNothing);
+  });
+
+  testWidgets('location fields keep norwegian characters in the query', (
+    tester,
+  ) async {
+    final search = _RecordingSearch(
+      hits: const [
+        PlaceSuggestion(
+          providerPlaceId: 'alesund',
+          primaryText: 'Ålesund',
+        ),
+      ],
+    );
+    await tester.pumpWidget(_searchHarness(search));
+    await tester.enterText(find.byType(TextField), 'Ålesund');
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(search.queries, ['Ålesund']);
+    expect(_fieldText(tester, 'Start'), 'Ålesund');
+    expect(find.text('Ålesund'), findsWidgets);
+    expect(
+      find.text('Place search is temporarily unavailable.'),
+      findsNothing,
+    );
+
+    await tester.enterText(find.byType(TextField), 'Ærøy');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byType(TextField), 'Øvre Åmot');
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(search.queries, containsAll(['Ærøy', 'Øvre Åmot']));
+  });
+
+  testWidgets('editing a selected place keeps the new norwegian query', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final search = _RecordingSearch(
+      hits: const [
+        PlaceSuggestion(
+          providerPlaceId: 'airport',
+          primaryText: 'Kristiansand lufthavn, Kjevik',
+        ),
+      ],
+    );
+    await _pumpPlanner(tester, search: search);
+    await tester.enterText(_fieldFinder('Start'), 'Kristiansand');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text('Kristiansand lufthavn, Kjevik'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(_fieldText(tester, 'Start'), 'Kristiansand lufthavn, Kjevik');
+
+    await tester.enterText(_fieldFinder('Start'), 'Tromsø');
+    expect(_fieldText(tester, 'Start'), 'Tromsø');
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(search.queries, contains('Tromsø'));
+    expect(_fieldText(tester, 'Start'), 'Tromsø');
+  });
+
+  testWidgets('current position fills coordinates and surfaces denial', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final api = _FlowApi();
+    await _pumpPlanner(
+      tester,
+      api: api,
+      deviceLocation: FakeDeviceLocationService(
+        place: const ResolvedPlace(
+          providerPlaceId: 'device:59.9,10.7',
+          label: 'Current location',
+          lat: 59.9,
+          lon: 10.7,
+        ),
+      ),
+    );
+    final useHere = find.text('Use current location');
+    await tester.ensureVisible(useHere);
+    await tester.tap(useHere);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(_fieldText(tester, 'Start'), 'Current location');
+    expect(
+      find.text('Location permission was denied. You can still search for a start place.'),
+      findsNothing,
+    );
+
+    await _choosePlace(
+      tester,
+      'Destination',
+      'Arendal',
+      'Arendal Trefoldighetskirke',
+    );
+    final name = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Route name',
+    );
+    await tester.ensureVisible(name);
+    await tester.enterText(name, 'Here');
+    await tester.pump();
+    final save = find.widgetWithText(OutlinedButton, 'Save route');
+    await tester.ensureVisible(save);
+    await tester.tap(save);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final waypoints = (api.saved?['waypoints'] as List).cast<Map>();
+    expect(waypoints.first['lat'], 59.9);
+    expect(waypoints.first['lon'], 10.7);
+    expect(waypoints.first['label'], 'Current location');
+
+    await _pumpPlanner(
+      tester,
+      deviceLocation: FakeDeviceLocationService(
+        failure: DeviceLocationFailure.permissionDenied,
+      ),
+    );
+    final deniedButton = find.text('Use current location');
+    await tester.ensureVisible(deniedButton);
+    await tester.tap(deniedButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(
+      find.text(
+        'Location permission was denied. You can still search for a start place.',
+      ),
+      findsOneWidget,
+    );
+    expect(_fieldText(tester, 'Start'), isEmpty);
+
+    await _pumpPlanner(
+      tester,
+      activityType: 'alpine_skiing',
+      deviceLocation: FakeDeviceLocationService(
+        failure: DeviceLocationFailure.serviceDisabled,
+      ),
+    );
+    final alpineButton = find.text('Use current location');
+    await tester.ensureVisible(alpineButton);
+    await tester.tap(alpineButton);
+    await tester.pump();
+    expect(
+      find.text('Location services are off. Turn them on, or search for a start place.'),
+      findsOneWidget,
+    );
+
+    await _pumpPlanner(
+      tester,
+      activityType: 'snowboarding',
+      deviceLocation: FakeDeviceLocationService(
+        place: const ResolvedPlace(
+          providerPlaceId: 'device:60.5,8.2',
+          label: 'Current location',
+          lat: 60.5,
+          lon: 8.2,
+        ),
+      ),
+    );
+    final snowButton = find.text('Use current location');
+    await tester.ensureVisible(snowButton);
+    await tester.tap(snowButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(_fieldText(tester, 'Place'), 'Current location');
+  });
+}
+
+Finder _fieldFinder(String label) {
+  return find.byWidgetPredicate(
+    (widget) => widget is TextField && widget.decoration?.labelText == label,
+  );
 }
 
 Future<void> _pumpPlanner(
   WidgetTester tester, {
   String activityType = 'motorcycle',
   LocationSearchService? search,
+  DeviceLocationService? deviceLocation,
   ApiClient? api,
 }) async {
   await tester.pumpWidget(
     MultiProvider(
       providers: [
-        Provider<LocationServices>(
-          create: (_) => LocationServices(
+        Provider<LocationServices>.value(
+          value: LocationServices(
             search: search ?? _PlaceCatalog(),
             geometry: FakeRouteGeometryService(),
           ),
         ),
-        Provider<DeviceLocationService>(
-          create: (_) => FakeDeviceLocationService(),
+        Provider<DeviceLocationService>.value(
+          value: deviceLocation ?? FakeDeviceLocationService(),
         ),
         if (api != null) Provider<ApiClient>.value(value: api),
       ],
@@ -370,6 +670,33 @@ Widget _searchHarness(LocationSearchService search) {
       body: PlaceSearchField(search: search, label: 'Start'),
     ),
   );
+}
+
+class _RecordingSearch implements LocationSearchService {
+  _RecordingSearch({this.hits = const []});
+
+  final List<String> queries = [];
+  final List<PlaceSuggestion> hits;
+
+  @override
+  Future<List<PlaceSuggestion>> autocomplete(
+    String query, {
+    String? sessionToken,
+  }) async {
+    queries.add(query);
+    if (query.toLowerCase().contains('krist')) return hits;
+    return const [];
+  }
+
+  @override
+  Future<ResolvedPlace> resolve(PlaceSuggestion suggestion) async {
+    return ResolvedPlace(
+      providerPlaceId: suggestion.providerPlaceId,
+      label: 'Kristiansand',
+      lat: 58.2,
+      lon: 8.1,
+    );
+  }
 }
 
 class _HoldingSearch implements LocationSearchService {

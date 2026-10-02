@@ -36,6 +36,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
   late final TextEditingController _controller;
   final FocusNode _focus = FocusNode();
   Timer? _debounce;
+  Timer? _hideTimer;
   bool _loading = false;
   String? _error;
   List<PlaceSuggestion> _suggestions = const [];
@@ -43,6 +44,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
   bool _suppressSearch = false;
   bool _hadSelection = false;
   int _requestId = 0;
+  int _hideGeneration = 0;
   String _typedQuery = '';
 
   @override
@@ -52,13 +54,8 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     _hadSelection =
         widget.initialDisplay != null && widget.initialDisplay!.trim().isNotEmpty;
     _focus.addListener(() {
-      if (!_focus.hasFocus) {
-        Future<void>.delayed(const Duration(milliseconds: 200), () {
-          if (mounted && !_focus.hasFocus) {
-            setState(() => _suggestions = const []);
-          }
-        });
-      }
+      if (_focus.hasFocus) return;
+      _scheduleHideSuggestions();
     });
   }
 
@@ -68,7 +65,19 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     final next = widget.initialDisplay ?? '';
     final prev = oldWidget.initialDisplay ?? '';
     if (next == prev) return;
+
+    final typed = _controller.text;
+    final userIsEditing = typed.trim().isNotEmpty && typed != prev;
+    if (userIsEditing && next.isEmpty) {
+      // The parent cleared the selected place because typing started.
+      // Keep the typed query, including Norwegian characters, and let the
+      // in-flight search finish.
+      _hadSelection = false;
+      return;
+    }
+
     _requestId++;
+    _hideGeneration++;
     _debounce?.cancel();
     _suppressSearch = true;
     _controller.text = next;
@@ -85,7 +94,18 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     _debounce?.cancel();
     _controller.dispose();
     _focus.dispose();
+    _hideTimer?.cancel();
     super.dispose();
+  }
+
+  void _scheduleHideSuggestions() {
+    final generation = ++_hideGeneration;
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(milliseconds: 200), () {
+      if (!mounted || generation != _hideGeneration || _focus.hasFocus) return;
+      // Hide the list after blur. Do not invent or restore a provider error.
+      setState(() => _suggestions = const []);
+    });
   }
 
   void _onChanged(String value) {
@@ -107,11 +127,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     final q = value.trim();
     if (q.length < 2) {
       if (mounted && requestId == _requestId) {
-        setState(() {
-          _suggestions = const [];
-          _loading = false;
-          _error = null;
-        });
+        setState(() => _publish(suggestions: const [], error: null));
       }
       return;
     }
@@ -122,28 +138,47 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     try {
       final results = await widget.search.autocomplete(q);
       if (!mounted || requestId != _requestId) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
-        _suggestions = results;
-        _loading = false;
-        _error = results.isEmpty
-            ? AppLocalizations.of(context).placeNoResults
-            : null;
+        _hideGeneration++;
+        _hideTimer?.cancel();
+        _publish(
+          suggestions: results,
+          error: results.isEmpty ? l10n.placeNoResults : null,
+        );
       });
     } on LocationProviderException catch (e) {
       if (!mounted || requestId != _requestId) return;
       setState(() {
-        _loading = false;
-        _suggestions = const [];
-        _error = localizeLocationError(e, AppLocalizations.of(context));
+        _publish(
+          suggestions: const [],
+          error: localizeLocationError(e, AppLocalizations.of(context)),
+        );
       });
     } catch (_) {
       if (!mounted || requestId != _requestId) return;
       setState(() {
-        _loading = false;
-        _suggestions = const [];
-        _error = AppLocalizations.of(context).placeSearchFailed;
+        _publish(
+          suggestions: const [],
+          error: AppLocalizations.of(context).placeSearchFailed,
+        );
       });
     }
+  }
+
+  /// Suggestions and a provider/empty error never stay visible together.
+  void _publish({
+    required List<PlaceSuggestion> suggestions,
+    required String? error,
+  }) {
+    if (suggestions.isNotEmpty) {
+      _suggestions = suggestions;
+      _error = null;
+    } else {
+      _suggestions = const [];
+      _error = error;
+    }
+    _loading = false;
   }
 
   Future<void> _select(PlaceSuggestion suggestion) async {
@@ -213,6 +248,12 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
           controller: _controller,
           focusNode: _focus,
           enabled: widget.enabled && !_resolving,
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.none,
+          autocorrect: false,
+          enableSuggestions: false,
+          smartDashesType: SmartDashesType.disabled,
+          smartQuotesType: SmartQuotesType.disabled,
           onChanged: _onChanged,
           decoration: InputDecoration(
             labelText: widget.label,
@@ -239,7 +280,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
             ),
           ),
         ),
-        if (_suggestions.isEmpty && _error != null)
+        if (_suggestions.isEmpty && _error != null && !_loading)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(

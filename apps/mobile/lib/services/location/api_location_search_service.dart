@@ -2,6 +2,18 @@ import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
 
+/// Path for `GET /location/places`.
+///
+/// The query is percent-encoded once as UTF-8. Norwegian letters such as
+/// æ, ø, and å stay in the query value and are not folded to ASCII.
+String locationPlacesPath(String query) {
+  final q = query.trim();
+  return Uri(
+    path: '/location/places',
+    queryParameters: <String, String>{'q': q},
+  ).toString();
+}
+
 /// Place search through the RideWear API. Provider credentials stay on the server.
 class ApiLocationSearchService implements LocationSearchService {
   ApiLocationSearchService({required this.getList, required this.post});
@@ -27,9 +39,7 @@ class ApiLocationSearchService implements LocationSearchService {
     final q = query.trim();
     if (q.length < 2) return const [];
     try {
-      final rows = await getList(
-        '/location/places?q=${Uri.encodeQueryComponent(q)}',
-      );
+      final rows = await getList(locationPlacesPath(q));
       return [
         for (final row in rows)
           if (row is Map)

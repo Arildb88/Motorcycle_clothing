@@ -50,6 +50,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
 
   bool _busy = false;
   String? _error;
+  String? _locationError;
   bool _locating = false;
 
   DeviceLocationService get _deviceLocation =>
@@ -162,36 +163,65 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     final l10n = AppLocalizations.of(context);
     setState(() {
       _locating = true;
-      _error = null;
+      _locationError = null;
     });
-    final result = await _deviceLocation.getCurrentPlace(
-      label: l10n.currentLocation,
-    );
-    if (!mounted) return;
-    setState(() => _locating = false);
-    if (!result.isOk) {
-      final msg = switch (result.failure!) {
-        DeviceLocationFailure.permissionDenied =>
-          l10n.plannerLocationPermissionDenied,
-        DeviceLocationFailure.permissionDeniedForever =>
-          l10n.plannerLocationPermissionDeniedForever,
-        DeviceLocationFailure.serviceDisabled =>
-          l10n.plannerLocationServicesDisabled,
-        DeviceLocationFailure.temporaryFailure =>
-          l10n.plannerLocationTemporaryFailure,
-      };
-      setState(() => _error = msg);
-      return;
-    }
-    final next = List<WaypointDraft>.from(_state.waypoints);
-    next[0] = WaypointDraft.fromResolved(result.place!);
-    var updated = _state.copyWith(waypoints: next);
-    if (updated.roundTrip) {
-      updated = updated.copyWith(
-        waypoints: WaypointListOps.applyRoundTrip(next, enabled: true),
+    try {
+      final result = await _deviceLocation.getCurrentPlace(
+        label: l10n.currentLocation,
       );
+      if (!mounted) return;
+      if (!result.isOk || result.place == null) {
+        setState(() {
+          _locationError = _locationFailureMessage(
+            l10n,
+            result.failure ?? DeviceLocationFailure.temporaryFailure,
+          );
+        });
+        return;
+      }
+      final place = result.place!;
+      if (!place.lat.isFinite || !place.lon.isFinite) {
+        setState(() {
+          _locationError = l10n.plannerLocationTemporaryFailure;
+        });
+        return;
+      }
+      final next = List<WaypointDraft>.from(_state.waypoints);
+      if (next.isEmpty) next.add(WaypointDraft.empty());
+      final localId = next.first.localId;
+      next[0] = WaypointDraft.fromResolved(place, localId: localId);
+      var updated = _state.copyWith(waypoints: next);
+      if (updated.roundTrip) {
+        updated = updated.copyWith(
+          waypoints: WaypointListOps.applyRoundTrip(next, enabled: true),
+        );
+      }
+      setState(() => _locationError = null);
+      _update(updated);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _locationError = l10n.plannerLocationTemporaryFailure;
+      });
+    } finally {
+      if (mounted) setState(() => _locating = false);
     }
-    _update(updated);
+  }
+
+  String _locationFailureMessage(
+    AppLocalizations l10n,
+    DeviceLocationFailure failure,
+  ) {
+    return switch (failure) {
+      DeviceLocationFailure.permissionDenied =>
+        l10n.plannerLocationPermissionDenied,
+      DeviceLocationFailure.permissionDeniedForever =>
+        l10n.plannerLocationPermissionDeniedForever,
+      DeviceLocationFailure.serviceDisabled =>
+        l10n.plannerLocationServicesDisabled,
+      DeviceLocationFailure.temporaryFailure =>
+        l10n.plannerLocationTemporaryFailure,
+    };
   }
 
   Future<void> _pickDateTime() async {
@@ -448,28 +478,15 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        role,
-                        style: GoogleFonts.barlowCondensed(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          role,
+                          style: GoogleFonts.barlowCondensed(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      const Spacer(),
-                      if (i == 0)
-                        TextButton.icon(
-                          onPressed: _locating ? null : _useCurrentLocation,
-                          icon: _locating
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.my_location, size: 18),
-                          label: Text(l10n.plannerUseCurrentLocation),
-                        ),
                       IconButton(
                         tooltip: l10n.plannerMoveUp,
                         onPressed: () {
@@ -508,6 +525,37 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
                         ),
                     ],
                   ),
+                  if (i == 0) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          tapTargetSize: MaterialTapTargetSize.padded,
+                        ),
+                        onPressed: _locating ? null : _useCurrentLocation,
+                        icon: _locating
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.my_location, size: 18),
+                        label: Text(l10n.plannerUseCurrentLocation),
+                      ),
+                    ),
+                    if (_locationError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          _locationError!,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
                   PlaceSearchField(
                     search: _location.search,
                     label: role,

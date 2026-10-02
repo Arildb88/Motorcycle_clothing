@@ -91,6 +91,41 @@ describe('OrsGeocodingService', () => {
     expect(hit.lon).toBeCloseTo(8.0852);
   });
 
+  it('percent-encodes Norwegian place names without ASCII folding', async () => {
+    let url = '';
+    const service = new OrsGeocodingService({
+      apiKey: 'pelias-key',
+      get: async (requested) => {
+        url = requested;
+        return {
+          status: 200,
+          data: {
+            features: [
+              {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [6.15, 62.47] },
+                properties: {
+                  gid: 'whosonfirst:locality:alesund',
+                  name: 'Ålesund',
+                  label: 'Ålesund, Møre og Romsdal, Norway',
+                },
+              },
+            ],
+          },
+        };
+      },
+    });
+
+    const hits = await service.autocomplete('Ålesund');
+    expect(url).toContain('text=%C3%85lesund');
+    expect(url).not.toContain('Alesund');
+    expect(hits[0].label).toBe('Ålesund, Møre og Romsdal, Norway');
+
+    await service.autocomplete('Tromsø');
+    expect(url).toContain('text=Troms%C3%B8');
+    expect(url).not.toContain('Tromso');
+  });
+
   it('surfaces provider failures without throwing the raw HTTP error', async () => {
     const service = new OrsGeocodingService({
       apiKey: 'pelias-key',
