@@ -6,7 +6,7 @@
 
 - Branch: `feature/xc-trail-sync-001`
 - Implementation commit: `1caefa3acc02232b57eecbac67d7e2bafeec1cda`
-- PR: pending, targeting `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/60 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
