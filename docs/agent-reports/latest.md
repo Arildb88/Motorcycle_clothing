@@ -6,7 +6,7 @@
 
 - Branch: `feature/alpine-resorts-001`
 - Implementation: `d6094183409534fa5e8a4016172b41bc79db6935`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/51 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
