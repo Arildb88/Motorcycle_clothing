@@ -1,14 +1,14 @@
 # Authorized RideWear Task
 ## Type: IMPLEMENTATION
-## ID: RECOMMENDATION-UX-001
-## Generation: 13
-## Handoff-From: MOBILE-ACTIVITIES-001
+## ID: WEATHER-VALIDATION-001
+## Generation: 14
+## Handoff-From: RECOMMENDATION-UX-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T12:50:11Z
-## Task: Present recommendation results clearly in the mobile app
+## Promoted: 2026-10-02T13:01:48Z
+## Task: Implement the provider-neutral weather validation harness
 
-Improve the existing recommendation result presentation for supported activities using data already returned by the API. Clearly separate wear and pack items, reasons, confidence/fallback information and relevant route/weather/elevation context when available. Keep safety-relevant uncertainty visible and avoid unsupported claims.
+Implement the deterministic, provider-neutral measurement/data-shaping foundation described by docs/research/WEATHER_DATA_QUALITY.md using the existing MET baseline and existing weather abstractions. Support paired coordinate/elevation/valid-time observations and measurable comparison outputs that can later accept additional providers without changing production recommendation behavior.
 
-Do not change recommendation ranking/physics, invent forecast accuracy, add providers/dependencies/schema changes, or redesign unrelated screens. Preserve Norwegian localization patterns already used by the app and existing motorcycle behavior.
+Do not subscribe to or integrate a new provider, make live-network-dependent CI tests, change the production weather provider, add paid services, expose secrets, or declare a provider superior without empirical data. Avoid schema/dependency changes unless the existing research explicitly makes them unnecessary; otherwise BLOCK.
 
-Add focused widget/domain tests where practical and run Flutter analyze on touched code. Follow queue rules.
+Add focused deterministic tests and update the research/report with what is actually measurable. Follow queue rules.

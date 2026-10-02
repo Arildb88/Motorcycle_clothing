@@ -1,58 +1,56 @@
-# MOBILE-ACTIVITIES-001 mobile activity planning
+# RECOMMENDATION-UX-001 recommendation result presentation
 
 ## Task
 
-`MOBILE-ACTIVITIES-001`, generation 12, authorized by the automatic final control update on `dev_test` commit `7e9f5781b9344948a26f33d19a0a774f62f344c3`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`RECOMMENDATION-UX-001`, generation 13, authorized by the automatic final control update on `dev_test` commit `0240fa31a66716aaff0e35ef7f9780872b586004`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/mobile-activities-001-planning`
-- Implementation: `fcce535c3de1fa92695cb82c0d29c58535a3ff8b`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/45 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/recommendation-ux-001-results`
+- Implementation: `35f660f0cb4cc5bbd6583f369429ef676c5cb442`
+- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
-The existing planner now requests the recommendation for the activity the user is planning.
+The planner result and the home recommendation card now present the API payload in separate sections.
 
-- Cycling sends `intensity` (`easy`, `steady`, or `hard`).
-- Alpine skiing and snowboarding send `exposure` (`lift`, `hike`, or `base`).
-- Cross-country skiing sends `intensity`, and `style` (`classic` or `skate`) only when the user picks one. Leaving style unset omits the query parameter.
-- Motorcycle still sends only `routeId` and `departureAt`.
-- Saved routes use that activity type. Alpine and cross-country keep the saved session length instead of a driving ETA. New alpine and snowboard plans default to 240 minutes, matching the server fallback. New cross-country plans default to 120 minutes, matching the engine default.
-- The result shows the effort, exposure, or style returned on `comfort` when those fields are present.
-- Profile and onboarding still offer only motorcycle, hiking, and cycling. That matches API `SELECTABLE_ACTIVITIES`. Alpine, snowboard, and cross-country are session choices. Hiking still has no engine.
+- Wear and pack stay in their own sections, with a short hint under each heading.
+- Kit reasons, such as cold, rain, wind, and which mountain site sets the kit, are listed under "Why this kit".
+- Missing data, assumptions, equipment that this kit does not choose, and "we do not claim this" notes stay under "Limits and assumptions". That includes village weather not being used as the summit, missing elevation, and no wax or grooming advice.
+- Confidence is the returned level (high, medium, or low). It is no longer the heading for every reason code.
+- Route endpoints, exposure temperature, ground-elevation range, and alpine base/mid/upper rows appear only when the API sent those values. An estimated mid height is labeled estimated. A missing summit row is not invented.
+- Elevation attribution is shown when the API returned it. It is not described as forecast accuracy.
+- Activity reason codes that previously fell back to the raw code are localized in English and Norwegian. An unknown code stays visible as the code.
+
+Motorcycle requests are unchanged. The home card still shows the same temperature, exposure, rain, wind, and confidence metrics, and it still hides an empty pack list.
 
 ## Final control state
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `MOBILE-ACTIVITIES-001` completed and appended once to `consumed.md`
-- `RECOMMENDATION-UX-001` is `active`
-- `active_id: RECOMMENDATION-UX-001`
+- `RECOMMENDATION-UX-001` completed and appended once to `consumed.md`
+- `WEATHER-VALIDATION-001` is `active`
+- `active_id: WEATHER-VALIDATION-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 13`
+- `handoff_generation: 14`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `RECOMMENDATION-UX-001`, Generation 13, Handoff-From `MOBILE-ACTIVITIES-001`, Authorization `authorized`, Promoted `2026-10-02T12:50:11Z`
+- `next-task.md`: `WEATHER-VALIDATION-001`, Generation 14, Handoff-From `RECOMMENDATION-UX-001`, Authorization `authorized`, Promoted `2026-10-02T13:01:48Z`
 
 ## Checks
 
 Flutter 3.47.5 / Dart 3.13.4, in `apps/mobile`:
 
 - `flutter analyze` on the touched Dart files — no issues
-- `flutter test test/ride_planner_test.dart test/ride_analysis_result_test.dart test/activity_context_test.dart test/nb_localization_test.dart` — passed
+- `flutter test test/recommendation_presentation_test.dart test/ride_analysis_result_test.dart test/locale_controller_test.dart test/nb_localization_test.dart` — 14 tests passed
 
-API, in `apps/api`:
-
-- `npx jest --no-coverage src/recommend/activity-planning.contract.spec.ts` — 4 tests passed
-
-Live MET, Kartverket, and OpenRouteService were not required.
+Live MET, Kartverket, and OpenRouteService were not required. The Flutter UI was not exercised in a browser or emulator.
 
 ## Architecture / config
 
-No new dependency, provider, paid service, schema change, or secret. `dev` and `main` were not modified.
+No new dependency, provider, paid service, schema change, or secret. Recommendation ranking and physics were not changed. `dev` and `main` were not modified.
 
 ## Remaining
 
-- Profile persistence still rejects alpine, snowboard, and cross-country because `SELECTABLE_ACTIVITIES` is motorcycle, hiking, and cycling. Changing that allow-list was not authorized.
+- Profile persistence still rejects alpine, snowboard, and cross-country because `SELECTABLE_ACTIVITIES` is motorcycle, hiking, and cycling.
 - Hiking still has no recommendation engine.
-- Recommendation reason codes that are not already localized still fall back to the code. Clearing that up is `RECOMMENDATION-UX-001`.
-- The Flutter UI was not exercised in a browser or emulator. Coverage is the focused widget and contract tests above.
+- Home still omits the empty-pack sentence that the planner result shows.
+- A later weather-validation harness is `WEATHER-VALIDATION-001`.
