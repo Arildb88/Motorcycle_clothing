@@ -1,19 +1,27 @@
 # Authorized RideWear Task
-
-## Type: NONE
-
-## ID: none
-
-## Generation: 27
-
+## Type: VALIDATION_AND_FIX
+## ID: TEST-COVERAGE-001
+## Generation: 28
 ## Handoff-From: none
+## Authorization: authorized
+## Promoted: 2026-10-02T21:49:00Z
+## Task: Close meaningful automated-test gaps in critical RideWear MVP flows
 
-## Authorization: none
+Review existing automated coverage after STABILIZATION-001 and add tests only where important MVP behavior remains materially unprotected.
 
-## Task: No active task
+Prioritize:
+- Authentication/profile/password/logout.
+- Wardrobe and demo-garment coexistence/idempotency.
+- Motorcycle/cycling planning and recommendation inputs.
+- Alpine/snowboard resort discovery and selection.
+- Cross-country trail/manual planning.
+- Weather/elevation/provider error and empty states.
+- Norwegian Unicode/location handling and important state/race regressions.
 
-No implementation is authorized.
+Requirements:
+- Prefer deterministic unit/widget/integration/API tests over brittle snapshot or timing-dependent tests.
+- Do not chase a numeric coverage percentage or add tests that only execute lines without checking behavior.
+- Fix small reproducible defects uncovered by the new tests when they fit existing architecture.
+- No new product features, providers, schema migrations, paid services or broad refactors.
 
-The queue is `docs/agent-control/task-queue.md`. The ledger is `docs/agent-control/consumed.md`.
-
-This is an abandoned/unclaimed authorization recovery. Generation 27 remains spent. The queued task is not consumed. A later retry requires a new from-idle authorization at generation 28.
+Run relevant/full Flutter and API suites and Flutter analyze. Keep dev and main untouched. Follow queue rules.
