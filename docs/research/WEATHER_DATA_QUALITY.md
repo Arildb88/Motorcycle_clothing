@@ -297,3 +297,24 @@ Blind the provider label when a person inspects individual cases. Keep Nowcast o
 ### 11.7 What this pass did not do
 
 No forecast was requested. No Frost client id was created. No WeatherKit, Open-Meteo, Meteomatics, or meteoblue subscription was started. No SDK, dependency, schema, or `WEATHER_PROVIDER` default was changed. No paid provider is declared more accurate than MET.
+
+## 12. Validation harness
+
+**Fact.** `WEATHER-VALIDATION-001` adds a deterministic harness at `apps/api/src/weather/validation/`. It shapes paired rows and computes the §11 measurements from readings the caller already holds. It does not call MET, Frost, Open-Meteo, WeatherKit, or any other host. `WeatherService` and `WEATHER_PROVIDER` are unchanged. Nothing in this section is an empirical score.
+
+**Fact.** Given those readings, the harness measures:
+
+- Pair identity. Latitude and longitude are truncated toward zero to 4 decimals. Elevation is rounded to integer metres. One `valid_time_utc` and the declared lead bucket are required. A row whose lead misses that bucket is dropped, not moved to another bucket. `h1` is 30–90 minutes inclusive. `h6` is 5–7 hours inclusive. `next_morning` is 06:00–09:00 Europe/Oslo, fetched at 16:00–20:00 Europe/Oslo on the previous civil day, inclusive.
+- The 15-minute fetch window across providers for one `case_id`. A wider spread is dropped from the scores.
+- Elevation-matched error only when `elevation_sent` is true and the integer height matches. Other rows stay in coverage.
+- Station joins at the same truncated coordinate, integer elevation, and valid time. Route and resort joins only within 5 km and 50 m of elevation.
+- Temperature MAE and mean bias (forecast minus observation) when both temperatures are 2 m. Another height is a coverage miss, not a zero.
+- Wind MAE when both winds are 10 m.
+- Precipitation occurrence disagreements for 1-hour amounts. Yes means `precipitationMm >= MOTORCYCLE_EXPOSURE.precipMmWetThreshold` (0.3 on 2026-10-02). A probability is never used as an amount. A longer precipitation step stays out of that count.
+- Motorcycle warmth-tier disagreements from `motorcycleExposureC` and `warmthDemandFromExposureC`, personal bias 0, with no invented wind direction. The stop-rule comparison uses only cases where the baseline and the candidate are both eligible.
+- Coverage shares. An HTTP error or an empty series is a miss, not a skipped row.
+- Latency nearest-rank p50 and p95 from supplied successful durations. Five is `MAX_ROUTE_WEATHER_SAMPLES`. A route batch counts only as the sum of five successes. A failure is omitted, not stored as zero latency. These durations are inputs. CI does not measure a live call.
+- Provider-versus-baseline mean absolute temperature difference on the same tuple. That sheet is disagreement. It is not accuracy.
+- The §11.6 clauses as booleans. A stratum counts toward those clauses only when the overlapping observation-paired set has at least 30 rows. Fewer than 30 stays `reportable: false`.
+
+**Fact.** The harness returns `empiricalTrial: false` and `adoption: withheld` on every run, including when fixture numbers meet every clause. It does not read a price page, does not decide that a cost fits `docs/business/ADS_MONETIZATION_STRATEGY.md`, and does not look up a git commit. Those clauses are true only when the caller passes them. Meeting them on fixtures does not change the production provider. No provider is declared superior to MET.
