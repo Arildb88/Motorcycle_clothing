@@ -1479,6 +1479,91 @@ Requirements:
 Keep dev and main untouched. Follow queue rules.
 ~~~~~
 
+### DEPARTURE-COMPARE-001
+
+- status: queued
+- title: Compare departure times
+- source: explicitly approved lightweight product enhancement
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE
+## ID: DEPARTURE-COMPARE-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Let users compare a small set of departure times using existing route-weather capabilities
+
+Implement a lightweight departure-time comparison for route-oriented activities where the existing data supports it.
+
+Requirements:
+- Reuse existing route geometry, route-weather sampling, MET integration and activity planning; do not introduce a new weather/provider stack.
+- Present 2–4 useful nearby departure alternatives with concise comparable conditions (temperature, precipitation, wind and other already-supported material conditions).
+- Make clear which time each forecast applies to and handle unavailable/out-of-range forecast data gracefully.
+- Do not invent a single opaque “best” score; users should be able to compare the factual conditions.
+- Keep provider/API calls bounded and avoid obvious duplicate calls; preserve existing caching/provider boundaries.
+- Norwegian localization and focused Flutter/API tests as applicable.
+- No new provider, paid service, schema migration or broad redesign.
+- Keep dev/main untouched and follow queue/control rules.
+~~~~~
+
+### RECOMMENDATION-EXPLAIN-001
+
+- status: queued
+- title: Explain clothing recommendations and what to bring
+- source: explicitly approved lightweight product enhancement
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE
+## ID: RECOMMENDATION-EXPLAIN-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Explain why RideWear recommends clothing and distinguish wear-now from useful bring-along items
+
+Build on the existing recommendation output and wardrobe/activity rules.
+
+Requirements:
+- Add concise user-facing reasons tied only to inputs/rules RideWear actually used (for example temperature, wind, precipitation, activity/intensity, elevation or personal thermal settings when present).
+- Never fabricate causal explanations from data the recommendation engine did not use.
+- Where existing recommendation logic/data supports it, distinguish garments to wear from optional items worth bringing for changing conditions.
+- Respect activity-specific wardrobe availability, MC isolation, personal/demo separation and Alpint & snowboard/XC/cycling behavior.
+- Keep explanations simple and Norwegian-localized; handle missing inputs gracefully.
+- Prefer extending the existing recommendation contract/model minimally rather than creating a parallel recommendation engine.
+- Add deterministic tests covering explanation correctness and garment eligibility.
+- No new provider, paid service, schema migration or unrelated redesign unless the existing model makes the task impossible; if so BLOCK rather than guess.
+- Follow queue/control rules.
+~~~~~
+
+### THERMAL-FEEDBACK-001
+
+- status: queued
+- title: Simple thermal recommendation feedback
+- source: explicitly approved lightweight personalization enhancement
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE
+## ID: THERMAL-FEEDBACK-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Add simple cold/comfortable/hot feedback after a recommendation or activity as groundwork for personal thermal calibration
+
+Requirements:
+- Provide a minimal Norwegian UX for “for kald”, “passe” and “for varm” linked to the relevant recommendation/activity context where existing architecture safely permits.
+- Inspect the existing personal thermal/profile model first and reuse it where possible.
+- If safe within the current model, use accumulated feedback conservatively to improve the user's existing thermal preference/calibration; make the behavior deterministic, bounded and testable.
+- Do not use ML, external AI, a new provider or opaque scoring.
+- Do not let one feedback event cause a large calibration change.
+- Preserve historical/user data and existing recommendations when no feedback exists.
+- If persistent feedback requires an unauthorized schema migration, do not create one: implement the safe non-schema portion and document the exact follow-up need, or BLOCK if no meaningful safe implementation is possible.
+- Respect activity/wardrobe isolation rules.
+- Add focused tests for cold/comfortable/hot behavior and bounds.
+- Follow queue/control rules.
+~~~~~
+
 ### PERFORMANCE-001
 
 - status: queued
