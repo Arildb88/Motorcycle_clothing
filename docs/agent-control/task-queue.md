@@ -1515,6 +1515,111 @@ Requirements:
 Keep dev and main untouched. Follow queue rules.
 ~~~~~
 
+### SECURITY-HARDENING-001
+
+- status: queued
+- title: Security hardening audit and safe fixes
+- source: explicitly approved security hardening work
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: SECURITY_AUDIT_AND_FIX
+## ID: SECURITY-HARDENING-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Audit and harden RideWear mobile/API security before release
+
+Use current OWASP MASVS/MASTG guidance as the baseline. Inspect the existing Flutter + NestJS architecture before changing anything.
+
+Scope:
+- authentication/session/token handling, password/reset/change flows, authorization boundaries and IDOR risks
+- sensitive local storage, logs, backups, error messages and accidental secret/PII exposure
+- API input validation, rate limiting/brute-force protection, CORS/security headers where applicable
+- TLS/cleartext configuration and production network settings
+- secrets/API keys must remain server-side; verify release config does not package server secrets
+- dependency/audit findings relevant to exploitable runtime risk
+- add focused regression/security tests for safe fixes
+
+Constraints:
+- Fix only low-risk issues that fit the existing architecture.
+- No new identity provider, paid service, schema migration or broad architecture rewrite.
+- If a security fix requires a breaking/auth architecture change, document it as a concrete follow-up recommendation in latest report and do not invent/enqueue a task.
+- Never commit secrets or real credentials.
+- Preserve existing user data and auth compatibility.
+- Run API tests/build and Flutter analyze/tests as applicable.
+- Follow queue/control rules; dev and main untouched.
+~~~~~
+
+### PRIVACY-DATA-001
+
+- status: queued
+- title: User data and privacy readiness
+- source: explicitly approved user-data handling review
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: PRIVACY_REVIEW_AND_FIX
+## ID: PRIVACY-DATA-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Review RideWear personal-data lifecycle and implement safe privacy-readiness improvements
+
+Inventory what personal/user-linked data RideWear currently stores or transmits (account/profile, wardrobe, routes/activity plans, location-related data, auth/reset data, logs/telemetry if any).
+
+Requirements:
+- document data category, purpose, storage location, retention/deletion behavior and external provider exposure
+- verify production logs/errors do not unnecessarily expose credentials, tokens, precise location or other personal data
+- inspect account deletion/data deletion behavior; identify gaps without pretending legal compliance
+- minimize provider payloads and persisted location data where not required by existing product behavior
+- ensure demo data remains distinguishable from personal user data
+- add safe tests/docs for changes
+- produce a concise privacy/data-flow readiness section in latest report
+
+Constraints:
+- This is engineering/privacy readiness, not a claim of GDPR/legal compliance.
+- No analytics/advertising SDK, new provider, schema migration or destructive data migration unless already explicitly authorized.
+- Preserve existing user data; if deletion semantics require a schema/architecture decision, document/block rather than guess.
+- Run relevant tests/checks and follow queue/control rules.
+~~~~~
+
+### SOCIAL-AUTH-RESEARCH-001
+
+- status: queued
+- title: Microsoft and Facebook login implementation plan
+- source: explicitly approved social-login planning
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: RESEARCH_AND_DESIGN
+## ID: SOCIAL-AUTH-RESEARCH-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Produce an implementation-ready plan for Microsoft and Facebook login without enabling either provider
+
+Inspect RideWear's current NestJS/Flutter authentication and user model first. Verify current official Microsoft and Meta documentation during the task.
+
+Plan:
+- native mobile OAuth/OIDC flow using current best practice (external user-agent/system browser and PKCE where provider/protocol requires)
+- server/API trust boundary and token validation/exchange strategy
+- Android and future iOS redirect/deep-link requirements
+- account linking rules for existing email/password users, duplicate-email/collision handling, provider unlinking, and recovery when a provider account disappears
+- minimum scopes/data requested and privacy implications
+- secure token storage/session lifecycle/logout/revocation
+- exact external operator setup required (app registrations, package/bundle IDs, redirect URIs, signing hashes/keys, review requirements) without committing secrets
+- phased implementation steps and test matrix
+- compare whether implementing Microsoft, Facebook, both, or neither adds meaningful value for RideWear; present factual tradeoffs without enabling them
+
+Constraints:
+- Research/design only: do not add dependencies, provider credentials, schema migrations, login buttons, or production OAuth code.
+- Do not invent credentials or provider configuration.
+- Preserve existing email/password auth.
+- Store the implementation-ready design in docs and summarize it in latest report.
+- Follow queue/control rules.
+~~~~~
+
 ### RELEASE-READINESS-001
 
 - status: queued
