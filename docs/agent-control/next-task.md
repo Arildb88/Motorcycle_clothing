@@ -1,174 +1,86 @@
 # Authorized RideWear Task
 
-## Type: PLANNING / RESEARCH ONLY
+## Type: IMPLEMENTATION
 
-## Task: Multi-activity platform, geo/weather data quality, and sustainable monetization research
+## Task: Altitude-aware route weather foundation
 
-This is an approved planning task. Do not implement production features, add SDKs, change dependencies, migrate the database, or redesign existing working UI. The purpose is to prepare evidence-based documents for later human review and implementation decisions.
+Implement the first evidence-backed follow-up from the weather/geo research: obtain reliable ground elevation for route weather sample coordinates and pass that altitude to MET Locationforecast so temperature/weather is evaluated at the sample point's terrain height.
 
-### Context
+Read first:
+- `docs/agent-control/guardrails.md`
+- `docs/research/WEATHER_DATA_QUALITY.md`
+- `docs/architecture/GEO_DATA_STRATEGY.md`
+- `docs/agent-reports/latest.md`
 
-RideWear Motorcycle is the current reference implementation. Future activity families under consideration are:
+### Goal
 
-- Motorcycle
-- Cycling
-- Alpine skiing / Snowboard
-- Cross-country skiing
+For the existing motorcycle recommendation flow:
 
-Treat Alpine skiing/Snowboard and Cross-country skiing as separate activity families. Do not invent additional product categories.
+road geometry -> route weather samples + ETA -> ground elevation -> MET(lat, lon, altitude, ETA)
 
-A core requirement is high-quality location-aware weather: temperature and other relevant conditions at points along routes, and at meaningful elevations/locations in ski resorts (for example base, mid-mountain, and upper/lift-top areas). Data quality matters more than choosing the cheapest provider. We want a strong free/open development path now while understanding when a paid provider could materially improve quality, reliability, coverage, or scalability if RideWear succeeds.
+Keep the design provider-independent so Cycling, Alpine/Snowboard and Cross-country can reuse elevation later.
 
-### Research requirements
+### Required investigation before coding
 
-Use current primary/authoritative documentation wherever possible and cite sources/URLs in the documents. Clearly separate verified facts, design recommendations, assumptions, and questions requiring later validation.
+Inspect current `dev_test` and the research documents. Choose the best already-researched free/open Norway-first elevation source/approach that is legally and technically suitable for this implementation.
 
-#### 1. RideWear platform architecture
+If the research does not support a sufficiently clear provider/endpoint/licensing choice, STOP and report the exact decision/evidence still needed. Do not invent a provider.
 
-Create/update:
-`docs/product/RIDEWEAR_PLATFORM_PLAN.md`
+### Implementation requirements
 
-Analyze what should be shared RideWear core versus activity-specific logic/UI. Cover at least profile/preferences, wardrobe, recommendation engine, weather, geo/location, routes, units/localization, and activity-specific configuration.
+If the prerequisite is satisfied:
 
-Preserve the existing Flutter -> NestJS API -> external-provider principle and server-side secrets.
+- Introduce/extend a provider-independent server-side elevation abstraction/port rather than coupling recommendation logic to a vendor.
+- Implement the smallest production adapter needed for the chosen elevation source.
+- Keep all provider access server-side.
+- Enrich existing route weather samples with ground altitude before MET lookup.
+- Pass altitude to MET Locationforecast using the documented parameter/format.
+- Preserve ETA-based forecast selection.
+- Preserve safe fallback: if elevation lookup fails/unavailable, weather recommendations must still work using the existing lat/lon behavior rather than failing the whole recommendation.
+- Use bounded batching/caching where appropriate; do not create one uncontrolled external request per dense geometry vertex.
+- Dense route geometry remains ephemeral and must not be persisted.
+- Add focused tests for altitude propagation, fallback, caching/batching behavior where applicable, and unchanged ETA behavior.
+- Keep existing provider-neutral domain boundaries.
 
-Do not propose separate duplicated apps unless evidence shows a compelling reason. Document alternatives and tradeoffs rather than making irreversible changes.
+### Explicitly out of scope
 
-#### 2. Geo data strategy
+- No Cycling/Alpine/XC implementation yet.
+- No ski resort UI/data integration.
+- No paid provider.
+- No ads/ad SDK.
+- No DB/schema migration.
+- No dependency upgrades unless absolutely required by the selected official API; if a new dependency appears necessary, STOP and report rather than adding it.
+- No routing-provider change.
+- No unrelated UI changes.
+- No live traffic/navigation/rerouting.
+- Do not modify `dev` or `main`.
 
-Create/update:
-`docs/architecture/GEO_DATA_STRATEGY.md`
+### Verification
 
-Deeply investigate the best sustainable way to obtain and normalize geo data, initially prioritizing Norway but considering later European expansion.
+Run:
+- relevant focused API tests
+- `npm test`
+- `npm run build`
+- existing API smoke test if applicable
 
-Cover:
-- geocoding/place search
-- road geometry
-- cycling networks/routes
-- alpine ski resorts, slopes/pistes and lifts
-- cross-country ski tracks/trails
-- elevation/DEM/terrain
-- altitude at weather sample coordinates
-- administrative/place data where useful
-- licensing, attribution, caching/storage restrictions, API limits, reliability and update frequency
+If Flutter code is unexpectedly required, STOP and report why before changing it. This task should be server-side.
 
-Prioritize authoritative Norwegian sources such as Kartverket/GeoNorge where relevant, but compare suitable European/global/open and commercial alternatives.
+All required checks must pass before merge.
 
-Evaluate whether RideWear should expose provider-independent NestJS geo interfaces/ports shared across activities.
-
-#### 3. Weather data quality and validation
-
-Create/update:
-`docs/research/WEATHER_DATA_QUALITY.md`
-
-This requires deep research.
-
-Investigate how RideWear can obtain excellent temperature/weather readings/forecasts:
-- at sampled coordinates along motorcycle and cycling route geometry
-- at the correct ETA for each route point
-- at meaningful elevations through alpine/snowboard resorts
-- along cross-country ski tracks and their elevation profiles
-
-Investigate MET Norway services and relevant forecast/observation datasets, including altitude/elevation handling, forecast model resolution/horizons, update frequency, station observations and quality metadata where applicable.
-
-Compare credible free/open and paid commercial alternatives that could be considered if RideWear becomes successful. Do NOT purchase or integrate anything.
-
-For each serious candidate, compare:
-- geographic coverage, especially Norway/Nordics/Europe
-- horizontal and vertical/elevation handling
-- mountain suitability
-- temporal resolution and forecast horizon
-- update frequency
-- observations versus forecasts
-- route-scale querying/batching
-- historical data if relevant to validation
-- documented accuracy/limitations; do not invent accuracy scores
-- uptime/SLA if documented
-- rate limits
-- licensing/caching/redistribution terms
-- current pricing or pricing model when publicly documented
-- likely scaling considerations at illustrative small/medium/large usage levels without pretending unknown request volumes are facts
-
-Design a proposed validation methodology: compare provider forecasts against trustworthy observations across representative routes, elevations, seasons and weather regimes before deciding that a paid source is better.
-
-Recommend an architecture that allows providers to be replaced/combined later without rewriting activity logic. Recommendations must be evidence-based and clearly marked as recommendations.
-
-#### 4. Activity plans
-
-Create/update:
-- `docs/product/CYCLING_PLAN.md`
-- `docs/product/ALPINE_SNOWBOARD_PLAN.md`
-- `docs/product/CROSS_COUNTRY_SKIING_PLAN.md`
-
-For each activity, document:
-- intended MVP
-- user/activity inputs
-- wardrobe taxonomy
-- weather/exposure factors relevant to clothing recommendations
-- geo/routing/location needs
-- what can reuse Motorcycle/shared RideWear core
-- genuinely activity-specific recommendation logic
-- data dependencies
-- staged roadmap
-- unresolved decisions
-
-For Alpine/Snowboard explicitly consider base/mid/upper-mountain conditions and elevation.
-
-For Cross-country explicitly consider route/track geometry, elevation profile, aerobic intensity and changing exposure along the route.
-
-For Cycling consider cycling-specific routing/surface/elevation and changing weather exposure along the route.
-
-Do not implement these variants.
-
-#### 5. Low-key advertising / monetization
-
-Create/update:
-`docs/business/ADS_MONETIZATION_STRATEGY.md`
-
-Research a restrained advertising strategy intended to generate modest income without materially disturbing the user.
-
-Cover:
-- credible mobile ad platforms/SDK options and current business models
-- small banner/native placements on a limited number of appropriate browsing screens
-- surfaces where ads should NOT appear, especially safety/weather warnings, critical recommendation interactions, navigation/route interaction, authentication and other interruption-sensitive flows
-- avoid disruptive interstitial/full-screen behavior as the default strategy
-- GDPR/EEA consent/privacy implications
-- personalized/tracking advertising versus contextual/non-personalized approaches
-- SDK privacy/data collection considerations
-- app-store policy considerations
-- rough monetization mechanics, clearly labeling estimates and avoiding invented revenue claims
-- possible future ad-free paid option
-- relationship between future recurring premium API costs and sustainable monetization
-
-Do NOT add an ad SDK or production ad code.
-
-### Quality bar
-
-This is a research task, not a brainstorming dump.
-
-- Prefer primary/official sources.
-- Include access date/current pricing date for volatile provider/pricing facts.
-- Flag uncertainty and unsupported claims.
-- Distinguish Norway-specific findings from broader Europe/global findings.
-- Avoid claiming paid data is superior without evidence.
-- Identify questions that should be empirically tested.
-- Keep recommendations compatible with provider-independent architecture.
-- Do not change application code.
-
-### Git workflow
+### Completion
 
 Follow `docs/agent-control/guardrails.md`.
 
-Start from latest `dev_test` and use an appropriate docs/research feature branch. Only documentation/research files and the required agent report should change.
+Use a `feature/*` or `fix/*` branch from latest `dev_test`.
+PR and merge successful work only to `dev_test`.
+Update `docs/agent-reports/latest.md` with:
+- selected elevation source and why
+- licensing/attribution/config implications
+- branch/commit/PR
+- files changed
+- tests/build/smoke results
+- fallback behavior
+- manual validation recommended
+- remaining issues
 
-No production code changes.
-
-No dependency changes.
-
-No DB/schema changes.
-
-No changes to `dev` or `main`.
-
-Because this is documentation-only, run appropriate repository documentation/static checks if available. Do not fabricate test results or install unrelated tooling merely to claim a test passed.
-
-After completion, PR and merge only to `dev_test`, update `docs/agent-reports/latest.md`, and STOP.
+Then STOP. Do not begin Cycling, skiing, ads, or another task.
