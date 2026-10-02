@@ -42,7 +42,7 @@ Completion state:
 
 - Branch: `feature/queue-control-002-final-handoff` from `dev_test` at `22582b0b4203726dec8f489c84ff3123cca99f65`.
 - Implementation commit: `19e309765ee000f5c41b8bef222e40368f08735a` — docs(agent): harden final-handoff authorization
-- PR: recorded after it is opened.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/33
 - Merge target: `dev_test` only. `dev` and `main` are not modified.
 
 ## Files changed
