@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: XC-SKI-001
+active_id: WEATHER-PROVIDER-RESEARCH-002
 promotion: automatic
-handoff_generation: 8
+handoff_generation: 9
 handoff_state: authorized
 ```
 
@@ -30,6 +30,8 @@ Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284
 Generation `5` is spent: a `CYCLING-001` claim at that generation was recovered without consuming the ID. Generation `6` is spent: `CYCLING-001` was authorized from idle at that generation and completed by the automatic final control update. That update authorizes `ALPINE-001` at generation `7`. Do not reuse generation `6`. Do not execute `CYCLING-001` again.
 
 Generation `7` is spent: `ALPINE-001` completed and the automatic final control update authorizes `XC-SKI-001` at generation `8`. Do not reuse generation `7`. Do not execute `ALPINE-001` again.
+
+Generation `8` is spent: `XC-SKI-001` completed and the automatic final control update authorizes `WEATHER-PROVIDER-RESEARCH-002` at generation `9`. Do not reuse generation `8`. Do not execute `XC-SKI-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -680,7 +682,7 @@ Focused tests only for the implemented domain behavior; broaden only when necess
 
 ### XC-SKI-001
 
-- status: active
+- status: completed
 - title: Cross-country skiing foundation
 - source: `docs/product/CROSS_COUNTRY_SKIING_PLAN.md`
 
@@ -702,7 +704,7 @@ Use focused tests and follow queue success/block rules.
 
 ### WEATHER-PROVIDER-RESEARCH-002
 
-- status: queued
+- status: active
 - title: Weather provider quality comparison plan
 - source: `docs/research/WEATHER_DATA_QUALITY.md`
 
@@ -745,4 +747,4 @@ Use focused tests for policy logic if executable code is added. No unrelated bro
 
 ## QUEUE-CONTROL-006 — no-claim execution
 
-Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The automatic final control update authorizes `XC-SKI-001` at generation 8.
+Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The automatic final control update authorizes `WEATHER-PROVIDER-RESEARCH-002` at generation 9.
