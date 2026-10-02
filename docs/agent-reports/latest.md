@@ -54,8 +54,8 @@ Generation `2` stays spent. The next from-idle human authorization must use Gene
 ## Commit / PR
 
 - Branch: `fix/queue-control-004` from `dev_test` at `c9c1d9fc88822a9b810545437586d9521ce771a1`
-- Commit: recorded when this branch is committed
-- PR: against `dev_test` only. Not merged to `dev` or `main`.
+- Commit: `07a98104423fd65c364606cf8d0650f541b0b771` — docs(agent): close manual tasks before the dev_test merge
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/36 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
