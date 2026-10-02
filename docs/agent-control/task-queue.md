@@ -9,7 +9,7 @@ Cursor must not add a product or implementation task to this file.
 ```text
 paused: false
 active_id: none
-promotion: manual
+promotion: automatic
 handoff_generation: 3
 handoff_state: idle
 ```
