@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: CYCLING-001
+active_id: none
 promotion: automatic
 handoff_generation: 4
-handoff_state: authorized
+handoff_state: idle
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -25,7 +25,7 @@ handoff_state: authorized
 
 ### Generation baseline
 
-Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `QUEUE-CONTROL-003` restored the idle baseline to `1` and did not reuse it. Generation `2` is also spent: `GEO-ELEVATION-002` completed at that generation and is consumed. Generation `3` is also spent: `ROUTING-WEATHER-002` completed at that generation and is consumed. The idle baseline remains `3`. The next from-idle human authorization must use Generation `4`. Do not reset the baseline downwards.
+Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `QUEUE-CONTROL-003` restored the idle baseline to `1` and did not reuse it. Generation `2` is also spent: `GEO-ELEVATION-002` completed at that generation and is consumed. Generation `3` is also spent: `ROUTING-WEATHER-002` completed at that generation and is consumed. Generation `4` is also spent: `CYCLING-001` was authorized and claimed at that generation in `6601fd8` and `74665b915ff13593fce2780d71b601fdfe2b584f`, then the owning implementation run was cancelled before completion. `QUEUE-CONTROL-005` returns `CYCLING-001` to `queued` without consuming it and without reusing generation `4`. The idle baseline remains `4`. The next from-idle human authorization, including a retry of `CYCLING-001`, must use Generation `5`. Do not reset the baseline downwards.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -68,7 +68,7 @@ The commit is a from-idle human authorization only when every condition below is
 
 This exception applies only to a from-idle human authorization. It must not replace an active task or a blocked task. A token pushed while `active_id` is set, while any item is `blocked`, or while the parent next-task ID is not `none`, is not a handoff.
 
-The accepting run claims the task only after those checks pass. The claim sets that item to `active`, sets `active_id` to that ID, sets `handoff_generation` to the token generation, and sets `handoff_state` to `authorized`. The claim does not change the token ID, Generation, Handoff-From, or Authorization lines. The claim is not an authorization handoff. A later trigger caused by the claim stops with no repository writes.
+The accepting run claims the task only after those checks pass. The claim sets that item to `active`, sets `active_id` to that ID, sets `handoff_generation` to the token generation, and sets `handoff_state` to `authorized`. The claim does not change the token ID, Generation, Handoff-From, or Authorization lines. The claim is not an authorization handoff. A later trigger caused by the claim stops with no repository writes. Cursor must not treat a missing follow-up, a cancelled run, or elapsed time as permission to recover, replace, or re-execute that claim. Abandoned-claim recovery is the human operation defined below.
 
 ### 2. Cursor to Cursor, automatic final control update
 
@@ -92,7 +92,7 @@ A new Automation run triggered by that landing must validate this range itself b
 
 If `promotion` is `automatic` and no queued unconsumed item exists, the pre-merge close is an idle final close instead. It must not invent an ID. Landing that idle close is not an authorization.
 
-Reject every other push before any repository write. Rejected pushes include a same-ID edit, a `Promoted:` bump, an idle or blocked `next-task.md`, a generation change other than exactly plus 1, an ID swap that does not meet one of the two handoff kinds, a manual-mode landing even when it carries the idle success-close, a claim commit, a pause, a resume, an implementation commit, a PR update, a report-only update, and any push while `paused` is `true`.
+Reject every other push before any repository write. Rejected pushes include a same-ID edit, a `Promoted:` bump, an idle or blocked `next-task.md`, a generation change other than exactly plus 1, an ID swap that does not meet one of the two handoff kinds, a manual-mode landing even when it carries the idle success-close, a claim commit, an abandoned-claim recovery, a pause, a resume, an implementation commit, a PR update, a report-only update, and any push while `paused` is `true`.
 
 A trigger caused by a rejected push stops with no repository writes. A manual-mode merge is one of those rejected pushes. No success-close write is required after it, and none is allowed as part of completion.
 
@@ -111,23 +111,62 @@ Before merging into `dev_test`, fetch `dev_test` again. Judge ownership from tha
 
 Continue only when the fetched tip still carries this token, `paused` is `false`, the ID is unconsumed there, and either the queue is still unclaimed (`active_id: none` and the item is still `queued`) or this same ID is already `active` at this same generation. Do not overwrite a newer handoff.
 
+## Abandoned claim recovery
+
+A claim that becomes abandoned must never automatically authorize another agent run. Recovery requires an explicit human or ChatGPT control action. Cursor must not perform it. Cursor must not infer that another run died from elapsed time. There is no timeout, lease, heartbeat, or takeover. Ordinary claim commits stay non-authorization pushes.
+
+The recovery applies only when a human has established all of the following on `dev_test`:
+
+- One item is `active`.
+- That ID is unconsumed.
+- `next-task.md` still holds that ID's authorized token.
+- The task has not completed.
+- No implementation pull request for that claim was merged.
+- The run that owned the claim was cancelled or abandoned, and no surviving implementation run owns it.
+
+The recovery commit returns that same task to a safe idle retry state in one push:
+
+- That item's status is `queued`.
+- `active_id` is `none`.
+- `handoff_state` is `idle`.
+- `handoff_generation` is unchanged.
+- `promotion` is unchanged.
+- `consumed.md` is unchanged. Do not append the ID.
+- `next-task.md` is the idle body.
+- `## Generation:` is unchanged.
+- `## Handoff-From:` is `none`.
+- `## Authorization:` is `none`.
+
+Do not mark the task `completed`. Do not authorize another task in the recovery commit. Do not retry the task. Do not advance to the next queued item.
+
+This commit is not an authorization handoff. It is not handoff A: it changes `task-queue.md` as well as `next-task.md`, and the new token is idle. It is not handoff B: it does not complete the previous ID, does not append `consumed.md`, does not activate another ID, and does not increase generation. An Automation run triggered by the recovery stops with no repository writes. Do not execute the recovered ID because the parent tip was authorized. The new tip is idle.
+
+The abandoned generation stays permanently spent. A later retry requires a new from-idle human authorization whose `## Generation:` is that unchanged `handoff_generation` plus 1. Never reuse the abandoned generation.
+
+`QUEUE-CONTROL-005` is that recovery for `CYCLING-001` generation `4`. The accepting implementation run was cancelled before completion. No implementation pull request merged, and no surviving run owns the claim. Generation `4` stays spent. `CYCLING-001` stays unconsumed and `queued`. The next explicit from-idle retry of `CYCLING-001` must use Generation `5`. `ALPINE-001` and every later item stay `queued`. This recovery does not authorize a product task.
+
 ## Promotion
 
-Automatic promotion is valid only as the Cursor-to-Cursor final control update above, and only for the first queued unconsumed item.
+Automatic promotion is valid only as the Cursor-to-Cursor final control update above, and only for the first queued unconsumed item. It is not a recovery path for an abandoned claim, and it must not be used to authorize the next queued item during recovery.
 
 From-idle human authorization may name any ID that is already `queued` and unconsumed. It is not limited to a Cursor-chosen item, and it does not mark the item `active` by itself.
 
-Manual mode is the mode in force:
+The Control block is authoritative for the current mode. Cursor must not change `promotion`. A human push set `promotion: automatic`. `QUEUE-CONTROL-005` leaves that value unchanged.
+
+While `promotion` is `manual`:
 
 - A human or ChatGPT authorizes one queued unconsumed item from idle by the single `next-task.md` commit defined above, pushed to `dev_test`.
-- Cursor does not create that token while `promotion` is `manual`, and must not write the next task into `next-task.md`.
-- A same-ID `Promoted:` bump is not a promotion and not a retry. To retry a task that never completed, return it to `queued` if needed, write the idle body, leave the generation unchanged, and do not consume it. A later idle authorization uses a new generation. Do not reuse a generation that has already appeared.
+- Cursor does not create that token, and must not write the next task into `next-task.md`.
+- The pre-merge close is the idle success-close. Landing it is not an authorization handoff.
 
-Automatic mode is not enabled:
+While `promotion` is `automatic`:
 
-- Cursor must not set `promotion: automatic`.
-- After a human sets it in their own push, a completing run may put the next authorization on its feature or fix branch only after required checks pass, and only when `paused` is `false` and a queued unconsumed item exists. Landing that branch on `dev_test` is the handoff.
+- Cursor still must not set `promotion: automatic`. Only a human push may change the flag.
+- A completing run may put the next authorization on its feature or fix branch only after required checks pass, and only when `paused` is `false` and a queued unconsumed item exists. Landing that branch on `dev_test` is the handoff.
 - That same run must merge and stop. It must not implement the authorized ID and must not write after the merge.
+- Abandoned-claim recovery does not use this path and does not activate the next queued item.
+
+A same-ID `Promoted:` bump is not a promotion and not a retry. Returning an abandoned claim to `queued` is only the human recovery above. A later from-idle authorization uses a new generation. Do not reuse a generation that has already appeared.
 
 ## Agent entry check
 
@@ -139,12 +178,14 @@ For a from-idle human authorization, do not reject the token only because `activ
 
 For an automatic final control update, require the landed `dev_test` range above, including `active_id` equal to the new ID and `handoff_state: authorized` on the new tip. A manual-mode merge that leaves the idle success-close is not that update. Stop with no writes. Do not add another completion commit.
 
+An abandoned-claim recovery is not a handoff even when the parent tip was `authorized` and named a real ID. The new tip is idle at the same generation, the same ID is `queued`, and `consumed.md` is unchanged. Stop with no repository writes. Do not execute the recovered ID. Do not execute the next queued ID. Do not infer abandonment from elapsed time, and do not perform the recovery.
+
 Also stop with no repository writes when any of these is true:
 
 - `paused` is `true`.
 - The ID already has a row in `consumed.md` on `dev_test`. A row that exists only on an unmerged branch does not count.
 - `next-task.md` has `Type: NONE`, its ID is `none`, it has no ID, or `## Authorization:` is not `authorized`.
-- The push is a claim, a same-ID edit, a `Promoted:`-only edit, an implementation commit, a report update, or a manual-mode merge.
+- The push is a claim, an abandoned-claim recovery, a same-ID edit, a `Promoted:`-only edit, an implementation commit, a report update, or a manual-mode merge.
 - The parent had an active or blocked task and this push tries to name a different ID without landing the automatic final control update.
 
 `QUEUE-CONTROL-001` is the queue-setup task that created this file. It has no Queue item. It is consumed. If `next-task.md` asks to add this queue again, stop.
@@ -153,9 +194,9 @@ This check is what stops ordinary and mid-task pushes when the trigger remains A
 
 ## Success
 
-Manual mode is the mode in force. After the token is validated and the task is claimed, implement on the feature or fix branch and run every required focused check. Only after those checks pass, prepare the success-close on that same branch, before the final merge. The PR must contain both the implementation and this close. Required PR checks run against that complete branch. There is no required repository write after the merge. The run stops after merge.
+After the token is validated and the task is claimed, implement on the feature or fix branch and run every required focused check. Only after those checks pass, prepare the close on that same branch, before the final merge. The PR must contain both the implementation and this close. Required PR checks run against that complete branch. There is no required repository write after the merge. The run stops after merge. Which close is valid depends on `promotion` in the Control block.
 
-The manual pre-merge success-close contains all of the following and authorizes no different task:
+While `promotion` is `manual`, the pre-merge success-close contains all of the following and authorizes no different task:
 
 1. Set that item's status to `completed`.
 2. Append that ID exactly once to `consumed.md`. Do not edit or delete older rows.
@@ -193,7 +234,7 @@ Pause: set `paused: true` in a commit pushed to `dev_test` by `Arildb88`. Agents
 
 Resume: set `paused: false` in a commit pushed by `Arildb88`. Clearing the flag does not start work and does not change `handoff_generation`. The next push that starts work must be a from-idle human authorization. Bumping `Promoted:` on an ID that is already active is not that handoff.
 
-`QUEUE-CONTROL-002` left the queue paused. Later human commits set `paused: false`. `QUEUE-CONTROL-003` and `QUEUE-CONTROL-004` keep `paused: false` and `promotion: manual`. Neither authorizes a product task. Product work starts only from a later from-idle human authorization.
+`QUEUE-CONTROL-002` left the queue paused. Later human commits set `paused: false`. `QUEUE-CONTROL-003` and `QUEUE-CONTROL-004` kept `promotion: manual`. A later human commit set `promotion: automatic`. `QUEUE-CONTROL-005` keeps `paused: false` and `promotion: automatic`. It does not authorize a product task. Product work starts only from a later from-idle human authorization or, when `promotion` is `automatic`, from a landed automatic final control update after a real completion. An abandoned-claim recovery is neither of those.
 
 ## Inspect
 
@@ -202,6 +243,7 @@ Read the Control block, each Queue status, `consumed.md`, and `next-task.md`.
 - Idle: `handoff_state: idle`, `active_id: none`, no `blocked` item, `next-task.md` is the idle body, and `## Authorization:` is `none`. Generation stays at the highest spent generation.
 - Awaiting claim: `next-task.md` is a from-idle token (`## Authorization: authorized`, Generation = control generation + 1, `Handoff-From: none`) and the control block is still idle. This is an authorization. It is not permission for a second run to write a different token.
 - Authorized and claimed: `handoff_state: authorized`, one `active` item, `active_id` matches, and `## Generation:` matches `handoff_generation`.
+- Recovered after an abandoned claim: the same ID is `queued` and unconsumed, `active_id` is `none`, `handoff_state` is `idle`, `handoff_generation` is unchanged, `promotion` is unchanged, `consumed.md` has no new row, and `next-task.md` is the idle body at that same generation with `## Authorization: none`. This is not an authorization. The generation stays spent.
 - Blocked: `handoff_state: blocked`, one `blocked` item, `active_id` matches, and `next-task.md` is the blocked body. Generation is unchanged.
 - Paused: `paused: true`. No handoff is valid until a human sets `paused: false`.
 
@@ -215,8 +257,11 @@ Read the Control block, each Queue status, `consumed.md`, and `next-task.md`.
 - A blocked item is not consumed and is not skipped. The queue waits. A token must not replace it.
 - `paused: true` stops the run before writes.
 - One successful run completes one ID. It does not start the next ID in that same run.
-- Do not set `promotion: automatic` from an agent run.
+- Do not set `promotion: automatic` from an agent run. Do not clear it either. `QUEUE-CONTROL-005` leaves `promotion: automatic`.
 - Do not reset `handoff_generation` downwards.
+- Cursor never decides that a claim is abandoned and never recovers its own active claim. No timeout, lease, heartbeat, or takeover.
+- An abandoned-claim recovery is a human or ChatGPT control push. It is not a handoff. A trigger on it stops with no writes. The recovered task stays `queued`. The abandoned generation stays spent. Recovery does not authorize a retry and does not advance to the next queued item.
+- A later retry of a recovered task is only a new from-idle authorization at `handoff_generation` plus 1.
 
 ## Replacement Cursor Agent Instructions
 
@@ -228,8 +273,9 @@ Observed overlap on 2026-10-02 for automation `af62016d-be2e-11f1-bb68-864e54d14
 - `GEO-ELEVATION-002` at generation `2` merged in pull request 35 before its manual success-close. The merge push started another run, which correctly wrote nothing. The task stayed active until a later repair. `QUEUE-CONTROL-004` puts the success-close on the feature branch before merge so no post-merge write is required.
 - An actor filter does not fix that. Anyone and an `Arildb88`-only trigger both start a run when an allowed account pushes a non-final `next-task.md` change. The entry check has to reject that push.
 - Historical note: when the trigger was limited to `Arildb88`, the `app/cursor` merge of pull request 27 (`6cb14cde2a3a0236c27e7f0bc17d26f423ca0074`) did not start a run. The next run waited for `5e184549b3ea8413bcd856b4c433f9419d82a8b0`. That is not the concurrency control.
+- `CYCLING-001` generation `4` was authorized and claimed. The accepting implementation run was cancelled before completion. The claim commit correctly did not start implementation. No implementation pull request merged. `QUEUE-CONTROL-005` is the human abandoned-claim recovery: the ID returns to `queued`, generation `4` stays spent, and `next-task.md` becomes the idle body. That recovery is not an authorization.
 
-This repository cannot edit the Cursor Automation. A human replaces the implementation-agent instructions with the block below. Leave the trigger able to fire for Anyone, including `Arildb88` and `app/cursor`. A path filter on `docs/agent-control/next-task.md` may be added; the checks in the prompt stay required either way. Do not set `promotion: automatic` in that edit.
+This repository cannot edit the Cursor Automation. This commit does not change the installed Cursor Automation prompt. A human pastes the block below into the automation after this change is on `dev_test`. Leave the trigger able to fire for Anyone, including `Arildb88` and `app/cursor`. A path filter on `docs/agent-control/next-task.md` may be added; the checks in the prompt stay required either way. Do not change `promotion` in that paste. It is already `automatic` from a human push. Installing this text does not authorize a task.
 
 ~~~~~text
 You are the RideWear implementation agent.
@@ -263,8 +309,12 @@ A change to docs/agent-control/next-task.md is required for a handoff and is not
 - The ID is consumed, or it is not queued and unconsumed for a from-idle token.
 - The push changes task-queue.md or consumed.md but is not the automatic final control update.
 - The push is an implementation commit, PR update, report update, claim commit, or a manual-mode merge. A manual success-close merge is idle and is not handoff B. Do not write a follow-up commit for it.
+- A claim commit itself remains a non-authorization. STOP with no repository writes.
+- The push is a human abandoned-claim recovery. That recovery is a non-authorization control push. The recovered task stays queued. The old generation stays spent. STOP with no repository writes. Do not retry the task. Do not advance to the next queued task.
+- Only a later fresh from-idle authorization may retry a recovered task, with Generation equal to the spent handoff_generation plus 1.
+- Never decide that a claim is abandoned. Never recover an active claim. No timeout, lease, heartbeat, or takeover.
 
-The trigger may remain Anyone. Do not treat the pushing GitHub account as proof of authorization.
+The trigger may remain Anyone. Do not treat the pushing GitHub account as proof of authorization. Do not weaken this filter so that a claim commit or a recovery commit becomes executable.
 
 QUEUE ENTRY CHECK
 
@@ -278,7 +328,9 @@ In particular:
 - For a from-idle token, active_id may still be none and the item may still be queued. Claim it only after validation. Do not treat that missing claim as a reason to invent a different task.
 - Never execute work while the queue is paused.
 - Never execute a push that is not the authorization handoff for this generation.
+- Never execute a human abandoned-claim recovery. The parent may still be authorized. The new tip is idle. The recovered task stays queued. The old generation stays spent.
 - Never invent, enqueue, or expand a task.
+- Never decide that another run abandoned a claim, including from elapsed time.
 - Never skip or replace a blocked task.
 - Execute at most ONE task ID per automation run.
 
@@ -333,6 +385,10 @@ LOOP PREVENTION
 - An idle next-task.md causes an immediate STOP.
 - A triggering push that is not an authorization handoff causes an immediate STOP with no repository writes.
 - A same-ID, Promoted-only, claim, implementation, report, or manual-mode merge push causes an immediate STOP with no repository writes.
+- A claim commit itself remains a non-authorization and causes an immediate STOP with no repository writes.
+- A human abandoned-claim recovery is a non-authorization control push and causes an immediate STOP with no repository writes. The recovered task stays queued. The old generation stays spent. Do not retry it and do not advance to the next queued task.
+- Only a later fresh from-idle authorization may retry a recovered task.
+- Never autonomously decide that a claim is abandoned. Never recover your own active claim. No timeout, lease, heartbeat, or takeover.
 - Do not write success-close bookkeeping after the PR has merged.
 
 Never start arbitrary work from your own commits, PRs, reports, or merges.
@@ -576,7 +632,7 @@ Use focused routing/weather tests first. Run broader API checks only when needed
 
 ### CYCLING-001
 
-- status: active
+- status: queued
 - title: Cycling recommendation foundation
 - source: `docs/product/CYCLING_PLAN.md`
 
