@@ -1,61 +1,57 @@
-# MANUAL-REGRESSION-001
+# MANUAL-REGRESSION-002
 
 ## Task
 
-`MANUAL-REGRESSION-001`, generation 16, authorized by the from-idle human token on `dev_test` commit `74025d088a7d36d3c7fb8cfb1420a8e1f773fff5`. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`MANUAL-REGRESSION-002`, generation 18, authorized by the from-idle human token on `dev_test` commit `472fa3f55e2b64e3da3aa4668fde97632f4d5e2e`. Generation 17 had been recovered and remains spent. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/manual-regression-001`
-- Implementation: `dd83c2188daf7c3e2953aa116c52fd623342b6aa`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/49 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/manual-regression-002`
+- Implementation: `312f34423d803cab79ce020668d1d91e07b0a784`
+- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
-Place search applies only the latest request. A successful result clears the error. A real provider failure still clears suggestions and shows the localized error, including "Stedsøk er midlertidig utilgjengelig." / "Place search is temporarily unavailable."
+Place search publishes one outcome at a time. Selectable suggestions clear the provider error, including "Stedsøk er midlertidig utilgjengelig." / "Place search is temporarily unavailable." A real failure still clears suggestions and shows the localized error. The same field behavior is covered for start, destination, and the single-place alpine planner. A typed Norwegian query is kept when editing a selected place. Swap still moves the selected place.
 
-Selecting a concrete place keeps the richer label. Pelias labels such as "Kristiansand lufthavn, Kjevik" stay the display label when the short name is only the locality. The typed query stays separate from the selected place. Coordinates and provider place id come from resolve.
+"Bruk nåværende posisjon" / "Use current location" is its own 48dp control. A successful fix writes the device coordinates and the current-location label onto the first planner stop, including snowboard's single place. Permission denial, a blocked permission, disabled location services, and a failed read set an explicit message beside the control.
 
-"Bytt om" copies each stop's local id, so the field, label, coordinates, and provider id move together.
+Location search sends the query through one UTF-8 percent-encoding. `Tromsø`, `Ålesund`, `Ærøy`, and `Øvre Åmot` are not folded to ASCII. The place field does not autocorrect those characters. The API geocoding request uses the same Unicode text.
 
-Alpine skiing and snowboarding plan from one place. Extra places stay optional. They do not show start/destination, the motorway toggle, round trip, or the road map. Motorcycle, cycling, and cross-country still need two points. Cycling and cross-country keep their existing intensity, style, and exposure controls. Road preview stays for motorcycle and cycling.
-
-Hiking has no recommendation engine. The coming-soon home no longer offers "Open Motorcycle today". The routes screen does not remap hiking to motorcycle or load motorcycle routes.
-
-"Legg til demo-klær" / "Add demo clothes" is available when the wardrobe has personal garments and no demo rows. Repeating the seed does not insert another demo set. Replacing demo clothes deletes only demo rows.
-
-"Endre passord" / "Change password" is a filled RideWear button at least 48dp tall. Navigation, validation, and localization are unchanged.
+"Endre passord" / "Change password" and "Logg ut" / "Sign out" stay filled RideWear buttons at least 48dp tall, with 12dp between them. Navigation, password behavior, logout, and localization are unchanged.
 
 ## Final control state
 
-Promotion is automatic. No queued unconsumed item remains, so this close is idle and authorizes nothing.
+Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `MANUAL-REGRESSION-001` completed and appended once to `consumed.md`
-- `active_id: none`
+- `MANUAL-REGRESSION-002` completed and appended once to `consumed.md`
+- `ALPINE-RESORTS-001` is active
+- `active_id: ALPINE-RESORTS-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 16`
-- `handoff_state: idle`
+- `handoff_generation: 19`
+- `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: idle, Generation 16, Handoff-From `none`, Authorization `none`
+- `next-task.md`: `ALPINE-RESORTS-001`, Generation 19, Handoff-From `MANUAL-REGRESSION-002`, Authorization `authorized`
 
 ## Checks
 
 Flutter 3.47.6 (Dart 3.13.5), in `apps/mobile`:
 
-- `flutter test test/manual_regression_flow_test.dart test/ride_planner_test.dart test/wardrobe_demo_test.dart test/waypoint_draft_test.dart test/activity_context_test.dart test/nb_localization_test.dart` — 40 tests passed
+- `flutter test test/manual_regression_flow_test.dart test/ride_planner_test.dart` — 26 tests passed
 - `flutter analyze` — no issues
 
-Node, in `apps/api`, after `npx prisma generate`:
+Node, in `apps/api`:
 
-- `npm test -- src/routing/ors-geocoding.service.spec.ts src/routes/routes.service.spec.ts src/wardrobe/wardrobe.service.spec.ts --runInBand --no-coverage` — 3 suites, 32 tests passed
+- `npx jest src/routing/ors-geocoding.service.spec.ts --runInBand --no-coverage` — 1 suite, 6 tests passed
 
 ## Architecture / config
 
-No new dependency, provider, paid service, schema migration, or secret. Existing ORS/HeiGIT mapping is unchanged except that a concrete Pelias label is kept as the display label. `dev` and `main` were not modified.
+No new dependency, provider, paid service, schema migration, or secret. Current position still uses the existing Geolocator adapter. Place search still goes through the RideWear API. `dev` and `main` were not modified.
 
 ## Remaining
 
 Live or device checks this run did not perform:
 
-- A device or emulator pass against live OpenRouteService / HeiGIT geocoding and routing.
-- Live place search for Kristiansand lufthavn, Kjevik and Arendal Trefoldighetskirke. The regression tests use fixtures and fakes.
+- An emulator or device pass for "Bruk nåværende posisjon" against a real location permission prompt.
+- Live place search for Norwegian names such as Tromsø, Ålesund, and Ærøy.
+- A visual check of the profile button spacing on a device.
 
-No further queued task is authorized.
+`ALPINE-RESORTS-001` is authorized for a later run. This run stops after merge.
