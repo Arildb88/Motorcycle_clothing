@@ -8,8 +8,8 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
-promotion: manual
+active_id: DB-POSTGRES-001
+promotion: automatic
 ```
 
 - `paused` is `true` or `false`.
@@ -218,7 +218,7 @@ This task exists only to verify that the updated Cursor Automation accepts the a
 
 ### DB-POSTGRES-001
 
-- status: queued
+- status: active
 - title: Implement Prisma PostgreSQL foundation
 - source: `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
 
@@ -269,5 +269,181 @@ If local Postgres or another required tool is unavailable, mark `DB-POSTGRES-001
 
 ### Completion
 
-Follow the queue success rule in `docs/agent-control/task-queue.md`. There is no further queued item to promote after this one. Stop.
+Follow the queue success rule in `docs/agent-control/task-queue.md`. If promotion is automatic, promote at most the next pre-approved item and STOP.
+~~~~~
+
+### DB-SUPABASE-002
+
+- status: queued
+- title: Supabase deployment readiness
+- source: `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: DB-SUPABASE-002
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Prepare Supabase deployment readiness
+
+After DB-POSTGRES-001 is completed, make the PostgreSQL setup operationally ready for a first manual Supabase deployment. Verify/document environment variable roles, pooled runtime versus direct migration connection, migration commands, empty-public preflight, rollback/recovery, and operator steps.
+
+Do not connect to or mutate the hosted Supabase database. Do not commit hosts, project refs, passwords, tokens, or other secrets. Do not introduce Supabase client/Data API or package upgrades.
+
+Prefer static/config validation. Run only focused checks that provide new evidence; do not repeat the full API suite if DB-POSTGRES-001 already established the same behavior.
+
+Update relevant architecture/operator docs and report. Follow queue success/block rules.
+~~~~~
+
+### GEO-ELEVATION-002
+
+- status: queued
+- title: Validate altitude-aware weather
+- source: existing Kartverket elevation + MET altitude implementation
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: GEO-ELEVATION-002
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Validate altitude-aware weather behavior
+
+Validate the existing Kartverket elevation -> MET altitude foundation with focused automated tests and deterministic fixtures/mocks. Cover low/high elevation cases, coordinate/rounding behavior, cache/fallback behavior, partial elevation failure, and that MET receives altitude only when valid elevation exists.
+
+Do not add providers, paid services, dependencies, schema changes, or live-network-dependent CI tests. Do not claim measured forecast accuracy from mocked tests. Add only minimal production changes if validation exposes a concrete defect.
+
+Run focused API tests for touched geo/weather code; broader suites only if the change materially affects them. Update report and follow queue rules.
+~~~~~
+
+### ROUTING-WEATHER-002
+
+- status: queued
+- title: Improve route ETA/weather sampling
+- source: existing route-weather-sampling foundation
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: ROUTING-WEATHER-002
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Improve route ETA and weather sampling
+
+Improve the current road-geometry weather sampling and ETA distribution using the existing provider-neutral routing/weather architecture. Preserve ephemeral dense geometry and the current provider boundary. Focus on segment-aware distance/progress and deterministic sampling/ETA behavior, including short routes and fallbacks.
+
+No live traffic, new routing/weather provider, paid service, schema change, dependency, or persisted polyline. Do not invent per-leg timing when provider data does not contain it.
+
+Use focused routing/weather tests first. Run broader API checks only when needed for changed behavior. Update report and follow queue rules.
+~~~~~
+
+### CYCLING-001
+
+- status: queued
+- title: Cycling recommendation foundation
+- source: `docs/product/CYCLING_PLAN.md`
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: CYCLING-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Implement cycling recommendation foundation
+
+Implement the first cycling-specific recommendation foundation according to docs/product/CYCLING_PLAN.md, reusing shared route/weather/elevation infrastructure but not motorcycle clothing rules. MVP scope: cycling route/weather along route at ETA, ground elevation where available, cycling intensity inputs already supported/authorized by the plan, wear/pack reasons and confidence with safe fallbacks.
+
+Do not add turn-by-turn navigation, live rerouting, power-meter integration, unsupported surface-quality claims, new paid providers, dependencies, or schema changes unless the existing plan explicitly makes them unnecessary. If a required schema/dependency/provider decision appears, BLOCK instead of inventing it.
+
+Use focused domain/API tests. Mobile work is allowed only if the plan and existing activity UI support it without schema/dependency expansion; otherwise block/report the boundary. Follow queue rules.
+~~~~~
+
+### ALPINE-001
+
+- status: queued
+- title: Alpine and snowboard exposure foundation
+- source: `docs/product/ALPINE_SNOWBOARD_PLAN.md`
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: ALPINE-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Implement alpine/snowboard exposure foundation
+
+Implement only the provider-independent foundation supported by docs/product/ALPINE_SNOWBOARD_PLAN.md. Keep alpine_skiing and snowboarding as separate activity values while allowing a shared exposure engine. Model/use base, mid and upper elevation weather correctly; never substitute village weather as summit weather.
+
+Do not add a piste/resort provider, paid service, dependency, schema migration, or fake resort data. If the existing data model cannot support the planned MVP without one of those decisions, BLOCK and report the exact minimal requirement instead of improvising.
+
+Focused tests only for the implemented domain behavior; broaden only when necessary. Follow queue rules.
+~~~~~
+
+### XC-SKI-001
+
+- status: queued
+- title: Cross-country skiing foundation
+- source: `docs/product/CROSS_COUNTRY_SKIING_PLAN.md`
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: XC-SKI-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Implement cross-country skiing foundation
+
+Implement only the provider-independent XC foundation supported by docs/product/CROSS_COUNTRY_SKIING_PLAN.md: track/line weather with elevation and ETA plus easy/steady/hard intensity, with classic/skate as a tag rather than separate engines.
+
+No grooming-status claims, Sporet integration, live rerouting, wax advice, new paid provider, dependency, or unauthorized schema migration. BLOCK if a required data-model/provider decision is missing.
+
+Use focused tests and follow queue success/block rules.
+~~~~~
+
+### WEATHER-PROVIDER-RESEARCH-002
+
+- status: queued
+- title: Weather provider quality comparison plan
+- source: `docs/research/WEATHER_DATA_QUALITY.md`
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: RESEARCH
+## ID: WEATHER-PROVIDER-RESEARCH-002
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Design empirical weather-provider quality comparison
+
+Extend the existing weather research into an evidence-based comparison methodology for RideWear route and mountain use: same coordinates, elevations, forecast horizons and timestamps; measurable error/coverage/latency/cost criteria; MET baseline; candidate free/paid providers only where current official terms/pricing can be verified.
+
+Research/documentation only. Do not subscribe, add SDKs, change providers, send secrets, or declare a paid provider superior without evidence. Minimize tests because no production code should change. Update research docs/report and follow queue rules.
+~~~~~
+
+### ADS-001
+
+- status: queued
+- title: Non-intrusive monetization foundation
+- source: `docs/business/ADS_MONETIZATION_STRATEGY.md`
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: IMPLEMENTATION
+## ID: ADS-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Implement ad-placement policy foundation
+
+Implement only the provider-neutral ad eligibility/policy foundation already defined in docs/business/ADS_MONETIZATION_STRATEGY.md: ads default off; explicitly eligible non-critical surfaces only; never allow ads to affect recommendation ranking; no ads on safety, navigation, recommendation-critical, or auth surfaces.
+
+Do not integrate AdMob or another ad SDK/provider, CMP, tracking, consent SDK, dependency, paid service, or production ad unit. If provider integration is required for meaningful implementation, BLOCK and leave the policy documented rather than adding it.
+
+Use focused tests for policy logic if executable code is added. No unrelated broad suites. Follow queue rules.
 ~~~~~
