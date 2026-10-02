@@ -48,7 +48,8 @@ Generation `4` is spent. The next explicit from-idle retry of `CYCLING-001` must
 ## Commit / PR
 
 - Branch: `fix/queue-control-005-abandoned-claim` from `dev_test` at `74665b915ff13593fce2780d71b601fdfe2b584f`
-- PR: pending, targeting `dev_test` only. Not merged to `dev` or `main`.
+- Recovery: `99f5b9ed4d228bb6478b7c3388a09e959652e709` — docs(agent): recover abandoned CYCLING-001 claim
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/38 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
