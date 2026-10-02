@@ -6,6 +6,7 @@
 
 - Branch: `feature/alpine-001-exposure-foundation`
 - Implementation: `3ee19150989e220c66bdda58303812be59cd6c01`
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/40 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
