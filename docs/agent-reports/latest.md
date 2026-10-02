@@ -6,7 +6,7 @@
 
 - Branch: `feature/fnugg-attribution-001`
 - Implementation commit: `54bfc10def7828e855577f4f3f0d149c3bead010`
-- PR: pending, targeting `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/59 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
