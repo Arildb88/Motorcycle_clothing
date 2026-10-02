@@ -8,11 +8,32 @@ import {
 
 export const FNUGG_API_BASE_URL = 'https://api.fnugg.no';
 
+/** Official public site named by the Fnugg API terms. */
+export const FNUGG_PUBLIC_ORIGIN = 'https://fnugg.no';
+
 /** Documented default search radius, passed explicitly so the bound is ours. */
 export const FNUGG_NEARBY_RADIUS_KM = 50;
 
-/** Fields the clothing planner needs. Weather, lifts, and copy stay out. */
-export const FNUGG_RESORT_SOURCE_FIELDS = 'id,name,location.lat,location.lon';
+/**
+ * Fields the clothing planner needs. Weather, lifts, and copy stay out.
+ * `site_path` is the documented resort-page path used only for attribution.
+ */
+export const FNUGG_RESORT_SOURCE_FIELDS =
+  'id,name,location.lat,location.lon,site_path';
+
+/** Documented `site_path` values look like `/trysil/` or `/oslo-vinterpark/`. */
+const FNUGG_SITE_PATH = /^\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/;
+
+/**
+ * Builds the public resort page from Fnugg's `site_path`.
+ * Rejects anything that is not a single relative slug.
+ */
+export function fnuggResortPageUrl(sitePath: unknown): string | null {
+  if (typeof sitePath !== 'string') return null;
+  const path = sitePath.trim();
+  if (!FNUGG_SITE_PATH.test(path)) return null;
+  return `${FNUGG_PUBLIC_ORIGIN}${path}`;
+}
 
 const NEARBY_RESULT_LIMIT = 20;
 const logger = new Logger('FnuggResortAdapter');
@@ -133,6 +154,7 @@ function mapFnuggHit(hit: unknown, withDistance: boolean): SkiResortHit | null {
     _source?: {
       id?: unknown;
       name?: unknown;
+      site_path?: unknown;
       location?: { lat?: unknown; lon?: unknown };
     };
     sort?: unknown;
@@ -159,7 +181,14 @@ function mapFnuggHit(hit: unknown, withDistance: boolean): SkiResortHit | null {
     }
   }
 
-  return { id, name, lat, lon, straightLineDistanceM };
+  return {
+    id,
+    name,
+    lat,
+    lon,
+    straightLineDistanceM,
+    sourceUrl: fnuggResortPageUrl(source?.site_path),
+  };
 }
 
 function isProviderError(data: unknown): boolean {

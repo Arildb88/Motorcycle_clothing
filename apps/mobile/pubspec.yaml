@@ -23,6 +23,8 @@ dependencies:
   google_fonts: ^9.0.0
   flutter_web_auth_2: ^5.1.0
   geolocator: ^14.1.1
+  # Already locked transitively. Direct so attribution links can open Fnugg.
+  url_launcher: 6.3.2
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,11 @@ export type SkiResortHit = {
   lon: number;
   /** Straight-line meters from the nearby origin. Null for name search. */
   straightLineDistanceM: number | null;
+  /**
+   * Public Fnugg resort page when the source path is a single documented slug.
+   * Null when Fnugg did not provide one. Never a weather or third-party URL.
+   */
+  sourceUrl: string | null;
 };
 
 export type ResortDirectoryPort = {

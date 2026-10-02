@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
+import 'package:motorcycle_clothing/features/plan/fnugg_attribution_link.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
+import 'package:motorcycle_clothing/services/resorts/fnugg_source.dart';
 import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -31,6 +33,7 @@ class ResortDiscoverySection extends StatefulWidget {
     required this.onSelected,
     this.selectedResortId,
     this.selectedResortName,
+    this.onOpenAttribution,
   });
 
   final ResortDirectory directory;
@@ -39,6 +42,7 @@ class ResortDiscoverySection extends StatefulWidget {
   final ValueChanged<SkiResort> onSelected;
   final String? selectedResortId;
   final String? selectedResortName;
+  final Future<void> Function(Uri uri)? onOpenAttribution;
 
   @override
   State<ResortDiscoverySection> createState() => _ResortDiscoverySectionState();
@@ -54,6 +58,8 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
   String? _error;
   String? _locationError;
   List<SkiResort> _results = const [];
+  String? _rememberedResortId;
+  String? _rememberedSourceUrl;
 
   @override
   void dispose() {
@@ -189,21 +195,47 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
     };
   }
 
+  String? _sourceForSelected() {
+    final id = widget.selectedResortId;
+    if (id == null || id.isEmpty) return null;
+    for (final resort in _results) {
+      if (resort.id == id && resort.sourceUrl != null) return resort.sourceUrl;
+    }
+    if (_rememberedResortId == id) return _rememberedSourceUrl;
+    return null;
+  }
+
+  void _choose(SkiResort resort) {
+    _rememberedResortId = resort.id;
+    _rememberedSourceUrl = resort.sourceUrl;
+    widget.onSelected(resort);
+  }
+
+  Widget _attribution(AppLocalizations l10n, {required Uri uri, Key? key}) {
+    return FnuggAttributionLink(
+      key: key,
+      label: l10n.plannerResortAttribution,
+      uri: uri,
+      onOpen: widget.onOpenAttribution,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final selected = widget.selectedResortName?.trim() ?? '';
+    final directoryAttribution = _attribution(
+      l10n,
+      uri: _results.isEmpty
+          ? fnuggAttributionUri(_sourceForSelected())
+          : fnuggHomeUri,
+      key: const Key('fnugg-attribution'),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.plannerResortAttribution,
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.steel.withValues(alpha: 0.9),
-          ),
-        ),
-        const SizedBox(height: 12),
+        if (_results.isEmpty) directoryAttribution,
+        if (_results.isEmpty) const SizedBox(height: 12),
         TextField(
           controller: _nameCtrl,
           keyboardType: TextInputType.text,
@@ -280,7 +312,8 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
           ),
         if (_results.isNotEmpty) ...[
           const SizedBox(height: 8),
-          for (final resort in _results)
+          directoryAttribution,
+          for (final resort in _results) ...[
             ListTile(
               key: ValueKey('resort-${resort.id}'),
               contentPadding: EdgeInsets.zero,
@@ -291,12 +324,25 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
               ),
               title: Text(resort.name),
               subtitle: Text(resortResultSubtitle(l10n, resort)),
-              onTap: () => widget.onSelected(resort),
+              onTap: () => _choose(resort),
             ),
+            FnuggAttributionLink(
+              key: ValueKey('fnugg-resort-link-${resort.id}'),
+              label: 'Fnugg.no',
+              uri: fnuggAttributionUri(resort.sourceUrl),
+              onOpen: widget.onOpenAttribution,
+            ),
+          ],
         ],
         if (selected.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text('${l10n.plannerResortSelected}: $selected'),
+          FnuggAttributionLink(
+            key: const Key('fnugg-selected-link'),
+            label: 'Fnugg.no',
+            uri: fnuggAttributionUri(_sourceForSelected()),
+            onOpen: widget.onOpenAttribution,
+          ),
         ],
       ],
     );

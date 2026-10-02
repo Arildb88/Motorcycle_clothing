@@ -6,6 +6,7 @@ class SkiResort {
     required this.lat,
     required this.lon,
     this.straightLineDistanceM,
+    this.sourceUrl,
   });
 
   final String id;
@@ -15,6 +16,9 @@ class SkiResort {
 
   /// Straight-line meters from a nearby search. Null for name search.
   final int? straightLineDistanceM;
+
+  /// Fnugg resort page when the API provided a documented path. Otherwise null.
+  final String? sourceUrl;
 
   String get providerPlaceId => 'fnugg:$id';
 }

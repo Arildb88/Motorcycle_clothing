@@ -1,4 +1,5 @@
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/services/resorts/fnugg_source.dart';
 import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
 
@@ -78,5 +79,6 @@ SkiResort? _resort(Map row) {
     lat: lat.toDouble(),
     lon: lon.toDouble(),
     straightLineDistanceM: distance is num ? distance.round() : null,
+    sourceUrl: acceptedFnuggSourceUrl(row['sourceUrl']),
   );
 }
