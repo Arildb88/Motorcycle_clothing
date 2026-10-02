@@ -248,6 +248,117 @@ void main() {
     expect(find.textContaining('°C'), findsNothing);
     expect(find.textContaining('m/s'), findsNothing);
   });
+
+  testWidgets('analysis compares nearby departures without ranking one', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _analysisApp(
+        home: RideAnalysisResultScreen(
+          payload: {
+            'route': {'name': 'Hill loop'},
+            'weather': {
+              'minTempC': 4,
+              'maxTempC': 6,
+              'maxRainProbPct': 20,
+              'maxWindMs': 5,
+            },
+            'departureComparison': {
+              'variesByTime': true,
+              'alternatives': [
+                {
+                  'departureAt': '2026-10-03T14:00:00.000Z',
+                  'selected': false,
+                  'available': true,
+                  'conditions': {
+                    'minTempC': 4,
+                    'maxTempC': 4,
+                    'maxRainProbPct': 10,
+                    'maxPrecipMm': 0,
+                    'maxWindMs': 3,
+                    'forecastFrom': '2026-10-03T14:00:00.000Z',
+                    'forecastTo': '2026-10-03T15:00:00.000Z',
+                  },
+                },
+                {
+                  'departureAt': '2026-10-03T15:00:00.000Z',
+                  'selected': true,
+                  'available': false,
+                  'unavailableReason': 'out_of_range',
+                  'missingAt': ['2026-10-03T16:00:00.000Z'],
+                },
+              ],
+            },
+            'recommendation': {
+              'wear': const <Map<String, dynamic>>[],
+              'pack': const <Map<String, dynamic>>[],
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('departure-comparison')), findsOneWidget);
+    expect(find.text('Departure times'), findsOneWidget);
+    expect(find.textContaining('Your departure'), findsOneWidget);
+    expect(find.text('Forecast unavailable for this time'), findsOneWidget);
+    expect(
+      find.text('Temp 4–4 °C · Rain 10% · Precipitation 0.0 mm · Wind 3 m/s'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('No forecast for'), findsOneWidget);
+    expect(find.textContaining('Best'), findsNothing);
+    expect(find.textContaining('Score'), findsNothing);
+  });
+
+  testWidgets('analysis keeps departure comparison in Norwegian', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _analysisApp(
+        locale: const Locale('nb'),
+        home: const RideAnalysisResultScreen(
+          payload: {
+            'route': {'name': 'Runde'},
+            'departureComparison': {
+              'variesByTime': false,
+              'alternatives': [
+                {
+                  'departureAt': '2026-10-03T15:00:00.000Z',
+                  'selected': true,
+                  'available': true,
+                  'conditions': {
+                    'minTempC': 1,
+                    'maxTempC': 2,
+                    'maxRainProbPct': 0,
+                    'maxPrecipMm': 0,
+                    'maxWindMs': 1,
+                    'forecastFrom': '2026-10-03T15:00:00.000Z',
+                    'forecastTo': '2026-10-03T15:00:00.000Z',
+                  },
+                },
+              ],
+            },
+            'recommendation': {
+              'wear': <Map<String, dynamic>>[],
+              'pack': <Map<String, dynamic>>[],
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Avreisetider'), findsOneWidget);
+    expect(find.textContaining('Din avreise'), findsOneWidget);
+    expect(find.textContaining('Nedbør'), findsOneWidget);
+    expect(
+      find.text('Denne prognosen endrer seg ikke mellom disse avreisetidene.'),
+      findsOneWidget,
+    );
+    expect(find.text('Departure times'), findsNothing);
+  });
 }
 
 Widget _analysisApp({

@@ -186,3 +186,146 @@ describe('WeatherService altitude', () => {
     expect(Number.isFinite(summary.points[0].airTempC)).toBe(true);
   });
 });
+
+describe('WeatherService departure comparison', () => {
+  beforeEach(() => {
+    mockedGet.mockReset();
+  });
+
+  function series(
+    hours: Array<{
+      time: string;
+      temp: number;
+      rain?: number;
+      wind?: number;
+      precip?: number;
+    }>,
+  ) {
+    return {
+      data: {
+        properties: {
+          timeseries: hours.map((hour) => ({
+            time: hour.time,
+            data: {
+              instant: {
+                details: {
+                  air_temperature: hour.temp,
+                  wind_speed: hour.wind ?? 2,
+                },
+              },
+              next_1_hours: {
+                details: {
+                  probability_of_precipitation: hour.rain ?? 0,
+                  precipitation_amount: hour.precip ?? 0,
+                },
+              },
+            },
+          })),
+        },
+      },
+    };
+  }
+
+  it('fetches each place once and leaves an out-of-range departure without invented numbers', async () => {
+    mockedGet.mockResolvedValue(
+      series([
+        { time: '2026-10-03T14:00:00Z', temp: 4, rain: 10, wind: 3, precip: 0 },
+        {
+          time: '2026-10-03T15:00:00Z',
+          temp: 6,
+          rain: 20,
+          wind: 4,
+          precip: 0.2,
+        },
+        {
+          time: '2026-10-03T16:00:00Z',
+          temp: 5,
+          rain: 80,
+          wind: 7,
+          precip: 1.4,
+        },
+        {
+          time: '2026-10-03T17:00:00Z',
+          temp: 3,
+          rain: 30,
+          wind: 5,
+          precip: 0.4,
+        },
+      ]),
+    );
+    const { weather, upsert } = service('met');
+    const place = { lat: 60.5, lon: 8.25, altitudeM: 120 };
+    const rows = await weather.compareSampleGroups([
+      [{ ...place, at: new Date('2026-10-03T14:00:00Z') }],
+      [{ ...place, at: new Date('2026-10-03T15:00:00Z') }],
+      [{ ...place, at: new Date('2026-10-03T16:00:00Z') }],
+      [{ ...place, at: new Date('2026-10-05T15:00:00Z') }],
+    ]);
+
+    expect(mockedGet).toHaveBeenCalledTimes(1);
+    expect(rows).toHaveLength(4);
+    expect(rows[0].available).toBe(true);
+    expect(rows[0].conditions).toMatchObject({
+      minTempC: 4,
+      maxTempC: 4,
+      maxRainProbPct: 10,
+      maxPrecipMm: 0,
+      maxWindMs: 3,
+      forecastFrom: '2026-10-03T14:00:00.000Z',
+      forecastTo: '2026-10-03T14:00:00.000Z',
+    });
+    expect(rows[2].conditions?.maxPrecipMm).toBe(1.4);
+    expect(rows[3].available).toBe(false);
+    expect(rows[3].unavailableReason).toBe('out_of_range');
+    expect(rows[3].conditions).toBeUndefined();
+    expect(JSON.stringify(rows)).not.toMatch(/score|best|rank/i);
+    const keys = upsert.mock.calls.map(
+      (call) => call[0].where.cacheKey as string,
+    );
+    expect(keys).toContain('series:met:60.500,8.250@120m');
+    expect(keys).toContain('met:60.500,8.250@120m@2026-10-03T15');
+    expect(keys.some((key) => key.includes('2026-10-05'))).toBe(false);
+  });
+
+  it('reuses a stored series for a second comparison', async () => {
+    const payload = series([
+      { time: '2026-10-03T15:00:00Z', temp: 1, rain: 0, wind: 1 },
+    ]).data.properties.timeseries;
+    const findUnique = jest.fn(({ where }: { where: { cacheKey: string } }) => {
+      if (where.cacheKey !== 'series:met:59.910,10.750') return null;
+      return {
+        cacheKey: where.cacheKey,
+        payloadJson: JSON.stringify(payload),
+        validUntil: new Date(Date.now() + 60_000),
+      };
+    });
+    const prisma = {
+      weatherCache: { findUnique, upsert: jest.fn().mockResolvedValue({}) },
+    };
+    const weather = new WeatherService(
+      {
+        get: (key: string, fallback?: string) =>
+          key === 'WEATHER_PROVIDER' ? 'met' : fallback,
+      } as ConfigService,
+      prisma as unknown as PrismaService,
+    );
+    const rows = await weather.compareSampleGroups([
+      [{ lat: 59.91, lon: 10.75, at: new Date('2026-10-03T15:10:00Z') }],
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(rows[0].conditions?.minTempC).toBe(1);
+    expect(rows[0].conditions?.forecastFrom).toBe('2026-10-03T15:00:00.000Z');
+  });
+
+  it('does not call MET for the mock provider and does not pretend the hours differ', async () => {
+    const { weather } = service('mock');
+    const rows = await weather.compareSampleGroups([
+      [{ lat: 59.91, lon: 10.75, at: new Date('2026-10-03T15:00:00Z') }],
+      [{ lat: 59.91, lon: 10.75, at: new Date('2026-10-03T16:00:00Z') }],
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(rows[0].variesByTime).toBe(false);
+    expect(rows[1].variesByTime).toBe(false);
+    expect(rows[0].conditions?.minTempC).toBe(rows[1].conditions?.minTempC);
+  });
+});

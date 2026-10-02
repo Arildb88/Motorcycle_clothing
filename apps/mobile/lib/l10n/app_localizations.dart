@@ -2828,6 +2828,60 @@ abstract class AppLocalizations {
   /// **'Rain {value}'**
   String analysisRainChip(String value);
 
+  /// No description provided for @departureCompareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure times'**
+  String get departureCompareTitle;
+
+  /// No description provided for @departureCompareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby departures along this route. Compare the conditions. None is ranked.'**
+  String get departureCompareHint;
+
+  /// No description provided for @departureCompareYours.
+  ///
+  /// In en, this message translates to:
+  /// **'Your departure'**
+  String get departureCompareYours;
+
+  /// No description provided for @departureCompareUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast unavailable for this time'**
+  String get departureCompareUnavailable;
+
+  /// No description provided for @departureCompareForecastAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast for {time}'**
+  String departureCompareForecastAt(String time);
+
+  /// No description provided for @departureCompareForecastSpan.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast {from}–{to}'**
+  String departureCompareForecastSpan(String from, String to);
+
+  /// No description provided for @departureComparePrecip.
+  ///
+  /// In en, this message translates to:
+  /// **'Precipitation {value}'**
+  String departureComparePrecip(String value);
+
+  /// No description provided for @departureCompareMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No forecast for {time}'**
+  String departureCompareMissing(String time);
+
+  /// No description provided for @departureCompareStatic.
+  ///
+  /// In en, this message translates to:
+  /// **'This forecast does not change between these departure times.'**
+  String get departureCompareStatic;
+
   /// No description provided for @analysisWindChip.
   ///
   /// In en, this message translates to:

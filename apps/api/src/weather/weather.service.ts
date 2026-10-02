@@ -3,8 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { RouteWeatherSummary, WeatherPoint } from '../recommend/weather.types';
-import { selectMetTimeseriesIndex } from './met-timeseries';
-import { metLocationForecastUrl, weatherCacheKey } from './met-request';
+import {
+  comparisonRowFromSamples,
+  type DepartureComparisonRow,
+  type DepartureSampleConditions,
+} from './departure-compare';
+import { matchMetTimeseries, selectMetTimeseriesIndex } from './met-timeseries';
+import {
+  metLocationForecastUrl,
+  weatherCacheKey,
+  weatherSeriesCacheKey,
+} from './met-request';
 
 @Injectable()
 export class WeatherService {
@@ -66,6 +75,124 @@ export class WeatherService {
     return this.summarize(provider, weatherPoints);
   }
 
+  /**
+   * Conditions for several departures that share the same route samples.
+   * One locationforecast request covers every departure at that place.
+   * The existing per-hour point cache is filled for samples that are in range
+   * so the recommendation for the chosen departure does not fetch them again.
+   * Out-of-range times stay unavailable. They are not replaced with mock weather.
+   */
+  async compareSampleGroups(
+    groups: Array<
+      Array<{
+        lat: number;
+        lon: number;
+        at?: Date;
+        altitudeM?: number | null;
+      }>
+    >,
+  ): Promise<DepartureComparisonRow[]> {
+    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
+    const variesByTime = provider === 'met';
+    const seriesByPlace = new Map<string, Promise<MetSeriesEntry[] | null>>();
+    const mockByPlace = new Map<string, WeatherPoint>();
+
+    const rows: DepartureSampleConditions[][] = [];
+    for (const group of groups) {
+      const samples: DepartureSampleConditions[] = [];
+      for (const sample of group) {
+        const requestedAt = sample.at?.toISOString() ?? '';
+        if (!sample.at || Number.isNaN(sample.at.getTime())) {
+          samples.push({
+            requestedAt,
+            available: false,
+            reason: 'missing',
+          });
+          continue;
+        }
+
+        if (!variesByTime) {
+          const place = weatherSeriesCacheKey({
+            provider,
+            lat: sample.lat,
+            lon: sample.lon,
+            altitudeM: sample.altitudeM,
+          });
+          let point = mockByPlace.get(place);
+          if (!point) {
+            point = withGroundElevation(
+              this.mockWeather(sample.lat, sample.lon),
+              sample.altitudeM,
+            );
+            mockByPlace.set(place, point);
+          }
+          await this.storePoint(
+            weatherCacheKey({
+              provider,
+              lat: sample.lat,
+              lon: sample.lon,
+              at: sample.at,
+              altitudeM: sample.altitudeM,
+            }),
+            point,
+          );
+          samples.push(
+            sampleConditions(requestedAt, sample.at.toISOString(), point),
+          );
+          continue;
+        }
+
+        const series = await this.metSeriesFor(
+          sample.lat,
+          sample.lon,
+          sample.altitudeM,
+          seriesByPlace,
+        );
+        if (!series) {
+          samples.push({
+            requestedAt,
+            available: false,
+            reason: 'missing',
+          });
+          continue;
+        }
+        const match = matchMetTimeseries(
+          series.map((entry) => entry.time),
+          sample.at,
+        );
+        const point =
+          match == null
+            ? null
+            : metPointFromEntry(series[match.index], sample.lat, sample.lon);
+        if (!match || !match.inRange || !point) {
+          samples.push({
+            requestedAt,
+            available: false,
+            reason: match && !match.inRange ? 'out_of_range' : 'missing',
+          });
+          continue;
+        }
+        const stored = withGroundElevation(point, sample.altitudeM);
+        await this.storePoint(
+          weatherCacheKey({
+            provider,
+            lat: sample.lat,
+            lon: sample.lon,
+            at: sample.at,
+            altitudeM: sample.altitudeM,
+          }),
+          stored,
+        );
+        samples.push(sampleConditions(requestedAt, match.matchedAt, stored));
+      }
+      rows.push(samples);
+    }
+
+    return rows.map((samples) =>
+      comparisonRowFromSamples(samples, variesByTime),
+    );
+  }
+
   private summarize(
     provider: string,
     weatherPoints: WeatherPoint[],
@@ -116,21 +243,88 @@ export class WeatherService {
         : this.mockWeather(lat, lon);
     const point = withGroundElevation(fetched, altitudeM);
 
+    await this.storePoint(key, point);
+    return point;
+  }
+
+  private async storePoint(key: string, point: WeatherPoint): Promise<void> {
+    await this.storeJson(key, point);
+  }
+
+  private async storeJson(key: string, payload: unknown): Promise<void> {
     const validUntil = new Date(Date.now() + 15 * 60 * 1000);
+    const payloadJson = JSON.stringify(payload);
     await this.prisma.weatherCache.upsert({
       where: { cacheKey: key },
       create: {
         cacheKey: key,
-        payloadJson: JSON.stringify(point),
+        payloadJson,
         validUntil,
       },
       update: {
-        payloadJson: JSON.stringify(point),
+        payloadJson,
         validUntil,
       },
     });
+  }
 
-    return point;
+  /**
+   * Locationforecast for one place, reused across departure hours.
+   * A failed or empty payload is not cached, so the next request can retry.
+   */
+  private metSeriesFor(
+    lat: number,
+    lon: number,
+    altitudeM: number | null | undefined,
+    memo: Map<string, Promise<MetSeriesEntry[] | null>>,
+  ): Promise<MetSeriesEntry[] | null> {
+    const key = weatherSeriesCacheKey({
+      provider: 'met',
+      lat,
+      lon,
+      altitudeM,
+    });
+    const pending = memo.get(key);
+    if (pending) return pending;
+    const loading = this.loadMetSeries(lat, lon, altitudeM, key);
+    memo.set(key, loading);
+    return loading;
+  }
+
+  private async loadMetSeries(
+    lat: number,
+    lon: number,
+    altitudeM: number | null | undefined,
+    key: string,
+  ): Promise<MetSeriesEntry[] | null> {
+    const cached = await this.prisma.weatherCache.findUnique({
+      where: { cacheKey: key },
+    });
+    if (cached && cached.validUntil > new Date()) {
+      const parsed = parseMetSeries(cached.payloadJson);
+      if (parsed) return parsed;
+    }
+
+    const userAgent = this.config.get(
+      'MET_USER_AGENT',
+      'MotorcycleClothingApp/0.1 (dev)',
+    );
+    try {
+      const url = metLocationForecastUrl(lat, lon, altitudeM);
+      const { data } = await axios.get(url, {
+        headers: { 'User-Agent': userAgent, Accept: 'application/json' },
+        timeout: 8000,
+      });
+      const timeseries = data?.properties?.timeseries;
+      if (!Array.isArray(timeseries) || timeseries.length === 0) return null;
+      await this.storeJson(key, timeseries);
+      return timeseries as MetSeriesEntry[];
+    } catch {
+      this.logger.warn(
+        `MET fetch failed for ${lat},${lon}; comparison has no series`,
+      );
+      return null;
+    }
   }
 
   private mockWeather(lat: number, lon: number): WeatherPoint {
@@ -217,4 +411,68 @@ function withGroundElevation(
 ): WeatherPoint {
   if (altitudeM == null || !Number.isFinite(altitudeM)) return point;
   return { ...point, groundElevationM: Math.round(altitudeM) };
+}
+
+type MetSlot = {
+  details?: {
+    probability_of_precipitation?: number;
+    precipitation_amount?: number;
+  };
+  summary?: { symbol_code?: string };
+};
+
+type MetSeriesEntry = {
+  time?: string;
+  data?: {
+    instant?: { details?: { air_temperature?: number; wind_speed?: number } };
+    next_1_hours?: MetSlot;
+    next_6_hours?: MetSlot;
+  };
+};
+
+function parseMetSeries(payloadJson: string): MetSeriesEntry[] | null {
+  try {
+    const parsed = JSON.parse(payloadJson) as unknown;
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    return parsed as MetSeriesEntry[];
+  } catch {
+    return null;
+  }
+}
+
+function metPointFromEntry(
+  entry: MetSeriesEntry | undefined,
+  lat: number,
+  lon: number,
+): WeatherPoint | null {
+  const instant = entry?.data?.instant?.details;
+  if (instant?.air_temperature == null) return null;
+  const next = entry?.data?.next_1_hours ?? entry?.data?.next_6_hours ?? {};
+  return {
+    lat,
+    lon,
+    airTempC: Number(instant.air_temperature),
+    precipitationProbPct: Number(
+      next.details?.probability_of_precipitation ?? 0,
+    ),
+    precipitationMm: Number(next.details?.precipitation_amount ?? 0),
+    windSpeedMs: Number(instant.wind_speed ?? 0),
+    symbol: next.summary?.symbol_code,
+  };
+}
+
+function sampleConditions(
+  requestedAt: string,
+  forecastAt: string,
+  point: WeatherPoint,
+): DepartureSampleConditions {
+  return {
+    requestedAt,
+    available: true,
+    forecastAt,
+    airTempC: point.airTempC,
+    precipitationProbPct: point.precipitationProbPct,
+    precipitationMm: point.precipitationMm,
+    windSpeedMs: point.windSpeedMs,
+  };
 }

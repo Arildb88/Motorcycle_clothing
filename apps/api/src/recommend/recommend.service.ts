@@ -5,6 +5,7 @@ import {
 } from '../elevation/elevation.port';
 import { lookupSampleAltitudes } from '../elevation/lookup-sample-altitudes';
 import { RoutesService } from '../routes/routes.service';
+import { nearbyDepartureTimes } from '../weather/departure-compare';
 import { WeatherService } from '../weather/weather.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -136,14 +137,17 @@ export class RecommendService {
         lon: sample.lon,
       })),
     );
-    const weather = await this.weather.forRouteSamples(
-      sampled.samples.map((sample, index) => ({
-        lat: sample.lat,
-        lon: sample.lon,
-        at: sample.at,
-        altitudeM: elevation.points[index]?.elevationM ?? null,
-      })),
+    const sampleRequests = sampled.samples.map((sample, index) => ({
+      lat: sample.lat,
+      lon: sample.lon,
+      at: sample.at,
+      altitudeM: elevation.points[index]?.elevationM ?? null,
+    }));
+    const departureComparison = await this.routeDepartureComparison(
+      departAt,
+      sampleRequests,
     );
+    const weather = await this.weather.forRouteSamples(sampleRequests);
     if (elevation.attribution) {
       weather.elevation = {
         provider: elevation.provider,
@@ -210,6 +214,7 @@ export class RecommendService {
         })),
       },
       departureAt: _departureAt ?? new Date().toISOString(),
+      ...(departureComparison ? { departureComparison } : {}),
       weather,
       comfort: {
         coldSensitivity: profile?.coldSensitivity ?? 0,
@@ -305,14 +310,17 @@ export class RecommendService {
         lon: sample.lon,
       })),
     );
-    const weather = await this.weather.forRouteSamples(
-      sampled.samples.map((sample, index) => ({
-        lat: sample.lat,
-        lon: sample.lon,
-        at: sample.at,
-        altitudeM: elevation.points[index]?.elevationM ?? null,
-      })),
+    const sampleRequests = sampled.samples.map((sample, index) => ({
+      lat: sample.lat,
+      lon: sample.lon,
+      at: sample.at,
+      altitudeM: elevation.points[index]?.elevationM ?? null,
+    }));
+    const departureComparison = await this.routeDepartureComparison(
+      departAt,
+      sampleRequests,
     );
+    const weather = await this.weather.forRouteSamples(sampleRequests);
     if (elevation.attribution) {
       weather.elevation = {
         provider: elevation.provider,
@@ -359,6 +367,7 @@ export class RecommendService {
         })),
       },
       departureAt: departureAt ?? new Date().toISOString(),
+      ...(departureComparison ? { departureComparison } : {}),
       weather,
       comfort: {
         coldSensitivity: null,
@@ -647,6 +656,10 @@ export class RecommendService {
       timeProgress: sample.timeProgress,
       altitudeM: elevation.points[index]?.elevationM ?? null,
     }));
+    const departureComparison = await this.routeDepartureComparison(
+      departAt,
+      requests,
+    );
     const fetched =
       requests.length === 0
         ? null
@@ -731,6 +744,7 @@ export class RecommendService {
         })),
       },
       departureAt: departureAt ?? new Date().toISOString(),
+      ...(departureComparison ? { departureComparison } : {}),
       weather,
       comfort: {
         coldSensitivity: null,
@@ -763,6 +777,56 @@ export class RecommendService {
         reason:
           'Cross-country foundation does not apply motorcycle personal offsets, alpine lift weighting, or road routing',
       },
+    };
+  }
+
+  /**
+   * Compare nearby departures on samples the route already produced.
+   * Geometry and elevation stay as they are. Only the sample clock moves.
+   * Alpine and snowboard are site forecasts, so they do not call this.
+   */
+  private async routeDepartureComparison(
+    anchor: Date,
+    samples: Array<{
+      lat: number;
+      lon: number;
+      at: Date;
+      altitudeM?: number | null;
+    }>,
+  ) {
+    if (samples.length === 0) return undefined;
+    if (typeof this.weather.compareSampleGroups !== 'function')
+      return undefined;
+    const departures = nearbyDepartureTimes(anchor, new Date());
+    if (departures.length < 2) return undefined;
+    const anchorMs = anchor.getTime();
+    const groups = departures.map((departure) => {
+      const delta = departure.getTime() - anchorMs;
+      return samples.map((sample) => ({
+        lat: sample.lat,
+        lon: sample.lon,
+        altitudeM: sample.altitudeM ?? null,
+        at: new Date(sample.at.getTime() + delta),
+      }));
+    });
+    const compared = await this.weather.compareSampleGroups(groups);
+    return {
+      variesByTime: compared[0]?.variesByTime ?? false,
+      alternatives: departures.map((departure, index) => {
+        const row = compared[index];
+        return {
+          departureAt: departure.toISOString(),
+          selected: departure.getTime() === anchorMs,
+          available: row?.available ?? false,
+          ...(row?.unavailableReason
+            ? { unavailableReason: row.unavailableReason }
+            : {}),
+          ...(row?.conditions ? { conditions: row.conditions } : {}),
+          ...(row?.missingAt && row.missingAt.length > 0
+            ? { missingAt: row.missingAt }
+            : {}),
+        };
+      }),
     };
   }
 

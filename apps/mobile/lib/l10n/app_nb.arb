@@ -617,6 +617,46 @@
       }
     }
   },
+  "departureCompareTitle": "Avreisetider",
+  "departureCompareHint": "Nærliggende avreiser langs ruten. Sammenlign forholdene. Ingen er rangert.",
+  "departureCompareYours": "Din avreise",
+  "departureCompareUnavailable": "Prognose utilgjengelig for dette tidspunktet",
+  "departureCompareForecastAt": "Prognose for {time}",
+  "@departureCompareForecastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "departureCompareForecastSpan": "Prognose {from}–{to}",
+  "@departureCompareForecastSpan": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "departureComparePrecip": "Nedbør {value}",
+  "@departureComparePrecip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "departureCompareMissing": "Ingen prognose for {time}",
+  "@departureCompareMissing": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "departureCompareStatic": "Denne prognosen endrer seg ikke mellom disse avreisetidene.",
   "analysisWindChip": "Vind {value}",
   "@analysisWindChip": {
     "placeholders": {

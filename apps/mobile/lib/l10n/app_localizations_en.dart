@@ -1539,6 +1539,44 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get departureCompareTitle => 'Departure times';
+
+  @override
+  String get departureCompareHint =>
+      'Nearby departures along this route. Compare the conditions. None is ranked.';
+
+  @override
+  String get departureCompareYours => 'Your departure';
+
+  @override
+  String get departureCompareUnavailable =>
+      'Forecast unavailable for this time';
+
+  @override
+  String departureCompareForecastAt(String time) {
+    return 'Forecast for $time';
+  }
+
+  @override
+  String departureCompareForecastSpan(String from, String to) {
+    return 'Forecast $from–$to';
+  }
+
+  @override
+  String departureComparePrecip(String value) {
+    return 'Precipitation $value';
+  }
+
+  @override
+  String departureCompareMissing(String time) {
+    return 'No forecast for $time';
+  }
+
+  @override
+  String get departureCompareStatic =>
+      'This forecast does not change between these departure times.';
+
+  @override
   String analysisWindChip(String value) {
     return 'Wind $value';
   }

@@ -617,6 +617,46 @@
       }
     }
   },
+  "departureCompareTitle": "Departure times",
+  "departureCompareHint": "Nearby departures along this route. Compare the conditions. None is ranked.",
+  "departureCompareYours": "Your departure",
+  "departureCompareUnavailable": "Forecast unavailable for this time",
+  "departureCompareForecastAt": "Forecast for {time}",
+  "@departureCompareForecastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "departureCompareForecastSpan": "Forecast {from}–{to}",
+  "@departureCompareForecastSpan": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "departureComparePrecip": "Precipitation {value}",
+  "@departureComparePrecip": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "departureCompareMissing": "No forecast for {time}",
+  "@departureCompareMissing": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "departureCompareStatic": "This forecast does not change between these departure times.",
   "analysisWindChip": "Wind {value}",
   "@analysisWindChip": {
     "placeholders": {

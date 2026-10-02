@@ -1,4 +1,8 @@
-import { selectMetTimeseriesIndex } from './met-timeseries';
+import {
+  FORECAST_MATCH_MAX_GAP_MS,
+  matchMetTimeseries,
+  selectMetTimeseriesIndex,
+} from './met-timeseries';
 
 describe('selectMetTimeseriesIndex', () => {
   const times = [
@@ -29,5 +33,27 @@ describe('selectMetTimeseriesIndex', () => {
         new Date('2026-10-01T15:10:00Z'),
       ),
     ).toBe(1);
+  });
+});
+
+describe('matchMetTimeseries', () => {
+  const times = ['2026-10-02T12:00:00Z', '2026-10-02T18:00:00Z'];
+
+  it('accepts a step within the published gap and rejects a later hole', () => {
+    const near = matchMetTimeseries(times, new Date('2026-10-02T15:00:00Z'));
+    expect(near?.inRange).toBe(true);
+    expect(near?.gapMs).toBe(FORECAST_MATCH_MAX_GAP_MS);
+    expect(near?.matchedAt).toBe('2026-10-02T12:00:00.000Z');
+
+    const far = matchMetTimeseries(times, new Date('2026-10-04T12:00:00Z'));
+    expect(far?.inRange).toBe(false);
+    expect(far?.matchedAt).toBe('2026-10-02T18:00:00.000Z');
+  });
+
+  it('returns null when the series has no time', () => {
+    expect(matchMetTimeseries([], new Date('2026-10-02T12:00:00Z'))).toBeNull();
+    expect(
+      matchMetTimeseries(['nope'], new Date('2026-10-02T12:00:00Z')),
+    ).toBeNull();
   });
 });

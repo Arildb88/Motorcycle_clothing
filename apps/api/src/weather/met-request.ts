@@ -31,3 +31,22 @@ export function weatherCacheKey(input: {
       : '';
   return `${place}${altitude}${hour}`;
 }
+
+/**
+ * One locationforecast payload covers every hour at this place.
+ * The key has no ETA, so a departure comparison can reuse it.
+ * The `series:` prefix keeps it distinct from a cached weather point.
+ */
+export function weatherSeriesCacheKey(input: {
+  provider: string;
+  lat: number;
+  lon: number;
+  altitudeM?: number | null;
+}): string {
+  return `series:${weatherCacheKey({
+    provider: input.provider,
+    lat: input.lat,
+    lon: input.lon,
+    altitudeM: input.altitudeM,
+  })}`;
+}

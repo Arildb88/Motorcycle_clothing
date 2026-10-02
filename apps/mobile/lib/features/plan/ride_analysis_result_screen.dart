@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:motorcycle_clothing/features/plan/departure_comparison_section.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_presentation.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
@@ -105,6 +106,13 @@ class RideAnalysisResultScreen extends StatelessWidget {
                 ),
             ],
           ),
+          if (payload['departureComparison'] is Map)
+            DepartureComparisonSection(
+              comparison: Map<String, dynamic>.from(
+                payload['departureComparison'] as Map,
+              ),
+              formatter: fmt,
+            ),
           ...recommendationContextWidgets(
             context,
             view,

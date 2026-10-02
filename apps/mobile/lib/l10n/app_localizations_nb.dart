@@ -1538,6 +1538,44 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get departureCompareTitle => 'Avreisetider';
+
+  @override
+  String get departureCompareHint =>
+      'Nærliggende avreiser langs ruten. Sammenlign forholdene. Ingen er rangert.';
+
+  @override
+  String get departureCompareYours => 'Din avreise';
+
+  @override
+  String get departureCompareUnavailable =>
+      'Prognose utilgjengelig for dette tidspunktet';
+
+  @override
+  String departureCompareForecastAt(String time) {
+    return 'Prognose for $time';
+  }
+
+  @override
+  String departureCompareForecastSpan(String from, String to) {
+    return 'Prognose $from–$to';
+  }
+
+  @override
+  String departureComparePrecip(String value) {
+    return 'Nedbør $value';
+  }
+
+  @override
+  String departureCompareMissing(String time) {
+    return 'Ingen prognose for $time';
+  }
+
+  @override
+  String get departureCompareStatic =>
+      'Denne prognosen endrer seg ikke mellom disse avreisetidene.';
+
+  @override
   String analysisWindChip(String value) {
     return 'Vind $value';
   }
