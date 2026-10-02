@@ -23,12 +23,12 @@ class RidePlannerState {
     int? durationMin,
     this.activityType = 'motorcycle',
     this.inputs = const ActivityPlanningInputs(),
-  })  : waypoints = WaypointListOps.ensureMinimum(
-          waypoints ?? const <WaypointDraft>[],
-          minimumPlanningWaypoints(activityType),
-        ),
-        anchorAt = anchorAt ?? DateTime.now(),
-        durationMin = durationMin ?? defaultPlanningDurationMin(activityType);
+  }) : waypoints = WaypointListOps.ensureMinimum(
+         waypoints ?? const <WaypointDraft>[],
+         minimumPlanningWaypoints(activityType),
+       ),
+       anchorAt = anchorAt ?? DateTime.now(),
+       durationMin = durationMin ?? defaultPlanningDurationMin(activityType);
 
   final String? routeId;
   final String routeName;
@@ -44,20 +44,24 @@ class RidePlannerState {
 
   bool get usesRoadPreview => activityUsesRoadPreview(activityType);
 
+  /// Resolved stops sent to the road-preview request, in waypoint order.
+  List<GeoPoint> get roadPreviewPoints => [
+    for (final waypoint in waypoints)
+      if (waypoint.geoPoint != null) waypoint.geoPoint!,
+  ];
+
   bool get canAnalyze => WaypointListOps.canAnalyze(
-        waypoints,
-        minimum: minimumPlanningWaypoints(activityType),
-      );
+    waypoints,
+    minimum: minimumPlanningWaypoints(activityType),
+  );
 
   bool get canSave => WaypointListOps.canSave(
-        name: routeName,
-        waypoints: waypoints,
-        minimum: minimumPlanningWaypoints(activityType),
-      );
+    name: routeName,
+    waypoints: waypoints,
+    minimum: minimumPlanningWaypoints(activityType),
+  );
 
-  Map<String, dynamic> preferencesJson() => {
-        'avoidMotorways': avoidMotorways,
-      };
+  Map<String, dynamic> preferencesJson() => {'avoidMotorways': avoidMotorways};
 
   Map<String, dynamic> planRequestBody() {
     final body = <String, dynamic>{
@@ -77,14 +81,14 @@ class RidePlannerState {
   }
 
   Map<String, dynamic> routeUpsertBody() => {
-        'name': routeName.trim().isEmpty ? 'Ride plan' : routeName.trim(),
-        'activityType': activityType,
-        'waypoints': WaypointListOps.toApiWaypoints(waypoints),
-        'typicalDurationMin': durationMin,
-        'preferences': preferencesJson(),
-        if (roundTrip || WaypointListOps.looksLikeRoundTrip(waypoints))
-          'routeKind': 'loop',
-      };
+    'name': routeName.trim().isEmpty ? 'Ride plan' : routeName.trim(),
+    'activityType': activityType,
+    'waypoints': WaypointListOps.toApiWaypoints(waypoints),
+    'typicalDurationMin': durationMin,
+    'preferences': preferencesJson(),
+    if (roundTrip || WaypointListOps.looksLikeRoundTrip(waypoints))
+      'routeKind': 'loop',
+  };
 
   Map<String, String> recommendQuery(String routeId, String departureAt) {
     return recommendationQuery(
@@ -125,14 +129,34 @@ class RidePlannerState {
   }
 }
 
+/// True when the road-preview request would change.
+///
+/// Departure time, session length, and the route name do not.
+bool roadPreviewRequestChanged(
+  RidePlannerState previous,
+  RidePlannerState next,
+) {
+  if (previous.usesRoadPreview != next.usesRoadPreview) return true;
+  if (!next.usesRoadPreview) return false;
+  if (previous.avoidMotorways != next.avoidMotorways) return true;
+  final before = previous.roadPreviewPoints;
+  final after = next.roadPreviewPoints;
+  if (before.length != after.length) return true;
+  for (var i = 0; i < before.length; i++) {
+    if (before[i].lat != after[i].lat || before[i].lon != after[i].lon) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ResolvedPlace currentLocationPlace(
   double lat,
   double lon, {
   String label = 'Current location',
-}) =>
-    ResolvedPlace(
-      providerPlaceId: 'device:$lat,$lon',
-      label: label,
-      lat: lat,
-      lon: lon,
-    );
+}) => ResolvedPlace(
+  providerPlaceId: 'device:$lat,$lon',
+  label: label,
+  lat: lat,
+  lon: lon,
+);

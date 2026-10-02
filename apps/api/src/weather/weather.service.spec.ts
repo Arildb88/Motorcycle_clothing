@@ -83,8 +83,14 @@ describe('WeatherService altitude', () => {
     expect(summary.points[0].airTempC).toBe(9);
     expect(summary.points[0].forecastAt).toBe(at.toISOString());
     expect(summary.points[0].groundElevationM).toBe(987);
-    expect(upsert.mock.calls[0][0].where.cacheKey).toBe(
-      'met:60.500,8.000@987m@2026-10-02T12',
+    const keys = upsert.mock.calls.map(
+      (call) => call[0].where.cacheKey as string,
+    );
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'series:met:60.500,8.000@987m',
+        'met:60.500,8.000@987m@2026-10-02T12',
+      ]),
     );
   });
 
@@ -184,6 +190,102 @@ describe('WeatherService altitude', () => {
     expect(summary.points).toHaveLength(1);
     expect(summary.points[0].groundElevationM).toBe(40);
     expect(Number.isFinite(summary.points[0].airTempC)).toBe(true);
+  });
+
+  it('reuses one locationforecast per place and loads distinct places together', async () => {
+    let active = 0;
+    let maxActive = 0;
+    mockedGet.mockImplementation(async (url: string) => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      active -= 1;
+      const high = new URL(url).searchParams.get('altitude') === '1000';
+      return {
+        data: {
+          properties: {
+            timeseries: [
+              {
+                time: '2026-10-02T10:00:00Z',
+                data: {
+                  instant: {
+                    details: {
+                      air_temperature: high ? -6 : 3,
+                      wind_speed: 1,
+                    },
+                  },
+                  next_1_hours: { details: {} },
+                },
+              },
+              {
+                time: '2026-10-02T12:00:00Z',
+                data: {
+                  instant: {
+                    details: {
+                      air_temperature: high ? -4 : 9,
+                      wind_speed: high ? 8 : 3,
+                    },
+                  },
+                  next_1_hours: {
+                    details: {
+                      probability_of_precipitation: high ? 40 : 5,
+                      precipitation_amount: 0,
+                    },
+                    summary: { symbol_code: 'fair_day' },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      };
+    });
+    const { weather, upsert } = service('met');
+    const summary = await weather.forRouteSamples([
+      {
+        lat: 60.5,
+        lon: 8,
+        altitudeM: 100,
+        at: new Date('2026-10-02T10:10:00Z'),
+      },
+      {
+        lat: 60.5,
+        lon: 8,
+        altitudeM: 100,
+        at: new Date('2026-10-02T12:10:00Z'),
+      },
+      {
+        lat: 61.1,
+        lon: 8.4,
+        altitudeM: 1000,
+        at: new Date('2026-10-02T12:10:00Z'),
+      },
+    ]);
+
+    expect(maxActive).toBe(2);
+    expect(mockedGet).toHaveBeenCalledTimes(2);
+    expect(summary.points.map((point) => point.airTempC)).toEqual([3, 9, -4]);
+    expect(summary.points.map((point) => point.forecastAt)).toEqual([
+      '2026-10-02T10:10:00.000Z',
+      '2026-10-02T12:10:00.000Z',
+      '2026-10-02T12:10:00.000Z',
+    ]);
+    expect(summary.points.map((point) => point.groundElevationM)).toEqual([
+      100, 100, 1000,
+    ]);
+    const keys = upsert.mock.calls.map(
+      (call) => call[0].where.cacheKey as string,
+    );
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'series:met:60.500,8.000@100m',
+        'met:60.500,8.000@100m@2026-10-02T10',
+        'met:60.500,8.000@100m@2026-10-02T12',
+        'series:met:61.100,8.400@1000m',
+        'met:61.100,8.400@1000m@2026-10-02T12',
+      ]),
+    );
+    expect(keys.filter((key) => key.startsWith('series:'))).toHaveLength(2);
   });
 });
 
@@ -315,6 +417,32 @@ describe('WeatherService departure comparison', () => {
     expect(mockedGet).not.toHaveBeenCalled();
     expect(rows[0].conditions?.minTempC).toBe(1);
     expect(rows[0].conditions?.forecastFrom).toBe('2026-10-03T15:00:00.000Z');
+  });
+
+  it('loads distinct comparison places together', async () => {
+    let active = 0;
+    let maxActive = 0;
+    mockedGet.mockImplementation(async () => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      active -= 1;
+      return series([
+        { time: '2026-10-03T15:00:00Z', temp: 2, rain: 0, wind: 1 },
+      ]);
+    });
+    const { weather } = service('met');
+    const at = new Date('2026-10-03T15:00:00Z');
+    const rows = await weather.compareSampleGroups([
+      [
+        { lat: 60.1, lon: 8.1, altitudeM: 10, at },
+        { lat: 61.2, lon: 9.2, altitudeM: 400, at },
+      ],
+    ]);
+    expect(mockedGet).toHaveBeenCalledTimes(2);
+    expect(maxActive).toBe(2);
+    expect(rows[0].available).toBe(true);
+    expect(rows[0].conditions?.minTempC).toBe(2);
   });
 
   it('does not call MET for the mock provider and does not pretend the hours differ', async () => {

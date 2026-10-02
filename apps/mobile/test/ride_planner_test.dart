@@ -76,6 +76,86 @@ void main() {
     });
   });
 
+  group('road preview requests', () {
+    RidePlannerState roadState({
+      bool avoidMotorways = false,
+      int durationMin = 30,
+      bool leaveNow = true,
+      PlanningMode planningMode = PlanningMode.departure,
+      String routeName = 'Ride',
+    }) {
+      return RidePlannerState(
+        routeName: routeName,
+        avoidMotorways: avoidMotorways,
+        durationMin: durationMin,
+        leaveNow: leaveNow,
+        planningMode: planningMode,
+        activityType: 'motorcycle',
+        waypoints: [
+          WaypointDraft.fromResolved(place('a', 'A', 59.91, 10.75)),
+          WaypointDraft.fromResolved(place('b', 'B', 59.95, 10.8)),
+        ],
+      );
+    }
+
+    test('schedule and name edits do not request another road preview', () {
+      final current = roadState();
+      expect(
+        roadPreviewRequestChanged(
+          current,
+          current.copyWith(leaveNow: false, planningMode: PlanningMode.arrival),
+        ),
+        isFalse,
+      );
+      expect(
+        roadPreviewRequestChanged(current, current.copyWith(durationMin: 90)),
+        isFalse,
+      );
+      expect(
+        roadPreviewRequestChanged(
+          current,
+          current.copyWith(routeName: 'Evening ride'),
+        ),
+        isFalse,
+      );
+    });
+
+    test(
+      'a stop change or the motorway switch does request another preview',
+      () {
+        final current = roadState();
+        expect(
+          roadPreviewRequestChanged(
+            current,
+            current.copyWith(avoidMotorways: true),
+          ),
+          isTrue,
+        );
+        final moved = current.copyWith(
+          waypoints: [
+            WaypointDraft.fromResolved(place('a', 'A', 59.91, 10.75)),
+            WaypointDraft.fromResolved(place('c', 'C', 60.1, 11.0)),
+          ],
+        );
+        expect(roadPreviewRequestChanged(current, moved), isTrue);
+      },
+    );
+
+    test('alpine session length does not request a road preview', () {
+      final alpine = RidePlannerState(
+        activityType: 'alpine_skiing',
+        durationMin: 240,
+        waypoints: [
+          WaypointDraft.fromResolved(place('g', 'Gautefall', 59.07, 8.79)),
+        ],
+      );
+      expect(
+        roadPreviewRequestChanged(alpine, alpine.copyWith(durationMin: 360)),
+        isFalse,
+      );
+    });
+  });
+
   group('planner schedule + preferences', () {
     test('leave now departure body uses departureAt', () {
       final state = RidePlannerState(

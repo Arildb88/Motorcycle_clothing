@@ -179,7 +179,11 @@ describe('altitude-aware weather', () => {
       undefined,
     ]);
     expect(summary.points.every((point) => point.airTempC === 1)).toBe(true);
-    expect(upsert.mock.calls.map((call) => call[0].where.cacheKey)).toEqual([
+    const cacheKeys = upsert.mock.calls.map(
+      (call) => call[0].where.cacheKey as string,
+    );
+    const pointKeys = cacheKeys.filter((key) => !key.startsWith('series:'));
+    expect(pointKeys).toEqual([
       weatherCacheKey({
         provider: 'met',
         ...belowSea,
@@ -191,12 +195,11 @@ describe('altitude-aware weather', () => {
       weatherCacheKey({ provider: 'met', ...summit, at, altitudeM: 2470 }),
       weatherCacheKey({ provider: 'met', ...unknown, at, altitudeM: null }),
     ]);
-    expect(upsert.mock.calls[2][0].where.cacheKey).toBe(
-      'met:59.914,10.752@2m@2026-10-02T12',
+    expect(cacheKeys.filter((key) => key.startsWith('series:'))).toHaveLength(
+      5,
     );
-    expect(upsert.mock.calls[4][0].where.cacheKey).toBe(
-      'met:62.100,7.200@2026-10-02T12',
-    );
+    expect(pointKeys[2]).toBe('met:59.914,10.752@2m@2026-10-02T12');
+    expect(pointKeys[4]).toBe('met:62.100,7.200@2026-10-02T12');
   });
 
   it('reuses a four-decimal elevation cache hit and still requests MET with that sample coordinate', async () => {
@@ -441,8 +444,13 @@ describe('altitude-aware weather', () => {
     expect(fresh.points[0].airTempC).toBe(4);
     expect(fresh.points[0].groundElevationM).toBe(12);
     expect(fresh.points[1].groundElevationM).toBe(2470);
-    expect(upsert).toHaveBeenCalledTimes(1);
-    expect(upsert.mock.calls[0][0].where.cacheKey).toBe(highKey);
+    const freshKeys = upsert.mock.calls.map(
+      (call) => call[0].where.cacheKey as string,
+    );
+    expect(freshKeys.filter((key) => !key.startsWith('series:'))).toEqual([
+      highKey,
+    ]);
+    expect(freshKeys).toContain('series:met:60.500,8.000@2470m');
 
     mockedGet.mockClear();
     upsert.mockClear();
@@ -463,7 +471,13 @@ describe('altitude-aware weather', () => {
     expect(mockedGet).toHaveBeenCalledTimes(1);
     expect(altitudeOf(metUrls()[0])).toBe('12');
     expect(stale.points[0].groundElevationM).toBe(12);
-    expect(upsert).toHaveBeenCalledTimes(1);
+    const staleKeys = upsert.mock.calls.map(
+      (call) => call[0].where.cacheKey as string,
+    );
+    expect(staleKeys.filter((key) => !key.startsWith('series:'))).toEqual([
+      lowKey,
+    ]);
+    expect(staleKeys).toContain('series:met:60.500,8.000@12m');
   });
 
   it('keeps a known height when MET fails, and does not invent one when elevation is unknown', async () => {

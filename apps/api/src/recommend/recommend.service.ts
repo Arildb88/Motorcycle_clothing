@@ -87,40 +87,97 @@ export class RecommendService {
       );
     }
 
-    if (routeId) {
-      await this.routes.touchLastUsed(userId, route.id);
-    }
+    const touched = (async () => {
+      if (routeId) await this.routes.touchLastUsed(userId, route.id);
+    })();
 
+    try {
+      const result = await this.recommendActivity(userId, route, {
+        departureAt: _departureAt,
+        intensity,
+        exposure,
+        style,
+      });
+      await touched;
+      return result;
+    } catch (error) {
+      await touched.catch(() => undefined);
+      throw error;
+    }
+  }
+
+  private async recommendActivity(
+    userId: string,
+    route: {
+      id: string;
+      name: string;
+      description: string | null;
+      activityType: string;
+      routeKind: string;
+      category: string | null;
+      isFavorite: boolean;
+      isDefaultCommute: boolean;
+      startLabel: string | null;
+      endLabel: string | null;
+      startLat: number;
+      startLon: number;
+      endLat: number;
+      endLon: number;
+      typicalDurationMin: number | null;
+      preferencesJson?: string | null;
+      waypoints?: Array<{
+        sortOrder: number;
+        lat: number;
+        lon: number;
+        label: string | null;
+      }>;
+    },
+    input: {
+      departureAt?: string;
+      intensity?: string;
+      exposure?: string;
+      style?: string;
+    },
+  ) {
     if (route.activityType === 'cycling') {
-      return this.forCycling(userId, route, _departureAt, intensity);
+      return this.forCycling(userId, route, input.departureAt, input.intensity);
     }
 
     if (isAlpineDiscipline(route.activityType)) {
-      return this.forAlpine(userId, route, _departureAt, exposure);
+      return this.forAlpine(userId, route, input.departureAt, input.exposure);
     }
 
     if (route.activityType === 'xc_skiing') {
-      return this.forXcSkiing(userId, route, _departureAt, intensity, style);
+      return this.forXcSkiing(
+        userId,
+        route,
+        input.departureAt,
+        input.intensity,
+        input.style,
+      );
     }
 
-    const profile = await this.prisma.userProfile.findUnique({
+    const profileP = this.prisma.userProfile.findUnique({
       where: { userId },
     });
-    const calibration = await this.thermalCalibration(
+    const calibrationP = this.thermalCalibration(userId, MVP_ACTIVITY_TYPE);
+    const departAt = parseDeparture(input.departureAt);
+    const fallbackPoints = this.routes.weatherPointsFor(route);
+    const roadP = this.roadGeometryFor(route, fallbackPoints);
+    const profile = await profileP;
+    const wardrobeP = this.loadActivityWardrobe(
       userId,
       MVP_ACTIVITY_TYPE,
+      profile,
     );
-    const n = calibration.n;
-    const k = calibration.shrinkageK;
-    const personalWeight = calibration.personalWeight;
-    // Manual coldSensitivity stays the prior. Feedback adds only the shrunk
-    // residual, and an empty offset adds 0.
-    const personalColdBiasC =
-      -(profile?.coldSensitivity ?? 0) + calibration.appliedBiasC;
-
-    const departAt = parseDeparture(_departureAt);
-    const fallbackPoints = this.routes.weatherPointsFor(route);
-    const road = await this.roadGeometryFor(route, fallbackPoints);
+    let sideError: unknown;
+    const side = Promise.all([calibrationP, wardrobeP]).catch(
+      (error: unknown) => {
+        sideError = error;
+        return null;
+      },
+    );
+    const road = await roadP;
     const sampled = resolveRouteWeatherSamples({
       roadGeometry: road?.points,
       providerDurationMin: road?.durationMin,
@@ -142,11 +199,30 @@ export class RecommendService {
       at: sample.at,
       altitudeM: elevation.points[index]?.elevationM ?? null,
     }));
-    const departureComparison = await this.routeDepartureComparison(
-      departAt,
-      sampleRequests,
-    );
-    const weather = await this.weather.forRouteSamples(sampleRequests);
+    let departureComparison: Awaited<
+      ReturnType<RecommendService['routeDepartureComparison']>
+    >;
+    let weather: Awaited<ReturnType<WeatherService['forRouteSamples']>>;
+    try {
+      departureComparison = await this.routeDepartureComparison(
+        departAt,
+        sampleRequests,
+      );
+      weather = await this.weather.forRouteSamples(sampleRequests);
+    } catch (error) {
+      await side;
+      throw error;
+    }
+    const ready = await side;
+    if (!ready) throw sideError;
+    const [calibration, wardrobe] = ready;
+    const n = calibration.n;
+    const k = calibration.shrinkageK;
+    const personalWeight = calibration.personalWeight;
+    // Manual coldSensitivity stays the prior. Feedback adds only the shrunk
+    // residual, and an empty offset adds 0.
+    const personalColdBiasC =
+      -(profile?.coldSensitivity ?? 0) + calibration.appliedBiasC;
     if (elevation.attribution) {
       weather.elevation = {
         provider: elevation.provider,
@@ -159,12 +235,6 @@ export class RecommendService {
       sampled.durationMin,
       road?.distanceM,
       sampled.appliedLegs,
-    );
-
-    const wardrobe = await this.loadActivityWardrobe(
-      userId,
-      MVP_ACTIVITY_TYPE,
-      profile,
     );
 
     const engine = runMotorcycleRecommendationPipeline({
@@ -212,7 +282,7 @@ export class RecommendService {
           label: w.label,
         })),
       },
-      departureAt: _departureAt ?? new Date().toISOString(),
+      departureAt: input.departureAt ?? new Date().toISOString(),
       ...(departureComparison ? { departureComparison } : {}),
       weather,
       comfort: {
@@ -291,6 +361,14 @@ export class RecommendService {
     departureAt: string | undefined,
     intensity: string | undefined,
   ) {
+    let sideError: unknown;
+    const side = Promise.all([
+      this.thermalCalibration(userId, 'cycling'),
+      this.loadActivityWardrobe(userId, 'cycling'),
+    ]).catch((error: unknown) => {
+      sideError = error;
+      return null;
+    });
     const departAt = parseDeparture(departureAt);
     const fallbackPoints = this.routes.weatherPointsFor(route);
     const road = await this.roadGeometryFor(route, fallbackPoints, 'cycling');
@@ -315,11 +393,23 @@ export class RecommendService {
       at: sample.at,
       altitudeM: elevation.points[index]?.elevationM ?? null,
     }));
-    const departureComparison = await this.routeDepartureComparison(
-      departAt,
-      sampleRequests,
-    );
-    const weather = await this.weather.forRouteSamples(sampleRequests);
+    let departureComparison: Awaited<
+      ReturnType<RecommendService['routeDepartureComparison']>
+    >;
+    let weather: Awaited<ReturnType<WeatherService['forRouteSamples']>>;
+    try {
+      departureComparison = await this.routeDepartureComparison(
+        departAt,
+        sampleRequests,
+      );
+      weather = await this.weather.forRouteSamples(sampleRequests);
+    } catch (error) {
+      await side;
+      throw error;
+    }
+    const ready = await side;
+    if (!ready) throw sideError;
+    const [calibration, wardrobe] = ready;
     if (elevation.attribution) {
       weather.elevation = {
         provider: elevation.provider,
@@ -333,10 +423,9 @@ export class RecommendService {
       road?.distanceM,
       sampled.appliedLegs,
     );
-    const calibration = await this.thermalCalibration(userId, 'cycling');
     const engine = runCyclingRecommendationPipeline({
       weather,
-      wardrobe: await this.loadActivityWardrobe(userId, 'cycling'),
+      wardrobe,
       rideDurationMin: sampled.durationMin,
       intensity,
       routeTravelSegments,
@@ -441,6 +530,14 @@ export class RecommendService {
       );
     }
     const discipline = route.activityType;
+    let sideError: unknown;
+    const side = Promise.all([
+      this.thermalCalibration(userId, discipline),
+      this.loadActivityWardrobe(userId, discipline),
+    ]).catch((error: unknown) => {
+      sideError = error;
+      return null;
+    });
     const departAt = parseDeparture(departureAt);
     const pins =
       route.waypoints && route.waypoints.length > 0
@@ -478,17 +575,26 @@ export class RecommendService {
       departAt,
       durationMin: route.typicalDurationMin ?? 240,
     });
-    const fetched =
-      requests.length === 0
-        ? null
-        : await this.weather.forRouteSamples(
-            requests.map((request) => ({
-              lat: request.lat,
-              lon: request.lon,
-              at: request.at,
-              altitudeM: request.altitudeM,
-            })),
-          );
+    let fetched: Awaited<ReturnType<WeatherService['forRouteSamples']>> | null;
+    try {
+      fetched =
+        requests.length === 0
+          ? null
+          : await this.weather.forRouteSamples(
+              requests.map((request) => ({
+                lat: request.lat,
+                lon: request.lon,
+                at: request.at,
+                altitudeM: request.altitudeM,
+              })),
+            );
+    } catch (error) {
+      await side;
+      throw error;
+    }
+    const ready = await side;
+    if (!ready) throw sideError;
+    const [calibration, wardrobe] = ready;
     const samples = requests.flatMap((request, index) => {
       const point = fetched?.points[index];
       if (!point) return [];
@@ -507,14 +613,13 @@ export class RecommendService {
         },
       ];
     });
-    const calibration = await this.thermalCalibration(userId, discipline);
     const engine = runAlpineRecommendationPipeline({
       discipline,
       exposureMode: exposure,
       durationMin: route.typicalDurationMin ?? 240,
       plan,
       samples,
-      wardrobe: await this.loadActivityWardrobe(userId, discipline),
+      wardrobe,
       personalColdBiasC: calibration.appliedBiasC,
       personalSampleCount: calibration.n,
     });
@@ -629,6 +734,14 @@ export class RecommendService {
     intensity: string | undefined,
     style: string | undefined,
   ) {
+    let sideError: unknown;
+    const side = Promise.all([
+      this.thermalCalibration(userId, 'xc_skiing'),
+      this.loadActivityWardrobe(userId, 'xc_skiing'),
+    ]).catch((error: unknown) => {
+      sideError = error;
+      return null;
+    });
     const departAt = parseDeparture(departureAt);
     const durationAssumed = !(
       route.typicalDurationMin != null && route.typicalDurationMin > 0
@@ -662,21 +775,33 @@ export class RecommendService {
       timeProgress: sample.timeProgress,
       altitudeM: elevation.points[index]?.elevationM ?? null,
     }));
-    const departureComparison = await this.routeDepartureComparison(
-      departAt,
-      requests,
-    );
-    const fetched =
-      requests.length === 0
-        ? null
-        : await this.weather.forRouteSamples(
-            requests.map((request) => ({
-              lat: request.lat,
-              lon: request.lon,
-              at: request.at,
-              altitudeM: request.altitudeM,
-            })),
-          );
+    let departureComparison: Awaited<
+      ReturnType<RecommendService['routeDepartureComparison']>
+    >;
+    let fetched: Awaited<ReturnType<WeatherService['forRouteSamples']>> | null;
+    try {
+      departureComparison = await this.routeDepartureComparison(
+        departAt,
+        requests,
+      );
+      fetched =
+        requests.length === 0
+          ? null
+          : await this.weather.forRouteSamples(
+              requests.map((request) => ({
+                lat: request.lat,
+                lon: request.lon,
+                at: request.at,
+                altitudeM: request.altitudeM,
+              })),
+            );
+    } catch (error) {
+      await side;
+      throw error;
+    }
+    const ready = await side;
+    if (!ready) throw sideError;
+    const [calibration, wardrobe] = ready;
     const points = requests.flatMap((request, index) => {
       const point = fetched?.points[index];
       if (!point) return [];
@@ -713,10 +838,9 @@ export class RecommendService {
           }
         : null,
     };
-    const calibration = await this.thermalCalibration(userId, 'xc_skiing');
     const engine = runXcRecommendationPipeline({
       weather,
-      wardrobe: await this.loadActivityWardrobe(userId, 'xc_skiing'),
+      wardrobe,
       durationMin,
       durationAssumed,
       intensity,
