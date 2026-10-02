@@ -22,7 +22,10 @@ Why: `docs/architecture/GEO_DATA_STRATEGY.md` and `docs/research/WEATHER_DATA_QU
 
 - Branch: `feature/altitude-aware-route-weather` from `dev_test` (`9cc3aae`)
 - Implementation commit: `02b59f6523acdcd263837c4153239cb55ca05bc7` — feat: add ground altitude to route weather
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/25 into `dev_test` only. Not merged to `dev` or `main`.
+- Report commit that CI passed: `8b2abcc8471fd6fbf1d83f128cf31a11f878ffa5`
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/25
+- CI: `api-ci` succeeded on that head (pull_request run 36975353586, job `test` SUCCESS). The implementation push run 36975306751 also succeeded.
+- Merge: fast-forward into `dev_test` only. `dev` and `main` are unchanged. The `dev_test` tip is the commit that adds this CI and merge record.
 
 ## Files changed
 
@@ -48,6 +51,7 @@ Why: `docs/architecture/GEO_DATA_STRATEGY.md` and `docs/research/WEATHER_DATA_QU
 - `npm test`: 20 suites, 128 tests passed.
 - `npm run build`: passed.
 - `scripts/smoke-api.sh` (`SMOKE_SKIP_UNIT=1`, `SMOKE_SKIP_BUILD=1`): passed, including `GET /api/recommend`.
+- GitHub `api-ci` on PR #25: success (run 36975353586).
 
 ## Architecture / config
 
