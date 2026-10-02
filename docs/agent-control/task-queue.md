@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
+active_id: ALPINE-001
 promotion: automatic
-handoff_generation: 5
-handoff_state: idle
+handoff_generation: 7
+handoff_state: authorized
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -26,6 +26,8 @@ handoff_state: idle
 ### Generation baseline
 
 Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `QUEUE-CONTROL-003` restored the idle baseline to `1` and did not reuse it. Generation `2` is also spent: `GEO-ELEVATION-002` completed at that generation and is consumed. Generation `3` is also spent: `ROUTING-WEATHER-002` completed at that generation and is consumed. Generation `4` is also spent: `CYCLING-001` was authorized and claimed at that generation in `6601fd8` and `74665b915ff13593fce2780d71b601fdfe2b584f`, then the owning implementation run was cancelled before completion. `QUEUE-CONTROL-005` returns `CYCLING-001` to `queued` without consuming it and without reusing generation `4`. The idle baseline remains `4`. The next from-idle human authorization, including a retry of `CYCLING-001`, must use Generation `5`. Do not reset the baseline downwards.
+
+Generation `5` is spent: a `CYCLING-001` claim at that generation was recovered without consuming the ID. Generation `6` is spent: `CYCLING-001` was authorized from idle at that generation and completed by the automatic final control update. That update authorizes `ALPINE-001` at generation `7`. Do not reuse generation `6`. Do not execute `CYCLING-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -84,7 +86,7 @@ The landed range is an automatic authorization only when `promotion` is `automat
 2. PREV is `completed` on the new tip.
 3. `consumed.md` gains exactly one new row, and that row is PREV.
 4. Exactly one queued unconsumed ID, the first such item in the Queue section, is `active`. `active_id` is that ID. No item is `blocked`. No other item is `active`.
-5. `handoff_generation` is exactly the previous generation plus 1. `handoff_state` is `authorized`.
+5. `handoff_generation` is exactly the previous generation plus 1. When the previous tip is an unclaimed from-idle token, that previous generation is the token `Generation`, not the lagging control-block value. `handoff_state` is `authorized`.
 6. `next-task.md` is that new item's promotable body plus `Generation:` set to the new generation, `Handoff-From:` set to PREV, `Authorization:` set to `authorized`, and `Promoted:` set to the UTC time the branch commit was prepared. Place them after the ID line in that order: `Generation`, `Handoff-From`, `Authorization`, `Promoted`.
 7. The report and control state on the new tip include that completion.
 
@@ -301,7 +303,7 @@ A change to docs/agent-control/next-task.md is required for a handoff and is not
 - The push does not change docs/agent-control/next-task.md.
 - The push keeps the same task ID, including a Promoted-only edit.
 - The new next-task.md is idle or blocked, its ID is none, or Authorization is not authorized.
-- Generation does not increase by exactly 1 from the parent handoff_generation.
+- Generation does not increase by exactly 1 from the previous generation. For a claimed parent, that is the parent `handoff_generation`. For an unclaimed from-idle token, that is the token `Generation`, not the lagging control-block value. Do not reuse a generation that has already appeared.
 - paused is true.
 - The parent was not idle, and this push is not the automatic final control update that completes that parent ID.
 - The commit tries to replace an active or blocked task.
@@ -632,7 +634,7 @@ Use focused routing/weather tests first. Run broader API checks only when needed
 
 ### CYCLING-001
 
-- status: queued
+- status: completed
 - title: Cycling recommendation foundation
 - source: `docs/product/CYCLING_PLAN.md`
 
@@ -654,7 +656,7 @@ Use focused domain/API tests. Mobile work is allowed only if the plan and existi
 
 ### ALPINE-001
 
-- status: queued
+- status: active
 - title: Alpine and snowboard exposure foundation
 - source: `docs/product/ALPINE_SNOWBOARD_PLAN.md`
 
@@ -741,4 +743,4 @@ Use focused tests for policy logic if executable code is added. No unrelated bro
 
 ## QUEUE-CONTROL-006 — no-claim execution
 
-Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The next retry of `CYCLING-001` must use Generation 6.
+Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The automatic final control update authorizes `ALPINE-001` at generation 7.
