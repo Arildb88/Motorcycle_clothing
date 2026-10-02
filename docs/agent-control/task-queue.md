@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: RECOMMENDATION-EXPLAIN-001
+active_id: THERMAL-FEEDBACK-001
 promotion: automatic
-handoff_generation: 33
+handoff_generation: 34
 handoff_state: authorized
 ```
 
@@ -80,6 +80,8 @@ Generation `30` is spent: `XC-TRAIL-SYNC-001` completed and the automatic final 
 Generation `31` is spent: `UX-POLISH-001` completed and the automatic final control update authorizes `DEPARTURE-COMPARE-001` at generation `32`. Do not reuse generation `31`. Do not execute `UX-POLISH-001` again.
 
 Generation `32` is spent: `DEPARTURE-COMPARE-001` completed and the automatic final control update authorizes `RECOMMENDATION-EXPLAIN-001` at generation `33`. Do not reuse generation `32`. Do not execute `DEPARTURE-COMPARE-001` again.
+
+Generation `33` is spent: `RECOMMENDATION-EXPLAIN-001` completed and the automatic final control update authorizes `THERMAL-FEEDBACK-001` at generation `34`. Do not reuse generation `33`. Do not execute `RECOMMENDATION-EXPLAIN-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1521,7 +1523,7 @@ Requirements:
 
 ### RECOMMENDATION-EXPLAIN-001
 
-- status: active
+- status: completed
 - title: Explain clothing recommendations and what to bring
 - source: explicitly approved lightweight product enhancement
 
@@ -1550,7 +1552,7 @@ Requirements:
 
 ### THERMAL-FEEDBACK-001
 
-- status: queued
+- status: active
 - title: Simple thermal recommendation feedback
 - source: explicitly approved lightweight personalization enhancement
 

@@ -1,21 +1,20 @@
 # Authorized RideWear Task
 ## Type: FEATURE
-## ID: RECOMMENDATION-EXPLAIN-001
-## Generation: 33
-## Handoff-From: DEPARTURE-COMPARE-001
+## ID: THERMAL-FEEDBACK-001
+## Generation: 34
+## Handoff-From: RECOMMENDATION-EXPLAIN-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T23:13:51Z
-## Task: Explain why RideWear recommends clothing and distinguish wear-now from useful bring-along items
-
-Build on the existing recommendation output and wardrobe/activity rules.
+## Promoted: 2026-10-02T23:26:34Z
+## Task: Add simple cold/comfortable/hot feedback after a recommendation or activity as groundwork for personal thermal calibration
 
 Requirements:
-- Add concise user-facing reasons tied only to inputs/rules RideWear actually used (for example temperature, wind, precipitation, activity/intensity, elevation or personal thermal settings when present).
-- Never fabricate causal explanations from data the recommendation engine did not use.
-- Where existing recommendation logic/data supports it, distinguish garments to wear from optional items worth bringing for changing conditions.
-- Respect activity-specific wardrobe availability, MC isolation, personal/demo separation and Alpint & snowboard/XC/cycling behavior.
-- Keep explanations simple and Norwegian-localized; handle missing inputs gracefully.
-- Prefer extending the existing recommendation contract/model minimally rather than creating a parallel recommendation engine.
-- Add deterministic tests covering explanation correctness and garment eligibility.
-- No new provider, paid service, schema migration or unrelated redesign unless the existing model makes the task impossible; if so BLOCK rather than guess.
+- Provide a minimal Norwegian UX for “for kald”, “passe” and “for varm” linked to the relevant recommendation/activity context where existing architecture safely permits.
+- Inspect the existing personal thermal/profile model first and reuse it where possible.
+- If safe within the current model, use accumulated feedback conservatively to improve the user's existing thermal preference/calibration; make the behavior deterministic, bounded and testable.
+- Do not use ML, external AI, a new provider or opaque scoring.
+- Do not let one feedback event cause a large calibration change.
+- Preserve historical/user data and existing recommendations when no feedback exists.
+- If persistent feedback requires an unauthorized schema migration, do not create one: implement the safe non-schema portion and document the exact follow-up need, or BLOCK if no meaningful safe implementation is possible.
+- Respect activity/wardrobe isolation rules.
+- Add focused tests for cold/comfortable/hot behavior and bounds.
 - Follow queue/control rules.

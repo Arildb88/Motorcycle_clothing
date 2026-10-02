@@ -1,37 +1,38 @@
-# DEPARTURE-COMPARE-001
+# RECOMMENDATION-EXPLAIN-001
 
 ## Task
 
-`DEPARTURE-COMPARE-001`, generation 32, authorized by the automatic final control update that completed `UX-POLISH-001`. The parent tip held that token at generation 31 with `UX-POLISH-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`RECOMMENDATION-EXPLAIN-001`, generation 33, authorized by the automatic final control update that completed `DEPARTURE-COMPARE-001`. The parent tip held that token at generation 32 with `DEPARTURE-COMPARE-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/departure-compare-001`
-- Implementation commit: `3cf1b110f45852a925521eb2895a478a470136fd`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/62 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/recommendation-explain-001`
+- Implementation commit: `4673568ae2bdf57829c1985fe2e327ac2399c037`
+- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Route activities can compare a few nearby departure times. The chosen departure stays labeled. Nothing is ranked as best.
+Each recommended garment can say why it is there, using only reason codes that engine already emitted for that slot.
 
-- Motorcycle, cycling, and cross-country reuse the route samples already built for the recommendation. Only the sample clock moves.
-- Two to four nearby hours are shown. A past hour is omitted unless it is the chosen departure.
-- Each row shows temperature, rain probability, precipitation, and wind, plus the forecast time those figures apply to.
-- A time outside the published forecast stays unavailable. Missing sample times are listed. Mock weather does not pretend the hours differ.
-- One MET locationforecast covers every departure at a place. The existing per-hour cache is filled for in-range samples so the chosen departure is not fetched again.
-- Alpine and snowboard stay site forecasts and do not show the comparison.
+- Wear and pack stay separate. A packed item does not receive a wear-only reason, and a worn item does not receive a pack-only reason.
+- A code is omitted when the engine did not emit it, when the slot rule does not read that input, when a liner or vent was not selected on that garment, or when a wardrobe gap belongs to another slot.
+- Missing reasons stay blank. Limit notes such as incomplete weather stay in the limits section.
+- Motorcycle clothes stay out of cycling, alpine, snowboard, and cross-country explanations. Demo clothes are not shared into another activity. A shared personal alpine garment can be explained only with cycling codes when cycling is the engine.
+- Alpine and snowboard share the alpine rules. No rain sentence is added, because that engine does not emit one.
+- A non-zero motorcycle cold-sensitivity bias is not turned into a personal-history sentence. The motorcycle engine does not emit that claim.
 
 ## Checks
 
 API, focused:
 
-- `departure-compare`, `met-timeseries`, `weather.service`, and `alpine-recommend` — 23 tests passed
-- `nest build` passed
+- `explain-kit` — 9 tests passed
+- `alpine-recommend`, `cycling-recommend`, `xc-recommend`, and `departure-compare.recommend` — 9 tests passed
+- `tsc --noEmit` reported no errors in the changed API files. Existing spec-file type errors were already present and were not changed.
 
 Flutter, in `apps/mobile`:
 
-- `flutter analyze` — no issues
-- `flutter test test/ride_analysis_result_test.dart` — 7 tests passed
+- `flutter analyze` on the four changed Dart files — no issues
+- `flutter test test/recommendation_presentation_test.dart test/ride_analysis_result_test.dart` — 12 tests passed
 
-Android, iOS, and a live MET call were not run.
+Android, iOS, and a live provider call were not run.
 
 ## Architecture / config
 
@@ -41,15 +42,15 @@ Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new p
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `DEPARTURE-COMPARE-001` completed and appended once to `consumed.md`
-- `RECOMMENDATION-EXPLAIN-001` is active
-- `active_id: RECOMMENDATION-EXPLAIN-001`
+- `RECOMMENDATION-EXPLAIN-001` completed and appended once to `consumed.md`
+- `THERMAL-FEEDBACK-001` is active
+- `active_id: THERMAL-FEEDBACK-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 33`
+- `handoff_generation: 34`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `RECOMMENDATION-EXPLAIN-001`, Generation 33, Handoff-From `DEPARTURE-COMPARE-001`, Authorization `authorized`
+- `next-task.md`: `THERMAL-FEEDBACK-001`, Generation 34, Handoff-From `RECOMMENDATION-EXPLAIN-001`, Authorization `authorized`
 
 ## Remaining
 
-A device pass of the comparison block was not run. `RECOMMENDATION-EXPLAIN-001` is authorized for a later run. This run stops after merge.
+A device pass of the explanation lines was not run. `THERMAL-FEEDBACK-001` is authorized for a later run. This run stops after merge.
