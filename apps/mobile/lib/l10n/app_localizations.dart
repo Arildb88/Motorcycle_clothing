@@ -350,6 +350,324 @@ abstract class AppLocalizations {
   /// **'Baseline recommendation — not enough personal ride evidence yet.'**
   String get reasonBaselineNoPersonalEvidence;
 
+  /// No description provided for @reasonRouteSpeedProfileUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Timing uses the route\'s own speed profile.'**
+  String get reasonRouteSpeedProfileUsed;
+
+  /// No description provided for @reasonRouteSpeedProfileUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No route speed profile was available, so a default pace was used.'**
+  String get reasonRouteSpeedProfileUnavailable;
+
+  /// No description provided for @reasonAssumedCruiseSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Cruise speed was assumed because the route did not provide one.'**
+  String get reasonAssumedCruiseSpeed;
+
+  /// No description provided for @reasonWindDirectionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind direction was not available, so airflow is not calculated as a vector.'**
+  String get reasonWindDirectionUnavailable;
+
+  /// No description provided for @reasonElevationUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Ground elevation was included with the weather request where a height was known.'**
+  String get reasonElevationUsed;
+
+  /// No description provided for @reasonElevationPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Ground elevation is missing for part of this plan.'**
+  String get reasonElevationPartial;
+
+  /// No description provided for @reasonElevationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Ground elevation was not available, so the weather request did not include height.'**
+  String get reasonElevationUnavailable;
+
+  /// No description provided for @reasonVentOrPackShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Use vents or pack a shell for changing conditions.'**
+  String get reasonVentOrPackShell;
+
+  /// No description provided for @reasonGenericCyclingKit.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a generic cycling kit because matching owned garments were not found.'**
+  String get reasonGenericCyclingKit;
+
+  /// No description provided for @reasonAssumedRideStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride effort was assumed because it was not specified.'**
+  String get reasonAssumedRideStyle;
+
+  /// No description provided for @reasonRouteGeometryFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Road geometry was unavailable, so weather samples follow the saved points.'**
+  String get reasonRouteGeometryFallback;
+
+  /// No description provided for @reasonHelmetAssumed.
+  ///
+  /// In en, this message translates to:
+  /// **'A helmet is assumed and is not chosen by this clothing kit.'**
+  String get reasonHelmetAssumed;
+
+  /// No description provided for @reasonFeetLimitingZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Feet need more warmth than the torso on this ride.'**
+  String get reasonFeetLimitingZone;
+
+  /// No description provided for @reasonHandsWindChill.
+  ///
+  /// In en, this message translates to:
+  /// **'Hands see more wind than the torso on this ride.'**
+  String get reasonHandsWindChill;
+
+  /// No description provided for @reasonUpperMountainSetsKit.
+  ///
+  /// In en, this message translates to:
+  /// **'The colder upper mountain sets what you wear.'**
+  String get reasonUpperMountainSetsKit;
+
+  /// No description provided for @reasonStayingAtBase.
+  ///
+  /// In en, this message translates to:
+  /// **'The plan stays at the base, so the base forecast sets the kit.'**
+  String get reasonStayingAtBase;
+
+  /// No description provided for @reasonVillageWeatherNotUsedAsSummit.
+  ///
+  /// In en, this message translates to:
+  /// **'Village or base weather is not used as the summit forecast.'**
+  String get reasonVillageWeatherNotUsedAsSummit;
+
+  /// No description provided for @reasonUpperSiteMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No upper-mountain site was identified, so summit conditions are unknown.'**
+  String get reasonUpperSiteMissing;
+
+  /// No description provided for @reasonUpperElevationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The upper site has no elevation, so its forecast was not requested.'**
+  String get reasonUpperElevationUnavailable;
+
+  /// No description provided for @reasonSitesNeedLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Sites could not be ordered into base and summit. Add labels or heights.'**
+  String get reasonSitesNeedLabels;
+
+  /// No description provided for @reasonMidElevationEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'The mid-mountain height is estimated, not measured.'**
+  String get reasonMidElevationEstimated;
+
+  /// No description provided for @reasonTemperatureSpread.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature differs between the base and the upper mountain.'**
+  String get reasonTemperatureSpread;
+
+  /// No description provided for @reasonHighWindAtUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind at the upper mountain is high.'**
+  String get reasonHighWindAtUpper;
+
+  /// No description provided for @reasonAssumedExposureMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exposure mode was assumed because it was not specified.'**
+  String get reasonAssumedExposureMode;
+
+  /// No description provided for @reasonGenericAlpineKit.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a generic alpine kit because matching owned garments were not found.'**
+  String get reasonGenericAlpineKit;
+
+  /// No description provided for @reasonLeaveWarmerLayerOffHill.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the warmer layer off while you are on the hill.'**
+  String get reasonLeaveWarmerLayerOffHill;
+
+  /// No description provided for @reasonBootsAreEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Boots are equipment and are not chosen by this clothing kit.'**
+  String get reasonBootsAreEquipment;
+
+  /// No description provided for @reasonGogglesAreEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Goggles are equipment and are not chosen by this clothing kit.'**
+  String get reasonGogglesAreEquipment;
+
+  /// No description provided for @reasonHelmetIsEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'A helmet is equipment and is not chosen by this clothing kit.'**
+  String get reasonHelmetIsEquipment;
+
+  /// No description provided for @reasonShortColdStopPacked.
+  ///
+  /// In en, this message translates to:
+  /// **'A short cold stop is covered by something packed, not worn the whole time.'**
+  String get reasonShortColdStopPacked;
+
+  /// No description provided for @reasonPackShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack a shell instead of wearing it the whole time.'**
+  String get reasonPackShell;
+
+  /// No description provided for @reasonVentsForClimb.
+  ///
+  /// In en, this message translates to:
+  /// **'Open vents while climbing.'**
+  String get reasonVentsForClimb;
+
+  /// No description provided for @reasonGenericXcKit.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a generic cross-country kit because matching owned garments were not found.'**
+  String get reasonGenericXcKit;
+
+  /// No description provided for @reasonAssumedIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Intensity was assumed because it was not specified.'**
+  String get reasonAssumedIntensity;
+
+  /// No description provided for @reasonAssumedDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration was assumed because the route has no saved length.'**
+  String get reasonAssumedDuration;
+
+  /// No description provided for @reasonStyleNotSpecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic or skate was not specified, so boots are not chosen.'**
+  String get reasonStyleNotSpecified;
+
+  /// No description provided for @reasonClassicBootsAreEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic boots are equipment and are not chosen by this clothing kit.'**
+  String get reasonClassicBootsAreEquipment;
+
+  /// No description provided for @reasonSkateBootsAreEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Skate boots are equipment and are not chosen by this clothing kit.'**
+  String get reasonSkateBootsAreEquipment;
+
+  /// No description provided for @reasonUserTrackNotRoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather follows your track, not a road route.'**
+  String get reasonUserTrackNotRoad;
+
+  /// No description provided for @reasonClimbReducesWornDemand.
+  ///
+  /// In en, this message translates to:
+  /// **'Climbing reduces how much insulation you need to wear.'**
+  String get reasonClimbReducesWornDemand;
+
+  /// No description provided for @reasonNoGroomingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Grooming status is not known and is not part of this recommendation.'**
+  String get reasonNoGroomingStatus;
+
+  /// No description provided for @reasonNoWaxAdvice.
+  ///
+  /// In en, this message translates to:
+  /// **'This recommendation does not include wax advice.'**
+  String get reasonNoWaxAdvice;
+
+  /// No description provided for @reasonsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this kit'**
+  String get reasonsSection;
+
+  /// No description provided for @limitsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Limits and assumptions'**
+  String get limitsSection;
+
+  /// No description provided for @wearSectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Worn for this session'**
+  String get wearSectionHint;
+
+  /// No description provided for @packSectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Packed, not worn the whole time'**
+  String get packSectionHint;
+
+  /// No description provided for @elevationRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation {min}–{max} m'**
+  String elevationRange(String min, String max);
+
+  /// No description provided for @elevationSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation {value} m'**
+  String elevationSingle(String value);
+
+  /// No description provided for @elevationEstimated.
+  ///
+  /// In en, this message translates to:
+  /// **'estimated height'**
+  String get elevationEstimated;
+
+  /// No description provided for @siteBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Base'**
+  String get siteBase;
+
+  /// No description provided for @siteMid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mid'**
+  String get siteMid;
+
+  /// No description provided for @siteUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper'**
+  String get siteUpper;
+
+  /// No description provided for @elevationAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation source: {source}'**
+  String elevationAttribution(String source);
+
   /// No description provided for @unitsSection.
   ///
   /// In en, this message translates to:

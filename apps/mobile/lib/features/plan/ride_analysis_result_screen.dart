@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:motorcycle_clothing/features/plan/recommendation_presentation.dart';
+import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
-import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
-import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
 /// Clothing recommendation after planner "Analyze ride".
@@ -15,14 +15,11 @@ class RideAnalysisResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final reasonL10n = AppLocalizationsReasonLookup(l10n);
     final route = payload['route'] as Map<String, dynamic>? ?? const {};
     final weather = payload['weather'] as Map<String, dynamic>? ?? const {};
-    final rec =
-        payload['recommendation'] as Map<String, dynamic>? ?? const {};
-    final wear = _asMaps(rec['wear']);
-    final pack = _asMaps(rec['pack']);
-    final reasons = _reasonCodes(rec);
+    final view = presentRecommendation(payload);
+    final wear = view.wear;
+    final pack = view.pack;
 
     return Scaffold(
       appBar: AppBar(
@@ -46,6 +43,13 @@ class RideAnalysisResultScreen extends StatelessWidget {
             l10n.plannerAnalysisSubtitle,
             style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
+          if (view.routeLine != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              view.routeLine!,
+              style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
+            ),
+          ],
           if (recommendationInputSummary(l10n, payload['comfort']) != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -66,6 +70,12 @@ class RideAnalysisResultScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (view.exposureC != null)
+                Chip(
+                  label: Text(
+                    '${l10n.metricExposure} ${view.exposureC!.toStringAsFixed(0)}°C',
+                  ),
+                ),
               if (weather['maxRainProbPct'] != null)
                 Chip(
                   label: Text(
@@ -84,13 +94,14 @@ class RideAnalysisResultScreen extends StatelessWidget {
                 ),
             ],
           ),
+          ...recommendationContextWidgets(context, view),
           const SizedBox(height: 24),
+          recommendationSectionTitle(l10n.wearSection),
+          const SizedBox(height: 4),
           Text(
-            l10n.wearSection,
-            style: GoogleFonts.barlowCondensed(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-            ),
+            l10n.wearSectionHint,
+            key: const Key('wear-section'),
+            style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 8),
           if (wear.isEmpty)
@@ -104,12 +115,12 @@ class RideAnalysisResultScreen extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 16),
+          recommendationSectionTitle(l10n.packSection),
+          const SizedBox(height: 4),
           Text(
-            l10n.packSection,
-            style: GoogleFonts.barlowCondensed(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-            ),
+            l10n.packSectionHint,
+            key: const Key('pack-section'),
+            style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 8),
           if (pack.isEmpty)
@@ -122,22 +133,7 @@ class RideAnalysisResultScreen extends StatelessWidget {
                 title: Text(kitLine(l10n, item)),
               ),
             ),
-          if (reasons.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              l10n.confidenceLabel,
-              style: GoogleFonts.barlowCondensed(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            ...reasons.map(
-              (code) => Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text('• ${localizeReasonCode(code, reasonL10n)}'),
-              ),
-            ),
-          ],
+          ...recommendationExplanationWidgets(context, view),
           const SizedBox(height: 24),
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
@@ -146,32 +142,5 @@ class RideAnalysisResultScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static List<Map<String, dynamic>> _asMaps(dynamic raw) {
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
-  }
-
-  static List<String> _reasonCodes(Map<String, dynamic> rec) {
-    final codes = <String>[];
-    final reasons = rec['reasons'];
-    if (reasons is List) {
-      for (final r in reasons) {
-        if (r is Map && r['code'] != null) {
-          codes.add(r['code'].toString());
-        } else if (r != null) {
-          codes.add(r.toString());
-        }
-      }
-    }
-    final legacy = rec['reasonCodes'];
-    if (codes.isEmpty && legacy is List) {
-      return legacy.map((e) => e.toString()).toList();
-    }
-    return codes;
   }
 }

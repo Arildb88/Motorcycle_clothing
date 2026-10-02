@@ -4,6 +4,7 @@ import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations_en.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations_nb.dart';
+import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
@@ -50,6 +51,23 @@ void main() {
     expect(en.wardrobeDeleteDemo, 'Delete demo wardrobe');
     expect(nb.wardrobeDeleteDemoBody, isNot(en.wardrobeDeleteDemoBody));
     expect(nb.analysisRainChip('40%'), 'Regn 40%');
+    expect(nb.reasonsSection, 'Hvorfor dette antrekket');
+    expect(nb.limitsSection, 'Begrensninger og antakelser');
+    expect(
+      localizeReasonCode(
+        'VILLAGE_WEATHER_NOT_USED_AS_SUMMIT',
+        AppLocalizationsReasonLookup(nb),
+      ),
+      nb.reasonVillageWeatherNotUsedAsSummit,
+    );
+    expect(
+      nb.reasonVillageWeatherNotUsedAsSummit,
+      isNot(en.reasonVillageWeatherNotUsedAsSummit),
+    );
+    expect(
+      localizeReasonCode('NO_WAX_ADVICE', AppLocalizationsReasonLookup(en)),
+      'This recommendation does not include wax advice.',
+    );
 
     expect(
       localizeUserError(
@@ -90,7 +108,9 @@ void main() {
     expect(controller.locale.languageCode, 'en');
   });
 
-  testWidgets('MaterialApp locale switch exposes Norwegian strings', (tester) async {
+  testWidgets('MaterialApp locale switch exposes Norwegian strings', (
+    tester,
+  ) async {
     Future<AppLocalizations> load(Locale locale) async {
       late AppLocalizations l10n;
       await tester.pumpWidget(

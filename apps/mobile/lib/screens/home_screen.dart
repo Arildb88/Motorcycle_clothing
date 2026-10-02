@@ -7,13 +7,13 @@ import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart';
 import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
+import 'package:motorcycle_clothing/features/plan/recommendation_presentation.dart';
+import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
-import 'package:motorcycle_clothing/l10n/reason_lookup.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
-import 'package:motorcycle_clothing/state/locale_controller.dart';
 import 'package:motorcycle_clothing/state/unit_preferences_controller.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 import 'package:motorcycle_clothing/screens/feedback_sheet.dart';
@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
             .toList();
         _loadingRoutes = false;
       });
-      } on ApiException catch (e) {
+    } on ApiException catch (e) {
       if (mounted) {
         setState(() {
           _error = localizeUserError(e, AppLocalizations.of(context));
@@ -95,12 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     try {
       final api = context.read<ApiClient>();
-      final when = leaveNow ? DateTime.now().toUtc() : (departureAt ?? DateTime.now().toUtc());
-      await api.post(
-        '/routes/${route.id}/plan',
-        {'departureAt': when.toIso8601String()},
-        auth: true,
-      );
+      final when = leaveNow
+          ? DateTime.now().toUtc()
+          : (departureAt ?? DateTime.now().toUtc());
+      await api.post('/routes/${route.id}/plan', {
+        'departureAt': when.toIso8601String(),
+      }, auth: true);
       final q = Uri(
         path: '/recommend',
         queryParameters: recommendationQuery(
@@ -114,7 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _data = data);
     } on ApiException catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } finally {
       if (mounted) setState(() => _loadingRec = false);
@@ -173,7 +175,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = DateTime.now();
     DateTime base = now;
     if (choice == 'tomorrow') {
-      base = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+      base = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).add(const Duration(days: 1));
     } else if (choice == 'today') {
       base = DateTime(now.year, now.month, now.day);
     }
@@ -300,8 +306,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemBuilder: (context, i) {
                           if (i == _routes.length) {
                             return _QuickChip(
-                              title: AppLocalizations.of(context).homePlanNewChip,
-                              subtitle: AppLocalizations.of(context).homeSaveRouteChip,
+                              title: AppLocalizations.of(context)
+                                  .homePlanNewChip,
+                              subtitle: AppLocalizations.of(context)
+                                  .homeSaveRouteChip,
                               selected: false,
                               onTap: _addRoute,
                             );
@@ -356,7 +364,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   AppLocalizations.of(context).tapSavedRoute,
-                  style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.95)),
+                  style: TextStyle(
+                    color: AppTheme.steel.withValues(alpha: 0.95),
+                  ),
                 ),
               ),
             ),
@@ -366,14 +376,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool get _showHomeAd => evaluateAdPlacement(
-        AdPlacementRequest(
-          adsEnabled: AppConfig.adsEnabled,
-          surface: AdSurface.activityHome,
-          format: AdFormat.banner,
-          contentState: _homeAdState,
-          position: AdPlacementPosition.afterPrimaryContent,
-        ),
-      ).show;
+    AdPlacementRequest(
+      adsEnabled: AppConfig.adsEnabled,
+      surface: AdSurface.activityHome,
+      format: AdFormat.banner,
+      contentState: _homeAdState,
+      position: AdPlacementPosition.afterPrimaryContent,
+    ),
+  ).show;
 
   AdContentState get _homeAdState {
     if (_loadingRoutes || _loadingRec) return AdContentState.loading;
@@ -446,55 +456,26 @@ class _RecommendationBody extends StatelessWidget {
     return kitLine(l10n, item);
   }
 
-  List<Map<String, dynamic>> _asMaps(dynamic raw) {
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
-  }
-
-  List<String> _reasonCodes(Map<String, dynamic> rec) {
-    final structured = rec['reasons'];
-    if (structured is List && structured.isNotEmpty) {
-      final codes = <String>[];
-      for (final r in structured) {
-        if (r is Map && r['code'] != null) {
-          codes.add(r['code'].toString());
-        } else if (r is String) {
-          codes.add(r);
-        }
-      }
-      if (codes.isNotEmpty) return codes;
-    }
-    final legacy = rec['reasonCodes'];
-    if (legacy is List) {
-      return legacy.map((e) => e.toString()).toList();
-    }
-    return const [];
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final reasonL10n = AppLocalizationsReasonLookup(l10n);
     final units = context.watch<UnitPreferencesController>();
-    final fmt = units.formatter(localeName: Localizations.localeOf(context).toString());
+    final fmt = units.formatter(
+      localeName: Localizations.localeOf(context).toString(),
+    );
     final route = data['route'] as Map<String, dynamic>;
     final weather = data['weather'] as Map<String, dynamic>;
     final rec = data['recommendation'] as Map<String, dynamic>;
+    final view = presentRecommendation(data);
 
-    final wear = _asMaps(rec['wear']);
-    final pack = _asMaps(rec['pack']);
+    final wear = view.wear;
+    final pack = view.pack;
     final legacyItems = (rec['items'] is List)
         ? (rec['items'] as List).map((e) => e.toString()).toList()
         : <String>[];
-    final reasonCodes = _reasonCodes(rec);
-    final confidence = rec['confidence'];
-    final confidenceLevel = confidence is Map
-        ? confidence['level']?.toString()
-        : null;
-    final exposureC = rec['effectiveTempC'] ??
+    final confidenceLevel = view.confidenceLevel;
+    final exposureC =
+        view.exposureC ??
         (rec['exposure'] is Map
             ? (rec['exposure'] as Map)['motorcycleExposureSustainedC']
             : null);
@@ -557,13 +538,17 @@ class _RecommendationBody extends StatelessWidget {
                 ),
             ],
           ),
+          ...recommendationContextWidgets(
+            context,
+            view,
+            formatTemp: fmt.temperatureFromC,
+          ),
           const SizedBox(height: 28),
+          recommendationSectionTitle(l10n.wearSection),
+          const SizedBox(height: 4),
           Text(
-            l10n.wearSection,
-            style: GoogleFonts.barlowCondensed(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-            ),
+            l10n.wearSectionHint,
+            style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 8),
           if (wear.isNotEmpty)
@@ -595,7 +580,10 @@ class _RecommendationBody extends StatelessWidget {
                         const Icon(Icons.check_circle_outline, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(item, style: const TextStyle(fontSize: 17)),
+                          child: Text(
+                            item,
+                            style: const TextStyle(fontSize: 17),
+                          ),
                         ),
                       ],
                     ),
@@ -603,12 +591,11 @@ class _RecommendationBody extends StatelessWidget {
                 ),
           if (pack.isNotEmpty) ...[
             const SizedBox(height: 20),
+            recommendationSectionTitle(l10n.packSection),
+            const SizedBox(height: 4),
             Text(
-              l10n.packSection,
-              style: GoogleFonts.barlowCondensed(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
+              l10n.packSectionHint,
+              style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
             ),
             const SizedBox(height: 8),
             ...pack.map(
@@ -629,18 +616,10 @@ class _RecommendationBody extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          ...reasonCodes.map(
-            (code) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                localizeReasonCode(code, reasonL10n),
-                style: TextStyle(
-                  color: AppTheme.steel.withValues(alpha: 0.85),
-                  fontSize: 13,
-                ),
-              ),
-            ),
+          ...recommendationExplanationWidgets(
+            context,
+            view,
+            showConfidenceLevel: false,
           ),
           const SizedBox(height: 24),
           FilledButton.tonal(

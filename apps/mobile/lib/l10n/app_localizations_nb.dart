@@ -156,6 +156,211 @@ class AppLocalizationsNb extends AppLocalizations {
       'Basisanbefaling — ikke nok personlig turhistorikk ennå.';
 
   @override
+  String get reasonRouteSpeedProfileUsed =>
+      'Tidsberegningen bruker rutens egen fartsprofil.';
+
+  @override
+  String get reasonRouteSpeedProfileUnavailable =>
+      'Ruten hadde ingen fartsprofil, så et standardtempo er brukt.';
+
+  @override
+  String get reasonAssumedCruiseSpeed =>
+      'Marsjfart er antatt fordi ruten ikke oppga en.';
+
+  @override
+  String get reasonWindDirectionUnavailable =>
+      'Vindretning var ikke tilgjengelig, så luftstrømmen er ikke beregnet som en vektor.';
+
+  @override
+  String get reasonElevationUsed =>
+      'Terrenghøyde ble sendt med værforespørselen der høyden var kjent.';
+
+  @override
+  String get reasonElevationPartial =>
+      'Terrenghøyde mangler for deler av denne planen.';
+
+  @override
+  String get reasonElevationUnavailable =>
+      'Terrenghøyde var ikke tilgjengelig, så værforespørselen ble sendt uten høyde.';
+
+  @override
+  String get reasonVentOrPackShell =>
+      'Bruk ventiler eller pakk et skall for skiftende forhold.';
+
+  @override
+  String get reasonGenericCyclingKit =>
+      'Dette er et generelt sykkelantrekk fordi ingen passende eide plagg ble funnet.';
+
+  @override
+  String get reasonAssumedRideStyle =>
+      'Innsats er antatt fordi den ikke ble oppgitt.';
+
+  @override
+  String get reasonRouteGeometryFallback =>
+      'Veigeometri var utilgjengelig, så værprøvene følger de lagrede punktene.';
+
+  @override
+  String get reasonHelmetAssumed =>
+      'Hjelm er antatt og velges ikke av dette bekledningsantrekket.';
+
+  @override
+  String get reasonFeetLimitingZone =>
+      'Føttene trenger mer varme enn overkroppen på denne turen.';
+
+  @override
+  String get reasonHandsWindChill =>
+      'Hendene får mer vind enn overkroppen på denne turen.';
+
+  @override
+  String get reasonUpperMountainSetsKit =>
+      'Det kaldere fjellet oppunder toppen bestemmer det du har på deg.';
+
+  @override
+  String get reasonStayingAtBase =>
+      'Planen blir ved bunnen, så bunnværet bestemmer antrekket.';
+
+  @override
+  String get reasonVillageWeatherNotUsedAsSummit =>
+      'Vær fra dalen eller bunnen brukes ikke som toppvær.';
+
+  @override
+  String get reasonUpperSiteMissing =>
+      'Ingen toppstasjon ble funnet, så forholdene på toppen er ukjente.';
+
+  @override
+  String get reasonUpperElevationUnavailable =>
+      'Toppstasjonen har ingen høyde, så værmeldingen der ble ikke hentet.';
+
+  @override
+  String get reasonSitesNeedLabels =>
+      'Stasjonene kunne ikke ordnes som bunn og topp. Legg til navn eller høyder.';
+
+  @override
+  String get reasonMidElevationEstimated =>
+      'Høyden midt i fjellet er anslått, ikke målt.';
+
+  @override
+  String get reasonTemperatureSpread =>
+      'Temperaturen er forskjellig mellom bunnen og toppen.';
+
+  @override
+  String get reasonHighWindAtUpper => 'Det er mye vind oppunder toppen.';
+
+  @override
+  String get reasonAssumedExposureMode =>
+      'Eksponeringsmåte er antatt fordi den ikke ble oppgitt.';
+
+  @override
+  String get reasonGenericAlpineKit =>
+      'Dette er et generelt alpinantrekk fordi ingen passende eide plagg ble funnet.';
+
+  @override
+  String get reasonLeaveWarmerLayerOffHill =>
+      'La det varmere laget ligge igjen mens du er i bakken.';
+
+  @override
+  String get reasonBootsAreEquipment =>
+      'Støvler er utstyr og velges ikke av dette bekledningsantrekket.';
+
+  @override
+  String get reasonGogglesAreEquipment =>
+      'Briller er utstyr og velges ikke av dette bekledningsantrekket.';
+
+  @override
+  String get reasonHelmetIsEquipment =>
+      'Hjelm er utstyr og velges ikke av dette bekledningsantrekket.';
+
+  @override
+  String get reasonShortColdStopPacked =>
+      'Et kort kaldt opphold dekkes av noe du pakker med, ikke har på hele tiden.';
+
+  @override
+  String get reasonPackShell =>
+      'Pakk et skall i stedet for å ha det på hele tiden.';
+
+  @override
+  String get reasonVentsForClimb => 'Åpne ventilene mens du går oppover.';
+
+  @override
+  String get reasonGenericXcKit =>
+      'Dette er et generelt langrennantrekk fordi ingen passende eide plagg ble funnet.';
+
+  @override
+  String get reasonAssumedIntensity =>
+      'Intensitet er antatt fordi den ikke ble oppgitt.';
+
+  @override
+  String get reasonAssumedDuration =>
+      'Varighet er antatt fordi ruten ikke har lagret lengde.';
+
+  @override
+  String get reasonStyleNotSpecified =>
+      'Klassisk eller skøyting ble ikke oppgitt, så støvler velges ikke.';
+
+  @override
+  String get reasonClassicBootsAreEquipment =>
+      'Klassiske støvler er utstyr og velges ikke av dette bekledningsantrekket.';
+
+  @override
+  String get reasonSkateBootsAreEquipment =>
+      'Skøytestøvler er utstyr og velges ikke av dette bekledningsantrekket.';
+
+  @override
+  String get reasonUserTrackNotRoad =>
+      'Været følger sporet ditt, ikke en veirute.';
+
+  @override
+  String get reasonClimbReducesWornDemand =>
+      'Motbakke reduserer hvor mye isolasjon du trenger å ha på deg.';
+
+  @override
+  String get reasonNoGroomingStatus =>
+      'Preparering er ukjent og inngår ikke i denne anbefalingen.';
+
+  @override
+  String get reasonNoWaxAdvice =>
+      'Denne anbefalingen inneholder ikke skismøring.';
+
+  @override
+  String get reasonsSection => 'Hvorfor dette antrekket';
+
+  @override
+  String get limitsSection => 'Begrensninger og antakelser';
+
+  @override
+  String get wearSectionHint => 'Dette har du på deg';
+
+  @override
+  String get packSectionHint => 'Dette pakker du med';
+
+  @override
+  String elevationRange(String min, String max) {
+    return 'Høyde $min–$max m';
+  }
+
+  @override
+  String elevationSingle(String value) {
+    return 'Høyde $value m';
+  }
+
+  @override
+  String get elevationEstimated => 'anslått høyde';
+
+  @override
+  String get siteBase => 'Bunn';
+
+  @override
+  String get siteMid => 'Midt';
+
+  @override
+  String get siteUpper => 'Topp';
+
+  @override
+  String elevationAttribution(String source) {
+    return 'Høydedata: $source';
+  }
+
+  @override
   String get unitsSection => 'Enheter';
 
   @override

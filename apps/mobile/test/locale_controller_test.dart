@@ -55,8 +55,7 @@ class _StubL10n implements AppLocalizationsLookup {
   String get reasonRain => 'Rain exposure is likely along the route.';
 
   @override
-  String get reasonStrongWind =>
-      'Strong wind is expected on exposed sections.';
+  String get reasonStrongWind => 'Strong wind is expected on exposed sections.';
 
   @override
   String get reasonPersonalColdHands =>
@@ -107,8 +106,7 @@ class _StubL10n implements AppLocalizationsLookup {
       'Keep vents closed for colder exposure.';
 
   @override
-  String get reasonVentsOpenRecommended =>
-      'Open vents for warmer exposure.';
+  String get reasonVentsOpenRecommended => 'Open vents for warmer exposure.';
 
   @override
   String get reasonPackExtraInsulation =>
@@ -129,6 +127,9 @@ class _StubL10n implements AppLocalizationsLookup {
   @override
   String get reasonBaselineNoPersonalEvidence =>
       'Baseline recommendation — not enough personal ride evidence yet.';
+
+  @override
+  String reasonOrCode(String code) => code;
 }
 
 class _StubL10nNb extends _StubL10n {

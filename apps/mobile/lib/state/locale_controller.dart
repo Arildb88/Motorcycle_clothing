@@ -1,4 +1,5 @@
 import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -97,7 +98,7 @@ String localizeReasonCode(String code, AppLocalizationsLookup l10n) {
     case 'BASELINE_NO_PERSONAL_EVIDENCE':
       return l10n.reasonBaselineNoPersonalEvidence;
     default:
-      return code;
+      return l10n.reasonOrCode(code);
   }
 }
 
@@ -124,4 +125,7 @@ abstract class AppLocalizationsLookup {
   String get reasonIncompleteWeather;
   String get reasonIncompleteWardrobe;
   String get reasonBaselineNoPersonalEvidence;
+
+  /// Later activity codes. The default keeps an unknown code visible.
+  String reasonOrCode(String code) => code;
 }

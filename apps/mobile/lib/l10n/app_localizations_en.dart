@@ -155,6 +155,211 @@ class AppLocalizationsEn extends AppLocalizations {
       'Baseline recommendation — not enough personal ride evidence yet.';
 
   @override
+  String get reasonRouteSpeedProfileUsed =>
+      'Timing uses the route\'s own speed profile.';
+
+  @override
+  String get reasonRouteSpeedProfileUnavailable =>
+      'No route speed profile was available, so a default pace was used.';
+
+  @override
+  String get reasonAssumedCruiseSpeed =>
+      'Cruise speed was assumed because the route did not provide one.';
+
+  @override
+  String get reasonWindDirectionUnavailable =>
+      'Wind direction was not available, so airflow is not calculated as a vector.';
+
+  @override
+  String get reasonElevationUsed =>
+      'Ground elevation was included with the weather request where a height was known.';
+
+  @override
+  String get reasonElevationPartial =>
+      'Ground elevation is missing for part of this plan.';
+
+  @override
+  String get reasonElevationUnavailable =>
+      'Ground elevation was not available, so the weather request did not include height.';
+
+  @override
+  String get reasonVentOrPackShell =>
+      'Use vents or pack a shell for changing conditions.';
+
+  @override
+  String get reasonGenericCyclingKit =>
+      'This is a generic cycling kit because matching owned garments were not found.';
+
+  @override
+  String get reasonAssumedRideStyle =>
+      'Ride effort was assumed because it was not specified.';
+
+  @override
+  String get reasonRouteGeometryFallback =>
+      'Road geometry was unavailable, so weather samples follow the saved points.';
+
+  @override
+  String get reasonHelmetAssumed =>
+      'A helmet is assumed and is not chosen by this clothing kit.';
+
+  @override
+  String get reasonFeetLimitingZone =>
+      'Feet need more warmth than the torso on this ride.';
+
+  @override
+  String get reasonHandsWindChill =>
+      'Hands see more wind than the torso on this ride.';
+
+  @override
+  String get reasonUpperMountainSetsKit =>
+      'The colder upper mountain sets what you wear.';
+
+  @override
+  String get reasonStayingAtBase =>
+      'The plan stays at the base, so the base forecast sets the kit.';
+
+  @override
+  String get reasonVillageWeatherNotUsedAsSummit =>
+      'Village or base weather is not used as the summit forecast.';
+
+  @override
+  String get reasonUpperSiteMissing =>
+      'No upper-mountain site was identified, so summit conditions are unknown.';
+
+  @override
+  String get reasonUpperElevationUnavailable =>
+      'The upper site has no elevation, so its forecast was not requested.';
+
+  @override
+  String get reasonSitesNeedLabels =>
+      'Sites could not be ordered into base and summit. Add labels or heights.';
+
+  @override
+  String get reasonMidElevationEstimated =>
+      'The mid-mountain height is estimated, not measured.';
+
+  @override
+  String get reasonTemperatureSpread =>
+      'Temperature differs between the base and the upper mountain.';
+
+  @override
+  String get reasonHighWindAtUpper => 'Wind at the upper mountain is high.';
+
+  @override
+  String get reasonAssumedExposureMode =>
+      'Exposure mode was assumed because it was not specified.';
+
+  @override
+  String get reasonGenericAlpineKit =>
+      'This is a generic alpine kit because matching owned garments were not found.';
+
+  @override
+  String get reasonLeaveWarmerLayerOffHill =>
+      'Leave the warmer layer off while you are on the hill.';
+
+  @override
+  String get reasonBootsAreEquipment =>
+      'Boots are equipment and are not chosen by this clothing kit.';
+
+  @override
+  String get reasonGogglesAreEquipment =>
+      'Goggles are equipment and are not chosen by this clothing kit.';
+
+  @override
+  String get reasonHelmetIsEquipment =>
+      'A helmet is equipment and is not chosen by this clothing kit.';
+
+  @override
+  String get reasonShortColdStopPacked =>
+      'A short cold stop is covered by something packed, not worn the whole time.';
+
+  @override
+  String get reasonPackShell =>
+      'Pack a shell instead of wearing it the whole time.';
+
+  @override
+  String get reasonVentsForClimb => 'Open vents while climbing.';
+
+  @override
+  String get reasonGenericXcKit =>
+      'This is a generic cross-country kit because matching owned garments were not found.';
+
+  @override
+  String get reasonAssumedIntensity =>
+      'Intensity was assumed because it was not specified.';
+
+  @override
+  String get reasonAssumedDuration =>
+      'Duration was assumed because the route has no saved length.';
+
+  @override
+  String get reasonStyleNotSpecified =>
+      'Classic or skate was not specified, so boots are not chosen.';
+
+  @override
+  String get reasonClassicBootsAreEquipment =>
+      'Classic boots are equipment and are not chosen by this clothing kit.';
+
+  @override
+  String get reasonSkateBootsAreEquipment =>
+      'Skate boots are equipment and are not chosen by this clothing kit.';
+
+  @override
+  String get reasonUserTrackNotRoad =>
+      'Weather follows your track, not a road route.';
+
+  @override
+  String get reasonClimbReducesWornDemand =>
+      'Climbing reduces how much insulation you need to wear.';
+
+  @override
+  String get reasonNoGroomingStatus =>
+      'Grooming status is not known and is not part of this recommendation.';
+
+  @override
+  String get reasonNoWaxAdvice =>
+      'This recommendation does not include wax advice.';
+
+  @override
+  String get reasonsSection => 'Why this kit';
+
+  @override
+  String get limitsSection => 'Limits and assumptions';
+
+  @override
+  String get wearSectionHint => 'Worn for this session';
+
+  @override
+  String get packSectionHint => 'Packed, not worn the whole time';
+
+  @override
+  String elevationRange(String min, String max) {
+    return 'Elevation $min–$max m';
+  }
+
+  @override
+  String elevationSingle(String value) {
+    return 'Elevation $value m';
+  }
+
+  @override
+  String get elevationEstimated => 'estimated height';
+
+  @override
+  String get siteBase => 'Base';
+
+  @override
+  String get siteMid => 'Mid';
+
+  @override
+  String get siteUpper => 'Upper';
+
+  @override
+  String elevationAttribution(String source) {
+    return 'Elevation source: $source';
+  }
+
+  @override
   String get unitsSection => 'Units';
 
   @override
