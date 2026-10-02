@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ELEVATION_PORT,
+  type ElevationPort,
+} from '../elevation/elevation.port';
+import { lookupSampleAltitudes } from '../elevation/lookup-sample-altitudes';
 import { RoutesService } from '../routes/routes.service';
 import { WeatherService } from '../weather/weather.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -33,13 +38,10 @@ export class RecommendService {
     private readonly weather: WeatherService,
     private readonly prisma: PrismaService,
     private readonly roadRouting: OpenRouteServiceRoutingAdapter,
+    @Inject(ELEVATION_PORT) private readonly elevations: ElevationPort,
   ) {}
 
-  async forUser(
-    userId: string,
-    routeId?: string,
-    _departureAt?: string,
-  ) {
+  async forUser(userId: string, routeId?: string, _departureAt?: string) {
     const route = routeId
       ? await this.routes.get(userId, routeId)
       : await this.routes.getDefault(userId);
@@ -70,8 +72,7 @@ export class RecommendService {
     const n = offset?.n ?? 0;
     const k = MOTORCYCLE_EXPOSURE.personalShrinkageK;
     const personalWeight = n / (n + k);
-    const shrunk =
-      n > 0 ? personalWeight * (offset?.meanResidual ?? 0) : 0;
+    const shrunk = n > 0 ? personalWeight * (offset?.meanResidual ?? 0) : 0;
     const personalColdBiasC = -(profile?.coldSensitivity ?? 0) + shrunk;
 
     const departAt = parseDeparture(_departureAt);
@@ -84,13 +85,27 @@ export class RecommendService {
       fallbackDurationMin: route.typicalDurationMin ?? 30,
       departAt,
     });
-    const weather = await this.weather.forRouteSamples(
+    const elevation = await lookupSampleAltitudes(
+      this.elevations,
       sampled.samples.map((sample) => ({
         lat: sample.lat,
         lon: sample.lon,
-        at: sample.at,
       })),
     );
+    const weather = await this.weather.forRouteSamples(
+      sampled.samples.map((sample, index) => ({
+        lat: sample.lat,
+        lon: sample.lon,
+        at: sample.at,
+        altitudeM: elevation.points[index]?.elevationM ?? null,
+      })),
+    );
+    if (elevation.attribution) {
+      weather.elevation = {
+        provider: elevation.provider,
+        attribution: elevation.attribution,
+      };
+    }
     const routeTravelSegments = this.travelForRoadSamples(
       sampled.usedRoadGeometry,
       sampled.samples,
@@ -241,9 +256,7 @@ export class RecommendService {
       const configs = item.configuration
         .map((c) => c.code.toLowerCase().replace(/_/g, ' '))
         .join(', ');
-      return configs
-        ? `${item.garmentName} (${configs})`
-        : item.garmentName;
+      return configs ? `${item.garmentName} (${configs})` : item.garmentName;
     }
     return item.genericLabel ?? item.slot;
   }

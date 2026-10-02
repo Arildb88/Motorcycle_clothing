@@ -2,11 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  RouteWeatherSummary,
-  WeatherPoint,
-} from '../recommend/weather.types';
+import { RouteWeatherSummary, WeatherPoint } from '../recommend/weather.types';
 import { selectMetTimeseriesIndex } from './met-timeseries';
+import { metLocationForecastUrl, weatherCacheKey } from './met-request';
 
 @Injectable()
 export class WeatherService {
@@ -22,9 +20,7 @@ export class WeatherService {
   ): Promise<RouteWeatherSummary> {
     const provider = this.config.get('WEATHER_PROVIDER', 'mock');
     const samples =
-      points.length > 0
-        ? points
-        : [{ lat: 59.9139, lon: 10.7522 }];
+      points.length > 0 ? points : [{ lat: 59.9139, lon: 10.7522 }];
 
     // Always include start, mid (if multiple), end
     const sampled = this.samplePoints(samples);
@@ -42,7 +38,12 @@ export class WeatherService {
    * When `at` is set, MET uses the timeseries entry nearest that ETA.
    */
   async forRouteSamples(
-    samples: Array<{ lat: number; lon: number; at?: Date }>,
+    samples: Array<{
+      lat: number;
+      lon: number;
+      at?: Date;
+      altitudeM?: number | null;
+    }>,
   ): Promise<RouteWeatherSummary> {
     const provider = this.config.get('WEATHER_PROVIDER', 'mock');
     const usable =
@@ -55,6 +56,7 @@ export class WeatherService {
         sample.lon,
         provider,
         sample.at,
+        sample.altitudeM,
       );
       weatherPoints.push(
         sample.at ? { ...point, forecastAt: sample.at.toISOString() } : point,
@@ -98,12 +100,9 @@ export class WeatherService {
     lon: number,
     provider: string,
     at?: Date,
+    altitudeM?: number | null,
   ): Promise<WeatherPoint> {
-    const hour =
-      at && !Number.isNaN(at.getTime()) ? at.toISOString().slice(0, 13) : '';
-    const key = hour
-      ? `${provider}:${lat.toFixed(3)},${lon.toFixed(3)}@${hour}`
-      : `${provider}:${lat.toFixed(3)},${lon.toFixed(3)}`;
+    const key = weatherCacheKey({ provider, lat, lon, at, altitudeM });
     const cached = await this.prisma.weatherCache.findUnique({
       where: { cacheKey: key },
     });
@@ -111,10 +110,11 @@ export class WeatherService {
       return JSON.parse(cached.payloadJson) as WeatherPoint;
     }
 
-    const point =
+    const fetched =
       provider === 'met'
-        ? await this.fetchMet(lat, lon, at)
+        ? await this.fetchMet(lat, lon, at, altitudeM)
         : this.mockWeather(lat, lon);
+    const point = withGroundElevation(fetched, altitudeM);
 
     const validUntil = new Date(Date.now() + 15 * 60 * 1000);
     await this.prisma.weatherCache.upsert({
@@ -139,9 +139,11 @@ export class WeatherService {
     const base = 8 + Math.sin((day / 365) * Math.PI * 2) * 10;
     const jitter = ((Math.abs(lat * 1000 + lon * 100) % 7) - 3) * 0.4;
     const airTempC = Number((base + jitter).toFixed(1));
-    const precipitationProbPct = (Math.abs(Math.floor(lat * 100 + day)) % 70);
+    const precipitationProbPct = Math.abs(Math.floor(lat * 100 + day)) % 70;
     const precipitationMm =
-      precipitationProbPct > 50 ? Number((precipitationProbPct / 80).toFixed(2)) : 0;
+      precipitationProbPct > 50
+        ? Number((precipitationProbPct / 80).toFixed(2))
+        : 0;
     const windSpeedMs = 2 + (Math.abs(Math.floor(lon * 50 + day)) % 8);
 
     return {
@@ -159,13 +161,14 @@ export class WeatherService {
     lat: number,
     lon: number,
     at?: Date,
+    altitudeM?: number | null,
   ): Promise<WeatherPoint> {
     const userAgent = this.config.get(
       'MET_USER_AGENT',
       'MotorcycleClothingApp/0.1 (dev)',
     );
     try {
-      const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`;
+      const url = metLocationForecastUrl(lat, lon, altitudeM);
       const { data } = await axios.get(url, {
         headers: { 'User-Agent': userAgent, Accept: 'application/json' },
         timeout: 8000,
@@ -194,4 +197,12 @@ export class WeatherService {
       return this.mockWeather(lat, lon);
     }
   }
+}
+
+function withGroundElevation(
+  point: WeatherPoint,
+  altitudeM?: number | null,
+): WeatherPoint {
+  if (altitudeM == null || !Number.isFinite(altitudeM)) return point;
+  return { ...point, groundElevationM: Math.round(altitudeM) };
 }

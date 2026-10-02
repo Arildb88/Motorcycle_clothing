@@ -15,6 +15,8 @@ export type WeatherPoint = {
   symbol?: string;
   /** ISO time the forecast was selected for, when the sample has an ETA. */
   forecastAt?: string;
+  /** Ground height in whole metres used for this forecast, when known. */
+  groundElevationM?: number;
 };
 
 export type RouteWeatherSummary = {
@@ -26,4 +28,6 @@ export type RouteWeatherSummary = {
   maxRainProbPct: number;
   maxPrecipMm: number;
   maxWindMs: number;
+  /** Set when a ground-elevation source returned at least one height. */
+  elevation?: { provider: string; attribution: string } | null;
 };
