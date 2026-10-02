@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: CYCLING-001
+active_id: ALPINE-001
 promotion: automatic
-handoff_generation: 4
+handoff_generation: 5
 handoff_state: authorized
 ```
 
@@ -25,7 +25,7 @@ handoff_state: authorized
 
 ### Generation baseline
 
-Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `QUEUE-CONTROL-003` restored the idle baseline to `1` and did not reuse it. Generation `2` is also spent: `GEO-ELEVATION-002` completed at that generation and is consumed. Generation `3` is also spent: `ROUTING-WEATHER-002` completed at that generation and is consumed. The idle baseline remains `3`. The next from-idle human authorization must use Generation `4`. Do not reset the baseline downwards.
+Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `QUEUE-CONTROL-003` restored the idle baseline to `1` and did not reuse it. Generation `2` is also spent: `GEO-ELEVATION-002` completed at that generation and is consumed. Generation `3` is also spent: `ROUTING-WEATHER-002` completed at that generation and is consumed. Generation `4` is also spent: `CYCLING-001` completed at that generation and is consumed. Generation `5` authorizes `ALPINE-001` from the automatic final control update. Do not reset the baseline downwards.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -576,7 +576,7 @@ Use focused routing/weather tests first. Run broader API checks only when needed
 
 ### CYCLING-001
 
-- status: active
+- status: completed
 - title: Cycling recommendation foundation
 - source: `docs/product/CYCLING_PLAN.md`
 
@@ -598,7 +598,7 @@ Use focused domain/API tests. Mobile work is allowed only if the plan and existi
 
 ### ALPINE-001
 
-- status: queued
+- status: active
 - title: Alpine and snowboard exposure foundation
 - source: `docs/product/ALPINE_SNOWBOARD_PLAN.md`
 
