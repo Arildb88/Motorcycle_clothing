@@ -41,8 +41,8 @@ Generation `1` is spent. It appeared on `dev_test` in:
 ## Commit / PR
 
 - Branch: `fix/queue-control-003` from `dev_test` at `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf`
-- Commit: recorded in the follow-up docs commit on this branch
-- PR: against `dev_test` only. Not merged to `dev` or `main`.
+- Commit: `a5af46655b5b094f1550b2b22c3e757242941ba0` — docs(agent): authorize idle tasks with one next-task commit
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/34 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
