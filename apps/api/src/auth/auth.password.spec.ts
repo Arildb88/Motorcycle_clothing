@@ -210,6 +210,16 @@ describe('AuthService login/register/password reset', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('keeps a Norwegian display name and trims surrounding spaces', async () => {
+    await service.register({
+      email: 'ase@example.com',
+      password: 'password1',
+      displayName: '  Åse Ødegård  ',
+    });
+    expect(users[0].displayName).toBe('Åse Ødegård');
+    expect(users[0].email).toBe('ase@example.com');
+  });
+
   it('logs in with valid credentials', async () => {
     const passwordHash = await bcrypt.hash('password1', 10);
     users.push({
@@ -224,6 +234,14 @@ describe('AuthService login/register/password reset', () => {
     });
     expect(res.accessToken).toBe('jwt-token');
     expect(res.user.email).toBe('rider@example.com');
+  });
+
+  it('rejects an unknown email with the same invalid-credentials error', async () => {
+    await expect(
+      service.login({ email: 'missing@example.com', password: 'password1' }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVALID_CREDENTIALS' }),
+    });
   });
 
   it('rejects invalid login credentials', async () => {

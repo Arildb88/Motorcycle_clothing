@@ -116,6 +116,65 @@ describe('WeatherService altitude', () => {
     expect(summary.points[0].airTempC).toBe(4);
   });
 
+  it('uses the failure forecast when MET returns no temperature', async () => {
+    const place = { lat: 59.91, lon: 10.75, altitudeM: 40 };
+    mockedGet.mockResolvedValueOnce({
+      data: { properties: { timeseries: [] } },
+    });
+    const { weather, upsert } = service('met');
+    const empty = await weather.forRouteSamples([place]);
+
+    mockedGet.mockResolvedValueOnce({ data: {} });
+    const missing = await weather.forRouteSamples([
+      { lat: 60.1, lon: 9.2, altitudeM: 12 },
+    ]);
+
+    mockedGet.mockRejectedValueOnce(new Error('met down'));
+    const failed = await weather.forRouteSamples([place]);
+
+    expect(empty.points[0].airTempC).toBe(failed.points[0].airTempC);
+    expect(empty.points[0].windSpeedMs).toBe(failed.points[0].windSpeedMs);
+    expect(empty.points[0].groundElevationM).toBe(40);
+    expect(missing.points[0].groundElevationM).toBe(12);
+    expect(missing.points[0].windSpeedMs).toBeGreaterThanOrEqual(2);
+    const cached = JSON.parse(
+      String(upsert.mock.calls[0][0].create.payloadJson),
+    ) as { airTempC: number };
+    expect(cached.airTempC).toBe(empty.points[0].airTempC);
+    expect(cached.airTempC).not.toBe(0);
+  });
+
+  it('keeps a real MET temperature of zero', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        properties: {
+          timeseries: [
+            {
+              time: '2026-10-02T10:00:00Z',
+              data: {
+                instant: { details: { air_temperature: 0, wind_speed: 7 } },
+                next_1_hours: {
+                  details: {
+                    probability_of_precipitation: 10,
+                    precipitation_amount: 0,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+    const { weather } = service('met');
+    const summary = await weather.forRouteSamples([
+      { lat: 59.91, lon: 10.75, altitudeM: 40 },
+    ]);
+    expect(summary.points[0].airTempC).toBe(0);
+    expect(summary.points[0].windSpeedMs).toBe(7);
+    expect(summary.points[0].precipitationProbPct).toBe(10);
+    expect(summary.points[0].groundElevationM).toBe(40);
+  });
+
   it('still returns a forecast when MET fails', async () => {
     mockedGet.mockRejectedValue(new Error('met down'));
     const { weather } = service('met');

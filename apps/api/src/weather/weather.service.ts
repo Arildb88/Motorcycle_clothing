@@ -179,12 +179,24 @@ export class WeatherService {
         at,
       );
       const series = timeseries[index]?.data;
-      const instant = series?.instant?.details ?? {};
+      const instant = series?.instant?.details;
+      // An empty payload is a provider miss. Caching it as 0 °C would dress
+      // the rider for a calm freeze that MET did not report.
+      if (
+        !Array.isArray(timeseries) ||
+        timeseries.length === 0 ||
+        instant?.air_temperature == null
+      ) {
+        this.logger.warn(
+          `MET fetch returned no temperature for ${lat},${lon}; using mock`,
+        );
+        return this.mockWeather(lat, lon);
+      }
       const next1 = series?.next_1_hours ?? series?.next_6_hours ?? {};
       return {
         lat,
         lon,
-        airTempC: Number(instant.air_temperature ?? 0),
+        airTempC: Number(instant.air_temperature),
         precipitationProbPct: Number(
           next1?.details?.probability_of_precipitation ?? 0,
         ),

@@ -48,4 +48,37 @@ describe('mobile activity planning contract', () => {
     expect(parseXcStyle(undefined)).toBeNull();
     expect(parseXcStyle('')).toBeNull();
   });
+
+  it('treats an unknown or cross-activity input as assumed, not as a real choice', () => {
+    expect(parseIntensity('lift')).toEqual({
+      intensity: 'steady',
+      assumed: true,
+    });
+    expect(parseIntensity('classic')).toEqual({
+      intensity: 'steady',
+      assumed: true,
+    });
+    expect(parseIntensity('  HARD ')).toEqual({
+      intensity: 'hard',
+      assumed: false,
+    });
+    expect(parseXcIntensity('hike')).toEqual({
+      intensity: 'steady',
+      assumed: true,
+    });
+    expect(parseXcStyle('easy')).toBeNull();
+    expect(parseXcStyle('skøyting')).toBeNull();
+    expect(parseExposureMode('hard')).toEqual({
+      mode: 'lift',
+      assumed: true,
+    });
+    expect(parseExposureMode('steady')).toEqual({
+      mode: 'lift',
+      assumed: true,
+    });
+    expect(parseExposureMode('Groomers')).toEqual({
+      mode: 'lift',
+      assumed: false,
+    });
+  });
 });
