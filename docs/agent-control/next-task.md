@@ -1,27 +1,20 @@
 # Authorized RideWear Task
-## Type: UX_MAINTENANCE
-## ID: UX-POLISH-001
-## Generation: 31
-## Handoff-From: XC-TRAIL-SYNC-001
+## Type: FEATURE
+## ID: DEPARTURE-COMPARE-001
+## Generation: 32
+## Handoff-From: UX-POLISH-001
 ## Authorization: authorized
-## Promoted: 2026-10-02T22:40:59Z
-## Task: Apply a focused RideWear MVP UI/UX polish pass
+## Promoted: 2026-10-02T22:56:32Z
+## Task: Let users compare a small set of departure times using existing route-weather capabilities
 
-Review implemented MVP screens for consistency and obvious usability defects without redesigning the product.
-
-Focus on:
-- Spacing, alignment, overflow and small-screen resilience.
-- Consistent RideWear buttons, minimum touch targets and disabled/loading states.
-- Clear empty, loading, validation and provider-error states.
-- Norwegian localization/text consistency, including æ/ø/å.
-- Planner forms and activity-specific flows remaining understandable without exposing irrelevant route controls.
-- Profile, wardrobe and recommendation-result presentation.
+Implement a lightweight departure-time comparison for route-oriented activities where the existing data supports it.
 
 Requirements:
-- Preserve existing navigation, architecture and visual identity.
-- Do not invent new product features or perform a broad visual redesign.
-- Add/update focused widget tests for meaningful regressions.
-- Run Flutter analyze and relevant Flutter tests.
-- Record anything requiring human visual/device judgment rather than claiming it is verified.
-
-Keep dev and main untouched. Follow queue rules.
+- Reuse existing route geometry, route-weather sampling, MET integration and activity planning; do not introduce a new weather/provider stack.
+- Present 2–4 useful nearby departure alternatives with concise comparable conditions (temperature, precipitation, wind and other already-supported material conditions).
+- Make clear which time each forecast applies to and handle unavailable/out-of-range forecast data gracefully.
+- Do not invent a single opaque “best” score; users should be able to compare the factual conditions.
+- Keep provider/API calls bounded and avoid obvious duplicate calls; preserve existing caching/provider boundaries.
+- Norwegian localization and focused Flutter/API tests as applicable.
+- No new provider, paid service, schema migration or broad redesign.
+- Keep dev/main untouched and follow queue/control rules.

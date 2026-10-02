@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: UX-POLISH-001
+active_id: DEPARTURE-COMPARE-001
 promotion: automatic
-handoff_generation: 31
+handoff_generation: 32
 handoff_state: authorized
 ```
 
@@ -76,6 +76,8 @@ Generation `28` is spent: `TEST-COVERAGE-001` was authorized from idle and compl
 Generation `29` is spent: `FNUGG-ATTRIBUTION-001` completed and the automatic final control update authorizes `XC-TRAIL-SYNC-001` at generation `30`. Do not reuse generation `29`. Do not execute `FNUGG-ATTRIBUTION-001` again.
 
 Generation `30` is spent: `XC-TRAIL-SYNC-001` completed and the automatic final control update authorizes `UX-POLISH-001` at generation `31`. Do not reuse generation `30`. Do not execute `XC-TRAIL-SYNC-001` again.
+
+Generation `31` is spent: `UX-POLISH-001` completed and the automatic final control update authorizes `DEPARTURE-COMPARE-001` at generation `32`. Do not reuse generation `31`. Do not execute `UX-POLISH-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1454,7 +1456,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### UX-POLISH-001
 
-- status: active
+- status: completed
 - title: MVP UI and UX consistency pass
 - source: approved final pre-release hardening plan
 
@@ -1489,7 +1491,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### DEPARTURE-COMPARE-001
 
-- status: queued
+- status: active
 - title: Compare departure times
 - source: explicitly approved lightweight product enhancement
 

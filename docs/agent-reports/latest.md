@@ -1,62 +1,53 @@
-# XC-TRAIL-SYNC-001
+# UX-POLISH-001
 
 ## Task
 
-`XC-TRAIL-SYNC-001`, generation 30, authorized by the automatic final control update that completed `FNUGG-ATTRIBUTION-001`. The parent tip held that token at generation 29 with `FNUGG-ATTRIBUTION-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`UX-POLISH-001`, generation 31, authorized by the automatic final control update that completed `XC-TRAIL-SYNC-001`. The parent tip held that token at generation 30 with `XC-TRAIL-SYNC-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/xc-trail-sync-001`
-- Implementation commit: `1caefa3acc02232b57eecbac67d7e2bafeec1cda`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/60 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/ux-polish-001`
+- Implementation commit: `d51e2952a5d8e3bfbb3818d727ace1c2ad85c515`
+- PR: into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Nearby cross-country trails still come from the official Geonorge Turrutebasen WFS (`app:Skiløype` on `https://wfs.geonorge.no/skwms1/wfs.turogfriluftsruter`). Flutter still calls the RideWear API. A nearby search reads a process-local collection for a 0.01-degree map cell and filters it to the existing 8 km straight-line radius.
+Focused MVP polish. Navigation, architecture, and visual identity are unchanged.
 
-The first search in a cell performs one bounded query, because there is no older collection to serve. That query is not a national download. Later searches in the same cell return the stored collection. Each cell is checked against Geonorge at most once per 24 hours. When a check is due, the stored collection is returned immediately and one refresh runs beside the request. A failed refresh keeps that collection, logs the fetch time and age, and does not empty the list. Concurrent callers share one cold fetch or one refresh. A cold outage still fails closed instead of caching an empty list.
-
-Manual start and finish planning was not changed. Norwegian names still pass through the existing XML decoder. Kartverket remains the attribution. Preparation codes are still not returned as grooming status.
+- A failed profile load stays on screen with the localized error and a retry button. It no longer leaves a spinner after the request fails.
+- A failed wardrobe load offers the same retry. Sharing and garment checkboxes use the standard touch height.
+- Strava sync and disconnect sit on their own row so the labels can wrap on a narrow screen.
+- Ride analysis uses the profile temperature and wind units, including mountain site lines. Metric display stays the default when no preference is loaded.
+- Alpine, snowboard, and cross-country planners no longer show the road heading "Route options" or the commute hint. The saved name field is labeled "Name" / "Navn" for those activities. Road activities still say "Route name" and "e.g. Work commute".
+- Departure and arrival share the row width, without a second selected icon, so a 320px-wide planner does not overflow.
+- Filled, outlined, and text buttons keep a 48dp minimum. Spinners on dark filled buttons use the light foreground color on login, password, reset, and analyze.
+- Login validation stays on the form. Stacked auth and garment fields keep the floating label clear of the outline above.
+- Norwegian imperial labels say "Engelske mil" and "Engelske mil (mi)".
 
 ## Checks
 
-Metadata and the live query were read on 2026-10-02. They are not part of the automated suite.
+Flutter, in `apps/mobile`:
 
-Geonorge metadata `d1422d17-6d95-4ef1-96ab-8af31744dd63`:
+- `flutter analyze` — no issues
+- `flutter test` — 139 tests passed
 
-- `DateUpdated`: 2026-09-29. Maintenance frequency: weekly.
-- Access: open data. Other constraints: "No conditions apply to access and use".
-- Distributions: Geonorge download order and ATOM feeds for FGDB, GML, GPX, PostGIS, and SOSI, including national files. The WFS used by `XC-TRAIL-DISCOVERY-001` still answers `GetFeature`.
-
-Live bounded query, Python urllib, one GET, 30 s timeout, User-Agent `RideWear/1.0 (cross-country trail discovery)`, WFS 2.0.0 `GetFeature`, `typeNames=app:Skiløype`, `count=80`, EPSG:4326 bbox around 59.98, 10.70:
-
-- First call: HTTP 200, 1.453 s, 179035 bytes, 67 features.
-- Repeat call: HTTP 200, 1.172 s, 179035 bytes, 67 features.
-
-Cached-path timing, local only: `ts-node` ran `mapGeonorgeSkiTrails` on that saved collection at 59.98, 10.70. Five warmup calls, then 20 timed calls: 23.01 ms total, 1.15 ms per call, 20 hits after the existing result cap. A cache hit does this filtering and does not call Geonorge.
-
-API, in `apps/api`:
-
-- `npx jest --no-coverage` — 267 tests passed
-- `npx nest build` — passed
-
-Prisma was not validated. Persistence was not touched. Flutter analyze and Flutter tests were not run. The client was not changed. Android, iOS, and a live cache-hit request were not run.
+Android, iOS, and a physical or emulator visual pass were not run. Spacing, wrapping, and contrast on a real device still need a human look.
 
 ## Architecture / config
 
-Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, schema migration, or paid service. The cache is process-local, the same shape as the elevation cache, and holds at most 32 cells. A national file import and a spatial database were not added. The bounded WFS query is already about one second, and a stored cell filters in about a millisecond. `dev` and `main` were not modified.
+Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, schema migration, or paid service. `dev` and `main` were not modified.
 
 ## Final control state
 
 Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
 
-- `XC-TRAIL-SYNC-001` completed and appended once to `consumed.md`
-- `UX-POLISH-001` is active
-- `active_id: UX-POLISH-001`
+- `UX-POLISH-001` completed and appended once to `consumed.md`
+- `DEPARTURE-COMPARE-001` is active
+- `active_id: DEPARTURE-COMPARE-001`
 - `promotion: automatic` unchanged
-- `handoff_generation: 31`
+- `handoff_generation: 32`
 - `handoff_state: authorized`
 - `paused: false`
-- `next-task.md`: `UX-POLISH-001`, Generation 31, Handoff-From `XC-TRAIL-SYNC-001`, Authorization `authorized`
+- `next-task.md`: `DEPARTURE-COMPARE-001`, Generation 32, Handoff-From `UX-POLISH-001`, Authorization `authorized`
 
 ## Remaining
 
-Device checks and a live cache-hit request were not run. The first search in an empty process still waits for one bounded WFS query. `UX-POLISH-001` is authorized for a later run. This run stops after merge.
+Device and emulator visual review was not run. `DEPARTURE-COMPARE-001` is authorized for a later run. This run stops after merge.
