@@ -1,92 +1,84 @@
-# Final-handoff authorization protocol
+# Human idle-token authorization
 
 ## Task
 
-`QUEUE-CONTROL-002`. Harden the automation final-handoff protocol so an ordinary or mid-task push cannot start another implementation run. Authorized by `22582b0b4203726dec8f489c84ff3123cca99f65`.
+`QUEUE-CONTROL-003`. Repair the control plane so a human or ChatGPT can authorize a queued task with one `next-task.md` commit, while Cursor-to-Cursor promotion stays an atomic final control commit. This run does not execute `GEO-ELEVATION-002` or any product task.
 
-## Entry check
+The repository was inconsistent after a rejected handoff. `next-task.md` still contained the `GEO-ELEVATION-002` body at Generation `1`, while the control block said `handoff_generation: 0`, `active_id: none`, and `handoff_state: idle`. That body was not executed.
 
-Trigger commit `22582b0b4203726dec8f489c84ff3123cca99f65` (`chore(agent): retrigger final-handoff hardening`, GitHub user `Arildb88`) changed only `docs/agent-control/next-task.md` (`Promoted`).
+## Protocol
 
-The entry check used the rules on `dev_test` at the start of this run, before this commit replaced them:
+Two authorization handoffs exist. Every other push stops with no repository writes.
 
-- `paused` was `false`.
-- Type was `CONTROL`. ID was `QUEUE-CONTROL-002`.
-- That ID had no row in `consumed.md`.
-- It was the only Queue item with status `active`.
-- `active_id` was `QUEUE-CONTROL-002`.
-- No item was `blocked`.
-- `next-task.md` matched that item's promotable body except `Promoted: 2026-10-02T09:43:00Z`.
+1. From-idle human/ChatGPT token. One commit changes `docs/agent-control/next-task.md` and does not change `task-queue.md` or `consumed.md`. It names a new ID that is already queued and unconsumed, sets Generation to the previous accepted generation plus 1, `Handoff-From: none`, and `Authorization: authorized`. The item does not need to become `active` in that commit. The accepting run claims it only after the token validates. This path cannot replace an active or blocked task.
+2. Cursor-to-Cursor automatic final control update, only when `promotion` is `automatic` and the current task has fully succeeded. One commit marks the previous ID completed, appends it to `consumed.md`, activates exactly one next queued ID, increments generation once, writes the new token, and updates the report. The same run does not execute the new ID.
 
-The entry check succeeded. `GEO-ELEVATION-002` was already `queued` and was not executed.
+Implementation commits, PR updates, report updates, claims, ordinary merges, same-ID edits, and `Promoted:`-only edits are not authorizations. Before a task merges or finalizes, the run fetches `dev_test` again and stops if generation or ownership was superseded or the queue was paused.
 
-## Completed work
+`promotion` stays `manual`. Cursor must not write the next token while that mode is in force.
 
-Repository control protocol only. `handoff_generation` and `handoff_state` now define when a `dev_test` push may authorize a task.
+## Generation baseline
 
-- An authorization handoff is the only push that may start implementation. The push must change `next-task.md`, increase `handoff_generation` by exactly 1, set `handoff_state` to `authorized`, and name a different unconsumed ID.
-- A different next ID is legal only from idle (human authorization; parent ID `none`) or from the completed task's final control update (previous ID completed and consumed in that same commit, and only when `promotion` is `automatic`).
-- Same-ID edits, `Promoted:` bumps, idle writes, blocked writes, pauses, resumes, implementation merges, and report updates are not authorizations.
-- The trigger may stay Anyone. The pushing account is not the concurrency control.
-- One run still executes at most one ID. Consumed IDs, blockers, human pause, and the ban on modifying `dev` and `main` stay in force.
-- The exact replacement Cursor Agent Instructions are in `docs/agent-control/task-queue.md` under "Replacement Cursor Agent Instructions". This run did not edit the Cursor Automation. A human pastes that block.
+Generation `1` is spent. It appeared on `dev_test` in:
 
-Completion state:
+- `15f2dae8e6c0fe5a5f3fc8284853669541f586e0` — `chore(agent): authorize elevation handoff generation 1`
+- `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5` — `chore(agent): handoff GEO-ELEVATION-002 generation 1`
+- `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` — `chore(agent): restore idle before atomic handoff`
 
-- `QUEUE-CONTROL-002` is `completed` and appended to `consumed.md`.
-- `paused: true`, `active_id: none`, `promotion: manual`, `handoff_generation: 0`, `handoff_state: idle`.
-- `next-task.md` is the idle body. This completion is a final close. It does not authorize another ID.
-- `GEO-ELEVATION-002` remains `queued` and has no consumed row.
+`d7125a9` reset the control block to generation `0` and left the stale task body. This repair does not repeat that reset. The idle baseline is generation `1`. The next from-idle human authorization must use Generation `2`.
+
+## Resulting control state
+
+- `paused: false`
+- `active_id: none`
+- `promotion: manual`
+- `handoff_state: idle`
+- `handoff_generation: 1`
+- `next-task.md` is the idle body, Generation `1`, `Authorization: none`
+- `GEO-ELEVATION-002` remains `queued`
+- `GEO-ELEVATION-002` has no row in `consumed.md`
 
 ## Commit / PR
 
-- Branch: `feature/queue-control-002-final-handoff` from `dev_test` at `22582b0b4203726dec8f489c84ff3123cca99f65`.
-- Implementation commit: `19e309765ee000f5c41b8bef222e40368f08735a` — docs(agent): harden final-handoff authorization
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/33
-- Merge target: `dev_test` only. `dev` and `main` are not modified.
+- Branch: `fix/queue-control-003` from `dev_test` at `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf`
+- Commit: recorded in the follow-up docs commit on this branch
+- PR: against `dev_test` only. Not merged to `dev` or `main`.
 
 ## Files changed
 
 - `docs/agent-control/guardrails.md`
 - `docs/agent-control/task-queue.md`
-- `docs/agent-control/consumed.md`
 - `docs/agent-control/next-task.md`
 - `docs/agent-reports/latest.md`
 
+`consumed.md` is unchanged. No application, Prisma, database, dependency, provider, CI, Flutter, or API file is changed.
+
 ## Tests / checks actually run
 
-No API, Flutter, build, or smoke command. The task forbids them. The check below is a local read of the control files after the edit:
+No API, Flutter, build, analyze, or smoke command. This task forbids them. The local read after the edit confirms:
 
-- Control block is `paused: true`, `active_id: none`, `promotion: manual`, `handoff_generation: 0`, `handoff_state: idle`.
-- `next-task.md` is the idle body with `Generation: 0` and `Handoff-From: none`.
-- `QUEUE-CONTROL-002` is `completed`. `GEO-ELEVATION-002` is `queued`. No item is `active` or `blocked`.
-- `consumed.md` gains one `QUEUE-CONTROL-002` row and no `GEO-ELEVATION-002` row.
-- `git diff` is limited to the control docs and this report.
+- Control block is `paused: false`, `active_id: none`, `promotion: manual`, `handoff_generation: 1`, `handoff_state: idle`.
+- `next-task.md` is the idle body at Generation `1` with `Authorization: none`.
+- `GEO-ELEVATION-002` is `queued`. No item is `active` or `blocked`.
+- `consumed.md` has no `GEO-ELEVATION-002` row.
+- The Queue section of `task-queue.md` is unchanged from `d7125a9`.
 
 ## Tests intentionally not repeated
 
-No `npm test`, `npm run build`, `scripts/smoke-api.sh`, GitHub `api-ci`, Flutter test, Flutter analyze, or mobile build. This task does not change application code, dependencies, schema, CI, providers, or database configuration.
+No `npm test`, `npm run build`, `scripts/smoke-api.sh`, GitHub `api-ci`, Flutter test, Flutter analyze, or mobile build.
 
 ## Architecture / config
 
-No schema, dependency, provider, package, or database change. `promotion` stays `manual`. The automation prompt was not changed from this run.
-
-## Fallback
-
-None. The protocol is documentation. No tool or hosted service was required.
+No schema, dependency, provider, package, or database change. `promotion` stays `manual`. The Cursor Automation prompt was not edited from this run. A human pastes the replacement block in `docs/agent-control/task-queue.md` under "Replacement Cursor Agent Instructions".
 
 ## Manual validation needed
 
-A human replaces the Cursor implementation-agent instructions with the paste block in `docs/agent-control/task-queue.md`. Leave the trigger able to fire for Anyone. Do not treat that paste as done until it is saved in the automation.
+Replace the Cursor implementation-agent instructions with that paste block. Leave the trigger able to fire for Anyone. Do not treat the paste as done until it is saved in the automation.
 
-Pull request 32 (`feature/geo-elevation-002-altitude-validation`) came from the overlapping run that started when `GEO-ELEVATION-002` was promoted. This run did not merge, close, or continue it. Leave it unmerged while the queue is paused. Authorize `GEO-ELEVATION-002` later only with a from-idle handoff after a human sets `paused: false`.
-
-## Queue
-
-`QUEUE-CONTROL-002` is completed and consumed. `active_id` is `none`. `handoff_state` is `idle`. `handoff_generation` is `0`. The queue is paused. No queued item was promoted.
+Do not authorize `GEO-ELEVATION-002` from this repair. A later authorization, after this idle baseline is on `dev_test`, is a separate from-idle commit whose Generation is `2`.
 
 ## Remaining issues
 
-- The Cursor Automation still has the previous prompt until a human pastes the replacement instructions. After this final close is on `dev_test`, a run that follows `task-queue.md` stops, because the idle file is not an authorization handoff.
+- The Cursor Automation still has the previous prompt until a human pastes the replacement instructions.
+- Pull request 32 was not merged, closed, or continued by this run.
 - Hosted Supabase apply remains a manual operator step from `DB-SUPABASE-002`.
-- Pull request 32 is still open. `GEO-ELEVATION-002` is queued, not consumed, and was not started by this run.

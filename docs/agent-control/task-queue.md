@@ -1,6 +1,6 @@
 # Pre-approved task queue
 
-`docs/agent-control/next-task.md` is the only task body an agent may execute, and only when the triggering push is an authorization handoff. A push that merely edits that file is not an authorization. This file is the ordered list of later tasks that Arild has already approved. `docs/agent-control/consumed.md` records IDs that have already completed.
+`docs/agent-control/next-task.md` is the authorization token. An agent may execute it only when the triggering push is an authorization handoff defined below. A push that merely edits that file is not an authorization. This file is the ordered list of later tasks that Arild has already approved. `docs/agent-control/consumed.md` records IDs that have already completed.
 
 Cursor must not add a product or implementation task to this file.
 
@@ -10,18 +10,24 @@ Cursor must not add a product or implementation task to this file.
 paused: false
 active_id: none
 promotion: manual
-handoff_generation: 0
+handoff_generation: 1
 handoff_state: idle
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
 - `active_id` is `none` or exactly one task ID.
 - `promotion` stays `manual` until a human sets `automatic` with their own push. Cursor must not change `promotion`.
-- `handoff_generation` is a non-negative integer. It starts at `0`. A missing value on an older commit is `0`. It increases by exactly 1 only on an authorization handoff.
+- `handoff_generation` is a non-negative integer. A missing value on an older commit is `0`. It increases by exactly 1 only on an authorization handoff. A generation value that has appeared on `dev_test` is spent. Never reset it downwards to make files match.
 - `handoff_state` is `idle`, `authorized`, or `blocked`.
-  - `idle`: nothing is authorized. `next-task.md` is the idle body. `active_id` is `none`. No item is blocked.
-  - `authorized`: exactly one ID is authorized at this generation. A run may execute it only when its triggering push is the authorization handoff that set this generation.
-  - `blocked`: the active item is blocked. `next-task.md` is the blocked body. Generation does not change.
+  - `idle`: nothing is authorized. `next-task.md` is the idle body. `active_id` is `none`. No item is blocked. `## Authorization:` is `none`.
+  - `authorized`: exactly one ID is authorized at this generation. A run may execute it only when its triggering push is the authorization handoff for that generation.
+  - `blocked`: the active item is blocked. `next-task.md` is the blocked body. Generation does not change. `## Authorization:` is `none`.
+
+### Generation baseline
+
+Generation `1` is spent. It appeared on `dev_test` in `15f2dae8e6c0fe5a5f3fc8284853669541f586e0`, `e668b09c97df165a34c59a2b1ceaf1f5bdbeade5`, and `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` for a rejected `GEO-ELEVATION-002` handoff. `d7125a9d8c8ae907e5d69a6cdf576642adaf32cf` then reset the control block to `0` and left that task body in `next-task.md`. `QUEUE-CONTROL-003` restores the idle baseline to `1` and does not reuse generation `1`. The next from-idle human authorization must use Generation `2`. `GEO-ELEVATION-002` stays queued and unconsumed. This repair does not authorize it.
+
+After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
 ## Who may enqueue
 
@@ -33,54 +39,83 @@ Cursor must not append a task, rewrite a queued body, or assign a new ID.
 
 `queued`, `active`, `completed`, `blocked`.
 
-At most one item is `active`. At most one item is `blocked`. An item is never both. `active_id` matches that item, or is `none` when every item is `queued` or `completed`.
+At most one item is `active`. At most one item is `blocked`. An item is never both. After a claim, `active_id` matches the active item. `active_id` is `none` when every item is `queued` or `completed`.
+
+A from-idle human authorization does not itself change an item from `queued` to `active`. The accepting run claims that item after the token validates. Until that claim, the authorized ID stays `queued` and `active_id` stays `none`.
 
 ## Authorization handoff
 
-An authorization handoff is the only push that may start an implementation run. The triggering push must change `docs/agent-control/next-task.md`, and that change is not enough by itself. The automation trigger may remain Anyone. The pushing GitHub account is not proof of authorization.
+An authorization handoff is the only push that may start an implementation run. There are exactly two kinds. The automation trigger may remain Anyone. The pushing GitHub account is not proof of authorization.
 
 Compare the triggering push with its parent on `dev_test`. Use the parent of the automation compare range when that range is known, otherwise the parent of `HEAD`. Read parent copies with `git show <parent>:path`. A missing `handoff_generation` on the parent is `0`. Treat a missing `handoff_state` as `idle` only when the parent `active_id` is `none` and the parent next-task ID is `none`. Any other parent without `handoff_state` is not a valid handoff source.
 
-The push is an authorization handoff only when every condition below is true:
+`## Authorization: authorized` is the authorization marker. Idle and blocked files use `## Authorization: none`. A `Promoted:` edit is not a marker and is not an authorization.
 
-1. The push changes `docs/agent-control/next-task.md`.
-2. The new `paused` value is `false`.
-3. The new `handoff_state` is `authorized`.
-4. The new `handoff_generation` is exactly the parent generation plus 1.
-5. `next-task.md` contains `## Generation:` equal to that new generation and `## Handoff-From:` equal to the parent next-task ID (`none` or a task ID).
-6. The new next-task ID is not `none`, its Type is not `NONE`, and it differs from the parent next-task ID.
-7. The new ID has no row in the new `consumed.md`.
-8. The new ID is the only Queue item with status `active`, `active_id` is that ID, and no item is `blocked`.
-9. `next-task.md` matches that item's promotable body except the `Promoted:`, `Generation:`, and `Handoff-From:` lines.
-10. The handoff has exactly one of these sources:
-    - **From idle.** The parent next-task ID is `none`, the parent `active_id` is `none`, the parent has no `blocked` item, and the push adds no `consumed.md` row. This is a human authorization. It does not replace an in-flight ID.
-    - **Final control update.** The parent next-task ID is a real task ID, called PREV. In this same push, PREV becomes `completed`, `consumed.md` gains exactly one new row and that row is PREV, the parent `active_id` was PREV, and `## Handoff-From:` is PREV. This is the only way to authorize a different next task ID after a task was active. It is allowed only when `promotion` is `automatic`. While `promotion` is `manual`, completion is a final close and must not authorize another ID.
+### 1. Human/ChatGPT to Cursor, from idle
 
-Reject every other push before any repository write. Rejected pushes include a same-ID edit, a `Promoted:` bump, an idle or blocked `next-task.md`, a generation change other than exactly plus 1, an ID swap that does not complete the previous ID in the same push, a manual-promotion completion that writes a new ID, a pause, a resume, an implementation merge, a report update, and any push while `paused` is `true`.
+`next-task.md` is the atomic token. From idle, one commit that changes `docs/agent-control/next-task.md` authorizes a task. That commit must not change `docs/agent-control/task-queue.md` or `docs/agent-control/consumed.md`. The queue item does not need to become `active` in that commit, and `active_id` / `handoff_generation` / `handoff_state` in the control block do not need to change in that commit.
 
-A final close records completion and does not authorize another ID. `handoff_state` becomes `idle`, `handoff_generation` stays the same, `active_id` becomes `none`, and `next-task.md` becomes the idle body. A block sets `handoff_state` to `blocked`, keeps the same generation, and does not append `consumed.md`.
+The commit is a from-idle human authorization only when every condition below is true:
 
-Before merging a finished task into `dev_test`, fetch `dev_test` again. Stop without merging if `paused` is `true`, `active_id` is no longer the ID this run started, or `handoff_generation` has changed from the value this run started from. A missing generation is `0`. If that fetched control block contains `handoff_state`, also stop unless it is still `authorized`. Do not overwrite a newer handoff.
+1. The commit changes `docs/agent-control/next-task.md` and does not change `docs/agent-control/task-queue.md` or `docs/agent-control/consumed.md`.
+2. The parent `paused` value is `false`, parent `handoff_state` is `idle`, parent `active_id` is `none`, the parent next-task ID is `none`, and the parent has no `blocked` item.
+3. The new next-task ID is not `none`, its Type is not `NONE`, and it differs from the parent ID.
+4. `## Generation:` is exactly the parent `handoff_generation` plus 1.
+5. `## Handoff-From:` is `none`.
+6. `## Authorization:` is `authorized`.
+7. In the unchanged queue, that ID is `queued`, it is not `active` or `blocked` or `completed`, and it has no row in `consumed.md`.
+8. `next-task.md` matches that item's promotable body except the `Promoted:`, `Generation:`, `Handoff-From:`, and `Authorization:` lines.
+
+This exception applies only to a from-idle human authorization. It must not replace an active task or a blocked task. A token pushed while `active_id` is set, while any item is `blocked`, or while the parent next-task ID is not `none`, is not a handoff.
+
+The accepting run claims the task only after those checks pass. The claim sets that item to `active`, sets `active_id` to that ID, sets `handoff_generation` to the token generation, and sets `handoff_state` to `authorized`. The claim does not change the token ID, Generation, Handoff-From, or Authorization lines. The claim is not an authorization handoff. A later trigger caused by the claim stops with no repository writes.
+
+### 2. Cursor to Cursor, automatic final control update
+
+Cursor may authorize a different next ID only after the current task has fully succeeded: implementation, required checks, PR and merge bookkeeping, then this final control commit. The same run must not execute the newly authorized ID.
+
+This kind is allowed only when `promotion` is `automatic`. While `promotion` is `manual`, completion is a final close and must not authorize another ID.
+
+The final control commit is an automatic authorization only when it atomically does all of the following:
+
+1. The parent next-task ID is a real task ID, called PREV. The parent `active_id` was PREV, the parent `handoff_state` was `authorized`, and the parent was not paused.
+2. PREV becomes `completed` in this commit.
+3. `consumed.md` gains exactly one new row, and that row is PREV.
+4. Exactly one queued unconsumed ID, the first such item in the Queue section, becomes `active`. `active_id` becomes that ID. No item is `blocked`. No other item becomes `active`.
+5. `handoff_generation` becomes exactly the parent generation plus 1. `handoff_state` becomes `authorized`.
+6. `next-task.md` is that new item's promotable body plus `Generation:` set to the new generation, `Handoff-From:` set to PREV, `Authorization:` set to `authorized`, and `Promoted:` set to the UTC time of the commit. Place them after the ID line in that order: `Generation`, `Handoff-From`, `Authorization`, `Promoted`.
+7. The report and control state are updated in this same commit.
+
+If `promotion` is `automatic` and no queued unconsumed item exists, the completion commit is a final close instead. It must not invent an ID.
+
+Reject every other push before any repository write. Rejected pushes include a same-ID edit, a `Promoted:` bump, an idle or blocked `next-task.md`, a generation change other than exactly plus 1, an ID swap that does not meet one of the two kinds above, a manual-promotion completion that writes a new ID, a claim commit, a pause, a resume, an implementation commit, a PR update, a report-only update, a merge that is not the automatic final control commit, and any push while `paused` is `true`.
+
+A trigger caused by a rejected push stops with no repository writes.
+
+A final close records completion and does not authorize another ID. `handoff_state` becomes `idle`, `handoff_generation` stays the same, `active_id` becomes `none`, and `next-task.md` becomes the idle body with `## Authorization: none`. A block sets `handoff_state` to `blocked`, keeps the same generation, and does not append `consumed.md`.
+
+Before merging or otherwise finalizing a task on `dev_test`, fetch `dev_test` again. Stop without merging if ownership was superseded or the queue was paused. In particular, stop when any of these is true:
+
+- `paused` is `true`.
+- The token ID already has a row in `consumed.md`.
+- `active_id` is a different ID than this token.
+- `handoff_generation` is greater than this token's generation.
+- `handoff_state` is `blocked`, or any item is `blocked`.
+- `next-task.md` on the fetched branch names a different ID or a different generation than this token.
+
+Continue only when the fetched branch still carries this token, `paused` is `false`, the ID is unconsumed, and either the queue is still unclaimed (`active_id: none` and the item is still `queued`) or this same ID is already `active` at this same generation. Do not overwrite a newer handoff.
 
 ## Promotion
 
-The only promotable item is the first `queued` item in the Queue section below.
+Automatic promotion is valid only as the Cursor-to-Cursor final control update above, and only for the first queued unconsumed item.
 
-Promotion is valid only when it is also an authorization handoff and all of the following are true:
-
-1. `paused` is `false`.
-2. `promotion` is `manual` or `automatic`. The actor differs by mode, below.
-3. No item is `active` or `blocked` before the push, except when this promotion is the final control update of the task that just completed. After the push, exactly one item is `active`.
-4. The chosen ID has no row in `consumed.md`.
-5. Status for that one item becomes `active`, and `active_id` becomes that ID. No other item becomes `active`.
-6. `next-task.md` is that item's promotable body plus three lines: `Promoted:` set to the UTC time of the push, `Generation:` set to the new `handoff_generation`, and `Handoff-From:` set to `none` from idle or to the completed ID on a final control update. Place them after the ID line, in that order: `Generation`, `Handoff-From`, `Promoted`.
-7. `handoff_generation` increases by exactly 1 and `handoff_state` becomes `authorized`.
+From-idle human authorization may name any ID that is already `queued` and unconsumed. It is not limited to a Cursor-chosen item, and it does not mark the item `active` by itself.
 
 Manual mode is the mode in force:
 
-- GitHub user `Arildb88` promotes one item from `handoff_state: idle` and pushes that handoff to `dev_test`.
-- Cursor does not promote while `promotion` is `manual`, and must not write the next task into `next-task.md`.
-- A same-ID `Promoted:` bump is not a promotion and not a retry. To retry a task that never completed, return it to `queued` if needed, write the idle body, leave the generation unchanged, and do not consume it. A later idle authorization uses a new generation.
+- A human or ChatGPT authorizes one queued unconsumed item from idle by the single `next-task.md` commit defined above, pushed to `dev_test`.
+- Cursor does not create that token while `promotion` is `manual`, and must not write the next task into `next-task.md`.
+- A same-ID `Promoted:` bump is not a promotion and not a retry. To retry a task that never completed, return it to `queued` if needed, write the idle body, leave the generation unchanged, and do not consume it. A later idle authorization uses a new generation. Do not reuse a generation that has already appeared.
 
 Automatic mode is not enabled:
 
@@ -92,18 +127,19 @@ Automatic mode is not enabled:
 
 On every run, before any edit, read this file, `consumed.md`, `guardrails.md`, and `next-task.md`, plus the parent copies from the triggering push.
 
-Stop with no repository writes when any of these is true:
+Stop with no repository writes unless the triggering push is one of the two authorization handoffs above.
 
-- The triggering push is not an authorization handoff.
+For a from-idle human authorization, do not reject the token only because `active_id` is still `none`, the item is still `queued`, or the control block `handoff_generation` is still the parent generation. Those are expected until the accepting run claims the task. Do reject it when the token checks fail, the ID is not queued and unconsumed, another item is active or blocked, or the parent was not idle.
+
+For an automatic final control update, require the atomic conditions above, including `active_id` equal to the new ID and `handoff_state: authorized` in that same commit.
+
+Also stop with no repository writes when any of these is true:
+
 - `paused` is `true`.
-- `handoff_state` is not `authorized`.
-- `next-task.md` has `Type: NONE`, or its ID is `none`, or it has no ID.
 - The ID already has a row in `consumed.md`.
-- The ID is not exactly one Queue item with status `active`.
-- `active_id` is not that same ID.
-- Another item is `active` or `blocked`.
-- `next-task.md` differs from that item's promotable body by anything other than the `Promoted:`, `Generation:`, and `Handoff-From:` lines.
-- `## Generation:` does not equal `handoff_generation`.
+- `next-task.md` has `Type: NONE`, its ID is `none`, it has no ID, or `## Authorization:` is not `authorized`.
+- The push is a claim, a same-ID edit, a `Promoted:`-only edit, an implementation commit, a report update, or a merge that is not an automatic final control update.
+- The parent had an active or blocked task and this push tries to name a different ID without completing that task in the same automatic final control update.
 
 `QUEUE-CONTROL-001` is the queue-setup task that created this file. It has no Queue item. It is consumed. If `next-task.md` asks to add this queue again, stop.
 
@@ -111,17 +147,19 @@ This check is what stops ordinary and mid-task pushes when the trigger remains A
 
 ## Success
 
-When the active task's required checks pass, the implementation agent does all of the following in its completion update, then stops:
+When the active task's required checks pass and `promotion` is `manual`, the implementation agent does all of the following in its completion update, then stops:
 
 1. Set that item's status to `completed`.
 2. Set `active_id` to `none`.
 3. Append one row to `consumed.md`. Do not edit or delete older rows.
-4. Leave `handoff_generation` unchanged. Set `handoff_state` to `idle`.
-5. Replace `next-task.md` with the idle body below, using that same generation and `Handoff-From: none`.
-6. Do not authorize a different ID while `promotion` is `manual`.
+4. Leave `handoff_generation` unchanged at the accepted token generation. Set `handoff_state` to `idle`.
+5. Replace `next-task.md` with the idle body below, using that same generation, `Handoff-From: none`, and `Authorization: none`.
+6. Do not authorize a different ID.
 7. Do not set `paused` to `false`. Set `paused` to `true` only when the authorized task text says to.
 
 The idle `next-task.md` permits a later human authorization. It is not itself a task. The completion push is a final close, not an authorization handoff.
+
+When `promotion` is `automatic`, the completion update is the atomic final control commit defined above. Do not implement the ID that commit authorizes.
 
 ## Block
 
@@ -130,7 +168,7 @@ If a required check fails, required tooling is unavailable, or the task needs a 
 1. Set that item to `blocked` and leave `active_id` on that ID.
 2. Set `handoff_state` to `blocked`. Leave `handoff_generation` unchanged.
 3. Do not append `consumed.md`. A blocked ID may be retried.
-4. Replace `next-task.md` with the blocked body below. Fill in the ID and the unchanged generation.
+4. Replace `next-task.md` with the blocked body below. Fill in the ID and the unchanged generation. `## Authorization:` is `none`.
 5. Do not change or promote any other item.
 6. Stop.
 
@@ -140,30 +178,32 @@ A human may later set that item back to `queued`, set `active_id` to `none`, set
 
 Pause: set `paused: true` in a commit pushed to `dev_test` by `Arildb88`. Agents that see `paused: true` stop before any edit, including when `next-task.md` changed in that push. Pausing does not change `handoff_generation`.
 
-Resume: set `paused: false` in a commit pushed by `Arildb88`. Clearing the flag does not start work and does not change `handoff_generation`. The next push that starts work must be an authorization handoff from idle. Bumping `Promoted:` on an ID that is already active is not that handoff.
+Resume: set `paused: false` in a commit pushed by `Arildb88`. Clearing the flag does not start work and does not change `handoff_generation`. The next push that starts work must be a from-idle human authorization. Bumping `Promoted:` on an ID that is already active is not that handoff.
 
-The completion of `QUEUE-CONTROL-002` sets `paused: true`. Product items stay queued until a human resumes and then authorizes one ID from idle.
+`QUEUE-CONTROL-002` left the queue paused. Later human commits set `paused: false`. `QUEUE-CONTROL-003` keeps `paused: false` and `promotion: manual`. It does not authorize a product task. Product work starts only from a later from-idle human authorization.
 
 ## Inspect
 
 Read the Control block, each Queue status, `consumed.md`, and `next-task.md`.
 
-- Idle: `handoff_state: idle`, `active_id: none`, no `blocked` item, and `next-task.md` is the idle body. Generation stays at the last handoff value, or `0` when no handoff has occurred.
-- Authorized: `handoff_state: authorized`, one `active` item, `active_id` matches, `## Generation:` matches `handoff_generation`, and the push under review increased that generation by 1.
+- Idle: `handoff_state: idle`, `active_id: none`, no `blocked` item, `next-task.md` is the idle body, and `## Authorization:` is `none`. Generation stays at the highest spent generation.
+- Awaiting claim: `next-task.md` is a from-idle token (`## Authorization: authorized`, Generation = control generation + 1, `Handoff-From: none`) and the control block is still idle. This is an authorization. It is not permission for a second run to write a different token.
+- Authorized and claimed: `handoff_state: authorized`, one `active` item, `active_id` matches, and `## Generation:` matches `handoff_generation`.
 - Blocked: `handoff_state: blocked`, one `blocked` item, `active_id` matches, and `next-task.md` is the blocked body. Generation is unchanged.
 - Paused: `paused: true`. No handoff is valid until a human sets `paused: false`.
 
 ## Loop prevention
 
-- One authorization at a time, and only an authorization handoff creates it.
-- Cursor never enqueues, never promotes while `promotion` is `manual`, and never invents an ID.
-- The trigger may remain Anyone. A push that is not an authorization handoff stops with no writes, including a Cursor merge that edits `next-task.md`.
+- One authorization at a time. Only a from-idle human token or an automatic final control commit creates it.
+- Cursor never enqueues, never writes a next-task token while `promotion` is `manual`, and never invents an ID.
+- The trigger may remain Anyone. A push that is not an authorization handoff stops with no writes. That includes implementation commits, PR updates, report updates, claim commits, same-ID edits, `Promoted:`-only edits, and merges that are not the automatic final control commit.
 - A final close leaves the idle file and the same generation, so the completion push cannot start another implementation.
 - A consumed ID cannot be promoted or executed again.
-- A blocked item is not consumed and is not skipped. The queue waits.
+- A blocked item is not consumed and is not skipped. The queue waits. A token must not replace it.
 - `paused: true` stops the run before writes.
 - One successful run completes one ID. It does not start the next ID in that same run.
 - Do not set `promotion: automatic` from an agent run.
+- Do not reset `handoff_generation` downwards.
 
 ## Replacement Cursor Agent Instructions
 
@@ -171,6 +211,7 @@ Observed overlap on 2026-10-02 for automation `af62016d-be2e-11f1-bb68-864e54d14
 
 - `DB-SUPABASE-002` completed in `3a85248f8575bb6a7e096c7cd18087f1bcccf926`. That commit wrote `GEO-ELEVATION-002` into `next-task.md` while `promotion` was `automatic`.
 - A second run started from that push and opened pull request 32 on `feature/geo-elevation-002-altitude-validation`.
+- Generation `1` was later published for `GEO-ELEVATION-002` and then left inconsistent with an idle control block. That body is not an authorization. Generation `1` stays spent.
 - An actor filter does not fix that. Anyone and an `Arildb88`-only trigger both start a run when an allowed account pushes a non-final `next-task.md` change. The entry check has to reject that push.
 - Historical note: when the trigger was limited to `Arildb88`, the `app/cursor` merge of pull request 27 (`6cb14cde2a3a0236c27e7f0bc17d26f423ca0074`) did not start a run. The next run waited for `5e184549b3ea8413bcd856b4c433f9419d82a8b0`. That is not the concurrency control.
 
@@ -189,18 +230,25 @@ TRIGGER FILTER
 
 STOP with no repository writes unless the triggering push is an authorization handoff as defined in docs/agent-control/task-queue.md.
 
-A change to docs/agent-control/next-task.md is required and is not sufficient. Reject all of the following before any edit:
+There are exactly two valid handoffs:
+
+A. From-idle human/ChatGPT authorization. One commit changes docs/agent-control/next-task.md and does not change docs/agent-control/task-queue.md or docs/agent-control/consumed.md. The parent is idle: paused false, handoff_state idle, active_id none, next-task ID none, no blocked item. The new file names a different task ID that is already queued and unconsumed, Generation is exactly the parent handoff_generation plus 1, Handoff-From is none, and Authorization is authorized. The queue item does not need to be active in that commit.
+
+B. Cursor-to-Cursor automatic final control update, and only when promotion is automatic. The same commit marks the previous ID completed, appends that ID to consumed.md, activates exactly one next queued ID, increments generation by exactly 1, writes that next-task.md token with Handoff-From set to the completed ID and Authorization authorized, and updates the report. Do not execute that new ID in the run that wrote the commit.
+
+A change to docs/agent-control/next-task.md is required for a handoff and is not sufficient. Reject all of the following before any edit:
 
 - The push does not change docs/agent-control/next-task.md.
 - The push keeps the same task ID, including a Promoted-only edit.
-- The new next-task.md is idle or blocked, or its ID is none.
-- handoff_generation does not increase by exactly 1 from the parent.
-- handoff_state is not authorized, or paused is true.
-- The new ID does not differ from the parent next-task ID.
-- The parent ID was a real task ID, and this same push does not mark that ID completed and append it to consumed.md.
-- The parent ID was none, but the parent was not idle: active_id was set, an item was blocked, or the push adds a consumed row.
-- promotion is manual, and the push is a completion that tries to authorize a different ID.
-- The ID is consumed, is not the single active item, or active_id does not match.
+- The new next-task.md is idle or blocked, its ID is none, or Authorization is not authorized.
+- Generation does not increase by exactly 1 from the parent handoff_generation.
+- paused is true.
+- The parent was not idle, and this push is not the automatic final control update that completes that parent ID.
+- The commit tries to replace an active or blocked task.
+- promotion is manual, and the push tries to authorize a different ID from a completion commit.
+- The ID is consumed, or it is not queued and unconsumed for a from-idle token.
+- The push changes task-queue.md or consumed.md but is not the automatic final control update.
+- The push is an implementation commit, PR update, report update, claim commit, or merge that is not handoff B.
 
 The trigger may remain Anyone. Do not treat the pushing GitHub account as proof of authorization.
 
@@ -212,11 +260,12 @@ In particular:
 
 - Never execute an idle next-task.md.
 - Never execute a consumed task ID.
-- Never execute a task that is not the single active queue item.
+- Never execute a from-idle token unless the parent was idle and the token checks pass.
+- For a from-idle token, active_id may still be none and the item may still be queued. Claim it only after validation. Do not treat that missing claim as a reason to invent a different task.
 - Never execute work while the queue is paused.
 - Never execute a push that is not the authorization handoff for this generation.
 - Never invent, enqueue, or expand a task.
-- Never skip a blocked task.
+- Never skip or replace a blocked task.
 - Execute at most ONE task ID per automation run.
 
 IMPLEMENTATION
@@ -224,24 +273,25 @@ IMPLEMENTATION
 If the entry check succeeds:
 
 1. Treat next-task.md as the complete authorized scope.
-2. Follow guardrails.md strictly.
-3. Start from the latest dev_test.
-4. Create the required feature/* or fix/* branch.
-5. Do not expand scope or invent features.
-6. Never modify or merge into dev or main.
-7. Before merging back to dev_test, fetch dev_test again. Stop without merging if paused is true, active_id is no longer this ID, or handoff_generation has changed from the value this run started from. A missing generation is 0. If the fetched control block contains handoff_state, also stop unless it is still authorized.
-8. Run only tests or checks that provide new evidence for the task. Prefer focused tests. Do not rerun broad suites merely because they passed recently. Run broader verification only when the task materially affects that area or next-task.md explicitly requires it.
-9. Never expose or commit secrets.
+2. Claim the task before other edits when the queue has not claimed it yet: status active, active_id set to the token ID, handoff_generation set to the token generation, handoff_state authorized. Do not change the token ID, Generation, Handoff-From, or Authorization. The claim is not a new authorization.
+3. Follow guardrails.md strictly.
+4. Start from the latest dev_test.
+5. Create the required feature/* or fix/* branch.
+6. Do not expand scope or invent features.
+7. Never modify or merge into dev or main.
+8. Before merging or finalizing on dev_test, fetch dev_test again. Stop without merging if paused is true, the token ID is consumed, active_id is a different ID, handoff_generation is greater than this token, handoff_state is blocked, or next-task.md names a different ID or generation. Continue only if this token is still present and the ID is still unclaimed or already claimed as this same ID at this same generation.
+9. Run only tests or checks that provide new evidence for the task. Prefer focused tests. Do not rerun broad suites merely because they passed recently. Run broader verification only when the task materially affects that area or next-task.md explicitly requires it.
+10. Never expose or commit secrets.
 
 BLOCKED TASK
 
 If a required check fails, required tooling is unavailable, or the task requires an unauthorized schema change, dependency, provider, paid service, secret, architecture decision, or other work outside next-task.md, apply the Block rule from task-queue.md.
 
-Do not consume the task. Do not promote another task. Do not increase handoff_generation. Update the report. STOP.
+Do not consume the task. Do not promote another task. Do not increase handoff_generation. Set Authorization to none. Update the report. STOP.
 
 SUCCESS
 
-If the task succeeds:
+If the task succeeds and promotion is manual:
 
 1. Commit the implementation.
 2. Open a PR targeting dev_test.
@@ -252,10 +302,12 @@ If the task succeeds:
    - set active_id to none
    - set handoff_state to idle
    - leave handoff_generation unchanged
-   - write the idle next-task.md
-5. Authorize a different next ID in that same commit only when promotion is automatic, paused is false, no item is blocked, and the commit meets the final-control-update rule in task-queue.md. While promotion is manual, do not authorize another ID.
+   - write the idle next-task.md with Authorization none
+5. Do not authorize another ID while promotion is manual.
 6. Update docs/agent-reports/latest.md with the completed work, the tests and checks actually run, the tests intentionally not repeated, the commit and PR, architecture decisions, fallbacks, manual validation needed, and remaining issues.
-7. STOP. Do not implement an ID authorized in this same run.
+7. STOP.
+
+If the task succeeds and promotion is automatic, write the atomic final control update from task-queue.md instead of the idle close, then STOP. Do not implement the ID that commit authorizes. If no queued unconsumed item remains, write the idle close and STOP.
 
 LOOP PREVENTION
 
@@ -264,11 +316,12 @@ LOOP PREVENTION
 - Never authorize more than one item.
 - Never create a new queue item yourself.
 - Never reuse a consumed ID.
+- Never reset handoff_generation downwards.
 - A blocked task stops queue advancement.
 - paused: true stops all work.
 - An idle next-task.md causes an immediate STOP.
-- A triggering push that is not an authorization handoff causes an immediate STOP.
-- A same-ID or Promoted-only push causes an immediate STOP.
+- A triggering push that is not an authorization handoff causes an immediate STOP with no repository writes.
+- A same-ID, Promoted-only, claim, implementation, report, or ordinary merge push causes an immediate STOP.
 
 Never start arbitrary work from your own commits, PRs, reports, or merges.
 
@@ -289,6 +342,8 @@ Use this exact file when no task is authorized. Replace `GENERATION` with the cu
 ## Generation: GENERATION
 
 ## Handoff-From: none
+
+## Authorization: none
 
 ## Task: No active task
 
@@ -314,12 +369,15 @@ Use this exact file when stopping on a blocker. Replace `BLOCKED_ID` with the it
 
 ## Handoff-From: none
 
+## Authorization: none
+
 ## Task: Queue blocked on BLOCKED_ID
 
 No implementation is authorized.
 
 `BLOCKED_ID` is blocked in `docs/agent-control/task-queue.md`. Do not continue it from this file and do not promote another item. This file is not an authorization handoff.
 ```
+
 
 ## Queue
 
