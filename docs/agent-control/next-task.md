@@ -1,19 +1,14 @@
 # Authorized RideWear Task
-
-## Type: NONE
-
-## ID: none
-
-## Generation: 10
-
+## Type: IMPLEMENTATION
+## ID: INTEGRATION-001
+## Generation: 11
 ## Handoff-From: none
+## Authorization: authorized
+## Promoted: 2026-10-02T14:30:00Z
+## Task: Run integration/regression pass for the new activity foundations
 
-## Authorization: none
+Validate the completed cycling, alpine/snowboard, cross-country skiing, route/weather/elevation, recommendation and mobile ad-policy foundations together. Run the existing API test/typecheck/lint commands and Flutter analyze/tests that are supported by the repository. Add focused integration/regression tests where concrete coverage gaps are found and fix concrete regressions within the existing architecture.
 
-## Task: No active task
+Do not add product features, dependencies, schema changes, providers, paid services, or broad refactors. Do not contact live external providers when deterministic mocks/fixtures exist. If a failure requires an architectural/provider/schema decision, BLOCK and report the exact boundary instead of inventing it.
 
-No implementation is authorized.
-
-The queue is `docs/agent-control/task-queue.md`. The ledger is `docs/agent-control/consumed.md`.
-
-Do not promote a queued item from an agent run while promotion is manual. Do not add a task. This file is not an authorization handoff.
+Update the agent report with exact commands and results. Follow queue rules.
