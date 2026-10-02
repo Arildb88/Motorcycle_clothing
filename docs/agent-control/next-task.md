@@ -2,59 +2,76 @@
 
 ## Type: IMPLEMENTATION
 
-## Task: Clearly marked demo wardrobe with safe removal
+## Task: Demo wardrobe identity migration and safe removal
 
-Improve the existing demo wardrobe experience so demo garments are visually obvious and can be removed together without deleting any user-created wardrobe items.
+Continue the previously blocked demo-wardrobe task. The investigation established that reliable demo identity requires a minimal schema change. This task explicitly authorizes that migration.
 
 Read first:
 - `docs/agent-control/guardrails.md`
 - `docs/agent-control/next-task.md`
 - `docs/agent-reports/latest.md`
 
-### Required investigation before coding
+### Authorized schema change
 
-Inspect the current wardrobe/demo implementation on latest `dev_test` before choosing an implementation.
+Add a non-client-writable field to Prisma `Garment`:
 
-Determine how demo wardrobe items are currently created, stored, updated and deleted.
+```prisma
+/// Inserted by the demo wardrobe seed. Survives rename and edit.
+/// Clients cannot set or clear this value.
+isDemo Boolean @default(false)
+```
 
-Use the smallest reliable existing mechanism to identify demo-created garments. Do NOT identify demo items only by their display name.
+Create the normal Prisma migration for the repository's current database setup. Existing rows must safely default to `false`. Do not attempt to guess/backfill historical demo rows from names or other editable fields.
 
-If the current data model cannot reliably preserve demo identity after a garment is renamed/edited without a DB/schema migration, STOP and report the exact minimal schema change that would be required. Do not create a migration in this task.
+### API behavior
 
-### User-visible behavior
+- `seedDemo` must set `isDemo = true` for garments it creates.
+- Normal user-created garments remain `isDemo = false`.
+- Create/update DTOs must not allow clients to set or clear `isDemo`.
+- Editing/renaming a demo garment must preserve `isDemo = true`.
+- Expose read-only `isDemo` in the garment response needed by the Flutter UI.
+- Add a safe delete-demo operation that deletes only rows matching the authenticated user AND `isDemo = true`.
+- Never use the existing destructive force behavior to implement delete-demo if it can delete user garments.
+- Preserve existing normal single-garment deletion.
 
-- Demo garments must have clear, natural demo names, for example `Demo – Touring jacket`, `Demo – Motorcycle trousers`, etc., localized appropriately.
-- Demo garments must also show a small visible `DEMO` marker/badge in the wardrobe UI so they are immediately distinguishable from real garments.
-- When at least one demo-created garment exists, show a bottom action/button for deleting the demo wardrobe.
-- Norwegian Bokmål text: `Slett demo-garderobe`.
-- Provide the corresponding English localization.
-- Pressing the delete action must show a confirmation dialog explaining that only garments added by the demo wardrobe will be removed and the user's own garments will remain.
-- After confirmation, delete only demo-created garments.
-- User-created garments must never be deleted by this action.
-- Demo identity must remain reliable even if the user edits/renames a demo garment.
-- When no demo garments remain, the delete-demo action should no longer be shown.
-- Preserve existing load-demo behavior and normal wardrobe editing unless a minimal adjustment is required for the above.
+### Flutter behavior
 
-### Implementation requirements
+- Give seeded demo garments clear localized names, e.g. `Demo – Touringjakke` / appropriate English equivalent.
+- Show a small visible `DEMO` badge on demo garment cards.
+- When at least one demo garment exists, show a bottom action:
+  - nb: `Slett demo-garderobe`
+  - en: `Delete demo wardrobe`
+- Show a confirmation dialog explaining that only demo-added garments will be removed and personal garments remain.
+- On confirmation call the safe API operation.
+- Refresh state after deletion.
+- Hide the delete-demo action when no demo garments remain.
+- Demo identity must still work after the user edits/renames a demo garment.
 
-- Follow existing Flutter/NestJS/domain patterns; do not invent a parallel wardrobe architecture.
-- Reuse existing data fields/metadata if they provide reliable demo identity.
-- Keep display naming separate from technical demo identification.
-- Add/update Norwegian Bokmål and English localization through the existing ARB/gen-l10n system. Do not edit generated localization files manually.
-- Add focused tests for:
-  - demo identification
-  - user garments surviving demo deletion
-  - renamed/edited demo garments still being removable
-  - delete action visibility when demo items exist / disappear when none remain
-  - confirmation flow where practical in the existing test structure
-- Keep the UI consistent with the current wardrobe screen.
+### Localization
+
+Use the existing ARB/gen-l10n system for all new user-visible Norwegian Bokmål and English strings. Do not manually edit generated localization files.
+
+### Tests
+
+Add focused API and Flutter tests covering at minimum:
+- seed creates `isDemo = true`
+- normal create remains false
+- update/rename preserves demo identity
+- client cannot set/clear demo identity
+- delete-demo removes only authenticated user's demo rows
+- personal garments survive demo deletion
+- UI badge/action visibility
+- delete action disappears when no demo rows remain
+- confirmation flow where practical
 
 ### Explicitly out of scope
 
-- No DB/schema migration in this task.
+- No unrelated schema changes.
+- No attempt to classify/backfill old rows as demo.
+- No Supabase/PostgreSQL migration yet; keep this task compatible with the repository's current database setup.
+- No auth redesign.
 - No unrelated wardrobe redesign.
-- No recommendation-engine changes.
-- No routing/weather/elevation changes.
+- No recommendation/routing/weather/elevation changes.
 - No dependency/package upgrades.
 - No ads.
 - No Cycling/Alpine/XC implementation.
@@ -62,28 +79,24 @@ If the current data model cannot reliably preserve demo identity after a garment
 
 ### Verification
 
-Run the relevant focused tests plus the normal checks required for changed packages.
-
-For Flutter changes, at minimum run:
-- `flutter analyze`
-- `flutter test`
-
-If API code is changed, also run relevant API tests/build required by guardrails.
+Run relevant focused tests plus:
+- API: `npm test`, `npm run build`, and smoke test if applicable.
+- Flutter: `flutter analyze`, `flutter test`.
 
 All required checks must pass before merge.
 
 ### Completion
 
 Follow `docs/agent-control/guardrails.md`.
-
 Use a `feature/*` or `fix/*` branch from latest `dev_test`.
 PR and merge successful work only to `dev_test`.
 Update `docs/agent-reports/latest.md` with:
-- how demo items are technically identified
+- migration/schema details
+- how demo identity is protected from client writes
 - branch/commit/PR
 - files changed
 - localization changes
-- tests/analyze/build results
+- tests/analyze/build/smoke results
 - deletion safety behavior
 - manual validation recommended
 - remaining issues
