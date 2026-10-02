@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
+active_id: CYCLING-001
 promotion: automatic
-handoff_generation: 3
-handoff_state: idle
+handoff_generation: 4
+handoff_state: authorized
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -576,7 +576,7 @@ Use focused routing/weather tests first. Run broader API checks only when needed
 
 ### CYCLING-001
 
-- status: queued
+- status: active
 - title: Cycling recommendation foundation
 - source: `docs/product/CYCLING_PLAN.md`
 
