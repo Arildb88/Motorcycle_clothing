@@ -8,7 +8,7 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: DB-POSTGRES-001
+active_id: DB-SUPABASE-002
 promotion: automatic
 ```
 
@@ -218,7 +218,7 @@ This task exists only to verify that the updated Cursor Automation accepts the a
 
 ### DB-POSTGRES-001
 
-- status: active
+- status: completed
 - title: Implement Prisma PostgreSQL foundation
 - source: `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
 
@@ -274,7 +274,7 @@ Follow the queue success rule in `docs/agent-control/task-queue.md`. If promotio
 
 ### DB-SUPABASE-002
 
-- status: queued
+- status: active
 - title: Supabase deployment readiness
 - source: `docs/architecture/SUPABASE_POSTGRES_MIGRATION_PLAN.md`
 
