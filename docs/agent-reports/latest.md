@@ -6,7 +6,7 @@
 
 - Branch: `feature/weather-provider-research-002`
 - Implementation: `3bb5f5b72cd7c951896011374396c6f3d9d20037`
-- PR: pending into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/42 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Implementation
 
