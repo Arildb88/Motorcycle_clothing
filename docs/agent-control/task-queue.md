@@ -1189,6 +1189,149 @@ Validation:
 Keep dev and main untouched. Follow queue rules.
 ~~~~~
 
+### TEST-COVERAGE-001
+
+- status: queued
+- title: Critical MVP automated test coverage
+- source: approved final pre-release hardening plan
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: VALIDATION_AND_FIX
+## ID: TEST-COVERAGE-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Close meaningful automated-test gaps in critical RideWear MVP flows
+
+Review existing automated coverage after STABILIZATION-001 and add tests only where important MVP behavior remains materially unprotected.
+
+Prioritize:
+- Authentication/profile/password/logout.
+- Wardrobe and demo-garment coexistence/idempotency.
+- Motorcycle/cycling planning and recommendation inputs.
+- Alpine/snowboard resort discovery and selection.
+- Cross-country trail/manual planning.
+- Weather/elevation/provider error and empty states.
+- Norwegian Unicode/location handling and important state/race regressions.
+
+Requirements:
+- Prefer deterministic unit/widget/integration/API tests over brittle snapshot or timing-dependent tests.
+- Do not chase a numeric coverage percentage or add tests that only execute lines without checking behavior.
+- Fix small reproducible defects uncovered by the new tests when they fit existing architecture.
+- No new product features, providers, schema migrations, paid services or broad refactors.
+
+Run relevant/full Flutter and API suites and Flutter analyze. Keep dev and main untouched. Follow queue rules.
+~~~~~
+
+### UX-POLISH-001
+
+- status: queued
+- title: MVP UI and UX consistency pass
+- source: approved final pre-release hardening plan
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: UX_MAINTENANCE
+## ID: UX-POLISH-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Apply a focused RideWear MVP UI/UX polish pass
+
+Review implemented MVP screens for consistency and obvious usability defects without redesigning the product.
+
+Focus on:
+- Spacing, alignment, overflow and small-screen resilience.
+- Consistent RideWear buttons, minimum touch targets and disabled/loading states.
+- Clear empty, loading, validation and provider-error states.
+- Norwegian localization/text consistency, including æ/ø/å.
+- Planner forms and activity-specific flows remaining understandable without exposing irrelevant route controls.
+- Profile, wardrobe and recommendation-result presentation.
+
+Requirements:
+- Preserve existing navigation, architecture and visual identity.
+- Do not invent new product features or perform a broad visual redesign.
+- Add/update focused widget tests for meaningful regressions.
+- Run Flutter analyze and relevant Flutter tests.
+- Record anything requiring human visual/device judgment rather than claiming it is verified.
+
+Keep dev and main untouched. Follow queue rules.
+~~~~~
+
+### PERFORMANCE-001
+
+- status: queued
+- title: Measure and fix obvious MVP performance waste
+- source: approved final pre-release hardening plan
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: PERFORMANCE
+## ID: PERFORMANCE-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Measure and address obvious RideWear MVP performance inefficiencies
+
+Inspect the working MVP for concrete performance waste and fix only issues supported by evidence or clearly redundant work.
+
+Focus on:
+- Duplicate/unnecessary API requests.
+- Search debounce, stale requests and race handling.
+- Provider request reuse/cancellation where existing abstractions support it.
+- Avoidable Flutter rebuild/state churn in important planner/recommendation screens.
+- Obvious sequential work that can safely run concurrently without changing semantics.
+- Excessive payload/data processing in existing API/provider adapters.
+
+Requirements:
+- Measure or demonstrate the problem before non-trivial optimization.
+- Preserve behavior and existing architecture.
+- Do not introduce caching infrastructure, new providers, dependencies, schema changes or speculative rewrites unless already available and clearly appropriate.
+- Add regression tests where practical.
+- Run relevant Flutter/API tests and Flutter analyze.
+- Document measured/observed improvements and deferred opportunities.
+
+Keep dev and main untouched. Follow queue rules.
+~~~~~
+
+### RELEASE-READINESS-001
+
+- status: queued
+- title: MVP release-readiness validation
+- source: approved final pre-release hardening plan
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: RELEASE_VALIDATION
+## ID: RELEASE-READINESS-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Prepare and validate RideWear for a human-controlled beta/release step
+
+Perform a final release-readiness pass after feature, dependency, stabilization, coverage, UX and performance work.
+
+Validate:
+- Flutter analyze and full practical Flutter test suite.
+- API tests, production build/type checks and Prisma generate/validate as applicable.
+- Android release build where the available environment supports it.
+- Environment/config expectations for API, PostgreSQL/Supabase, routing, weather/elevation and resort/trail providers.
+- Secrets remain server-side and no credentials are committed.
+- Production-facing error handling does not expose secrets/internal stack data.
+- Database migration state is documented and consistent with the repository.
+- Existing ads/config behavior is appropriate for the current MVP configuration.
+- Produce/update a concise release checklist covering remaining human steps, Android signing/distribution, hosted API/database configuration and later iOS/TestFlight work.
+
+Boundaries:
+- Do not deploy to production, publish an app, create paid infrastructure, rotate credentials or modify external services/accounts.
+- Do not claim iOS build/test validation from Windows.
+- Fix small release-blocking repository defects that fit existing architecture; document anything requiring human credentials, provider accounts, macOS/iOS tooling or a product decision.
+- No new product features.
+
+Keep dev and main untouched. Follow queue rules.
+~~~~~
+
 ## QUEUE-CONTROL-006 — no-claim execution
 
 Generation 5 for `CYCLING-001` was abandoned after its claim push triggered overlapping Automation activity. Human/ChatGPT recovery returned it to `queued`, `active_id: none`, `handoff_state: idle`, with generation 5 spent and `consumed.md` unchanged. From Generation 6 onward, accepting runs do not write claim commits to `dev_test`; the authorization token is ownership until the final implementation PR lands. The generation 6 retry of `CYCLING-001` was authorized from idle and completed. `CYCLING-001` is consumed. The generation 7 authorization of `ALPINE-001` completed. The generation 8 authorization of `XC-SKI-001` completed. The generation 9 authorization of `WEATHER-PROVIDER-RESEARCH-002` completed. The generation 10 authorization of `ADS-001` completed. No queued unconsumed item remained, so the final close is idle at generation 10. Later queued work was authorized from idle as `INTEGRATION-001` at generation 11 and completed. The automatic final control update authorized `MOBILE-ACTIVITIES-001` at generation 12 and that task completed. The automatic final control update authorized `RECOMMENDATION-UX-001` at generation 13 and that task completed. The automatic final control update authorized `WEATHER-VALIDATION-001` at generation 14 and that task completed. The automatic final control update authorized `MVP-SMOKE-001` at generation 15 and that task completed. No queued unconsumed item remained, so the final close is idle at generation 15. `MANUAL-REGRESSION-001` was later authorized from idle at generation 16 and completed. No queued unconsumed item remained, so the final close is idle at generation 16.
