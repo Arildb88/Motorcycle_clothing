@@ -34,10 +34,13 @@ export class WeatherService {
     // Always include start, mid (if multiple), end
     const sampled = this.samplePoints(samples);
 
-    const weatherPoints: WeatherPoint[] = [];
-    for (const p of sampled) {
-      weatherPoints.push(await this.pointWeather(p.lat, p.lon, provider));
-    }
+    // Samples are independent cache/provider lookups. Running them serially made
+    // route-weather latency the sum of every sample latency (up to three here).
+    // Promise.all preserves sample order while allowing the existing provider and
+    // cache abstractions to do the independent work concurrently.
+    const weatherPoints = await Promise.all(
+      sampled.map((p) => this.pointWeather(p.lat, p.lon, provider)),
+    );
 
     return this.summarize(provider, weatherPoints);
   }
@@ -58,19 +61,22 @@ export class WeatherService {
     const usable =
       samples.length > 0 ? samples : [{ lat: 59.9139, lon: 10.7522 }];
 
-    const weatherPoints: WeatherPoint[] = [];
-    for (const sample of usable) {
-      const point = await this.pointWeather(
-        sample.lat,
-        sample.lon,
-        provider,
-        sample.at,
-        sample.altitudeM,
-      );
-      weatherPoints.push(
-        sample.at ? { ...point, forecastAt: sample.at.toISOString() } : point,
-      );
-    }
+    // Route samples have no ordering dependency. Start their cache/provider
+    // lookups together; Promise.all keeps the returned points in route order.
+    const weatherPoints = await Promise.all(
+      usable.map(async (sample) => {
+        const point = await this.pointWeather(
+          sample.lat,
+          sample.lon,
+          provider,
+          sample.at,
+          sample.altitudeM,
+        );
+        return sample.at
+          ? { ...point, forecastAt: sample.at.toISOString() }
+          : point;
+      }),
+    );
 
     return this.summarize(provider, weatherPoints);
   }
