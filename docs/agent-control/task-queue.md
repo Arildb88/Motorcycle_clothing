@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: PERFORMANCE-001
+active_id: none
 promotion: automatic
 handoff_generation: 35
-handoff_state: authorized
+handoff_state: idle
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -1582,7 +1582,7 @@ Requirements:
 
 ### PERFORMANCE-001
 
-- status: active
+- status: queued
 - title: Measure and fix obvious MVP performance waste
 - source: approved final pre-release hardening plan
 
