@@ -175,6 +175,54 @@ describe('WeatherService altitude', () => {
     expect(summary.points[0].groundElevationM).toBe(40);
   });
 
+  it('starts independent route sample MET requests concurrently and preserves route order', async () => {
+    const releases: Array<() => void> = [];
+    mockedGet.mockImplementation(
+      (url) =>
+        new Promise((resolve) => {
+          const parsed = new URL(String(url));
+          const lat = Number(parsed.searchParams.get('lat'));
+          releases.push(() =>
+            resolve({
+              data: {
+                properties: {
+                  timeseries: [
+                    {
+                      time: '2026-10-03T12:00:00Z',
+                      data: {
+                        instant: {
+                          details: { air_temperature: lat, wind_speed: 2 },
+                        },
+                        next_1_hours: { details: {} },
+                      },
+                    },
+                  ],
+                },
+              },
+            }),
+          );
+        }) as ReturnType<typeof axios.get>,
+    );
+
+    const { weather } = service('met');
+    const pending = weather.forRouteSamples([
+      { lat: 58, lon: 8, at: new Date('2026-10-03T12:00:00Z') },
+      { lat: 59, lon: 9, at: new Date('2026-10-03T12:10:00Z') },
+      { lat: 60, lon: 10, at: new Date('2026-10-03T12:20:00Z') },
+    ]);
+
+    // Flush the cache lookup continuations. Before the optimization only the
+    // first provider request could be in flight at this point.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(mockedGet).toHaveBeenCalledTimes(3);
+
+    for (const release of releases) release();
+    const summary = await pending;
+    expect(summary.points.map((point) => point.airTempC)).toEqual([58, 59, 60]);
+  });
+
   it('still returns a forecast when MET fails', async () => {
     mockedGet.mockRejectedValue(new Error('met down'));
     const { weather } = service('met');

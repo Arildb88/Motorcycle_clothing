@@ -1,62 +1,39 @@
-# THERMAL-FEEDBACK-001
+# PERFORMANCE-001
 
 ## Task
 
-`THERMAL-FEEDBACK-001`, generation 34, authorized by the automatic final control update that completed `RECOMMENDATION-EXPLAIN-001`. The parent tip held that token at generation 33 with `RECOMMENDATION-EXPLAIN-001` active. This run did not write a claim commit. The token stayed the ownership record until this branch's final control state.
+`PERFORMANCE-001`, generation 36, re-authorized from idle after the abandoned generation-35 Cursor run. ChatGPT performed this implementation after Arild explicitly approved takeover while the Cursor quota was exhausted.
 
-- Branch: `feature/thermal-feedback-001`
-- Implementation commit: `751f5e1efc7219811f443a57eea1b26906c60bca`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/64 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/performance-001-chatgpt`
+- Implementation commits: `cbadbf4e2424983226098b85ec2b1ca2d292cb42`, `c93c112839286a8b570cd91b5d0919b93728697b`
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/66 into `dev_test` only.
 
-## Result
+## Evidence and result
 
-A recommendation can be marked for kald, passe, or for varm. The rating is stored on the activity that produced it.
+`WeatherService.forRoutePoints` and `forRouteSamples` awaited independent weather/cache lookups one at a time. Route weather therefore paid the sum of sample latency even though samples have no ordering dependency. Existing route sampling is bounded, but the important path can still contain several independent provider/cache lookups.
 
-- The three Norwegian choices are For kald, Passe, and For varm. They are on today's recommendation and on the planner analysis screen.
-- A missing activity type does not fall back to motorcycle, so the submit control stays off.
-- The rating updates only that activity's existing `PersonalOffset` (`zone: overall`). Alpine skiing and snowboarding stay on separate rows. Motorcycle clothes stay on the motorcycle wardrobe.
-- `UserProfile.coldSensitivity` is not rewritten. Motorcycle recommendations still add that manual prior, then the shrunk feedback residual. Cycling, alpine, snowboard, and cross-country apply only their own residual and do not read the manual prior or another activity's offset.
-- One extreme rating from an empty offset stores a 1 °C residual and applies `1/7` °C, because shrinkage uses `n/(n+6)`. The stored mean stays within ±3 °C. A long run of the same rating approaches at most 1 °C of applied bias.
-- Comfortable feedback pulls an existing mean toward 0. No feedback (`n` is 0) applies 0, including a stored mean with no samples, so existing recommendations stay as they were.
-- The engines do not turn the bias into a personal-history sentence. `canClaimPersonal` stays false.
-- The API still accepts the older slightly-cold and slightly-warm ratings at half the step. The screen does not show them.
+The two paths now start those independent lookups with `Promise.all`. Returned point order is unchanged, so summary and route semantics are preserved. No cache infrastructure, provider, dependency, schema, or Flutter behavior changed.
+
+A regression test holds three MET responses unresolved and verifies all three provider calls have started before any response is released. It then releases them and verifies the returned route order remains 58, 59, 60. This demonstrates the latency shape changed from serial accumulation toward the slowest independent sample.
 
 ## Checks
 
-API, focused:
+GitHub Actions `api-ci` run 37087279095 on PR #66:
+- `npm ci`: passed
+- `prisma generate`: passed
+- `npm test`: passed, including the new concurrency regression
+- `npm run build`: passed
+- smoke: failed at `POST /api/wardrobe/actions/seed-demo` with HTTP 400 `Invalid activity:`
 
-- `thermal-calibration`, `feedback.service`, `thermal-bias.exposure`, `cycling-recommend`, `alpine-recommend`, `xc-recommend`, `activity-foundations`, `cycling.engine`, `alpine.engine`, `xc.engine`, and `explain-kit` — 59 tests passed
-- `nest build` passed
-- `tsc --noEmit` still reports existing spec-file union errors. The new activity-type assertion was cast so it does not add one. Production files in this change typecheck through the build.
+The smoke failure is not introduced by this performance branch: generation-34 parent commit `751f5e1efc7219811f443a57eea1b26906c60bca` has the same API-CI pattern (unit/build pass, smoke fail). Fixing that unrelated smoke contract is outside PERFORMANCE-001 scope.
 
-Flutter, in `apps/mobile`:
+No Flutter files changed. Flutter analyze was not rerun in this environment; the immediately preceding generation-34 report records a clean Flutter analyze baseline.
 
-- `flutter analyze` on `feedback_sheet.dart` and `ride_analysis_result_screen.dart` — no issues
-- `flutter test test/thermal_feedback_sheet_test.dart test/ride_analysis_result_test.dart test/nb_localization_test.dart` — 14 tests passed
+## Deferred
 
-Android, iOS, and a live provider call were not run.
-
-## Architecture / config
-
-Flutter -> NestJS -> provider stays the same. Secrets stay server-side. No new provider, dependency, schema migration, or paid service. `dev` and `main` were not modified.
-
-`ActivityLog` still has no `activityType` column. The calibration key is the existing `PersonalOffset` row. A later query of logs by activity would need an additive column. This task did not add one.
-
-Hiking can be stored if a client sends that activity type. Hiking still has no recommendation engine, so nothing reads that row.
+- Departure comparison still performs some cache writes sequentially. It was left unchanged because the current task requires evidence before broader optimization and its provider-series memoization already prevents duplicate MET network requests.
+- Mobile search already has debounce and stale-request generation guards, so no speculative rewrite was made.
 
 ## Final control state
 
-Promotion is automatic. The first queued unconsumed item is authorized. This run does not execute it.
-
-- `THERMAL-FEEDBACK-001` completed and appended once to `consumed.md`
-- `PERFORMANCE-001` is active
-- `active_id: PERFORMANCE-001`
-- `promotion: automatic` unchanged
-- `handoff_generation: 35`
-- `handoff_state: authorized`
-- `paused: false`
-- `next-task.md`: `PERFORMANCE-001`, Generation 35, Handoff-From `THERMAL-FEEDBACK-001`, Authorization `authorized`
-
-## Remaining
-
-A device pass of the feedback sheet was not run. `PERFORMANCE-001` is authorized for a later run. This run stops after merge.
+`PERFORMANCE-001` is completed and appended once to `consumed.md`. Automatic promotion authorizes `SECURITY-HARDENING-001` at generation 37. This run must not execute generation 37.
