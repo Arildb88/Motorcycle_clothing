@@ -1,19 +1,28 @@
 # Authorized RideWear Task
-
-## Type: NONE
-
-## ID: none
-
-## Generation: 35
-
+## Type: PERFORMANCE
+## ID: PERFORMANCE-001
+## Generation: 36
 ## Handoff-From: none
+## Authorization: authorized
+## Promoted: 2026-10-03T01:45:00Z
+## Task: Measure and address obvious RideWear MVP performance inefficiencies
 
-## Authorization: none
+Inspect the working MVP for concrete performance waste and fix only issues supported by evidence or clearly redundant work.
 
-## Task: No active task
+Focus on:
+- Duplicate/unnecessary API requests.
+- Search debounce, stale requests and race handling.
+- Provider request reuse/cancellation where existing abstractions support it.
+- Avoidable Flutter rebuild/state churn in important planner/recommendation screens.
+- Obvious sequential work that can safely run concurrently without changing semantics.
+- Excessive payload/data processing in existing API/provider adapters.
 
-No implementation is authorized.
+Requirements:
+- Measure or demonstrate the problem before non-trivial optimization.
+- Preserve behavior and existing architecture.
+- Do not introduce caching infrastructure, new providers, dependencies, schema changes or speculative rewrites unless already available and clearly appropriate.
+- Add regression tests where practical.
+- Run relevant Flutter/API tests and Flutter analyze.
+- Document measured/observed improvements and deferred opportunities.
 
-The queue is `docs/agent-control/task-queue.md`. The ledger is `docs/agent-control/consumed.md`.
-
-This is an abandoned/unclaimed authorization recovery. Generation 35 remains spent. The queued task is not consumed. A later retry requires a new from-idle authorization at generation 36.
+Keep dev and main untouched. Follow queue rules.
