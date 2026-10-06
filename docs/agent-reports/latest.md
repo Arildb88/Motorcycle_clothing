@@ -1,54 +1,41 @@
-# SECURITY-HARDENING-001
+# MC-BASIC-LAYERS-001
 
 ## Task
 
-`SECURITY-HARDENING-001`, generation 38, authorized from idle after generation 37 was recovered without consuming the ID. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
+`MC-BASIC-LAYERS-001`, generation 39, authorized by the automatic final control update that completed `SECURITY-HARDENING-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/security-hardening-001`
-- Implementation commit: `b911a18ba7ff0fc081fd9862acd6541117b1d0fe`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/69 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/mc-basic-layers-001`
+- Implementation commit: `7c9c7c6ba1a9ae743949b99d1f991e6e7ea66d50`
+- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Low-risk fixes on the existing Flutter and NestJS boundaries. No new identity provider, paid service, schema migration, or auth rewrite.
+Motorcycle planning can name everyday clothes already worn under the protective kit. The choice lives on the recommendation request. There is no schema migration.
 
-- Production refuses a missing, short, or known example `JWT_SECRET`. Local and test environments keep the existing dev fallback. Access tokens are signed and verified as HS256 only.
-- `demo:` OAuth tokens stay available outside production and cannot be enabled by `ALLOW_DEMO_OAUTH` when `NODE_ENV` is production.
-- Login compares a dummy bcrypt hash when the account has no local password, and the unknown-email error stays `INVALID_CREDENTIALS`.
-- Login, register, forgot-password, and OAuth bodies reject oversized fields before they reach bcrypt or provider calls.
-- Auth routes allow 20 attempts per 15 minutes per direct socket address. The limiter is in-memory per process, off when `NODE_ENV` is `test` or `AUTH_RATE_LIMIT=off`, and does not trust `X-Forwarded-For`.
-- CORS no longer reflects any origin. Requests without `Origin` still pass for the native app. Production browsers must match `CORS_ORIGINS`. Other environments also allow `localhost` and `127.0.0.1`.
-- JSON responses set nosniff, frame denial, a locked-down content security policy, and HSTS only in production. Unexpected errors return `Internal server error` and the log records the error name only.
-- Feedback can store a `routeId` only when that route belongs to the same user. A foreign id is `ROUTE_NOT_OWNED` and is not written.
-- MET failure logs no longer include coordinates.
-- `proxy-addr` is 2.0.8, inside the existing Express range, for GHSA-jqcg-44mw-7w3h. Remaining npm audit findings are moderate Jest and js-yaml issues in the test toolchain, not the API runtime.
-- Release Android builds disable cleartext and Android backup. Debug and profile builds still allow cleartext for the local HTTP API. iOS keeps local networking and does not allow arbitrary loads.
-- The session token uses Keychain accessibility `first_unlock_this_device` with iCloud sync off. Server secrets are not packaged in the Flutter app; AdMob values in git are Google's public test ids.
+- Overdel and Underdel are separate dropdowns in the motorcycle planner. Both include Ingen / None and start empty. Empty is a valid request and is omitted from the query.
+- Upper options are none, T-shirt, thin sweater, thick sweater, and wool base-layer top. Lower options are none, wool base-layer bottom, jeans, and sweatpants/joggers.
+- A base piece can be worn with one sweater. Wool bottoms can be worn with jeans or joggers. Choosing the other piece in the same role replaces it. If a request still sends two pieces for one role, only the warmer credit is kept.
+- Warmth credits are ordinal points on the existing 1–5 scale, not laboratory CLO values. Upper credit applies to the torso. Lower credit applies to the legs.
+- A thick sweater is warmer than a thin sweater. A wool base top is warmer than a T-shirt. Extra base and mid suggestions use the remaining torso warmth. When that remaining warmth drops below the existing extra-layer threshold, those slots are omitted and the explanation `BASIC_UNDERLAYER_WARMTH` is emitted.
+- The protective jacket and riding pants stay required. A T-shirt does not fill the shell slot. Basic jeans do not fill the pants slot, and selecting none does not demand ordinary jeans when protective motorcycle pants are already in the wardrobe.
+- Cycling, alpine, snowboard, and cross-country requests ignore these fields. Motorcycle wardrobe isolation is unchanged.
 
 ## Checks
 
 API, in `apps/api`:
 
-- `npx jest` — 49 suites, 321 tests passed
+- `npx jest` on the basic-layer spec, motorcycle engine spec, explanation spec, activity-planning contract, and demo wardrobe spec — 5 suites, 52 tests passed
+- `npx tsc --noEmit -p tsconfig.build.json` — passed
 - `npm run build` — passed
 
 Flutter, in `apps/mobile`:
 
-- `flutter analyze` — no issues
-- `flutter test` — 150 tests passed
+- `flutter analyze` on the changed planner, presentation, label, and test files — no issues
+- `flutter test test/basic_layers_test.dart test/ride_planner_test.dart` — passed
+- `flutter test test/recommendation_presentation_test.dart` — passed
 
-Android, iOS, and live providers were not run. CI smoke was not re-run here. The generation-36 report already records the pre-existing `seed-demo` activity-parameter failure.
-
-## Follow-ups
-
-These need a product or architecture decision, so they are not queued from this run:
-
-- Access tokens stay valid until expiry after password change, reset, or logout. Revoking them needs a token version or denylist, which is a schema change.
-- The auth rate limit is per API process. A shared lockout across instances needs a store this repository does not have.
-- `routes.get` still returns 403 when the route exists for another user and 404 when it does not. The body is not returned. Changing that status would change the existing route contract.
-- Password reset and OAuth state rows are not swept on a schedule. They expire on use.
-- Jest's moderate `js-yaml` advisory is confined to the test runner.
+Android, iOS, and live providers were not run.
 
 ## Final control state
 
-`SECURITY-HARDENING-001` is completed and appended once to `consumed.md`. Automatic promotion authorizes `MC-BASIC-LAYERS-001` at generation 39. This run must not execute generation 39.
+`MC-BASIC-LAYERS-001` is completed and appended once to `consumed.md`. Automatic promotion authorizes `PRIVACY-DATA-001` at generation 40. This run must not execute generation 40.

@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: MC-BASIC-LAYERS-001
+active_id: PRIVACY-DATA-001
 promotion: automatic
-handoff_generation: 39
+handoff_generation: 40
 handoff_state: authorized
 ```
 
@@ -92,6 +92,8 @@ Generation `36` is spent: `PERFORMANCE-001` was authorized from idle and complet
 Generation `37` is spent: `SECURITY-HARDENING-001` was authorized and recovered without being consumed. Do not reuse generation `37`.
 
 Generation `38` is spent: `SECURITY-HARDENING-001` was authorized from idle and completed. The automatic final control update authorizes `MC-BASIC-LAYERS-001` at generation `39`. Do not reuse generation `38`. Do not execute `SECURITY-HARDENING-001` again.
+
+Generation `39` is spent: `MC-BASIC-LAYERS-001` completed and the automatic final control update authorizes `PRIVACY-DATA-001` at generation `40`. Do not reuse generation `39`. Do not execute `MC-BASIC-LAYERS-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1662,7 +1664,7 @@ Constraints:
 
 ### MC-BASIC-LAYERS-001
 
-- status: active
+- status: completed
 - title: Motorcycle basic under-clothing layers
 - source: explicitly approved by Arild in chat 2026-10-06
 
@@ -1702,7 +1704,7 @@ Thermal behavior:
 
 ### PRIVACY-DATA-001
 
-- status: queued
+- status: active
 - title: User data and privacy readiness
 - source: explicitly approved user-data handling review
 
