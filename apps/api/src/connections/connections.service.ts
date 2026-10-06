@@ -10,6 +10,7 @@ import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenVault } from '../security/token-vault';
 import { pkceChallenge, randomUrlSafe } from '../domain/oauth-utils';
+import { deleteExpiredAuthSecrets } from '../security/ephemeral-secret-cleanup';
 
 @Injectable()
 export class ConnectionsService {
@@ -65,6 +66,7 @@ export class ConnectionsService {
       'STRAVA_REDIRECT_URI',
       this.config.get('OAUTH_REDIRECT_URI', 'ridewear://oauth/callback'),
     );
+    await deleteExpiredAuthSecrets(this.prisma);
     await this.prisma.oAuthState.create({
       data: {
         state,
@@ -146,11 +148,7 @@ export class ConnectionsService {
           ? new Date(data.expires_at * 1000)
           : null,
         status: 'connected',
-        metadataJson: JSON.stringify({
-          username: athlete.username,
-          city: athlete.city,
-          country: athlete.country,
-        }),
+        metadataJson: JSON.stringify(stravaAthleteMetadata(athlete)),
       },
       update: {
         providerAccountId: String(athlete.id ?? 'unknown'),
@@ -164,11 +162,7 @@ export class ConnectionsService {
           ? new Date(data.expires_at * 1000)
           : null,
         status: 'connected',
-        metadataJson: JSON.stringify({
-          username: athlete.username,
-          city: athlete.city,
-          country: athlete.country,
-        }),
+        metadataJson: JSON.stringify(stravaAthleteMetadata(athlete)),
       },
     });
 
@@ -217,12 +211,9 @@ export class ConnectionsService {
       where: { id: row.id },
       data: {
         displayName,
-        metadataJson: JSON.stringify({
-          username: athlete.username,
-          city: athlete.city,
-          country: athlete.country,
-          syncedAt: new Date().toISOString(),
-        }),
+        metadataJson: JSON.stringify(
+          stravaAthleteMetadata(athlete, { syncedAt: new Date().toISOString() }),
+        ),
       },
     });
     return {
@@ -251,4 +242,20 @@ export class ConnectionsService {
         this.config.get('STRAVA_CLIENT_SECRET'),
     );
   }
+}
+
+/**
+ * Fields RideWear keeps after a Strava connect or sync.
+ * City is the athlete's location and is not shown, so it is not stored.
+ */
+export function stravaAthleteMetadata(
+  athlete: { username?: string | null; country?: string | null },
+  extra?: { syncedAt?: string },
+): { username?: string; country?: string; syncedAt?: string } {
+  const metadata: { username?: string; country?: string; syncedAt?: string } =
+    {};
+  if (athlete.username) metadata.username = athlete.username;
+  if (athlete.country) metadata.country = athlete.country;
+  if (extra?.syncedAt) metadata.syncedAt = extra.syncedAt;
+  return metadata;
 }

@@ -19,6 +19,7 @@ import { UsersService } from '../users/users.service';
 
 describe('AuthService login/register/password reset', () => {
   let service: AuthService;
+  const signedPayloads: unknown[] = [];
   const users: Array<{
     id: string;
     email: string | null;
@@ -62,14 +63,29 @@ describe('AuthService login/register/password reset', () => {
       ),
     },
     passwordResetToken: {
-      deleteMany: jest.fn(async ({ where }: { where: { userId: string } }) => {
-        for (let i = resetTokens.length - 1; i >= 0; i--) {
-          if (resetTokens[i].userId === where.userId && !resetTokens[i].usedAt) {
-            resetTokens.splice(i, 1);
+      deleteMany: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { userId?: string; expiresAt?: { lt: Date } };
+        }) => {
+          let count = 0;
+          for (let i = resetTokens.length - 1; i >= 0; i--) {
+            const row = resetTokens[i];
+            const expired =
+              where.expiresAt != null && row.expiresAt < where.expiresAt.lt;
+            const unusedForUser =
+              where.userId != null &&
+              row.userId === where.userId &&
+              row.usedAt == null;
+            if (expired || unusedForUser) {
+              resetTokens.splice(i, 1);
+              count += 1;
+            }
           }
-        }
-        return { count: 0 };
-      }),
+          return { count };
+        },
+      ),
       create: jest.fn(
         async ({
           data,
@@ -120,6 +136,7 @@ describe('AuthService login/register/password reset', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(async () => ({ count: 0 })),
     },
   };
 
@@ -147,6 +164,7 @@ describe('AuthService login/register/password reset', () => {
   beforeEach(async () => {
     users.length = 0;
     resetTokens.length = 0;
+    signedPayloads.length = 0;
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -155,7 +173,12 @@ describe('AuthService login/register/password reset', () => {
         { provide: UsersService, useValue: usersMock },
         {
           provide: JwtService,
-          useValue: { sign: () => 'jwt-token' },
+          useValue: {
+            sign: (payload: unknown) => {
+              signedPayloads.push(payload);
+              return 'jwt-token';
+            },
+          },
         },
         {
           provide: ConfigService,
@@ -180,6 +203,8 @@ describe('AuthService login/register/password reset', () => {
     });
     expect(res.accessToken).toBe('jwt-token');
     expect(users[0].email).toBe('rider@example.com');
+    expect(res.user.email).toBe('rider@example.com');
+    expect(signedPayloads).toEqual([{ sub: users[0].id }]);
     expect(usersMock.createLocalUser).toHaveBeenCalled();
   });
 
@@ -234,6 +259,7 @@ describe('AuthService login/register/password reset', () => {
     });
     expect(res.accessToken).toBe('jwt-token');
     expect(res.user.email).toBe('rider@example.com');
+    expect(signedPayloads).toEqual([{ sub: 'u1' }]);
   });
 
   it('rejects an unknown email with the same invalid-credentials error', async () => {
@@ -282,6 +308,26 @@ describe('AuthService login/register/password reset', () => {
       .digest('hex');
     expect(resetTokens[0].tokenHash).toBe(expectedHash);
     expect(resetTokens[0].tokenHash).not.toBe(res.devResetToken);
+  });
+
+  it('removes expired reset hashes before issuing a new one', async () => {
+    const passwordHash = await bcrypt.hash('password1', 10);
+    users.push({
+      id: 'u1',
+      email: 'rider@example.com',
+      displayName: 'Rider',
+      passwordHash,
+    });
+    resetTokens.push({
+      id: 'prt_expired',
+      userId: 'someone-else',
+      tokenHash: 'old-hash',
+      expiresAt: new Date(Date.now() - 60_000),
+      usedAt: null,
+    });
+    await service.forgotPassword({ email: 'rider@example.com' });
+    expect(resetTokens.some((row) => row.id === 'prt_expired')).toBe(false);
+    expect(resetTokens.some((row) => row.userId === 'u1')).toBe(true);
   });
 
   it('reset-password accepts a valid token once', async () => {

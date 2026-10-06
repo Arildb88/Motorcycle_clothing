@@ -49,6 +49,9 @@ describe('production auth guards', () => {
               deleteMany: jest.fn(async () => ({ count: 0 })),
               create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => data),
             },
+            oAuthState: {
+              deleteMany: jest.fn(async () => ({ count: 0 })),
+            },
           },
         },
         {

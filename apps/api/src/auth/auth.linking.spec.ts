@@ -52,6 +52,7 @@ describe('AuthService account linking rules', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
+      deleteMany: jest.fn(async () => ({ count: 0 })),
     },
   };
 

@@ -192,6 +192,8 @@ describe('CachingTrailDirectory', () => {
     expect(warnings[0]).toContain('serving last known good');
     expect(warnings[0]).toContain('2026-10-02T12:00:00.000Z');
     expect(warnings[0]).toContain(`${TRAIL_SOURCE_REFRESH_MS + hour}ms old`);
+    expect(warnings[0]).not.toContain(trailCacheCell(oslo.lat, oslo.lon).key);
+    expect(warnings[0]).not.toContain(String(oslo.lat));
     expect(again).not.toEqual([]);
   });
 

@@ -98,3 +98,38 @@ Route creation uses provider-neutral mobile abstractions (`LocationSearchService
 4. Preview geometry is **road-following driving geometry** (`driving-car`). The UI must say so and must not claim the route is motorcycle-optimized.
 5. When the provider is unset or unavailable, planning falls back to the duration hint and the preview shows a safe unavailable error. Straight segments are only a local drawing fallback, not a claimed road route.
 6. Saved Route still stores **route definition only** (waypoints/labels), not weather, clothing, or full provider polylines. Device GPS for “current location” stays on the device until the rider saves or previews a waypoint.
+
+---
+
+## 8. Personal-data inventory (engineering readiness)
+
+Reviewed 2026-10-06 in `PRIVACY-DATA-001`. This is a description of the current repository. It is not a GDPR determination, a privacy policy, or a statement that retention is legally sufficient.
+
+| Category | Purpose | Storage | Retention / deletion | Leaves RideWear |
+| --- | --- | --- | --- | --- |
+| Account | Sign-in and display name | `User.email`, `User.passwordHash` (bcrypt), `User.displayName` | Account deletion deletes the user row. Related profile, wardrobe, places, routes, plans, logs, offsets, identities, reset tokens, and connected accounts cascade with it | Email is in the login response body. New access tokens carry only the user id. Older tokens may still contain email until they expire |
+| Auth identities | Which login method is linked | `AuthIdentity` provider, subject id, provider email, avatar URL | Cascade on account deletion | Facebook and Microsoft receive the OAuth code exchange when those providers are configured. Demo `demo:` tokens work only outside production |
+| Password reset | One-hour reset link | `PasswordResetToken.tokenHash` only | Unused hashes for that user are replaced on a new request. Expired hashes and expired OAuth rows are deleted on the next forgot-password, login OAuth start, or Strava connect start. Account deletion cascades the rows | The raw token is in the email link when SMTP is configured. It is not written to application logs |
+| OAuth / PKCE state | Short login or connect handshake | `OAuthState` state, code verifier, optional user id, redirect | 10-minute expiry. Expired rows are deleted by the sweep above. Account deletion deletes rows whose `userId` matches, because this table has no foreign key | The authorization URL goes to Facebook, Microsoft, or Strava when that flow is started |
+| Profile and home | Units, language, optional home point, activity defaults | `UserProfile`, including optional `homeLat` / `homeLon` | Cascade on account deletion. Home coordinates are optional and user-editable | Not sent to providers by themselves |
+| Motorcycle setup | Wind and category for clothing | `MotorcycleProfile` | Cascade on account deletion | No |
+| Wardrobe | Clothing the rider owns | `Garment` and `GarmentComponent` | Cascade on account deletion. A rider can delete one garment | No |
+| Demo wardrobe | Sample clothes beside personal clothes | Same tables, `isDemo: true`, names prefixed `Demo –` | The server sets `isDemo`. Clients cannot set or clear it. Demo rows can be removed without deleting personal garments | No |
+| Saved places and routes | Reusable start, finish, and waypoints | `Place`, `Route`, `RouteWaypoint` | Cascade on account deletion. Deleting a route keeps historical plans with `routeId` set null and the waypoint snapshot left in place | Place search text and selected coordinates go to HeiGIT Pelias. Saved waypoint coordinates go to OpenRouteService when routing is configured. Preview geometry is not stored |
+| Activity plan | The planned departure and the waypoint snapshot | `ActivityPlan.snapshotJson`, `routeAnalysisJson` | Cascade on account deletion. The snapshot is waypoints and preferences, not a GPS trace or a provider polyline | No, beyond the provider calls made while planning |
+| Weather cache | Reuse a forecast for about 15 minutes | `WeatherCache`, keyed by provider and coordinates rounded to 0.001°, plus altitude and hour when present | Rows are ignored after `validUntil`. The next cache write deletes expired rows. The cache is shared and is not a per-user history. Stored point coordinates use that same 0.001° precision. A cache hit returns the caller's own sample coordinate. Stored MET series keep time, temperature, wind speed, precipitation probability, precipitation amount, and symbol | MET Norway receives the sample coordinate and ground altitude the planner already uses. Kartverket receives elevation sample coordinates. Those calls are required for the current forecast |
+| Recommendation and feedback | What was suggested and how the ride felt | `Recommendation`, `RecommendationItem`, `ActivityLog`, `ActivityFeedback`, `BodyAreaFeedback`, `PersonalOffset` | Cascade on account deletion, directly or through the plan and log | No |
+| Connected Strava account | Optional activity connection | Encrypted access and refresh tokens, display name, scopes, username, country | Disconnect deletes the local row and attempts Strava deauthorize. Account deletion removes the local row by cascade and does not call Strava | Strava receives the OAuth code and later the bearer token for the athlete call. City is not stored |
+| Trail and resort directories | Find a trail or resort | Process memory for trail collections. No user id | At most 32 trail cells, refreshed at most every 24 hours. Failure logs include age, not coordinates | Geonorge Turrutebasen and Fnugg receive the search area or resort query |
+| Mobile session | Stay signed in | Access token in `FlutterSecureStorage` | Logout deletes the token | The token is sent only to the RideWear API |
+
+Production API logs that were inspected do not include passwords, reset tokens, API keys, or waypoint coordinates. Unexpected errors log the error name and return a fixed message. MET failures log a fixed sentence. A failed ski-trail refresh logs age, not the map cell.
+
+### Gaps left in place
+
+- `OAuthState` still has no foreign key. Deletion is application code. A schema change was not made.
+- Account deletion does not call Strava deauthorize. Disconnect does. Adding that call inside deletion was not guessed here, because a failed provider call must not decide whether the local account can be removed.
+- Expired weather-cache rows remain until a later cache write. There is no separate retention job.
+- Activity-plan snapshots remain after the saved route is deleted. That is existing product behavior: the plan keeps the waypoints it was made from.
+- MET and Kartverket still receive the sample coordinates the product already sends. Rounding those provider requests would change which forecast or elevation point is requested, so it was not changed.
+- There is no analytics SDK and no advertising SDK in this change.

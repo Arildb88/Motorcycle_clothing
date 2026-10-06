@@ -22,6 +22,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { OAuthDto } from './dto/oauth.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { pkceChallenge, randomUrlSafe } from '../domain/oauth-utils';
+import { deleteExpiredAuthSecrets } from '../security/ephemeral-secret-cleanup';
 
 type IdentityProvider = 'facebook' | 'microsoft';
 
@@ -99,6 +100,7 @@ export class AuthService {
    * only when a reset was actually issued — never in production.
    */
   async forgotPassword(dto: ForgotPasswordDto) {
+    await deleteExpiredAuthSecrets(this.prisma);
     const email = dto.email.toLowerCase().trim();
     const generic = {
       ok: true as const,
@@ -311,6 +313,7 @@ export class AuthService {
       'ridewear://oauth/callback',
     );
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await deleteExpiredAuthSecrets(this.prisma);
     await this.prisma.oAuthState.create({
       data: {
         state,
@@ -695,7 +698,9 @@ export class AuthService {
     email: string | null | undefined,
     displayName: string,
   ) {
-    const accessToken = this.jwt.sign({ sub: userId, email: email ?? null });
+    // The device stores this token. Email stays on the login response body,
+    // which the client keeps in memory, and is loaded later from /users/me.
+    const accessToken = this.jwt.sign({ sub: userId });
     return {
       accessToken,
       user: { id: userId, email: email ?? null, displayName },

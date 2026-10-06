@@ -32,7 +32,11 @@ function createWeather(provider = 'met'): {
   const upsert = jest.fn().mockResolvedValue({});
   const findUnique = jest.fn().mockResolvedValue(null);
   const prisma = {
-    weatherCache: { findUnique, upsert },
+    weatherCache: {
+      findUnique,
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      upsert,
+    },
   };
   const config = {
     get: (key: string, fallback?: string) =>

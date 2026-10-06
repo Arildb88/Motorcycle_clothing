@@ -1,7 +1,12 @@
 import axios from 'axios';
 import type { ConfigService } from '@nestjs/config';
 import type { PrismaService } from '../prisma/prisma.service';
-import { MET_FAILURE_LOGS, WeatherService } from './weather.service';
+import {
+  MET_FAILURE_LOGS,
+  WeatherService,
+  minimizeMetSeries,
+  persistedWeatherPoint,
+} from './weather.service';
 
 jest.mock('axios');
 
@@ -15,6 +20,7 @@ function service(provider: string): {
   const prisma = {
     weatherCache: {
       findUnique: jest.fn().mockResolvedValue(null),
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
       upsert,
     },
   };
@@ -348,7 +354,11 @@ describe('WeatherService departure comparison', () => {
       };
     });
     const prisma = {
-      weatherCache: { findUnique, upsert: jest.fn().mockResolvedValue({}) },
+      weatherCache: {
+        findUnique,
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        upsert: jest.fn().mockResolvedValue({}),
+      },
     };
     const weather = new WeatherService(
       {
@@ -382,5 +392,131 @@ describe('WeatherService departure comparison', () => {
       expect(message).not.toMatch(/\d/);
       expect(message).not.toContain(',');
     }
+  });
+
+  it('returns the caller coordinate from a shared cache row', async () => {
+    const findUnique = jest.fn().mockResolvedValue({
+      cacheKey: 'met:59.914,10.752',
+      payloadJson: JSON.stringify({
+        lat: 59.913946,
+        lon: 10.752214,
+        airTempC: 4,
+        precipitationProbPct: 1,
+        precipitationMm: 0,
+        windSpeedMs: 2,
+      }),
+      validUntil: new Date(Date.now() + 60_000),
+    });
+    const weather = new WeatherService(
+      {
+        get: (key: string, fallback?: string) =>
+          key === 'WEATHER_PROVIDER' ? 'met' : fallback,
+      } as ConfigService,
+      {
+        weatherCache: { findUnique, upsert: jest.fn(), deleteMany: jest.fn() },
+      } as unknown as PrismaService,
+    );
+    const summary = await weather.forRouteSamples([
+      { lat: 59.9135, lon: 10.7524 },
+    ]);
+    expect(summary.points[0].lat).toBe(59.9135);
+    expect(summary.points[0].lon).toBe(10.7524);
+    expect(summary.points[0].airTempC).toBe(4);
+    expect(mockedGet).not.toHaveBeenCalled();
+  });
+
+  it('persists cache-key coordinates and only the MET fields the forecast reads', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        properties: {
+          timeseries: [
+            {
+              time: '2026-10-06T12:00:00Z',
+              data: {
+                instant: {
+                  details: {
+                    air_temperature: 3,
+                    wind_speed: 5,
+                    air_pressure_at_sea_level: 1000,
+                    relative_humidity: 80,
+                    wind_from_direction: 180,
+                  },
+                },
+                next_1_hours: {
+                  details: {
+                    probability_of_precipitation: 15,
+                    precipitation_amount: 0.4,
+                    probability_of_thunder: 2,
+                  },
+                  summary: { symbol_code: 'lightrain' },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+    const { weather, upsert } = service('met');
+    await weather.compareSampleGroups([
+      [
+        {
+          lat: 59.913946,
+          lon: 10.752214,
+          at: new Date('2026-10-06T12:10:00Z'),
+        },
+      ],
+    ]);
+    const storedSeries = JSON.parse(
+      String(
+        upsert.mock.calls.find((call) =>
+          String(call[0].where.cacheKey).startsWith('series:'),
+        )?.[0].create.payloadJson,
+      ),
+    );
+    const storedText = JSON.stringify(storedSeries);
+    expect(storedText).not.toContain('relative_humidity');
+    expect(storedText).not.toContain('air_pressure');
+    expect(storedText).not.toContain('wind_from_direction');
+    expect(storedText).not.toContain('probability_of_thunder');
+    expect(storedSeries[0].data.instant.details.air_temperature).toBe(3);
+    expect(storedSeries[0].data.next_1_hours.summary.symbol_code).toBe(
+      'lightrain',
+    );
+
+    const storedPoint = JSON.parse(
+      String(
+        upsert.mock.calls.find((call) =>
+          String(call[0].where.cacheKey).startsWith('met:'),
+        )?.[0].create.payloadJson,
+      ),
+    ) as { lat: number; lon: number };
+    expect(storedPoint).toEqual(
+      persistedWeatherPoint({
+        lat: 59.913946,
+        lon: 10.752214,
+        airTempC: 3,
+        precipitationProbPct: 15,
+        precipitationMm: 0.4,
+        windSpeedMs: 5,
+        symbol: 'lightrain',
+      }),
+    );
+    expect(storedPoint.lat).toBe(59.914);
+    expect(storedPoint.lon).toBe(10.752);
+  });
+
+  it('drops unused MET fields without changing the values that are kept', () => {
+    const minimized = minimizeMetSeries([
+      {
+        time: '2026-10-06T12:00:00Z',
+        data: {
+          instant: {
+            details: { air_temperature: 0, wind_speed: 1, cloud_area_fraction: 9 },
+          },
+        },
+      },
+    ]);
+    expect(minimized[0].data?.instant?.details?.air_temperature).toBe(0);
+    expect(JSON.stringify(minimized)).not.toContain('cloud_area_fraction');
   });
 });

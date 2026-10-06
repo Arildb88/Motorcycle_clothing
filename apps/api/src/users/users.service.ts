@@ -241,6 +241,9 @@ export class UsersService {
   }
 
   async deleteAccount(userId: string) {
+    // OAuthState.userId is not a foreign key, so the user cascade does not
+    // remove PKCE verifiers started for this account.
+    await this.prisma.oAuthState.deleteMany({ where: { userId } });
     await this.prisma.user.delete({ where: { id: userId } });
     return { ok: true };
   }

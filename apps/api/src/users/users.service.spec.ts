@@ -43,6 +43,8 @@ function assignDefined(target: object, data: object) {
 
 describe('UsersService profile and account', () => {
   const users: StoredUser[] = [];
+  const oauthStates: Array<{ id: string; userId: string; codeVerifier: string }> =
+    [];
 
   function seed(partial?: Partial<StoredUser>): StoredUser {
     const user: StoredUser = {
@@ -147,6 +149,17 @@ describe('UsersService profile and account', () => {
         return removed;
       }),
     },
+    oAuthState: {
+      deleteMany: jest.fn(({ where }: { where: { userId: string } }) => {
+        const before = oauthStates.length;
+        for (let index = oauthStates.length - 1; index >= 0; index -= 1) {
+          if (oauthStates[index].userId === where.userId) {
+            oauthStates.splice(index, 1);
+          }
+        }
+        return { count: before - oauthStates.length };
+      }),
+    },
     userProfile: {
       update: jest.fn(
         ({
@@ -169,6 +182,7 @@ describe('UsersService profile and account', () => {
 
   beforeEach(() => {
     users.length = 0;
+    oauthStates.length = 0;
   });
 
   it('returns the profile without the password hash', async () => {
@@ -298,6 +312,10 @@ describe('UsersService profile and account', () => {
   it('deletes the account and then refuses to load it', async () => {
     seed();
     seed({ id: 'other', email: 'other@example.com' });
+    oauthStates.push(
+      { id: 'state-1', userId: 'user-1', codeVerifier: 'verifier-user-1' },
+      { id: 'state-2', userId: 'other', codeVerifier: 'verifier-other' },
+    );
     await expect(service.deleteAccount('user-1')).resolves.toEqual({
       ok: true,
     });
@@ -307,5 +325,8 @@ describe('UsersService profile and account', () => {
     await expect(service.getMe('other')).resolves.toMatchObject({
       email: 'other@example.com',
     });
+    expect(oauthStates).toEqual([
+      { id: 'state-2', userId: 'other', codeVerifier: 'verifier-other' },
+    ]);
   });
 });

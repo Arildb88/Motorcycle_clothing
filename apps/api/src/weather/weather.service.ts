@@ -246,7 +246,9 @@ export class WeatherService {
       where: { cacheKey: key },
     });
     if (cached && cached.validUntil > new Date()) {
-      return JSON.parse(cached.payloadJson) as WeatherPoint;
+      const stored = JSON.parse(cached.payloadJson) as WeatherPoint;
+      // The shared cache must not hand one rider another rider's sample.
+      return { ...stored, lat, lon };
     }
 
     const fetched =
@@ -260,12 +262,15 @@ export class WeatherService {
   }
 
   private async storePoint(key: string, point: WeatherPoint): Promise<void> {
-    await this.storeJson(key, point);
+    await this.storeJson(key, persistedWeatherPoint(point));
   }
 
   private async storeJson(key: string, payload: unknown): Promise<void> {
     const validUntil = new Date(Date.now() + 15 * 60 * 1000);
     const payloadJson = JSON.stringify(payload);
+    await this.prisma.weatherCache.deleteMany({
+      where: { validUntil: { lt: new Date() } },
+    });
     await this.prisma.weatherCache.upsert({
       where: { cacheKey: key },
       create: {
@@ -329,8 +334,10 @@ export class WeatherService {
       });
       const timeseries = data?.properties?.timeseries;
       if (!Array.isArray(timeseries) || timeseries.length === 0) return null;
-      await this.storeJson(key, timeseries);
-      return timeseries as MetSeriesEntry[];
+      const minimized = minimizeMetSeries(timeseries);
+      if (minimized.length === 0) return null;
+      await this.storeJson(key, minimized);
+      return minimized;
     } catch {
       this.logger.warn(MET_FAILURE_LOGS.series);
       return null;
@@ -411,6 +418,72 @@ export class WeatherService {
       return this.mockWeather(lat, lon);
     }
   }
+}
+
+/** Cache identity is 0.001°. Do not persist a finer coordinate in the shared row. */
+export function persistedWeatherPoint(point: WeatherPoint): WeatherPoint {
+  return {
+    ...point,
+    lat: Number(point.lat.toFixed(3)),
+    lon: Number(point.lon.toFixed(3)),
+  };
+}
+
+/**
+ * Keep the MET fields the clothing forecast reads.
+ * Humidity, pressure, cloud, and wind direction are not used and are not stored.
+ */
+export function minimizeMetSeries(raw: unknown): MetSeriesEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const minimized: MetSeriesEntry[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue;
+    const row = entry as {
+      time?: unknown;
+      data?: {
+        instant?: { details?: Record<string, unknown> };
+        next_1_hours?: MetSlot & { details?: Record<string, unknown> };
+        next_6_hours?: MetSlot & { details?: Record<string, unknown> };
+      };
+    };
+    const instant = row.data?.instant?.details;
+    minimized.push({
+      time: typeof row.time === 'string' ? row.time : undefined,
+      data: {
+        instant: {
+          details: {
+            air_temperature: numberOrUndefined(instant?.air_temperature),
+            wind_speed: numberOrUndefined(instant?.wind_speed),
+          },
+        },
+        next_1_hours: minimizedSlot(row.data?.next_1_hours),
+        next_6_hours: minimizedSlot(row.data?.next_6_hours),
+      },
+    });
+  }
+  return minimized;
+}
+
+function minimizedSlot(
+  source: (MetSlot & { details?: Record<string, unknown> }) | undefined,
+): MetSlot | undefined {
+  if (!source) return undefined;
+  const symbol = source.summary?.symbol_code;
+  return {
+    details: {
+      probability_of_precipitation: numberOrUndefined(
+        source.details?.probability_of_precipitation,
+      ),
+      precipitation_amount: numberOrUndefined(
+        source.details?.precipitation_amount,
+      ),
+    },
+    summary: typeof symbol === 'string' ? { symbol_code: symbol } : undefined,
+  };
+}
+
+function numberOrUndefined(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function withGroundElevation(

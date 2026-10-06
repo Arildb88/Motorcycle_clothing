@@ -211,7 +211,7 @@ export class CachingTrailDirectory implements TrailDirectoryPort {
         const ageMs = checkedAt - existing.fetchedAt;
         existing.checkedAt = checkedAt;
         this.logger.warn(
-          `Ski trail refresh failed for ${cell.key}; serving last known good fetched at ${new Date(existing.fetchedAt).toISOString()} (${ageMs}ms old)`,
+          `Ski trail refresh failed; serving last known good fetched at ${new Date(existing.fetchedAt).toISOString()} (${ageMs}ms old)`,
         );
         return;
       }
