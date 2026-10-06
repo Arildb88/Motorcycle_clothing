@@ -6,7 +6,7 @@
 
 - Branch: `feature/mc-basic-layers-001`
 - Implementation commit: `7c9c7c6ba1a9ae743949b99d1f991e6e7ea66d50`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/70 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
