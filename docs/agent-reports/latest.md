@@ -1,28 +1,40 @@
-# SOCIAL-AUTH-RESEARCH-001
+# RELEASE-READINESS-001
 
 ## Task
 
-`SOCIAL-AUTH-RESEARCH-001`, generation 41, authorized by the automatic final control update that completed `PRIVACY-DATA-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
+`RELEASE-READINESS-001`, generation 42, authorized by the automatic final control update that completed `SOCIAL-AUTH-RESEARCH-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/social-auth-research-001`
-- Implementation commit: `acd018becf8c537195f2d8b1d1d9f05e0fbefcd1`
-- Design: `docs/research/SOCIAL_AUTH_LOGIN_PLAN.md`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/72 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/release-readiness-001`
+- Implementation commit: `a9c0f98b6d9aff7b2fe2803313cd9f5c0604daed`
+- Checklist: `docs/operations/RELEASE_CHECKLIST.md`
+- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Research and design only. Microsoft and Facebook login stay disabled. No dependency, credential, schema migration, login button, or production OAuth code was added. Email and password are unchanged.
+Validation and a human release checklist. No product code, schema, dependency, or provider change. Nothing was deployed or published.
 
-The plan reads the current NestJS and Flutter auth path and the Microsoft, Meta, and App Store documents fetched on 2026-10-06. It keeps authorization-code plus PKCE in the system browser, with the code exchange and the PKCE verifier on the API. RideWear's own JWT remains the session. Provider access tokens and refresh tokens are not stored.
+Flutter 3.47.6 (Dart 3.13.5): `flutter analyze` reported no issues, and `flutter test` passed 154 tests. API: 334 tests passed and `npm run build` passed. Prisma 5.22.0 generate and validate passed. On local PostgreSQL 16, `prisma migrate deploy` applied both committed migrations and `prisma migrate diff` from those migrations to `schema.prisma` found no difference. `scripts/check-supabase-readiness.sh` passed without a hosted connection. `scripts/smoke-api.sh` passed against that local database with mock weather.
 
-Recommendation: enable neither provider now. Microsoft personal accounts are the only later candidate, and only after the token-validation gaps in the plan are fixed and a human decides how App Store Review Guideline 4.8 is met. Facebook needs a redirect URI the manual-flow guide does not document for `ridewear://`, a current Graph version, a token debug check, and a data-deletion instruction. Enabling both does not remove the iOS requirement.
+Android release build was not run. This environment has no Android SDK, and the release build type still signs with the debug keystore. iOS and TestFlight were not run. This machine is Linux.
 
-`DEVELOPMENT_NOTES.md` now points at the plan and says not to enable either provider from the older setup steps.
+Ads stay off unless `ADS_ENABLED` is set. Secrets in git are the documented local placeholders. Production error responses do not include stack traces. Microsoft and Facebook login stay disabled.
+
+No queued unconsumed task remained, so this close is idle at generation 42.
 
 ## Checks
 
-This task does not change runtime code, so the API and Flutter suites were not re-run. The plan's test matrix is for a later implementation task. No live Microsoft, Meta, or Apple call was made beyond reading public documentation. No secret was added.
+- `flutter analyze`: no issues found
+- `flutter test`: 154 passed
+- `npm test`: 334 passed
+- `npm run build`: passed
+- `npx prisma generate` and `npx prisma validate`: passed
+- `npx prisma migrate deploy`: 2 migrations applied on local Postgres 16
+- `npx prisma migrate diff`: no difference
+- `scripts/check-supabase-readiness.sh`: passed
+- `scripts/smoke-api.sh`: passed
+- Android release build: not run (no Android SDK)
+- iOS: not run
 
 ## Final control state
 
-`SOCIAL-AUTH-RESEARCH-001` is completed and appended once to `consumed.md`. Automatic promotion authorizes `RELEASE-READINESS-001` at generation 42. This run must not execute generation 42.
+`RELEASE-READINESS-001` is completed and appended once to `consumed.md`. `active_id` is `none`. `handoff_state` is `idle`. `handoff_generation` stays 42. `promotion` stays `automatic`. `next-task.md` is the idle body with `Authorization: none`. No other ID is authorized.
