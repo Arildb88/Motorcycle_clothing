@@ -7,7 +7,7 @@
 - Branch: `feature/social-auth-research-001`
 - Implementation commit: `acd018becf8c537195f2d8b1d1d9f05e0fbefcd1`
 - Design: `docs/research/SOCIAL_AUTH_LOGIN_PLAN.md`
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/72 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
