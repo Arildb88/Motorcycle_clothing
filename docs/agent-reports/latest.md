@@ -5,6 +5,7 @@
 `SOCIAL-AUTH-RESEARCH-001`, generation 41, authorized by the automatic final control update that completed `PRIVACY-DATA-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
 - Branch: `feature/social-auth-research-001`
+- Implementation commit: `acd018becf8c537195f2d8b1d1d9f05e0fbefcd1`
 - Design: `docs/research/SOCIAL_AUTH_LOGIN_PLAN.md`
 - PR: into `dev_test` only. Not merged to `dev` or `main`.
 
