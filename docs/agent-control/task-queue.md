@@ -1669,7 +1669,7 @@ Constraints:
 
 Inspect the current motorcycle planning, wardrobe and recommendation models first and implement the smallest compatible extension.
 
-For motorcycle only, let the rider indicate basic clothing already worn underneath the protective MC gear. Support at least:
+For motorcycle only, let the rider optionally indicate basic clothing already worn underneath the protective MC gear. Selecting no basic under-clothing must be a valid, explicit state and must not trigger validation errors or force a default selection. This is important for warm-weather riding where the protective MC garment itself may be the relevant leg/torso layer (for example protective motorcycle jeans with no ordinary trousers underneath). Support at least:
 - T-shirt
 - thin sweater
 - thick sweater
@@ -1683,7 +1683,7 @@ Thermal behavior:
 - The thermal ordering must be explicit and deterministic: a thick sweater contributes more warmth than a thin sweater; wool base layers are insulating and warmer than a plain T-shirt; lower-body wool/jeans/joggers affect legs rather than torso.
 - Use bounded, explainable constants consistent with the existing 1–5 warmth/demand model. Do not claim laboratory CLO values unless a verified source/model is actually introduced.
 - Multiple physically compatible basics may be selected where sensible (for example T-shirt + sweater, or wool bottom + pants), but prevent or clearly handle nonsensical double counting.
-- Protective MC outerwear remains required and separate. Basic jeans must not be treated as protective motorcycle jeans, and ordinary sweaters/T-shirts must not satisfy protective shell requirements.
+- Protective MC outerwear remains required and separate. Basic jeans must not be treated as protective motorcycle jeans, and ordinary sweaters/T-shirts must not satisfy protective shell requirements. Conversely, protective motorcycle jeans (including Kevlar/reinforced riding jeans) belong to the MC protective wardrobe and must not cause the UI to require ordinary jeans, joggers, wool bottoms, or any other basic under-layer.
 - Recommendation explanations should account for selected basic warmth when it materially changes a suggested base/mid layer.
 - Keep this MC-only; do not weaken the existing motorcycle wardrobe isolation rules.
 - Preserve existing users/data. Prefer no schema migration if the selection can safely live in the existing plan/request model; if persistence requires a migration, use only a minimal safe additive migration.
