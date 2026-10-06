@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
+active_id: MC-BASIC-LAYERS-001
 promotion: automatic
-handoff_generation: 37
-handoff_state: idle
+handoff_generation: 39
+handoff_state: authorized
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -84,6 +84,14 @@ Generation `32` is spent: `DEPARTURE-COMPARE-001` completed and the automatic fi
 Generation `33` is spent: `RECOMMENDATION-EXPLAIN-001` completed and the automatic final control update authorizes `THERMAL-FEEDBACK-001` at generation `34`. Do not reuse generation `33`. Do not execute `RECOMMENDATION-EXPLAIN-001` again.
 
 Generation `34` is spent: `THERMAL-FEEDBACK-001` completed and the automatic final control update authorizes `PERFORMANCE-001` at generation `35`. Do not reuse generation `34`. Do not execute `THERMAL-FEEDBACK-001` again.
+
+Generation `35` is spent: `PERFORMANCE-001` was authorized and recovered without being consumed. Do not reuse generation `35`.
+
+Generation `36` is spent: `PERFORMANCE-001` was authorized from idle and completed. The automatic final control update authorizes `SECURITY-HARDENING-001` at generation `37`. Do not reuse generation `36`. Do not execute `PERFORMANCE-001` again.
+
+Generation `37` is spent: `SECURITY-HARDENING-001` was authorized and recovered without being consumed. Do not reuse generation `37`.
+
+Generation `38` is spent: `SECURITY-HARDENING-001` was authorized from idle and completed. The automatic final control update authorizes `MC-BASIC-LAYERS-001` at generation `39`. Do not reuse generation `38`. Do not execute `SECURITY-HARDENING-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1618,7 +1626,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### SECURITY-HARDENING-001
 
-- status: queued
+- status: completed
 - title: Security hardening audit and safe fixes
 - source: explicitly approved security hardening work
 
@@ -1654,7 +1662,7 @@ Constraints:
 
 ### MC-BASIC-LAYERS-001
 
-- status: queued
+- status: active
 - title: Motorcycle basic under-clothing layers
 - source: explicitly approved by Arild in chat 2026-10-06
 
