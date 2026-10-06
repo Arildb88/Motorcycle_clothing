@@ -158,7 +158,7 @@ expect_contains "POST /api/wardrobe" '"layer":"base"' "$GARM"
 
 step "POST /api/wardrobe/actions/seed-demo"
 SEED=$(expect_http "POST /api/wardrobe/actions/seed-demo" \
-  -X POST "http://localhost:${PORT}/api/wardrobe/actions/seed-demo?force=true" \
+  -X POST "http://localhost:${PORT}/api/wardrobe/actions/seed-demo?activity=motorcycle&force=true" \
   -H "Authorization: Bearer ${TOKEN}")
 # Demo wardrobe size evolves with garment presets; assert a successful seed, not a frozen count.
 expect_contains "POST /api/wardrobe/actions/seed-demo" '"created":' "$SEED"
@@ -184,7 +184,7 @@ expect_contains "POST /api/wardrobe (personal garment beside demo)" '"isDemo":fa
 
 step "DELETE /api/wardrobe/actions/demo"
 DELETED=$(expect_http "DELETE /api/wardrobe/actions/demo" \
-  -X DELETE "http://localhost:${PORT}/api/wardrobe/actions/demo" \
+  -X DELETE "http://localhost:${PORT}/api/wardrobe/actions/demo?activity=motorcycle" \
   -H "Authorization: Bearer ${TOKEN}")
 expect_contains "DELETE /api/wardrobe/actions/demo" '"deleted":' "$DELETED"
 

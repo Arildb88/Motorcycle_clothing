@@ -34,7 +34,7 @@ API, in `apps/api`:
 - `npx tsc --noEmit -p tsconfig.build.json` — passed
 - `npm run build` — passed
 
-Flutter files were not changed. Android, iOS, live providers, and the local HTTP smoke were not run. Postgres is not available in this environment. `api-ci` runs the unit suite, the build, and the smoke script.
+Flutter files were not changed. Android, iOS, and live providers were not run. Postgres is not available in this environment. The first `api-ci` smoke run failed on `POST /api/wardrobe/actions/seed-demo` because the script omitted `activity`. That call has required an activity since demo wardrobes became activity-specific, and the same red smoke was already on `dev_test`. The script now seeds and deletes the motorcycle demo wardrobe, which is the set that contains `Demo – Insulated winter gloves`.
 
 ## Final control state
 
