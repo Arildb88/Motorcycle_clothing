@@ -1,41 +1,27 @@
-# PRIVACY-DATA-001
+# SOCIAL-AUTH-RESEARCH-001
 
 ## Task
 
-`PRIVACY-DATA-001`, generation 40, authorized by the automatic final control update that completed `MC-BASIC-LAYERS-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
+`SOCIAL-AUTH-RESEARCH-001`, generation 41, authorized by the automatic final control update that completed `PRIVACY-DATA-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/privacy-data-001`
-- Implementation commit: `8786a949e66d293b2252222265cf18561ab3f5b7`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/71 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/social-auth-research-001`
+- Design: `docs/research/SOCIAL_AUTH_LOGIN_PLAN.md`
+- PR: into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Engineering privacy-readiness pass. This is not a GDPR or legal-compliance claim.
+Research and design only. Microsoft and Facebook login stay disabled. No dependency, credential, schema migration, login button, or production OAuth code was added. Email and password are unchanged.
 
-- `PRIVACY_ARCHITECTURE.md` section 8 inventories account, auth, profile, wardrobe, routes, plans, weather cache, feedback, Strava, trail and resort lookups, and the mobile session. Each row names purpose, storage, retention, and whether data leaves RideWear.
-- New access tokens carry only the user id. The login response still returns email, and `/users/me` still loads the profile. Older tokens that already contain email keep working until they expire.
-- Shared weather-cache points store coordinates at the existing 0.001° cache-key precision. A cache hit returns the caller's own sample coordinate. Stored MET series keep time, temperature, wind speed, precipitation probability, precipitation amount, and symbol. Humidity, pressure, cloud, wind direction, and thunder probability are not stored. Expired cache rows are deleted on the next cache write.
-- MET and Kartverket still receive the sample coordinates the planner already sends. Rounding those requests would change the forecast or elevation point, so it was not changed.
-- Expired password-reset hashes and expired OAuth PKCE rows are deleted when a reset is requested or a login/Strava connect starts.
-- Account deletion deletes `OAuthState` rows for that user. Those rows have no foreign key, so the user cascade did not remove them. No schema migration was added.
-- Strava metadata keeps username and country. City is not stored. Account deletion still does not call Strava deauthorize; disconnect does. A failed provider call must not decide whether the local account can be removed.
-- Ski-trail refresh failures log age, not the map cell.
-- Demo garments stay `isDemo: true` with `Demo –` names. Clients still cannot set or clear `isDemo`.
+The plan reads the current NestJS and Flutter auth path and the Microsoft, Meta, and App Store documents fetched on 2026-10-06. It keeps authorization-code plus PKCE in the system browser, with the code exchange and the PKCE verifier on the API. RideWear's own JWT remains the session. Provider access tokens and refresh tokens are not stored.
 
-## Privacy / data-flow readiness
+Recommendation: enable neither provider now. Microsoft personal accounts are the only later candidate, and only after the token-validation gaps in the plan are fixed and a human decides how App Store Review Guideline 4.8 is met. Facebook needs a redirect URI the manual-flow guide does not document for `ridewear://`, a current Graph version, a token debug check, and a data-deletion instruction. Enabling both does not remove the iOS requirement.
 
-RideWear stores account, profile, optional home coordinates, wardrobe, saved places and route waypoints, plan snapshots, recommendations, feedback, personal offsets, and encrypted Strava tokens. Password reset secrets are stored as hashes. The mobile access token is in secure storage. Place search and routing go to HeiGIT when configured. Forecasts go to MET Norway. Elevation goes to Kartverket. Resorts go to Fnugg. Ski trails go to Geonorge. Preview geometry is not persisted. Production logs that were inspected do not include passwords, reset tokens, API keys, or waypoint coordinates. Gaps that remain: no foreign key on `OAuthState`, no Strava deauthorize during account deletion, weather-cache cleanup only on the next write, and plan snapshots kept after a route is deleted.
+`DEVELOPMENT_NOTES.md` now points at the plan and says not to enable either provider from the older setup steps.
 
 ## Checks
 
-API, in `apps/api`:
-
-- `npx jest` — 52 suites, 334 tests passed
-- `npx tsc --noEmit -p tsconfig.build.json` — passed
-- `npm run build` — passed
-
-Flutter files were not changed. Android, iOS, and live providers were not run. Postgres is not available in this environment. The first `api-ci` smoke run failed on `POST /api/wardrobe/actions/seed-demo` because the script omitted `activity`. That call has required an activity since demo wardrobes became activity-specific, and the same red smoke was already on `dev_test`. The script now seeds and deletes the motorcycle demo wardrobe, which is the set that contains `Demo – Insulated winter gloves`.
+This task does not change runtime code, so the API and Flutter suites were not re-run. The plan's test matrix is for a later implementation task. No live Microsoft, Meta, or Apple call was made beyond reading public documentation. No secret was added.
 
 ## Final control state
 
-`PRIVACY-DATA-001` is completed and appended once to `consumed.md`. Automatic promotion authorizes `SOCIAL-AUTH-RESEARCH-001` at generation 41. This run must not execute generation 41.
+`SOCIAL-AUTH-RESEARCH-001` is completed and appended once to `consumed.md`. Automatic promotion authorizes `RELEASE-READINESS-001` at generation 42. This run must not execute generation 42.

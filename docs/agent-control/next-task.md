@@ -1,28 +1,29 @@
 # Authorized RideWear Task
-## Type: RESEARCH_AND_DESIGN
-## ID: SOCIAL-AUTH-RESEARCH-001
-## Generation: 41
-## Handoff-From: PRIVACY-DATA-001
+## Type: RELEASE_VALIDATION
+## ID: RELEASE-READINESS-001
+## Generation: 42
+## Handoff-From: SOCIAL-AUTH-RESEARCH-001
 ## Authorization: authorized
-## Promoted: 2026-10-06T09:16:13Z
-## Task: Produce an implementation-ready plan for Microsoft and Facebook login without enabling either provider
+## Promoted: 2026-10-06T09:28:51Z
+## Task: Prepare and validate RideWear for a human-controlled beta/release step
 
-Inspect RideWear's current NestJS/Flutter authentication and user model first. Verify current official Microsoft and Meta documentation during the task.
+Perform a final release-readiness pass after feature, dependency, stabilization, coverage, UX and performance work.
 
-Plan:
-- native mobile OAuth/OIDC flow using current best practice (external user-agent/system browser and PKCE where provider/protocol requires)
-- server/API trust boundary and token validation/exchange strategy
-- Android and future iOS redirect/deep-link requirements
-- account linking rules for existing email/password users, duplicate-email/collision handling, provider unlinking, and recovery when a provider account disappears
-- minimum scopes/data requested and privacy implications
-- secure token storage/session lifecycle/logout/revocation
-- exact external operator setup required (app registrations, package/bundle IDs, redirect URIs, signing hashes/keys, review requirements) without committing secrets
-- phased implementation steps and test matrix
-- compare whether implementing Microsoft, Facebook, both, or neither adds meaningful value for RideWear; present factual tradeoffs without enabling them
+Validate:
+- Flutter analyze and full practical Flutter test suite.
+- API tests, production build/type checks and Prisma generate/validate as applicable.
+- Android release build where the available environment supports it.
+- Environment/config expectations for API, PostgreSQL/Supabase, routing, weather/elevation and resort/trail providers.
+- Secrets remain server-side and no credentials are committed.
+- Production-facing error handling does not expose secrets/internal stack data.
+- Database migration state is documented and consistent with the repository.
+- Existing ads/config behavior is appropriate for the current MVP configuration.
+- Produce/update a concise release checklist covering remaining human steps, Android signing/distribution, hosted API/database configuration and later iOS/TestFlight work.
 
-Constraints:
-- Research/design only: do not add dependencies, provider credentials, schema migrations, login buttons, or production OAuth code.
-- Do not invent credentials or provider configuration.
-- Preserve existing email/password auth.
-- Store the implementation-ready design in docs and summarize it in latest report.
-- Follow queue/control rules.
+Boundaries:
+- Do not deploy to production, publish an app, create paid infrastructure, rotate credentials or modify external services/accounts.
+- Do not claim iOS build/test validation from Windows.
+- Fix small release-blocking repository defects that fit existing architecture; document anything requiring human credentials, provider accounts, macOS/iOS tooling or a product decision.
+- No new product features.
+
+Keep dev and main untouched. Follow queue rules.
