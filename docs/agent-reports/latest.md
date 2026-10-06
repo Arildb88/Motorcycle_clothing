@@ -6,7 +6,7 @@
 
 - Branch: `feature/security-hardening-001`
 - Implementation commit: `b911a18ba7ff0fc081fd9862acd6541117b1d0fe`
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/69 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
