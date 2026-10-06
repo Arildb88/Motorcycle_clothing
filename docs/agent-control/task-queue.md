@@ -1652,6 +1652,45 @@ Constraints:
 - Follow queue/control rules; dev and main untouched.
 ~~~~~
 
+### MC-BASIC-LAYERS-001
+
+- status: queued
+- title: Motorcycle basic under-clothing layers
+- source: explicitly approved by Arild in chat 2026-10-06
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: MC_BASIC_LAYERS
+## ID: MC-BASIC-LAYERS-001
+## Promoted: REPLACE_WITH_UTC_TIME
+## Task: Add selectable everyday/basic clothing worn under motorcycle protective gear and include its warmth in MC recommendations
+
+Inspect the current motorcycle planning, wardrobe and recommendation models first and implement the smallest compatible extension.
+
+For motorcycle only, let the rider indicate basic clothing already worn underneath the protective MC gear. Support at least:
+- T-shirt
+- thin sweater
+- thick sweater
+- wool base-layer top
+- wool base-layer bottom
+- jeans
+- sweatpants/joggers
+
+Thermal behavior:
+- Basic clothing contributes warmth to the relevant body zone before/while the MC recommendation determines additional layers.
+- The thermal ordering must be explicit and deterministic: a thick sweater contributes more warmth than a thin sweater; wool base layers are insulating and warmer than a plain T-shirt; lower-body wool/jeans/joggers affect legs rather than torso.
+- Use bounded, explainable constants consistent with the existing 1–5 warmth/demand model. Do not claim laboratory CLO values unless a verified source/model is actually introduced.
+- Multiple physically compatible basics may be selected where sensible (for example T-shirt + sweater, or wool bottom + pants), but prevent or clearly handle nonsensical double counting.
+- Protective MC outerwear remains required and separate. Basic jeans must not be treated as protective motorcycle jeans, and ordinary sweaters/T-shirts must not satisfy protective shell requirements.
+- Recommendation explanations should account for selected basic warmth when it materially changes a suggested base/mid layer.
+- Keep this MC-only; do not weaken the existing motorcycle wardrobe isolation rules.
+- Preserve existing users/data. Prefer no schema migration if the selection can safely live in the existing plan/request model; if persistence requires a migration, use only a minimal safe additive migration.
+- Add Norwegian UI labels/localization and deterministic tests covering thermal ordering, torso/legs separation, no protective-equipment substitution, and recommendation impact.
+- Follow queue/control rules.
+~~~~~
+
 ### PRIVACY-DATA-001
 
 - status: queued
