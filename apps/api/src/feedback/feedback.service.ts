@@ -24,11 +24,12 @@ export class FeedbackService {
     }
     const activityType = dto.activityType;
     const overallRating = this.mapLegacyRating(dto.rating);
+    const routeId = await this.ownedRouteId(userId, dto.routeId);
 
     const log = await this.prisma.activityLog.create({
       data: {
         userId,
-        routeId: dto.routeId,
+        routeId,
         startedAt: new Date(dto.departureAt),
         weatherSummaryJson: JSON.stringify(dto.weatherSnapshot),
         recommendationJson: JSON.stringify(dto.recommendation),
@@ -91,6 +92,21 @@ export class FeedbackService {
       take: 50,
       include: { activityLog: true, bodyAreas: true },
     });
+  }
+
+  private async ownedRouteId(userId: string, routeId?: string) {
+    if (!routeId) return undefined;
+    const owned = await this.prisma.route.findFirst({
+      where: { id: routeId, userId },
+      select: { id: true },
+    });
+    if (!owned) {
+      throw new BadRequestException({
+        code: 'ROUTE_NOT_OWNED',
+        message: 'Route not found',
+      });
+    }
+    return owned.id;
   }
 
   private mapLegacyRating(rating: string): number {

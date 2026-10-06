@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { resolveJwtSecret } from '../security/jwt-secret';
 
 @Module({
   imports: [
@@ -15,8 +16,12 @@ import { UsersModule } from '../users/users.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET', 'dev-secret'),
+        secret: resolveJwtSecret(
+          config.get<string>('JWT_SECRET'),
+          config.get<string>('NODE_ENV'),
+        ),
         signOptions: {
+          algorithm: 'HS256' as const,
           expiresIn: config.get('JWT_EXPIRES_IN', '7d') as `${number}d`,
         },
       }),

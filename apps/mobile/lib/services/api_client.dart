@@ -12,11 +12,22 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// Session token stays on this device and is not marked for iCloud sync.
+const ridewearIosOptions = IOSOptions(
+  accessibility: KeychainAccessibility.first_unlock_this_device,
+  synchronizable: false,
+);
+
+const ridewearSecureStorage = FlutterSecureStorage(
+  iOptions: ridewearIosOptions,
+);
+
 class ApiClient {
-  ApiClient({required this.baseUrl});
+  ApiClient({required this.baseUrl, FlutterSecureStorage? storage})
+    : _storage = storage ?? ridewearSecureStorage;
 
   final String baseUrl;
-  final _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
   String? _token;
 
   String? get token => _token;

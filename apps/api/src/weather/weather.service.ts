@@ -15,6 +15,12 @@ import {
   weatherSeriesCacheKey,
 } from './met-request';
 
+export const MET_FAILURE_LOGS = {
+  series: 'MET fetch failed; comparison has no series',
+  noTemperature: 'MET fetch returned no temperature; using mock',
+  fetch: 'MET fetch failed; using mock',
+} as const;
+
 @Injectable()
 export class WeatherService {
   private readonly logger = new Logger(WeatherService.name);
@@ -326,9 +332,7 @@ export class WeatherService {
       await this.storeJson(key, timeseries);
       return timeseries as MetSeriesEntry[];
     } catch {
-      this.logger.warn(
-        `MET fetch failed for ${lat},${lon}; comparison has no series`,
-      );
+      this.logger.warn(MET_FAILURE_LOGS.series);
       return null;
     }
   }
@@ -387,9 +391,7 @@ export class WeatherService {
         timeseries.length === 0 ||
         instant?.air_temperature == null
       ) {
-        this.logger.warn(
-          `MET fetch returned no temperature for ${lat},${lon}; using mock`,
-        );
+        this.logger.warn(MET_FAILURE_LOGS.noTemperature);
         return this.mockWeather(lat, lon);
       }
       const next1 = series?.next_1_hours ?? series?.next_6_hours ?? {};
@@ -404,8 +406,8 @@ export class WeatherService {
         windSpeedMs: Number(instant.wind_speed ?? 0),
         symbol: next1?.summary?.symbol_code,
       };
-    } catch (err) {
-      this.logger.warn(`MET fetch failed for ${lat},${lon}; using mock`);
+    } catch {
+      this.logger.warn(MET_FAILURE_LOGS.fetch);
       return this.mockWeather(lat, lon);
     }
   }

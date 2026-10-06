@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { ConfigService } from '@nestjs/config';
 import type { PrismaService } from '../prisma/prisma.service';
-import { WeatherService } from './weather.service';
+import { MET_FAILURE_LOGS, WeatherService } from './weather.service';
 
 jest.mock('axios');
 
@@ -375,5 +375,12 @@ describe('WeatherService departure comparison', () => {
     expect(rows[0].variesByTime).toBe(false);
     expect(rows[1].variesByTime).toBe(false);
     expect(rows[0].conditions?.minTempC).toBe(rows[1].conditions?.minTempC);
+  });
+
+  it('does not put coordinates in MET failure logs', () => {
+    for (const message of Object.values(MET_FAILURE_LOGS)) {
+      expect(message).not.toMatch(/\d/);
+      expect(message).not.toContain(',');
+    }
   });
 });

@@ -28,6 +28,8 @@ type IdentityProvider = 'facebook' | 'microsoft';
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const FORGOT_PASSWORD_MESSAGE =
   'If an account exists for this email, a password reset link has been sent.';
+/** Compared when the account has no local password so missing users are not faster. */
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('ridewear-login-timing-dummy', 10);
 
 @Injectable()
 export class AuthService {
@@ -78,14 +80,11 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!user?.passwordHash) {
-      throw new UnauthorizedException({
-        code: 'INVALID_CREDENTIALS',
-        message: 'Invalid email or password.',
-      });
-    }
-    const ok = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!ok) {
+    const ok = await bcrypt.compare(
+      dto.password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
+    if (!user?.passwordHash || !ok) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password.',
@@ -687,10 +686,8 @@ export class AuthService {
   }
 
   private allowDemoOAuth() {
-    return (
-      this.config.get('NODE_ENV') !== 'production' ||
-      this.config.get('ALLOW_DEMO_OAUTH') === 'true'
-    );
+    // ALLOW_DEMO_OAUTH must not turn demo: tokens into a production login.
+    return this.config.get('NODE_ENV') !== 'production';
   }
 
   private tokenResponse(

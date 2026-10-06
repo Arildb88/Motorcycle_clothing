@@ -3,21 +3,37 @@ import { FeedbackService } from './feedback.service';
 import { THERMAL_FEEDBACK_STEP_C, maxOneEventAppliedC } from '../domain';
 
 describe('FeedbackService thermal ratings', () => {
-  function harness() {
+  function harness(routes: Array<{ id: string; userId: string }> = []) {
     const offsets = new Map<
       string,
       { n: number; meanResidual: number; activityType: string }
     >();
     const profiles: string[] = [];
     const prisma = {
+      route: {
+        findFirst: jest.fn(
+          async ({
+            where,
+          }: {
+            where: { id: string; userId: string };
+          }) =>
+            routes.find(
+              (route) => route.id === where.id && route.userId === where.userId,
+            ) ?? null,
+        ),
+      },
       activityLog: {
         create: jest.fn(
           ({
             data,
           }: {
-            data: { feedback: { create: { overallRating: number } } };
+            data: {
+              routeId?: string;
+              feedback: { create: { overallRating: number } };
+            };
           }) => ({
             id: 'log-1',
+            routeId: data.routeId,
             feedback: {
               id: 'fb-1',
               overallRating: data.feedback.create.overallRating,
@@ -133,6 +149,35 @@ describe('FeedbackService thermal ratings', () => {
     expect(offsets.has('user-1:motorcycle')).toBe(false);
     expect(offsets.has('user-1:snowboarding')).toBe(false);
     expect(profiles).toEqual([]);
+  });
+
+  it('stores a route only when that route belongs to the same user', async () => {
+    const owned = harness([{ id: 'route-a', userId: 'user-1' }]);
+    const saved = await owned.service.create('user-1', {
+      ...body,
+      activityType: 'cycling',
+      rating: 'ok',
+      routeId: 'route-a',
+    });
+    expect(saved.activityLogId).toBe('log-1');
+    expect(owned.prisma.activityLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ routeId: 'route-a', userId: 'user-1' }),
+      }),
+    );
+
+    const foreign = harness([{ id: 'route-b', userId: 'user-2' }]);
+    await expect(
+      foreign.service.create('user-1', {
+        ...body,
+        activityType: 'cycling',
+        rating: 'too_cold',
+        routeId: 'route-b',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'ROUTE_NOT_OWNED' }),
+    });
+    expect(foreign.prisma.activityLog.create).not.toHaveBeenCalled();
   });
 
   it('rejects an unknown activity instead of writing a motorcycle offset', async () => {

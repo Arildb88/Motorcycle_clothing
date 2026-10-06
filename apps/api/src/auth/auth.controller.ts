@@ -17,7 +17,9 @@ import { OAuthDto } from './dto/oauth.dto';
 import { OAuthCallbackDto } from './dto/oauth-callback.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthRequest } from './jwt-auth.guard';
+import { AuthRateLimitGuard } from '../security/auth-rate-limit';
 
+@UseGuards(AuthRateLimitGuard)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
