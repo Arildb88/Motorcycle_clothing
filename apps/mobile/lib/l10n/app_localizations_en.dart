@@ -155,6 +155,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Baseline recommendation — not enough personal ride evidence yet.';
 
   @override
+  String get reasonBasicUnderlayerWarmth =>
+      'Basic clothes already worn cover some warmth, so less extra layering is suggested.';
+
+  @override
   String get reasonRouteSpeedProfileUsed =>
       'Timing uses the route\'s own speed profile.';
 
@@ -1113,6 +1117,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get plannerStyleSkate => 'Skate';
+
+  @override
+  String get plannerBasicClothing => 'Clothes under the protective gear';
+
+  @override
+  String get plannerBasicHint =>
+      'Optional. None is a valid choice, including when the motorcycle garment is the only layer you need.';
+
+  @override
+  String get plannerBasicUpper => 'Upper layer';
+
+  @override
+  String get plannerBasicLower => 'Lower layer';
+
+  @override
+  String get plannerBasicNone => 'None';
+
+  @override
+  String get plannerBasicTShirt => 'T-shirt';
+
+  @override
+  String get plannerBasicThinSweater => 'Thin sweater';
+
+  @override
+  String get plannerBasicThickSweater => 'Thick sweater';
+
+  @override
+  String get plannerBasicWoolTop => 'Wool base-layer top';
+
+  @override
+  String get plannerBasicWoolBottom => 'Wool base-layer bottom';
+
+  @override
+  String get plannerBasicJeans => 'Jeans';
+
+  @override
+  String get plannerBasicJoggers => 'Sweatpants/joggers';
 
   @override
   String get plannerSessionLength => 'Session length';

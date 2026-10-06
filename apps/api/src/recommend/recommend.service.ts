@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ELEVATION_PORT,
   type ElevationPort,
@@ -43,6 +48,10 @@ import {
 } from './xc';
 import { explainKitItems } from './explain-kit';
 import {
+  InvalidBasicLayerError,
+  parseBasicLayers,
+} from './motorcycle/basic-layers';
+import {
   MOTORCYCLE_EXPOSURE,
   routeTravelAlignedWithSamples,
   runMotorcycleRecommendationPipeline,
@@ -76,6 +85,8 @@ export class RecommendService {
     intensity?: string,
     exposure?: string,
     style?: string,
+    basicUpper?: string,
+    basicLower?: string,
   ) {
     const route = routeId
       ? await this.routes.get(userId, routeId)
@@ -101,6 +112,16 @@ export class RecommendService {
 
     if (route.activityType === 'xc_skiing') {
       return this.forXcSkiing(userId, route, _departureAt, intensity, style);
+    }
+
+    let basicLayers;
+    try {
+      basicLayers = parseBasicLayers(basicUpper, basicLower);
+    } catch (error) {
+      if (error instanceof InvalidBasicLayerError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
     }
 
     const profile = await this.prisma.userProfile.findUnique({
@@ -180,6 +201,7 @@ export class RecommendService {
       personalColdBiasC,
       personalSampleCount: n,
       shrinkageK: k,
+      basicLayers,
     });
 
     // M3 may apply shrinkage bias but never emits personal preference claims (M5).
@@ -238,6 +260,7 @@ export class RecommendService {
         wear: explainKitItems(engine.engine, engine.wear, engine.reasons),
         pack: explainKitItems(engine.engine, engine.pack, engine.reasons),
         reasons: engine.reasons,
+        basicLayers: engine.basicLayers,
         confidence: engine.confidence,
         // Legacy list fields (labels / codes) — prefer wear/pack + reasons[].code
         items,

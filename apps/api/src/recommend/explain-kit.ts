@@ -91,11 +91,22 @@ function allowlist(
   }
 }
 
-function motorcycleAllow(mode: 'wear' | 'pack', slot: string): readonly string[] {
+function motorcycleAllow(
+  mode: 'wear' | 'pack',
+  slot: string,
+): readonly string[] {
   if (mode === 'pack') {
     if (slot === 'rain') return ['PACK_RAIN_LAYER', 'WARDROBE_GAP'];
-    if (slot === 'mid' || slot === 'hands' || slot === 'base') {
+    if (slot === 'hands') {
       return ['PACK_EXTRA_INSULATION', 'SHORT_COLD_SEGMENT', 'WARDROBE_GAP'];
+    }
+    if (slot === 'mid' || slot === 'base') {
+      return [
+        'PACK_EXTRA_INSULATION',
+        'SHORT_COLD_SEGMENT',
+        'WARDROBE_GAP',
+        'BASIC_UNDERLAYER_WARMTH',
+      ];
     }
     return ['WARDROBE_GAP'];
   }
@@ -120,6 +131,12 @@ function motorcycleAllow(mode: 'wear' | 'pack', slot: string): readonly string[]
       ];
     case 'mid':
     case 'base':
+      return [
+        ...MC_COLD,
+        ...MC_CONFIG,
+        'WARDROBE_GAP',
+        'BASIC_UNDERLAYER_WARMTH',
+      ];
     case 'head':
     case 'feet':
       return [...MC_COLD, ...MC_CONFIG, 'WARDROBE_GAP'];
@@ -179,7 +196,11 @@ function cyclingAllow(mode: 'wear' | 'pack', slot: string): readonly string[] {
 }
 
 function alpineAllow(mode: 'wear' | 'pack', slot: string): readonly string[] {
-  const kitRule = ['UPPER_MOUNTAIN_SETS_KIT', 'STAYING_AT_BASE', 'WARDROBE_GAP'];
+  const kitRule = [
+    'UPPER_MOUNTAIN_SETS_KIT',
+    'STAYING_AT_BASE',
+    'WARDROBE_GAP',
+  ];
   if (mode === 'pack') {
     if (slot === 'lighter_mid') return ['TEMPERATURE_SPREAD', 'WARDROBE_GAP'];
     if (slot === 'mid' || slot === 'shell') return kitRule;

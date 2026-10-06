@@ -350,6 +350,12 @@ abstract class AppLocalizations {
   /// **'Baseline recommendation — not enough personal ride evidence yet.'**
   String get reasonBaselineNoPersonalEvidence;
 
+  /// No description provided for @reasonBasicUnderlayerWarmth.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic clothes already worn cover some warmth, so less extra layering is suggested.'**
+  String get reasonBasicUnderlayerWarmth;
+
   /// No description provided for @reasonRouteSpeedProfileUsed.
   ///
   /// In en, this message translates to:
@@ -2047,6 +2053,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skate'**
   String get plannerStyleSkate;
+
+  /// No description provided for @plannerBasicClothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clothes under the protective gear'**
+  String get plannerBasicClothing;
+
+  /// No description provided for @plannerBasicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. None is a valid choice, including when the motorcycle garment is the only layer you need.'**
+  String get plannerBasicHint;
+
+  /// No description provided for @plannerBasicUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper layer'**
+  String get plannerBasicUpper;
+
+  /// No description provided for @plannerBasicLower.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower layer'**
+  String get plannerBasicLower;
+
+  /// No description provided for @plannerBasicNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get plannerBasicNone;
+
+  /// No description provided for @plannerBasicTShirt.
+  ///
+  /// In en, this message translates to:
+  /// **'T-shirt'**
+  String get plannerBasicTShirt;
+
+  /// No description provided for @plannerBasicThinSweater.
+  ///
+  /// In en, this message translates to:
+  /// **'Thin sweater'**
+  String get plannerBasicThinSweater;
+
+  /// No description provided for @plannerBasicThickSweater.
+  ///
+  /// In en, this message translates to:
+  /// **'Thick sweater'**
+  String get plannerBasicThickSweater;
+
+  /// No description provided for @plannerBasicWoolTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Wool base-layer top'**
+  String get plannerBasicWoolTop;
+
+  /// No description provided for @plannerBasicWoolBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Wool base-layer bottom'**
+  String get plannerBasicWoolBottom;
+
+  /// No description provided for @plannerBasicJeans.
+  ///
+  /// In en, this message translates to:
+  /// **'Jeans'**
+  String get plannerBasicJeans;
+
+  /// No description provided for @plannerBasicJoggers.
+  ///
+  /// In en, this message translates to:
+  /// **'Sweatpants/joggers'**
+  String get plannerBasicJoggers;
 
   /// No description provided for @plannerSessionLength.
   ///

@@ -28,6 +28,7 @@ export const REASON_CODES = [
   'ROUTE_SPEED_PROFILE_UNAVAILABLE',
   'ASSUMED_CRUISE_SPEED',
   'WIND_DIRECTION_UNAVAILABLE',
+  'BASIC_UNDERLAYER_WARMTH',
 ] as const;
 export type ReasonCode = (typeof REASON_CODES)[number];
 
@@ -38,13 +39,7 @@ export type Reason = {
 
 export type ConfidenceLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
-export type ZoneId =
-  | 'torso'
-  | 'legs'
-  | 'hands'
-  | 'feet'
-  | 'head'
-  | 'neck';
+export type ZoneId = 'torso' | 'legs' | 'hands' | 'feet' | 'head' | 'neck';
 
 /** Ordinal demand 1–5 aligned with garment warmth/wind/water tiers. */
 export type ZoneDemand = {
@@ -177,5 +172,15 @@ export type MotorcycleRecommendationResult = {
     shrinkageK: number;
     personalWeight: number;
     canClaimPersonal: boolean;
+  };
+  /**
+   * Everyday clothes already worn under the protective kit.
+   * Empty lists are the explicit none state.
+   */
+  basicLayers: {
+    upper: string[];
+    lower: string[];
+    torsoWarmth: number;
+    legsWarmth: number;
   };
 };

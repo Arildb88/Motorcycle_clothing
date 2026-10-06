@@ -16,6 +16,8 @@ export class RecommendController {
     @Query('intensity') intensity?: string,
     @Query('exposure') exposure?: string,
     @Query('style') style?: string,
+    @Query('basicUpper') basicUpper?: string,
+    @Query('basicLower') basicLower?: string,
   ) {
     return this.recommend.forUser(
       req.user.userId,
@@ -24,6 +26,8 @@ export class RecommendController {
       intensity,
       exposure,
       style,
+      basicUpper,
+      basicLower,
     );
   }
 }

@@ -1,3 +1,10 @@
+import {
+  NO_BASIC_LAYERS,
+  NO_BASIC_WARMTH,
+  basicLayerWarmth,
+  type BasicLayerSelection,
+  type BasicWarmthCredit,
+} from './basic-layers';
 import { MOTORCYCLE_EXPOSURE } from './constants';
 import { computeConfidence } from './confidence';
 import { computeDemand } from './demand';
@@ -9,6 +16,7 @@ import {
 import type {
   ExposureSummary,
   GarmentInput,
+  KitItem,
   MotorcycleRecommendationResult,
   Reason,
   SpeedSource,
@@ -34,6 +42,8 @@ export type PipelineInput = {
   personalColdBiasC?: number;
   personalSampleCount?: number;
   shrinkageK?: number;
+  /** Omitted or empty means no basic under-clothing. */
+  basicLayers?: BasicLayerSelection;
 };
 
 /**
@@ -99,13 +109,31 @@ export function runMotorcycleRecommendationPipeline(
 
   const packWarmth = demand.shortExtremeInfluencesPackOnly;
 
+  const basicLayers = input.basicLayers ?? NO_BASIC_LAYERS;
+  const basicWarmth = basicLayerWarmth(basicLayers);
   const matched = matchWardrobe({
     demand,
     wardrobe: input.wardrobe,
     sustainedExposureC,
     packWarmth,
     packRain,
+    basicWarmth,
   });
+  const layerReasons =
+    basicWarmth.torso > 0
+      ? basicLayerReasons(
+          basicWarmth,
+          matched,
+          matchWardrobe({
+            demand,
+            wardrobe: input.wardrobe,
+            sustainedExposureC,
+            packWarmth,
+            packRain,
+            basicWarmth: NO_BASIC_WARMTH,
+          }),
+        )
+      : [];
 
   const windDirectionUsed = segments.some((s) => s.airflowMode === 'vector');
 
@@ -121,6 +149,7 @@ export function runMotorcycleRecommendationPipeline(
   const reasons = mergeReasons([
     ...demandReasons,
     ...matched.reasons,
+    ...layerReasons,
     ...confidence.extra,
   ]);
 
@@ -194,7 +223,47 @@ export function runMotorcycleRecommendationPipeline(
       personalWeight,
       canClaimPersonal,
     },
+    basicLayers: {
+      upper: [...basicLayers.upper],
+      lower: [...basicLayers.lower],
+      torsoWarmth: basicWarmth.torso,
+      legsWarmth: basicWarmth.legs,
+    },
   };
+}
+
+function basicLayerReasons(
+  credit: BasicWarmthCredit,
+  credited: { wear: KitItem[]; pack: KitItem[] },
+  baseline: { wear: KitItem[]; pack: KitItem[] },
+): Reason[] {
+  if (credit.torso <= 0) return [];
+  const changed = ['base', 'mid'].some(
+    (slot) => layerSignature(credited, slot) !== layerSignature(baseline, slot),
+  );
+  if (!changed) return [];
+  return [
+    {
+      code: 'BASIC_UNDERLAYER_WARMTH',
+      params: { zone: 'torso', warmth: credit.torso },
+    },
+  ];
+}
+
+function layerSignature(
+  matched: { wear: KitItem[]; pack: KitItem[] },
+  slot: string,
+): string {
+  const item =
+    matched.wear.find((entry) => entry.slot === slot) ??
+    matched.pack.find((entry) => entry.slot === slot);
+  if (!item) return 'absent';
+  return [
+    item.mode,
+    item.garmentId ?? '',
+    item.genericLabel ?? '',
+    item.effectiveTiers?.warmthTier ?? '',
+  ].join(':');
 }
 
 function mergeReasons(reasons: Reason[]): Reason[] {
@@ -216,10 +285,7 @@ export {
   windDemandFromPoint,
   waterDemandFromPoint,
 } from './exposure';
-export {
-  buildRideSegments,
-  durationWeightedMean,
-} from './segments';
+export { buildRideSegments, durationWeightedMean } from './segments';
 export { computeDemand } from './demand';
 export { matchWardrobe } from './wardrobe-match';
 export { computeConfidence } from './confidence';

@@ -156,6 +156,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Basisanbefaling — ikke nok personlig turhistorikk ennå.';
 
   @override
+  String get reasonBasicUnderlayerWarmth =>
+      'Vanlige klær du allerede har på dekker noe av varmen, så det foreslås mindre ekstra lag.';
+
+  @override
   String get reasonRouteSpeedProfileUsed =>
       'Tidsberegningen bruker rutens egen fartsprofil.';
 
@@ -1115,6 +1119,43 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get plannerStyleSkate => 'Skøyting';
+
+  @override
+  String get plannerBasicClothing => 'Klær under det beskyttende utstyret';
+
+  @override
+  String get plannerBasicHint =>
+      'Valgfritt. Ingen er et gyldig valg, også når mc-plagget er det eneste laget du trenger.';
+
+  @override
+  String get plannerBasicUpper => 'Overdel';
+
+  @override
+  String get plannerBasicLower => 'Underdel';
+
+  @override
+  String get plannerBasicNone => 'Ingen';
+
+  @override
+  String get plannerBasicTShirt => 'T-skjorte';
+
+  @override
+  String get plannerBasicThinSweater => 'Tynn genser';
+
+  @override
+  String get plannerBasicThickSweater => 'Tykk genser';
+
+  @override
+  String get plannerBasicWoolTop => 'Ullundertøy, overdel';
+
+  @override
+  String get plannerBasicWoolBottom => 'Ullundertøy, underdel';
+
+  @override
+  String get plannerBasicJeans => 'Jeans';
+
+  @override
+  String get plannerBasicJoggers => 'Joggebukse';
 
   @override
   String get plannerSessionLength => 'Øktlengde';

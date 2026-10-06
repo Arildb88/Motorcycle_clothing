@@ -1,4 +1,5 @@
 import { effectiveGarmentTiers } from '../../domain/garment-config';
+import { NO_BASIC_WARMTH, type BasicWarmthCredit } from './basic-layers';
 import { VENT_ADVICE } from './constants';
 import type {
   ConfigInstruction,
@@ -95,7 +96,7 @@ function demandForSlot(slot: SlotSpec, zones: ZoneDemand[]): number {
     if (slot.axis === 'water') return torso.water;
     return Math.max(torso.warmth, torso.wind, torso.water);
   }
-  const z = zoneOf(zones, slot.zone as ZoneId);
+  const z = zoneOf(zones, slot.zone);
   if (slot.axis === 'water') return z.water;
   if (slot.axis === 'wind') return z.wind;
   return z.warmth;
@@ -220,6 +221,26 @@ function bestConfiguration(
   return best;
 }
 
+/**
+ * Protective shell warmth stays on the weather demand. Base and mid layers
+ * see torso credit from basic under-clothes. Protective pants stay required;
+ * their insulation target can drop by the leg credit.
+ */
+function creditedNeed(
+  slot: SlotSpec,
+  raw: number,
+  basic: BasicWarmthCredit,
+): { gate: number; target: number } {
+  if (slot.slot === 'base' || slot.slot === 'mid') {
+    const residual = Math.max(0, raw - basic.torso);
+    return { gate: residual, target: Math.max(1, residual) };
+  }
+  if (slot.slot === 'legs') {
+    return { gate: raw, target: Math.max(1, raw - basic.legs) };
+  }
+  return { gate: raw, target: raw };
+}
+
 function matchSlot(
   slot: SlotSpec,
   mode: 'wear' | 'pack',
@@ -227,23 +248,25 @@ function matchSlot(
   wardrobe: GarmentInput[],
   sustainedExposureC: number,
   usedGarmentIds: Set<string>,
+  basic: BasicWarmthCredit,
 ): { item: KitItem | null; reasons: Reason[] } {
   const need = demandForSlot(slot, zones);
-  if (mode === 'wear' && need < wearThreshold(slot)) {
+  const credited = creditedNeed(slot, need, basic);
+  if (mode === 'wear' && credited.gate < wearThreshold(slot)) {
     return { item: null, reasons: [] };
   }
   // Pack rain / insulation only when demand justifies.
   if (mode === 'pack' && slot.slot === 'rain' && need < 3) {
     return { item: null, reasons: [] };
   }
-  if (mode === 'pack' && slot.slot !== 'rain' && need < 3) {
+  if (mode === 'pack' && slot.slot !== 'rain' && credited.gate < 3) {
     return { item: null, reasons: [] };
   }
 
   const torso = zoneOf(zones, 'torso');
   const needWarmth =
     slot.axis === 'warmth'
-      ? need
+      ? credited.target
       : slot.zone === 'rain'
         ? 1
         : zoneOf(zones, slot.zone as ZoneId).warmth;
@@ -340,7 +363,6 @@ function matchSlot(
     reasons,
   };
 }
-
 
 const RAIN_CAPABLE_CATEGORIES = new Set([
   'shell_jacket',
@@ -449,11 +471,13 @@ export function matchWardrobe(input: {
   sustainedExposureC: number;
   packWarmth: boolean;
   packRain: boolean;
+  basicWarmth?: BasicWarmthCredit;
 }): { wear: KitItem[]; pack: KitItem[]; reasons: Reason[] } {
   const wear: KitItem[] = [];
   const pack: KitItem[] = [];
   const reasons: Reason[] = [];
   const used = new Set<string>();
+  const basic = input.basicWarmth ?? NO_BASIC_WARMTH;
 
   // 1) Match non-rain WEAR slots first so outer gear is chosen before rain.
   for (const slot of WEAR_SLOTS) {
@@ -465,6 +489,7 @@ export function matchWardrobe(input: {
       input.wardrobe,
       input.sustainedExposureC,
       used,
+      basic,
     );
     if (matched.item) wear.push(matched.item);
     reasons.push(...matched.reasons);
@@ -491,6 +516,7 @@ export function matchWardrobe(input: {
         input.wardrobe,
         input.sustainedExposureC,
         used,
+        basic,
       );
       if (matched.item) wear.push(matched.item);
       reasons.push(...matched.reasons);
@@ -509,6 +535,7 @@ export function matchWardrobe(input: {
         input.wardrobe,
         input.sustainedExposureC,
         used,
+        basic,
       );
       if (matched.item) {
         if (
@@ -540,6 +567,7 @@ export function matchWardrobe(input: {
         input.wardrobe,
         input.sustainedExposureC,
         used,
+        basic,
       );
       if (matched.item) {
         pack.push(matched.item);

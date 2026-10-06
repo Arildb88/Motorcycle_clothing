@@ -54,6 +54,27 @@ String exposureModeLabel(AppLocalizations l10n, String value) {
   }
 }
 
+String basicPieceLabel(AppLocalizations l10n, String value) {
+  switch (value) {
+    case 't_shirt':
+      return l10n.plannerBasicTShirt;
+    case 'thin_sweater':
+      return l10n.plannerBasicThinSweater;
+    case 'thick_sweater':
+      return l10n.plannerBasicThickSweater;
+    case 'wool_base_top':
+      return l10n.plannerBasicWoolTop;
+    case 'wool_base_bottom':
+      return l10n.plannerBasicWoolBottom;
+    case 'jeans':
+      return l10n.plannerBasicJeans;
+    case 'joggers':
+      return l10n.plannerBasicJoggers;
+    default:
+      return value;
+  }
+}
+
 String xcStyleLabel(AppLocalizations l10n, String value) {
   switch (value) {
     case 'classic':

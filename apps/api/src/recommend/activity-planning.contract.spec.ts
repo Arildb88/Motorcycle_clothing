@@ -1,11 +1,13 @@
 import { isActivityType } from '../domain/enums';
 import { parseExposureMode } from './alpine/exposure';
 import { parseIntensity } from './cycling/pipeline';
+import { parseBasicLayers } from './motorcycle/basic-layers';
 import { parseXcIntensity, parseXcStyle } from './xc/pipeline';
 
 /**
  * Values the mobile planner is allowed to send on GET /recommend.
- * Query names are routeId, departureAt, and, by activity, intensity, exposure, style.
+ * Query names are routeId, departureAt, and, by activity, intensity, exposure,
+ * style, or motorcycle basicUpper and basicLower.
  */
 describe('mobile activity planning contract', () => {
   it('keeps the activity types the planner can store on a route', () => {
@@ -79,6 +81,23 @@ describe('mobile activity planning contract', () => {
     expect(parseExposureMode('Groomers')).toEqual({
       mode: 'lift',
       assumed: false,
+    });
+  });
+
+  it('accepts motorcycle basic under-layers and treats none as no clothing', () => {
+    expect(parseBasicLayers(undefined, undefined)).toEqual({
+      upper: [],
+      lower: [],
+    });
+    expect(parseBasicLayers('none', 'none')).toEqual({
+      upper: [],
+      lower: [],
+    });
+    expect(
+      parseBasicLayers('t_shirt,thick_sweater', 'wool_base_bottom,jeans'),
+    ).toEqual({
+      upper: ['t_shirt', 'thick_sweater'],
+      lower: ['wool_base_bottom', 'jeans'],
     });
   });
 });

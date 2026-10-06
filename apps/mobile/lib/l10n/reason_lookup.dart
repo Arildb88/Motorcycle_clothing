@@ -140,6 +140,8 @@ class AppLocalizationsReasonLookup implements AppLocalizationsLookup {
         return _l10n.reasonNoGroomingStatus;
       case 'NO_WAX_ADVICE':
         return _l10n.reasonNoWaxAdvice;
+      case 'BASIC_UNDERLAYER_WARMTH':
+        return _l10n.reasonBasicUnderlayerWarmth;
       default:
         return code;
     }
