@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: SECURITY-HARDENING-001
+active_id: none
 promotion: automatic
 handoff_generation: 37
-handoff_state: authorized
+handoff_state: idle
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -1618,7 +1618,7 @@ Keep dev and main untouched. Follow queue rules.
 
 ### SECURITY-HARDENING-001
 
-- status: active
+- status: queued
 - title: Security hardening audit and safe fixes
 - source: explicitly approved security hardening work
 
