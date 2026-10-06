@@ -6,7 +6,7 @@
 
 - Branch: `feature/privacy-data-001`
 - Implementation commit: `8786a949e66d293b2252222265cf18561ab3f5b7`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/71 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
