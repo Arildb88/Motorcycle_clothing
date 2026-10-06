@@ -66,6 +66,8 @@ Copy `apps/api/.env.example` → `apps/api/.env`.
 
 ## Facebook setup
 
+Do not enable Facebook or Microsoft from these notes. The implementation plan is [`docs/research/SOCIAL_AUTH_LOGIN_PLAN.md`](docs/research/SOCIAL_AUTH_LOGIN_PLAN.md). Both providers stay off until that plan's gaps are fixed and a human explicitly enables one.
+
 1. Create a Facebook app with **Facebook Login**.
 2. Valid OAuth redirect URI: `ridewear://oauth/callback` (and any Facebook-required https redirect if using intermediary).
 3. Set `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` on the API.
