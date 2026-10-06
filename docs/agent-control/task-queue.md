@@ -1669,14 +1669,15 @@ Constraints:
 
 Inspect the current motorcycle planning, wardrobe and recommendation models first and implement the smallest compatible extension.
 
-For motorcycle only, let the rider optionally indicate basic clothing already worn underneath the protective MC gear. Selecting no basic under-clothing must be a valid, explicit state and must not trigger validation errors or force a default selection. This is important for warm-weather riding where the protective MC garment itself may be the relevant leg/torso layer (for example protective motorcycle jeans with no ordinary trousers underneath). Support at least:
-- T-shirt
-- thin sweater
-- thick sweater
-- wool base-layer top
-- wool base-layer bottom
-- jeans
-- sweatpants/joggers
+For motorcycle only, let the rider optionally indicate basic clothing already worn underneath the protective MC gear. Selecting no basic under-clothing must be a valid, explicit state and must not trigger validation errors or force a default selection. This is important for warm-weather riding where the protective MC garment itself may be the relevant leg/torso layer (for example protective motorcycle jeans with no ordinary trousers underneath).
+
+UI:
+- Use one dropdown for basic upper-body clothing (Overdel).
+- Use a separate dropdown for basic lower-body clothing (Underdel).
+- Both dropdowns must include an explicit Ingen / none option and default safely to no basic garment rather than forcing clothing.
+- Overdel options: none, T-shirt, thin sweater, thick sweater, wool base-layer top.
+- Underdel options: none, wool base-layer bottom, jeans, sweatpants/joggers.
+- Keep this simple in the normal MC planning flow; do not require opening the wardrobe editor just to describe these basic clothes.
 
 Thermal behavior:
 - Basic clothing contributes warmth to the relevant body zone before/while the MC recommendation determines additional layers.
