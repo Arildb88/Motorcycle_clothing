@@ -1,25 +1,28 @@
 # Authorized RideWear Task
-## Type: PRIVACY_REVIEW_AND_FIX
-## ID: PRIVACY-DATA-001
-## Generation: 40
-## Handoff-From: MC-BASIC-LAYERS-001
+## Type: RESEARCH_AND_DESIGN
+## ID: SOCIAL-AUTH-RESEARCH-001
+## Generation: 41
+## Handoff-From: PRIVACY-DATA-001
 ## Authorization: authorized
-## Promoted: 2026-10-06T09:07:00Z
-## Task: Review RideWear personal-data lifecycle and implement safe privacy-readiness improvements
+## Promoted: 2026-10-06T09:16:13Z
+## Task: Produce an implementation-ready plan for Microsoft and Facebook login without enabling either provider
 
-Inventory what personal/user-linked data RideWear currently stores or transmits (account/profile, wardrobe, routes/activity plans, location-related data, auth/reset data, logs/telemetry if any).
+Inspect RideWear's current NestJS/Flutter authentication and user model first. Verify current official Microsoft and Meta documentation during the task.
 
-Requirements:
-- document data category, purpose, storage location, retention/deletion behavior and external provider exposure
-- verify production logs/errors do not unnecessarily expose credentials, tokens, precise location or other personal data
-- inspect account deletion/data deletion behavior; identify gaps without pretending legal compliance
-- minimize provider payloads and persisted location data where not required by existing product behavior
-- ensure demo data remains distinguishable from personal user data
-- add safe tests/docs for changes
-- produce a concise privacy/data-flow readiness section in latest report
+Plan:
+- native mobile OAuth/OIDC flow using current best practice (external user-agent/system browser and PKCE where provider/protocol requires)
+- server/API trust boundary and token validation/exchange strategy
+- Android and future iOS redirect/deep-link requirements
+- account linking rules for existing email/password users, duplicate-email/collision handling, provider unlinking, and recovery when a provider account disappears
+- minimum scopes/data requested and privacy implications
+- secure token storage/session lifecycle/logout/revocation
+- exact external operator setup required (app registrations, package/bundle IDs, redirect URIs, signing hashes/keys, review requirements) without committing secrets
+- phased implementation steps and test matrix
+- compare whether implementing Microsoft, Facebook, both, or neither adds meaningful value for RideWear; present factual tradeoffs without enabling them
 
 Constraints:
-- This is engineering/privacy readiness, not a claim of GDPR/legal compliance.
-- No analytics/advertising SDK, new provider, schema migration or destructive data migration unless already explicitly authorized.
-- Preserve existing user data; if deletion semantics require a schema/architecture decision, document/block rather than guess.
-- Run relevant tests/checks and follow queue/control rules.
+- Research/design only: do not add dependencies, provider credentials, schema migrations, login buttons, or production OAuth code.
+- Do not invent credentials or provider configuration.
+- Preserve existing email/password auth.
+- Store the implementation-ready design in docs and summarize it in latest report.
+- Follow queue/control rules.

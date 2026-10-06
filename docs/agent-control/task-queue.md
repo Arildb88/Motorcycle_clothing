@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: PRIVACY-DATA-001
+active_id: SOCIAL-AUTH-RESEARCH-001
 promotion: automatic
-handoff_generation: 40
+handoff_generation: 41
 handoff_state: authorized
 ```
 
@@ -94,6 +94,8 @@ Generation `37` is spent: `SECURITY-HARDENING-001` was authorized and recovered 
 Generation `38` is spent: `SECURITY-HARDENING-001` was authorized from idle and completed. The automatic final control update authorizes `MC-BASIC-LAYERS-001` at generation `39`. Do not reuse generation `38`. Do not execute `SECURITY-HARDENING-001` again.
 
 Generation `39` is spent: `MC-BASIC-LAYERS-001` completed and the automatic final control update authorizes `PRIVACY-DATA-001` at generation `40`. Do not reuse generation `39`. Do not execute `MC-BASIC-LAYERS-001` again.
+
+Generation `40` is spent: `PRIVACY-DATA-001` completed and the automatic final control update authorizes `SOCIAL-AUTH-RESEARCH-001` at generation `41`. Do not reuse generation `40`. Do not execute `PRIVACY-DATA-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1704,7 +1706,7 @@ Thermal behavior:
 
 ### PRIVACY-DATA-001
 
-- status: active
+- status: completed
 - title: User data and privacy readiness
 - source: explicitly approved user-data handling review
 
@@ -1737,7 +1739,7 @@ Constraints:
 
 ### SOCIAL-AUTH-RESEARCH-001
 
-- status: queued
+- status: active
 - title: Microsoft and Facebook login implementation plan
 - source: explicitly approved social-login planning
 
