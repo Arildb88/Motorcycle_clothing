@@ -520,3 +520,4 @@ Verify against code before assuming otherwise:
 - [QUICKSTART.md](QUICKSTART.md) — older Windows spike guide (paths/branches may be stale; prefer this README)
 - [DEVELOPMENT_NOTES.md](DEVELOPMENT_NOTES.md) — milestone implementation notes
 - [docs/PLAN.md](docs/PLAN.md) — historical scaffold plan
+- [docs/operations/RELEASE_CHECKLIST.md](docs/operations/RELEASE_CHECKLIST.md) — human steps before a beta or store build
