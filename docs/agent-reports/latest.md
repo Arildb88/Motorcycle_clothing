@@ -7,7 +7,7 @@
 - Branch: `feature/release-readiness-001`
 - Implementation commit: `a9c0f98b6d9aff7b2fe2803313cd9f5c0604daed`
 - Checklist: `docs/operations/RELEASE_CHECKLIST.md`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/73 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
