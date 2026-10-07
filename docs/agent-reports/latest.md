@@ -6,7 +6,7 @@
 
 - Branch: `fix/snowboard-label-001`
 - Implementation commit: `7ffe633dbe1f63433faebe3d78d1ef1c2aff7d23`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/83 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
