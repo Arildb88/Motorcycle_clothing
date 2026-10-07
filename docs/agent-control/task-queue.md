@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: CYCLING-WARDROBE-UX-001
+active_id: WARDROBE-REMOVE-SHARING-001
 promotion: automatic
-handoff_generation: 48
+handoff_generation: 49
 handoff_state: authorized
 ```
 
@@ -110,6 +110,8 @@ Generation `45` is spent: `COMMUTE-ROUNDTRIP-001` was authorized from idle and c
 Generation `46` is spent: `REAL-DATA-ONLY-001` was authorized and completed. The automatic final control update authorizes `PLACE-SEARCH-AVAILABILITY-001` at generation `47`. Do not reuse generation `46`. Do not execute `REAL-DATA-ONLY-001` again.
 
 Generation `47` is spent: `PLACE-SEARCH-AVAILABILITY-001` was authorized and completed. The automatic final control update authorizes `CYCLING-WARDROBE-UX-001` at generation `48`. Do not reuse generation `47`. Do not execute `PLACE-SEARCH-AVAILABILITY-001` again.
+
+Generation `48` is spent: `CYCLING-WARDROBE-UX-001` was authorized and completed. The automatic final control update authorizes `WARDROBE-REMOVE-SHARING-001` at generation `49`. Do not reuse generation `48`. Do not execute `CYCLING-WARDROBE-UX-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1994,7 +1996,7 @@ Verification:
 
 ### CYCLING-WARDROBE-UX-001
 
-- status: active
+- status: completed
 - title: Cycling-specific garment choices and simple seasonal defaults
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 
@@ -2024,7 +2026,7 @@ Execution boundaries and verification:
 
 ### WARDROBE-REMOVE-SHARING-001
 
-- status: queued
+- status: active
 - title: Remove share-this-rating controls from every wardrobe
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 

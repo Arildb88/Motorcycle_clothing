@@ -1,36 +1,40 @@
-# PLACE-SEARCH-AVAILABILITY-001
+# CYCLING-WARDROBE-UX-001
 
 ## Task
 
-`PLACE-SEARCH-AVAILABILITY-001`, generation 47, authorized from `REAL-DATA-ONLY-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
+`CYCLING-WARDROBE-UX-001`, generation 48, authorized from `PLACE-SEARCH-AVAILABILITY-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
-- Branch: `fix/place-search-availability-001`
-- Implementation commit: `4e26287eabb38bd24d924d9f8263435aec07b87b`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/79 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/cycling-wardrobe-ux-001`
+- Implementation commit: `a0f6b11e63789d6bddb79be393dfdbe34ab72dba`
+- PR: targeting `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Searching could return suggestions while choosing one did not select a place, and the Norwegian UI could say "Stedsøk er midlertidig utilgjengelig."
+Cycling wardrobe add and edit now offers eight cycling garment choices instead of motorcycle presets: long cycling trousers/tights, short cycling shorts, triathlon suit, short-sleeve technical T-shirt, long-sleeve technical jersey, thin cycling jacket, fingerless cycling gloves, and thin full-finger gloves. Norwegian labels say "Fingreløse sykkelhansker" and "Tynne sykkelhansker med fingre" so "Fingerhansker" is not used as an ambiguous label.
 
-HeiGIT Pelias autocomplete, search, reverse, and structured search are real routes. Without a key they return HTTP 401 JSON (`Authorization field missing`). `GET /pelias/v1/place` returns the same nginx HTML 404 as a path that does not exist. Resolve called that missing route and the API mapped every non-success, including that 404, to a temporary outage. This is not a key-scope failure: autocomplete and `/place` do not fail the same way.
+Each choice maps to an existing category and body zone. Long trousers and shorts are `pants` / legs. The technical T-shirt and long jersey are `base_layer` / torso. The jacket is `shell_jacket` / torso. Both glove choices are `gloves` / hands. The triathlon suit is `one_piece_suit` / `full_body` and covers torso and legs as one garment.
 
-`GET /location/places` now returns the coordinates, label, and address Pelias autocomplete already had. The app selects those coordinates and does not call resolve for that suggestion. Canonical latitude and longitude update the start, destination, stop, and commute fields through the existing callback. A suggestion without coordinates still uses resolve. A resolve HTTP 404 or an empty feature collection is `PLACE_NOT_FOUND`, not a temporary outage. A missing key or HTTP 401/403 is `GEOCODING_NOT_CONFIGURED`. Provider 5xx, timeout, and network failures stay `GEOCODING_UNAVAILABLE`.
+A short technical T-shirt is warmth 1. It is not the category default warmth 3. Long trousers, the long jersey, and the jacket expose Thin / Medium / Warm, stored as warmth 2, 3, and 4 on the existing 1–5 scale. Those defaults are estimates, not measured manufacturer values. Detailed warmth, wind, water, breathability, ventilation, heated, and liner controls stay inside the collapsed "Avanserte innstillinger / vinter" section.
 
-No matches stay "Ingen steder funnet" / "No places found". Failures show localized nb/en copy and a Retry button. The raw exception is not shown. Logs name autocomplete or resolve and the HTTP status, timeout, network, authentication, empty body, or not_configured. They do not include the key, the search text, or coordinates.
+Brand and model are optional text fields. A garment can be saved from its name without a catalogue selection. Choosing a preset or a thin/medium/warm band does not mark the tiers as an explicit community rating. The share-rating control stays in the advanced section and still requires a deliberate slider change plus a brand and model.
 
-Tapping a suggestion does not dismiss the field before the tap, including while the keyboard is open. Clear, edit, and swap still drop a resolve that finishes late, and the field stays usable.
+The stored `preset` column is a nullable additive field. Existing garments stay null. Motorcycle presets are unchanged and are not offered on the cycling form.
 
-Pull request 76's selection-state fixes were already on `dev_test` (`ffcf2b1`). They were not copied again.
+Recommendation matching still uses temperature, wind, precipitation, and intensity. A cold, windy, easy ride prefers the warmer long jersey, tights, jacket, and thin full-finger gloves over the light T-shirt, shorts, and fingerless gloves, and it does not use a motorcycle jacket. A hot, dry, hard ride wears the light T-shirt and shorts and does not wear the warm jacket. A triathlon suit on a mild ride is one wear item and does not also add a T-shirt or shorts. When warmer trousers and a jersey are owned, a cold ride uses those and does not wear the suit. A cycling-tagged one-piece without the triathlon preset stays out of the cycling kit.
 
 ## Checks
 
-- `flutter analyze`: no issues found
-- `flutter test test/place_search_availability_test.dart test/manual_regression_flow_test.dart test/api_route_geometry_service_test.dart test/location_services_test.dart test/nb_localization_test.dart`: passed
-- Focused API tests passed: `ors-geocoding.service.spec.ts`, `location.controller.spec.ts`
+- `flutter analyze` on the changed mobile files: no issues found
+- `flutter test test/cycling_wardrobe_ux_test.dart`: passed
+- `flutter test test/garment_catalogue_test.dart`: passed
+- `flutter test test/wardrobe_sharing_test.dart`: the cycling form membership test passed. `shows Norwegian sharing copy and saves a chosen combination` failed because `wardrobeSharingBody` is still the English sentence in `app_nb.arb`. That string was already English in the generated Norwegian file on `dev_test` before this change. This task did not edit that copy.
+- Focused API tests passed: `cycling-presets.spec.ts`, `wardrobe.service.spec.ts`, `cycling.engine.spec.ts`, `cycling-recommend.service.spec.ts`
 - API production build: passed (`npm run build` in `apps/api` after `prisma generate`)
-- Live keyed search: not verified. This environment has no `ORS_API_KEY` and no `apps/api/.env`. No keyed request was sent for Arendal or Kristiansand.
-- Unauthenticated probe only: autocomplete, search, reverse, and structured search returned HTTP 401 JSON. `/pelias/v1/place` returned nginx HTML 404. No place coordinates were recorded from that probe.
+- Prisma schema validate: passed
+- `prisma migrate deploy` on disposable local Postgres 16 database `motorcycle_preset_check`: passed, including `20261007220000_cycling_garment_preset`
+- `prisma migrate diff` from migrations to the schema: no difference
+- Android, iOS, and a live wardrobe save were not run
 
 ## Final control state
 
-`PLACE-SEARCH-AVAILABILITY-001` is completed and appended once to `consumed.md`. `active_id` is `CYCLING-WARDROBE-UX-001`. `handoff_state` is `authorized`. `handoff_generation` is 48. `promotion` stays `automatic`. `next-task.md` authorizes `CYCLING-WARDROBE-UX-001` with `Handoff-From: PLACE-SEARCH-AVAILABILITY-001`. This run does not execute that ID.
+`CYCLING-WARDROBE-UX-001` is completed and appended once to `consumed.md`. `active_id` is `WARDROBE-REMOVE-SHARING-001`. `handoff_state` is `authorized`. `handoff_generation` is 49. `promotion` stays `automatic`. `next-task.md` authorizes `WARDROBE-REMOVE-SHARING-001` with `Handoff-From: CYCLING-WARDROBE-UX-001`. This run does not execute that ID.
