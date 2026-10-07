@@ -2106,10 +2106,10 @@ Scope:
 - Preserve pending feature behavior, API contract, Unicode/localization, catalogue snapshots, feedback, authentication and platform integration.
 
 Verification:
-- Clean reproducible API dependency install using lockfile; Prisma generate/validate; API tests and production build; existing local smoke checks when tooling is available.
-- Flutter pub get, flutter analyze, Flutter tests and Android debug APK build to catch native plugin regressions. iOS build only on available macOS tooling; never claim iOS verification from Linux/Windows.
+- Quota-conscious verification explicitly requested by Arild: install from the updated lockfile, Prisma generate/validate and API production build once. Run only focused API tests for actual compatibility edits or affected critical paths; no full suite or separate smoke run by default.
+- Flutter pub get and flutter analyze once. Run only focused Flutter tests for actual compatibility edits. Build Android debug APK once only if native plugins or Android/toolchain dependencies change. No full Flutter suite or iOS build is required for this maintenance task; report platform coverage honestly.
 - Compare audit output before/after; report remaining advisories and packages deferred with concrete reasons. A successful update does not prove security or performance improvement.
-- Required checks that cannot run must be reported and handled under queue blocker rules. No invented results.
+- Required lightweight checks that cannot run must be reported and handled under queue blocker rules. Broaden testing only for a concrete failure or unresolved compatibility concern, not as routine reassurance. No invented results.
 - Read architecture/security/privacy docs. Work from latest dev_test on a dedicated maintenance branch, PR to dev_test only; merge after required checks pass. Keep dev/main untouched.
 - Follow queue completion/blocker protocol, report old/new versions, compatibility edits, verification and remaining operator steps in docs/agent-reports/latest.md. Stop after this task.
 ~~~~~
