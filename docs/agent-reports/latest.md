@@ -6,7 +6,7 @@
 
 - Branch: `feature/wardrobe-remove-sharing-001`
 - Implementation commit: `eb12fe6856b7c74a23c2c63d30824a0994207e1f`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/81 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
