@@ -110,6 +110,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
 
   void _onChanged(String value) {
     if (_suppressSearch) return;
+    _requestId++;
     _typedQuery = value;
     // Clear resolved selection once when the user starts editing.
     if (_hadSelection) {
@@ -184,6 +185,8 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
   Future<void> _select(PlaceSuggestion suggestion) async {
     final requestId = ++_requestId;
     _debounce?.cancel();
+    _hideGeneration++;
+    _hideTimer?.cancel();
     final typedQuery = _typedQuery;
     setState(() {
       _resolving = true;
@@ -219,6 +222,13 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
           _error = localizeLocationError(e, AppLocalizations.of(context));
         });
       }
+    } catch (_) {
+      if (mounted && requestId == _requestId) {
+        setState(() {
+          _suggestions = const [];
+          _error = AppLocalizations.of(context).placeSearchFailed;
+        });
+      }
     } finally {
       if (mounted && requestId == _requestId) {
         setState(() => _resolving = false);
@@ -227,11 +237,18 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
   }
 
   void _clear() {
+    _requestId++;
+    _hideGeneration++;
+    _debounce?.cancel();
+    _hideTimer?.cancel();
+    _typedQuery = '';
     _suppressSearch = true;
     _controller.clear();
     _suppressSearch = false;
     _hadSelection = false;
     setState(() {
+      _loading = false;
+      _resolving = false;
       _suggestions = const [];
       _error = null;
     });
