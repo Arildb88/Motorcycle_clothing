@@ -2078,3 +2078,38 @@ Execution boundaries and verification:
 - Branch from latest dev_test; PR to dev_test; merge only after required checks pass. Follow queue success/blocker protocol, update docs/agent-reports/latest.md, and stop after this ID.
 - Run focused regression tests for changed behavior, API tests/build when API changes, Flutter analyze and relevant Flutter tests when mobile changes. Report checks honestly.
 ~~~~~
+
+
+### DEPENDENCY-MAINTENANCE-002
+
+- status: queued
+- title: Update API and Flutter packages with verified compatibility
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: DEPENDENCY_MAINTENANCE
+## ID: DEPENDENCY-MAINTENANCE-002
+## Task: Update API and Flutter packages with verified compatibility
+
+Arild explicitly requested package updates in chat on 2026-10-07. Inspect the actual current dependency manifests and lockfiles, npm outdated/audit and flutter pub outdated. Verify candidate releases and breaking changes against official package release notes/documentation at execution time; do not rely on remembered versions.
+
+Scope:
+- Update existing API and Flutter dependencies to current stable compatible versions, including safe constraint changes where needed, and commit corresponding lockfiles. Keep related package families aligned.
+- Major upgrades are permitted only where documented migration is contained within this maintenance task and preserves existing architecture, data and functionality. Defer/report upgrades requiring broader architectural or database migration rather than forcing them.
+- Prisma CLI/client must match. A Prisma major migration, database schema/data migration or persistence rewrite is outside this task; report it separately.
+- Do not run npm audit fix --force blindly or override transitive dependencies without verifying compatibility.
+- Make necessary small compatibility fixes and fix resulting build regressions. No new product features, providers, paid services, deployment or credentials.
+- SDK/toolchain changes only where required by updated packages and verified; do not upgrade every tool simply because a newer version exists. Document Flutter/Dart/Node/Java/Android requirements and CI alignment if changed.
+- Preserve pending feature behavior, API contract, Unicode/localization, catalogue snapshots, feedback, authentication and platform integration.
+
+Verification:
+- Clean reproducible API dependency install using lockfile; Prisma generate/validate; API tests and production build; existing local smoke checks when tooling is available.
+- Flutter pub get, flutter analyze, Flutter tests and Android debug APK build to catch native plugin regressions. iOS build only on available macOS tooling; never claim iOS verification from Linux/Windows.
+- Compare audit output before/after; report remaining advisories and packages deferred with concrete reasons. A successful update does not prove security or performance improvement.
+- Required checks that cannot run must be reported and handled under queue blocker rules. No invented results.
+- Read architecture/security/privacy docs. Work from latest dev_test on a dedicated maintenance branch, PR to dev_test only; merge after required checks pass. Keep dev/main untouched.
+- Follow queue completion/blocker protocol, report old/new versions, compatibility edits, verification and remaining operator steps in docs/agent-reports/latest.md. Stop after this task.
+~~~~~
