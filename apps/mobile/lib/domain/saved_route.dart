@@ -16,6 +16,8 @@ class SavedRoute {
     required this.typicalDurationMin,
     required this.waypoints,
     this.avoidMotorways = false,
+    this.outboundDepartureLocal,
+    this.returnDepartureLocal,
   });
 
   final String id;
@@ -31,6 +33,12 @@ class SavedRoute {
   final int typicalDurationMin;
   final List<RouteWaypoint> waypoints;
   final bool avoidMotorways;
+  /// Europe/Oslo HH:mm template. Not a forecast.
+  final String? outboundDepartureLocal;
+  final String? returnDepartureLocal;
+
+  bool get isCommute =>
+      activityType == 'motorcycle' && category == 'commute';
 
   factory SavedRoute.fromJson(Map<String, dynamic> json) {
     final wps = (json['waypoints'] as List?) ?? const [];
@@ -52,6 +60,8 @@ class SavedRoute {
           .map(RouteWaypoint.fromJson)
           .toList(),
       avoidMotorways: prefs['avoidMotorways'] == true,
+      outboundDepartureLocal: json['outboundDepartureLocal'] as String?,
+      returnDepartureLocal: json['returnDepartureLocal'] as String?,
     );
   }
 

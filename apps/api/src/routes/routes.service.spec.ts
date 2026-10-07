@@ -38,6 +38,8 @@ type RouteRow = {
   waypointsJson: string;
   typicalDurationMin: number;
   preferencesJson: string;
+  outboundDepartureLocal: string | null;
+  returnDepartureLocal: string | null;
   lastUsedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -124,6 +126,10 @@ describe('RoutesService', () => {
             waypointsJson: (data.waypointsJson as string) ?? '[]',
             typicalDurationMin: (data.typicalDurationMin as number) ?? 30,
             preferencesJson: (data.preferencesJson as string) ?? '{}',
+            outboundDepartureLocal:
+              (data.outboundDepartureLocal as string | null) ?? null,
+            returnDepartureLocal:
+              (data.returnDepartureLocal as string | null) ?? null,
             lastUsedAt: null,
             createdAt: now,
             updatedAt: now,
@@ -521,5 +527,51 @@ describe('RoutesService', () => {
     expect((result.plan as { planningMode: string }).planningMode).toBe(
       'departure',
     );
+    expect(r.outboundDepartureLocal).toBeNull();
+    expect(r.category).toBeNull();
+  });
+
+  it('stores commute clock templates and leaves the default-route flag alone', async () => {
+    const ordinary = await service.create('u1', {
+      name: 'Sunday loop',
+      waypoints: [
+        { lat: 58.1, lon: 8.0 },
+        { lat: 58.2, lon: 8.1 },
+      ],
+    });
+    const commute = await service.create('u1', {
+      name: 'Weekday',
+      category: 'commute',
+      outboundDepartureLocal: '07:30',
+      returnDepartureLocal: '16:15',
+      isDefaultCommute: false,
+      waypoints: [
+        { lat: 58.1, lon: 8.0, label: 'From' },
+        { lat: 58.3, lon: 8.2, label: 'To' },
+      ],
+    });
+    expect(commute.category).toBe('commute');
+    expect(commute.outboundDepartureLocal).toBe('07:30');
+    expect(commute.returnDepartureLocal).toBe('16:15');
+    expect(commute.isDefaultCommute).toBe(false);
+    expect(ordinary.isDefaultCommute).toBe(true);
+    expect(ordinary.outboundDepartureLocal).toBeNull();
+
+    const renamed = await service.update('u1', commute.id, { name: 'Weekday edited' });
+    expect(renamed.outboundDepartureLocal).toBe('07:30');
+    expect(renamed.returnDepartureLocal).toBe('16:15');
+
+    await expect(
+      service.create('u1', {
+        name: 'Missing times',
+        category: 'commute',
+        waypoints: [
+          { lat: 58.1, lon: 8.0 },
+          { lat: 58.2, lon: 8.1 },
+        ],
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'COMMUTE_TIMES_REQUIRED' }),
+    });
   });
 });

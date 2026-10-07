@@ -1545,7 +1545,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get routeCatWork => 'Jobb';
 
   @override
-  String get routeCatCommute => 'Pendling';
+  String get routeCatCommute => 'Pendlerrute';
 
   @override
   String get routeCatHome => 'Hjem';
@@ -1671,4 +1671,80 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get coordCustomPoint => 'Egendefinert punkt';
+
+  @override
+  String get commuteTimesTitle => 'Vanlige avreisetider';
+
+  @override
+  String get commuteTimesHint =>
+      'Klokkeslett i Europe/Oslo. Dette er maler, ikke et værvarsel.';
+
+  @override
+  String get commuteOutboundTime => 'Til jobb';
+
+  @override
+  String get commuteReturnTime => 'Hjem';
+
+  @override
+  String get commutePlanTitle => 'Pendlerrute';
+
+  @override
+  String get commuteDate => 'Dato';
+
+  @override
+  String get commuteNextDay => 'Hjemtur neste dag';
+
+  @override
+  String get commuteAnalyze => 'Se uttur og hjemtur';
+
+  @override
+  String get commuteOutboundSection => 'Til jobb';
+
+  @override
+  String get commuteReturnSection => 'Hjem';
+
+  @override
+  String get commuteWearHeading => 'Ha på til utturen';
+
+  @override
+  String get commutePackHeading => 'Pakk før du drar';
+
+  @override
+  String get commuteAdjustmentHeading => 'Endre til hjemturen';
+
+  @override
+  String commuteArrival(String time) {
+    return 'Estimert ankomst $time';
+  }
+
+  @override
+  String get commuteUnavailable =>
+      'Været for hjemturen er ikke tilgjengelig. Morgenforhold brukes ikke for hjemturen.';
+
+  @override
+  String get commuteForecastNote => 'Et varsel er ikke en garanti.';
+
+  @override
+  String get commuteDiffDryRain =>
+      'Opphold på morgenen, regn meldt på hjemturen – ta med regntøy.';
+
+  @override
+  String get commuteDiffWarmCold =>
+      'Utturen er meldt varmere enn hjemturen. Pakk ekstra lag til hjemturen.';
+
+  @override
+  String get commuteLegFeedback => 'Hvordan kjentes denne etappen?';
+
+  @override
+  String get commuteTimeInvalid => 'Skriv klokkeslett som HH:mm.';
+
+  @override
+  String commuteRain(String amount, String probability) {
+    return 'Regn $amount mm, $probability%';
+  }
+
+  @override
+  String commuteWind(String value) {
+    return 'Vind $value';
+  }
 }

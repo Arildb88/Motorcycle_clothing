@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -145,4 +146,18 @@ export class CreateRouteDto {
   @ValidateNested()
   @Type(() => RoutePreferencesInputDto)
   preferences?: RoutePreferencesInputDto;
+
+  /**
+   * Europe/Oslo HH:mm template. Required when category is commute.
+   * A clock time, not a forecast.
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  outboundDepartureLocal?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  returnDepartureLocal?: string;
 }

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
 import { THERMAL_FEEDBACK_STEP_C, maxOneEventAppliedC } from '../domain';
 
@@ -190,5 +190,81 @@ describe('FeedbackService thermal ratings', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(offsets.size).toBe(0);
+  });
+
+  it('records each commute leg once and does not apply the same plan again', async () => {
+    const plans = [
+      {
+        id: 'out',
+        userId: 'user-1',
+        commuteGroupId: 'group-1',
+        commuteLeg: 'outbound',
+      },
+      {
+        id: 'back',
+        userId: 'user-1',
+        commuteGroupId: 'group-1',
+        commuteLeg: 'return',
+      },
+    ];
+    const logs = new Map<string, string>();
+    let offsetWrites = 0;
+    const prisma = {
+      route: { findFirst: async () => null },
+      activityPlan: {
+        findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
+          plans.find((plan) => plan.id === where.id && plan.userId === where.userId) ??
+          null,
+      },
+      activityLog: {
+        findUnique: async ({ where }: { where: { planId: string } }) =>
+          logs.has(where.planId) ? { id: logs.get(where.planId) } : null,
+        create: async ({ data }: { data: { planId?: string } }) => {
+          const id = `log-${logs.size + 1}`;
+          if (data.planId) logs.set(data.planId, id);
+          return {
+            id,
+            feedback: { id: `fb-${id}`, overallRating: 0 },
+          };
+        },
+      },
+      personalOffset: {
+        findUnique: async () =>
+          offsetWrites === 0
+            ? null
+            : { n: offsetWrites, meanResidual: offsetWrites },
+        upsert: async () => {
+          offsetWrites += 1;
+          return { n: offsetWrites, meanResidual: offsetWrites };
+        },
+      },
+      userProfile: { update: async () => undefined },
+    };
+    const service = new FeedbackService(prisma as never);
+    const outbound = await service.create('user-1', {
+      ...body,
+      activityType: 'motorcycle',
+      rating: 'ok',
+      planId: 'out',
+    });
+    const returning = await service.create('user-1', {
+      ...body,
+      activityType: 'motorcycle',
+      rating: 'too_cold',
+      planId: 'back',
+    });
+    expect(outbound.commuteLeg).toBe('outbound');
+    expect(returning.commuteLeg).toBe('return');
+    expect(offsetWrites).toBe(2);
+    await expect(
+      service.create('user-1', {
+        ...body,
+        activityType: 'motorcycle',
+        rating: 'too_warm',
+        planId: 'out',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(offsetWrites).toBe(2);
+    expect(logs.size).toBe(2);
   });
 });

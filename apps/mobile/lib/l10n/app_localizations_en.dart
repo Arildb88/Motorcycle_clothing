@@ -1672,4 +1672,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get coordCustomPoint => 'Custom point';
+
+  @override
+  String get commuteTimesTitle => 'Usual departure times';
+
+  @override
+  String get commuteTimesHint =>
+      'Europe/Oslo clock times. These are templates, not a forecast.';
+
+  @override
+  String get commuteOutboundTime => 'Outbound';
+
+  @override
+  String get commuteReturnTime => 'Return';
+
+  @override
+  String get commutePlanTitle => 'Commute';
+
+  @override
+  String get commuteDate => 'Date';
+
+  @override
+  String get commuteNextDay => 'Return the next day';
+
+  @override
+  String get commuteAnalyze => 'See outbound and return';
+
+  @override
+  String get commuteOutboundSection => 'Outbound';
+
+  @override
+  String get commuteReturnSection => 'Return';
+
+  @override
+  String get commuteWearHeading => 'Wear for the outbound leg';
+
+  @override
+  String get commutePackHeading => 'Pack before you leave';
+
+  @override
+  String get commuteAdjustmentHeading => 'Change for the return';
+
+  @override
+  String commuteArrival(String time) {
+    return 'Estimated arrival $time';
+  }
+
+  @override
+  String get commuteUnavailable =>
+      'The return forecast is unavailable. Morning conditions are not used for the return.';
+
+  @override
+  String get commuteForecastNote => 'A forecast is not a guarantee.';
+
+  @override
+  String get commuteDiffDryRain =>
+      'Dry in the morning, rain is forecast for the return — pack rain gear.';
+
+  @override
+  String get commuteDiffWarmCold =>
+      'The outbound leg is forecast warmer than the return. Pack the extra layer for the way back.';
+
+  @override
+  String get commuteLegFeedback => 'How did this leg feel?';
+
+  @override
+  String get commuteTimeInvalid => 'Enter times as HH:mm.';
+
+  @override
+  String commuteRain(String amount, String probability) {
+    return 'Rain $amount mm, $probability%';
+  }
+
+  @override
+  String commuteWind(String value) {
+    return 'Wind $value';
+  }
 }

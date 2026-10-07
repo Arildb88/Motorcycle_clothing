@@ -3055,6 +3055,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Custom point'**
   String get coordCustomPoint;
+
+  /// No description provided for @commuteTimesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Usual departure times'**
+  String get commuteTimesTitle;
+
+  /// No description provided for @commuteTimesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Europe/Oslo clock times. These are templates, not a forecast.'**
+  String get commuteTimesHint;
+
+  /// No description provided for @commuteOutboundTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Outbound'**
+  String get commuteOutboundTime;
+
+  /// No description provided for @commuteReturnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get commuteReturnTime;
+
+  /// No description provided for @commutePlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Commute'**
+  String get commutePlanTitle;
+
+  /// No description provided for @commuteDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get commuteDate;
+
+  /// No description provided for @commuteNextDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Return the next day'**
+  String get commuteNextDay;
+
+  /// No description provided for @commuteAnalyze.
+  ///
+  /// In en, this message translates to:
+  /// **'See outbound and return'**
+  String get commuteAnalyze;
+
+  /// No description provided for @commuteOutboundSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Outbound'**
+  String get commuteOutboundSection;
+
+  /// No description provided for @commuteReturnSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get commuteReturnSection;
+
+  /// No description provided for @commuteWearHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear for the outbound leg'**
+  String get commuteWearHeading;
+
+  /// No description provided for @commutePackHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack before you leave'**
+  String get commutePackHeading;
+
+  /// No description provided for @commuteAdjustmentHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Change for the return'**
+  String get commuteAdjustmentHeading;
+
+  /// No description provided for @commuteArrival.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated arrival {time}'**
+  String commuteArrival(String time);
+
+  /// No description provided for @commuteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The return forecast is unavailable. Morning conditions are not used for the return.'**
+  String get commuteUnavailable;
+
+  /// No description provided for @commuteForecastNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A forecast is not a guarantee.'**
+  String get commuteForecastNote;
+
+  /// No description provided for @commuteDiffDryRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Dry in the morning, rain is forecast for the return — pack rain gear.'**
+  String get commuteDiffDryRain;
+
+  /// No description provided for @commuteDiffWarmCold.
+  ///
+  /// In en, this message translates to:
+  /// **'The outbound leg is forecast warmer than the return. Pack the extra layer for the way back.'**
+  String get commuteDiffWarmCold;
+
+  /// No description provided for @commuteLegFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'How did this leg feel?'**
+  String get commuteLegFeedback;
+
+  /// No description provided for @commuteTimeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter times as HH:mm.'**
+  String get commuteTimeInvalid;
+
+  /// No description provided for @commuteRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain {amount} mm, {probability}%'**
+  String commuteRain(String amount, String probability);
+
+  /// No description provided for @commuteWind.
+  ///
+  /// In en, this message translates to:
+  /// **'Wind {value}'**
+  String commuteWind(String value);
 }
 
 class _AppLocalizationsDelegate

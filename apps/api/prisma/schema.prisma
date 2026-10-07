@@ -229,6 +229,9 @@ model Route {
   /// { avoidMotorways?, avoidTolls?, avoidFerries? }
   /// Never store clothing/weather on Route.
   preferencesJson    String    @default("{}")
+  /// Europe/Oslo HH:mm templates for a commute. Not a stored forecast.
+  outboundDepartureLocal String?
+  returnDepartureLocal   String?
   lastUsedAt         DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -278,6 +281,10 @@ model ActivityPlan {
     /// Optional provider-neutral RouteAnalysis JSON (distance, duration,
   /// travel segments / expected speeds). Prefer derived summaries over dense GPS.
   routeAnalysisJson String?
+  /// Shared id for one outbound/return analysis. Null on ordinary plans.
+  commuteGroupId String?
+  /// outbound | return. Null on ordinary plans.
+  commuteLeg     String?
   createdAt    DateTime @default(now())
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -285,6 +292,8 @@ model ActivityPlan {
   weatherSnapshot WeatherSnapshot?
   recommendation  Recommendation?
   activityLog     ActivityLog?
+
+  @@index([commuteGroupId])
 }
 
 model WeatherSnapshot {

@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
-import { RouteWeatherSummary, WeatherPoint } from '../recommend/weather.types';
+import {
+  LegForecast,
+  RouteWeatherSummary,
+  WeatherPoint,
+} from '../recommend/weather.types';
 import {
   comparisonRowFromSamples,
   type DepartureComparisonRow,
@@ -85,6 +89,69 @@ export class WeatherService {
     );
 
     return this.summarize(provider, weatherPoints);
+  }
+
+  /**
+   * Forecast for one commute leg.
+   * MET times outside the published series stay unavailable.
+   * This does not borrow another leg's samples.
+   */
+  async forecastLeg(
+    samples: Array<{
+      lat: number;
+      lon: number;
+      at?: Date;
+      altitudeM?: number | null;
+    }>,
+  ): Promise<LegForecast> {
+    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
+    const usable =
+      samples.length > 0 ? samples : [{ lat: 59.9139, lon: 10.7522 }];
+    if (provider !== 'met') {
+      return {
+        available: true,
+        weather: await this.forRouteSamples(usable),
+      };
+    }
+
+    const seriesByPlace = new Map<string, Promise<MetSeriesEntry[] | null>>();
+    const points: WeatherPoint[] = [];
+    let sawOutOfRange = false;
+    for (const sample of usable) {
+      if (!sample.at || Number.isNaN(sample.at.getTime())) {
+        continue;
+      }
+      const series = await this.metSeriesFor(
+        sample.lat,
+        sample.lon,
+        sample.altitudeM,
+        seriesByPlace,
+      );
+      if (!series) continue;
+      const match = matchMetTimeseries(
+        series.map((entry) => entry.time),
+        sample.at,
+      );
+      const entry = match ? series[match.index] : undefined;
+      const point =
+        match && match.inRange
+          ? metPointFromEntry(entry, sample.lat, sample.lon)
+          : null;
+      if (!match || !match.inRange || !point) {
+        if (match && !match.inRange) sawOutOfRange = true;
+        continue;
+      }
+      const stored = withGroundElevation(point, sample.altitudeM);
+      points.push({ ...stored, forecastAt: match.matchedAt });
+    }
+
+    if (points.length !== usable.length) {
+      return {
+        available: false,
+        reason: sawOutOfRange ? 'out_of_range' : 'missing',
+      };
+    }
+    return { available: true, weather: this.summarize('met', points) };
   }
 
   /**

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
+import 'package:motorcycle_clothing/features/plan/commute_plan.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
@@ -36,6 +37,8 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
   final _description = TextEditingController();
   String? _category;
   bool _favorite = false;
+  final _outboundTime = TextEditingController(text: '07:30');
+  final _returnTime = TextEditingController(text: '16:30');
   bool _saving = false;
   String? _error;
   List<WaypointDraft> _waypoints = [
@@ -61,6 +64,12 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       _description.text = e.description ?? '';
       _category = e.category;
       _favorite = e.isFavorite;
+      if (e.outboundDepartureLocal != null) {
+        _outboundTime.text = e.outboundDepartureLocal!;
+      }
+      if (e.returnDepartureLocal != null) {
+        _returnTime.text = e.returnDepartureLocal!;
+      }
       if (e.waypoints.isNotEmpty) {
         _waypoints = e.waypoints
             .map(WaypointDraft.fromRouteWaypoint)
@@ -76,6 +85,8 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
   void dispose() {
     _name.dispose();
     _description.dispose();
+    _outboundTime.dispose();
+    _returnTime.dispose();
     for (final c in _advLat) {
       c.dispose();
     }
@@ -219,10 +230,17 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
     if (!_canSave) {
       setState(() {
-        _error = AppLocalizations.of(context).routeEditorIncomplete;
+        _error = l10n.routeEditorIncomplete;
       });
+      return;
+    }
+    if (commuteFieldsApply(_category, widget.existing?.activityType ?? widget.activityType) &&
+        (!commuteClockPattern.hasMatch(_outboundTime.text.trim()) ||
+            !commuteClockPattern.hasMatch(_returnTime.text.trim()))) {
+      setState(() => _error = l10n.commuteTimeInvalid);
       return;
     }
     setState(() {
@@ -233,16 +251,17 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       final waypoints = WaypointListOps.toApiWaypoints(_waypoints);
       final duration =
           _geometry?.durationMin ?? widget.existing?.typicalDurationMin ?? 35;
-      final body = {
-        'name': _name.text.trim(),
-        if (_description.text.trim().isNotEmpty)
-          'description': _description.text.trim(),
-        if (_category != null) 'category': _category,
-        'isFavorite': _favorite,
-        'activityType': widget.existing?.activityType ?? widget.activityType,
-        'waypoints': waypoints,
-        'typicalDurationMin': duration,
-      };
+      final body = savedRouteBody(
+        name: _name.text.trim(),
+        description: _description.text.trim(),
+        category: _category,
+        isFavorite: _favorite,
+        activityType: widget.existing?.activityType ?? widget.activityType,
+        waypoints: waypoints,
+        typicalDurationMin: duration,
+        outboundDepartureLocal: _outboundTime.text.trim(),
+        returnDepartureLocal: _returnTime.text.trim(),
+      );
       final api = context.read<ApiClient>();
       if (widget.existing == null) {
         await api.post('/routes', body, auth: true);
@@ -326,6 +345,17 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
             ],
             onChanged: (v) => setState(() => _category = v),
           ),
+          if (commuteFieldsApply(
+            _category,
+            widget.existing?.activityType ?? widget.activityType,
+          ))
+            CommuteScheduleFields(
+              outbound: _outboundTime,
+              returning: _returnTime,
+              nextDay: false,
+              onNextDay: (_) {},
+              showNextDay: false,
+            ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.commonFavorite),

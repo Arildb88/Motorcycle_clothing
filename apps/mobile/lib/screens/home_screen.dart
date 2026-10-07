@@ -12,6 +12,7 @@ import 'package:motorcycle_clothing/features/plan/recommendation_presentation.da
 import 'package:motorcycle_clothing/features/plan/resort_discipline_control.dart';
 import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
+import 'package:motorcycle_clothing/features/plan/commute_plan_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
@@ -54,7 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
         (r) => r.isDefaultCommute,
         orElse: () => _routes.first,
       );
-      await _launchRoute(preferred, leaveNow: true, silent: true);
+      if (preferred.isCommute) {
+        if (mounted) {
+          setState(() {
+            _selectedRouteId = preferred.id;
+            _loadingRec = false;
+          });
+        }
+      } else {
+        await _launchRoute(preferred, leaveNow: true, silent: true);
+      }
     } else {
       setState(() => _loadingRec = false);
     }
@@ -122,6 +132,16 @@ class _HomeScreenState extends State<HomeScreen> {
     } finally {
       if (mounted) setState(() => _loadingRec = false);
     }
+  }
+
+  Future<void> _openRoute(SavedRoute route) async {
+    if (route.isCommute) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => CommutePlanScreen(route: route)),
+      );
+      return;
+    }
+    await _pickDeparture(route);
   }
 
   Future<void> _pickDeparture(SavedRoute route) async {
@@ -245,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
         selected ??= _routes.isEmpty ? null : _routes.first;
-        if (selected != null) {
+        if (selected != null && !selected.isCommute) {
           await _launchRoute(selected, leaveNow: true);
         }
       },
@@ -331,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 '${routeDuration(AppLocalizations.of(context), r.typicalDurationMin)}'
                                 '${r.isFavorite ? ' · ★' : ''}',
                             selected: r.id == _selectedRouteId,
-                            onTap: () => _pickDeparture(r),
+                            onTap: () => _openRoute(r),
                           );
                         },
                       ),

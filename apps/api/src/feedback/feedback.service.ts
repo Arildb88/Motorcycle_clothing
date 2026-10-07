@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   appliedThermalBiasC,
@@ -25,14 +29,26 @@ export class FeedbackService {
     const activityType = dto.activityType;
     const overallRating = this.mapLegacyRating(dto.rating);
     const routeId = await this.ownedRouteId(userId, dto.routeId);
+    const plan = await this.ownedPlan(userId, dto.planId);
+    const recommendation = {
+      ...dto.recommendation,
+      ...(plan
+        ? {
+            planId: plan.id,
+            commuteGroupId: plan.commuteGroupId,
+            commuteLeg: plan.commuteLeg,
+          }
+        : {}),
+    };
 
     const log = await this.prisma.activityLog.create({
       data: {
         userId,
         routeId,
+        ...(plan ? { planId: plan.id } : {}),
         startedAt: new Date(dto.departureAt),
         weatherSummaryJson: JSON.stringify(dto.weatherSnapshot),
-        recommendationJson: JSON.stringify(dto.recommendation),
+        recommendationJson: JSON.stringify(recommendation),
         wornGarmentIdsJson: JSON.stringify(dto.wornItems ?? []),
         feedback: {
           create: {
@@ -79,6 +95,9 @@ export class FeedbackService {
       feedback: log.feedback,
       activityLogId: log.id,
       activityType,
+      ...(plan
+        ? { planId: plan.id, commuteLeg: plan.commuteLeg }
+        : {}),
       personalOffset: offset,
       appliedBiasC: appliedThermalBiasC(next),
       note: 'Stored for this activity only. One event is shrunk by n/(n+k) and does not change coldSensitivity.',
@@ -92,6 +111,29 @@ export class FeedbackService {
       take: 50,
       include: { activityLog: true, bodyAreas: true },
     });
+  }
+
+  private async ownedPlan(userId: string, planId?: string) {
+    if (!planId) return null;
+    const plan = await this.prisma.activityPlan.findFirst({
+      where: { id: planId, userId },
+    });
+    if (!plan) {
+      throw new BadRequestException({
+        code: 'PLAN_NOT_OWNED',
+        message: 'Plan not found',
+      });
+    }
+    const existing = await this.prisma.activityLog.findUnique({
+      where: { planId },
+    });
+    if (existing) {
+      throw new ConflictException({
+        code: 'FEEDBACK_ALREADY_RECORDED',
+        message: 'Feedback for this leg is already recorded',
+      });
+    }
+    return plan;
   }
 
   private async ownedRouteId(userId: string, routeId?: string) {

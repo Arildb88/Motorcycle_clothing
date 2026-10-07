@@ -699,5 +699,46 @@
   },
   "routeCoordsInvalid": "Coordinates must be valid numbers.",
   "routeEditorIncomplete": "Enter a name and choose a place for start and destination.",
-  "coordCustomPoint": "Custom point"
+  "coordCustomPoint": "Custom point",
+  "commuteTimesTitle": "Usual departure times",
+  "commuteTimesHint": "Europe/Oslo clock times. These are templates, not a forecast.",
+  "commuteOutboundTime": "Outbound",
+  "commuteReturnTime": "Return",
+  "commutePlanTitle": "Commute",
+  "commuteDate": "Date",
+  "commuteNextDay": "Return the next day",
+  "commuteAnalyze": "See outbound and return",
+  "commuteOutboundSection": "Outbound",
+  "commuteReturnSection": "Return",
+  "commuteWearHeading": "Wear for the outbound leg",
+  "commutePackHeading": "Pack before you leave",
+  "commuteAdjustmentHeading": "Change for the return",
+  "commuteArrival": "Estimated arrival {time}",
+  "@commuteArrival": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "commuteUnavailable": "The return forecast is unavailable. Morning conditions are not used for the return.",
+  "commuteForecastNote": "A forecast is not a guarantee.",
+  "commuteDiffDryRain": "Dry in the morning, rain is forecast for the return — pack rain gear.",
+  "commuteDiffWarmCold": "The outbound leg is forecast warmer than the return. Pack the extra layer for the way back.",
+  "commuteLegFeedback": "How did this leg feel?",
+  "commuteTimeInvalid": "Enter times as HH:mm.",
+  "commuteRain": "Rain {amount} mm, {probability}%",
+  "@commuteRain": {
+    "placeholders": {
+      "amount": { "type": "String" },
+      "probability": { "type": "String" }
+    }
+  },
+  "commuteWind": "Wind {value}"
+  ,
+  "@commuteWind": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  }
 }

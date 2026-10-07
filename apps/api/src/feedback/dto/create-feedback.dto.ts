@@ -17,6 +17,11 @@ export class CreateFeedbackDto {
   @IsString()
   routeId?: string;
 
+  /** Activity plan for this leg. A second submission for the same plan is rejected. */
+  @IsOptional()
+  @IsString()
+  planId?: string;
+
   @IsDateString()
   departureAt!: string;
 

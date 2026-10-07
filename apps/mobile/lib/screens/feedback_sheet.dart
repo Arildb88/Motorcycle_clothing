@@ -98,6 +98,10 @@ Future<void> showFeedbackSheet(
                           if (routeId is String && routeId.isNotEmpty) {
                             body['routeId'] = routeId;
                           }
+                          final planId = recommendPayload['planId'];
+                          if (planId is String && planId.isNotEmpty) {
+                            body['planId'] = planId;
+                          }
                           await api.post('/feedback', body, auth: true);
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (context.mounted) {

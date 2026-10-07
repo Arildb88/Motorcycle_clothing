@@ -23,6 +23,7 @@ import {
   type RouteKind,
   type RoutePreferences,
 } from '../domain';
+import { parseClock } from '../domain/commute';
 import {
   analyzePlanRoute,
   NullRoutingAdapter,
@@ -118,6 +119,12 @@ export class RoutesService {
         waypointsJson: JSON.stringify(waypoints),
         typicalDurationMin: dto.typicalDurationMin ?? 30,
         preferencesJson: serializeRoutePreferences(dto.preferences),
+        ...this.commuteTimeFields(
+          category,
+          activityType,
+          dto.outboundDepartureLocal,
+          dto.returnDepartureLocal,
+        ),
         waypoints: {
           create: waypoints.map((w, i) => ({
             sortOrder: i,
@@ -145,7 +152,7 @@ export class RoutesService {
   }
 
   async update(userId: string, id: string, dto: UpdateRouteDto) {
-    await this.get(userId, id);
+    const existing = await this.get(userId, id);
 
     if (dto.isDefaultCommute === true) {
       await this.prisma.route.updateMany({
@@ -179,6 +186,7 @@ export class RoutesService {
         dto.preferences !== undefined
           ? serializeRoutePreferences(dto.preferences)
           : undefined,
+      ...this.commuteTimePatch(existing, dto),
     };
 
     if (dto.waypoints !== undefined) {
@@ -483,6 +491,67 @@ export class RoutesService {
     const last = waypoints[waypoints.length - 1];
     if (this.near(first.lat, first.lon, last.lat, last.lon)) return 'loop';
     return 'multi_stop';
+  }
+
+  private commuteTimeFields(
+    category: string | null,
+    activityType: string,
+    outbound: string | null | undefined,
+    returnTime: string | null | undefined,
+  ): { outboundDepartureLocal: string | null; returnDepartureLocal: string | null } {
+    if (category !== 'commute') {
+      return { outboundDepartureLocal: null, returnDepartureLocal: null };
+    }
+    if (activityType !== MVP_ACTIVITY_TYPE) {
+      throw new BadRequestException({
+        code: 'COMMUTE_MOTORCYCLE_ONLY',
+        message: 'Commute routes are available for motorcycle first',
+      });
+    }
+    const outboundDepartureLocal = parseClock(outbound);
+    const returnDepartureLocal = parseClock(returnTime);
+    if (!outboundDepartureLocal || !returnDepartureLocal) {
+      throw new BadRequestException({
+        code: 'COMMUTE_TIMES_REQUIRED',
+        message: 'A commute needs outbound and return times as HH:mm',
+      });
+    }
+    return { outboundDepartureLocal, returnDepartureLocal };
+  }
+
+  private commuteTimePatch(
+    existing: {
+      category: string | null;
+      activityType: string;
+      outboundDepartureLocal?: string | null;
+      returnDepartureLocal?: string | null;
+    },
+    dto: UpdateRouteDto,
+  ): Record<string, string | null> {
+    const nextCategory =
+      dto.category === undefined
+        ? existing.category
+        : this.resolveCategory(dto.category);
+    const nextActivity =
+      dto.activityType !== undefined
+        ? this.resolveActivityType(dto.activityType)
+        : existing.activityType;
+    const touchesTimes =
+      nextCategory === 'commute' ||
+      existing.category === 'commute' ||
+      dto.outboundDepartureLocal !== undefined ||
+      dto.returnDepartureLocal !== undefined;
+    if (!touchesTimes) return {};
+    return this.commuteTimeFields(
+      nextCategory,
+      nextActivity,
+      dto.outboundDepartureLocal !== undefined
+        ? dto.outboundDepartureLocal
+        : existing.outboundDepartureLocal,
+      dto.returnDepartureLocal !== undefined
+        ? dto.returnDepartureLocal
+        : existing.returnDepartureLocal,
+    );
   }
 
   private resolveActivityType(value?: string): string {

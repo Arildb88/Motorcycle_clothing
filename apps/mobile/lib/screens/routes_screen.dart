@@ -9,6 +9,7 @@ import 'package:motorcycle_clothing/state/activity_context.dart';
 import 'package:motorcycle_clothing/widgets/common.dart';
 import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
 import 'package:motorcycle_clothing/features/routes/route_editor_screen.dart';
+import 'package:motorcycle_clothing/features/plan/commute_plan_screen.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
@@ -103,11 +104,13 @@ class _RoutesScreenState extends State<RoutesScreen> {
     if (activityType == null) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => RidePlannerScreen(
-          initialRoute: existing,
-          savedRoutes: _routes,
-          activityType: activityType,
-        ),
+        builder: (_) => existing != null && existing.isCommute
+            ? CommutePlanScreen(route: existing)
+            : RidePlannerScreen(
+                initialRoute: existing,
+                savedRoutes: _routes,
+                activityType: activityType,
+              ),
       ),
     );
     await _load();

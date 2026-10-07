@@ -31,3 +31,12 @@ export type RouteWeatherSummary = {
   /** Set when a ground-elevation source returned at least one height. */
   elevation?: { provider: string; attribution: string } | null;
 };
+
+/**
+ * One commute leg's forecast.
+ * Unavailable means that leg has no forecast. Callers must not fill it
+ * from another leg or another time.
+ */
+export type LegForecast =
+  | { available: true; weather: RouteWeatherSummary }
+  | { available: false; reason: 'missing' | 'out_of_range' };
