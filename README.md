@@ -55,6 +55,70 @@ Helper scripts (from repo root): `scripts\start-api.bat` and `scripts\start-andr
 
 ---
 
+## Quick start etter oppdatering (allerede installert)
+
+For Windows + PowerShell når Node.js, Flutter, Android Studio, Docker Desktop og prosjektets lokale `.env` allerede er satt opp.
+
+### 1. Oppdater prosjektet
+
+Stopp API og Flutter med `Ctrl + C`. Kjør fra prosjektets hovedmappe:
+
+```powershell
+git status
+git pull --ff-only
+```
+
+Dette oppdaterer grenen du allerede står på (for eksempel `dev_test`). Hvis du har lokale endringer, commit eller stash dem før oppdatering eller grenbytte. Hvis pull feiler, løs årsaken før du fortsetter.
+
+### 2. Start database og API — terminal 1
+
+Start Docker Desktop først. Kjør fra prosjektets hovedmappe. Databasesteget forutsetter at `DATABASE_URL` og `DIRECT_URL` i `apps/api/.env` peker på lokal Postgres:
+
+```powershell
+docker compose up -d postgres
+cd apps\api
+npm install
+npx prisma migrate deploy
+npm run prisma:generate
+npm run start:dev
+```
+
+Dette oppdaterer pakkene, legger inn eksisterende migrasjoner og regenererer Prisma Client. Fortsett bare hvis hvert steg lykkes. La API-terminalen stå åpen.
+
+### 3. Start appen — terminal 2
+
+Start Android-emulatoren i Android Studio. Åpne en ny terminal i prosjektets hovedmappe:
+
+```powershell
+cd apps\mobile
+flutter pub get
+flutter run
+```
+
+Velg Android-emulatoren hvis flere enheter vises. Standard API-adresse for emulatoren er `http://10.0.2.2:3000/api`.
+
+Valgfri API-sjekk i en separat terminal:
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/health
+```
+
+Forvent `status: ok`.
+
+### Vanlig oppstart uten nye oppdateringer
+
+Start Docker Desktop og emulatoren først:
+
+| Sted | Kommando |
+|------|----------|
+| Prosjektets hovedmappe | `docker compose up -d postgres` |
+| `apps\api` — terminal 1 | `npm run start:dev` |
+| `apps\mobile` — terminal 2 | `flutter run` |
+
+`dev_test` er et grennavn. API-kommandoen er fortsatt `npm run start:dev`; det finnes ingen `npm run start:dev_test`. Du trenger normalt ikke `flutter clean` eller å installere utviklingsverktøyene på nytt.
+
+---
+
 ## 1. Product (developer summary)
 
 RideWear turns:
