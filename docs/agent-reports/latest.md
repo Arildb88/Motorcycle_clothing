@@ -6,7 +6,7 @@
 
 - Branch: `fix/real-data-only-001`
 - Implementation commit: `503c31d5db12e6c6072867208c9d2dca2706d24c`
-- PR: into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/78 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
