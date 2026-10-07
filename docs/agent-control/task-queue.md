@@ -10,7 +10,7 @@ Cursor must not add a product or implementation task to this file.
 paused: false
 active_id: none
 promotion: automatic
-handoff_generation: 43
+handoff_generation: 44
 handoff_state: idle
 ```
 
@@ -2196,3 +2196,6 @@ Verification and boundaries:
 - Read current architecture/security/privacy constraints. Dedicated feature/fix branch from latest dev_test; PR to dev_test, merge only after required checks. Keep dev/main untouched.
 - Follow queue completion/blocker protocol, update docs/agent-reports/latest.md with results and limitations, and stop after this task.
 ~~~~~
+
+
+Generation 44 recovery: Arild supplied the stopped Cursor run on 2026-10-07. ChatGPT returned the unconsumed COMMUTE-ROUNDTRIP-001 token to idle after the non-handoff implementation merge. Generation 44 is spent; retry requires generation 45. No task was consumed; promotion remains automatic.
