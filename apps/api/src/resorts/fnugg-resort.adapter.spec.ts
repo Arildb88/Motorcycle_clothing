@@ -182,6 +182,46 @@ describe('FnuggResortAdapter', () => {
     expect(JSON.stringify(mapped)).not.toContain('conditions');
   });
 
+  it('encodes Åmli, Øyer, Sæby, and uppercase letters once', async () => {
+    const urls: string[] = [];
+    const adapter = new FnuggResortAdapter({
+      get: (url) => {
+        urls.push(url);
+        return Promise.resolve({
+          status: 200,
+          data: { hits: { total: 0, hits: [] } },
+        });
+      },
+    });
+
+    for (const name of ['Åmli', 'Øyer', 'Sæby', 'ÆØÅ']) {
+      await expect(adapter.searchByName(name)).resolves.toEqual([]);
+      const requested = urls[urls.length - 1];
+      expect(new URL(requested).searchParams.get('q')).toBe(name);
+      expect(requested).not.toContain('%25');
+    }
+    expect(urls).toHaveLength(4);
+  });
+
+  it('keeps the live empty Kongsberg search empty', async () => {
+    const urls: string[] = [];
+    const adapter = new FnuggResortAdapter({
+      get: (url) => {
+        urls.push(url);
+        return Promise.resolve({
+          status: 200,
+          // Live GET /search?type=resort&q=Kongsberg on 2026-10-07.
+          data: { took: 1, timed_out: false, hits: { total: 0, hits: [] } },
+        });
+      },
+    });
+
+    await expect(adapter.searchByName(' Kongsberg ')).resolves.toEqual([]);
+    expect(urls).toHaveLength(1);
+    expect(new URL(urls[0]).searchParams.get('q')).toBe('Kongsberg');
+    expect(urls[0]).toContain('type=resort');
+  });
+
   it('returns an empty list instead of inventing resorts', async () => {
     const adapter = new FnuggResortAdapter({
       get: () =>

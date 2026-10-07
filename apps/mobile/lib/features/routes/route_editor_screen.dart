@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/plan/commute_plan.dart';
+import 'package:motorcycle_clothing/features/routes/place_query_field.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/features/routes/route_map_preview.dart';
 import 'package:motorcycle_clothing/features/routes/waypoint_draft.dart';
@@ -71,9 +72,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
         _returnTime.text = e.returnDepartureLocal!;
       }
       if (e.waypoints.isNotEmpty) {
-        _waypoints = e.waypoints
-            .map(WaypointDraft.fromRouteWaypoint)
-            .toList();
+        _waypoints = e.waypoints.map(WaypointDraft.fromRouteWaypoint).toList();
       }
     }
     _waypoints = WaypointListOps.ensureStartAndEnd(_waypoints);
@@ -98,10 +97,8 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
 
   LocationServices get _location => context.read<LocationServices>();
 
-  bool get _canSave => WaypointListOps.canSave(
-        name: _name.text,
-        waypoints: _waypoints,
-      );
+  bool get _canSave =>
+      WaypointListOps.canSave(name: _name.text, waypoints: _waypoints);
 
   void _syncAdvancedControllers() {
     while (_advLat.length < _waypoints.length) {
@@ -212,16 +209,15 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
     final lat = double.tryParse(_advLat[index].text.trim());
     final lon = double.tryParse(_advLon[index].text.trim());
     if (lat == null || lon == null) {
-      setState(
-        () => _error = AppLocalizations.of(context).routeCoordsInvalid,
-      );
+      setState(() => _error = AppLocalizations.of(context).routeCoordsInvalid);
       return;
     }
     setState(() {
       _waypoints[index].applyManualCoordinates(
         latitude: lat,
         longitude: lon,
-        manualLabel: _waypoints[index].label ??
+        manualLabel:
+            _waypoints[index].label ??
             AppLocalizations.of(context).coordCustomPoint,
       );
       _error = null;
@@ -237,7 +233,10 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       });
       return;
     }
-    if (commuteFieldsApply(_category, widget.existing?.activityType ?? widget.activityType) &&
+    if (commuteFieldsApply(
+          _category,
+          widget.existing?.activityType ?? widget.activityType,
+        ) &&
         (!commuteClockPattern.hasMatch(_outboundTime.text.trim()) ||
             !commuteClockPattern.hasMatch(_returnTime.text.trim()))) {
       setState(() => _error = l10n.commuteTimeInvalid);
@@ -271,11 +270,15 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = localizeUserError(e, AppLocalizations.of(context)));
+        setState(
+          () => _error = localizeUserError(e, AppLocalizations.of(context)),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -309,7 +312,7 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          TextField(
+          PlaceQueryField(
             controller: _name,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
@@ -318,12 +321,10 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
+          PlaceQueryField(
             controller: _description,
-            decoration: InputDecoration(
-              labelText: l10n.routeDescription,
-            ),
             maxLines: 2,
+            decoration: InputDecoration(labelText: l10n.routeDescription),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String?>(
@@ -333,15 +334,27 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
             items: [
               DropdownMenuItem(value: null, child: Text(l10n.commonNone)),
               DropdownMenuItem(value: 'work', child: Text(l10n.routeCatWork)),
-              DropdownMenuItem(value: 'commute', child: Text(l10n.routeCatCommute)),
+              DropdownMenuItem(
+                value: 'commute',
+                child: Text(l10n.routeCatCommute),
+              ),
               DropdownMenuItem(value: 'home', child: Text(l10n.routeCatHome)),
-              DropdownMenuItem(value: 'weekend', child: Text(l10n.routeCatWeekend)),
-              DropdownMenuItem(value: 'touring', child: Text(l10n.routeCatTouring)),
+              DropdownMenuItem(
+                value: 'weekend',
+                child: Text(l10n.routeCatWeekend),
+              ),
+              DropdownMenuItem(
+                value: 'touring',
+                child: Text(l10n.routeCatTouring),
+              ),
               DropdownMenuItem(
                 value: 'favourite',
                 child: Text(l10n.routeCatFavourite),
               ),
-              DropdownMenuItem(value: 'custom', child: Text(l10n.routeCatCustom)),
+              DropdownMenuItem(
+                value: 'custom',
+                child: Text(l10n.routeCatCustom),
+              ),
             ],
             onChanged: (v) => setState(() => _category = v),
           ),
@@ -488,7 +501,9 @@ class _RouteEditorScreenState extends State<RouteEditorScreen> {
                             decimal: true,
                             signed: true,
                           ),
-                          decoration: InputDecoration(labelText: l10n.coordLongitude),
+                          decoration: InputDecoration(
+                            labelText: l10n.coordLongitude,
+                          ),
                         ),
                       ),
                       IconButton(

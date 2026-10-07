@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
 import 'package:motorcycle_clothing/features/plan/fnugg_attribution_link.dart';
+import 'package:motorcycle_clothing/features/routes/place_query_field.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
@@ -57,6 +58,8 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
   bool _settled = false;
   String? _error;
   String? _locationError;
+  String? _retryQuery;
+  ({double lat, double lon})? _retryNearby;
   List<SkiResort> _results = const [];
   String? _rememberedResortId;
   String? _rememberedSourceUrl;
@@ -91,6 +94,7 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
     setState(() {
       _loading = true;
       _error = null;
+      _retryNearby = null;
     });
     try {
       final hits = await widget.directory.searchByName(query.trim());
@@ -98,6 +102,7 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
       setState(() {
         _results = hits;
         _error = null;
+        _retryQuery = null;
         _settled = true;
         _loading = false;
       });
@@ -106,6 +111,7 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
       setState(() {
         _results = const [];
         _error = AppLocalizations.of(context).plannerResortUnavailable;
+        _retryQuery = query.trim();
         _settled = true;
         _loading = false;
       });
@@ -125,6 +131,7 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
       _loading = true;
       _error = null;
       _locationError = null;
+      _retryQuery = null;
     });
     try {
       final hits = await widget.directory.nearby(lat: lat, lon: lon);
@@ -132,6 +139,7 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
       setState(() {
         _results = hits;
         _error = null;
+        _retryNearby = null;
         _settled = true;
         _loading = false;
       });
@@ -140,10 +148,21 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
       setState(() {
         _results = const [];
         _error = AppLocalizations.of(context).plannerResortUnavailable;
+        _retryNearby = (lat: lat, lon: lon);
         _settled = true;
         _loading = false;
       });
     }
+  }
+
+  void _retry() {
+    final nearby = _retryNearby;
+    if (nearby != null) {
+      _nearbyFrom(nearby.lat, nearby.lon);
+      return;
+    }
+    final query = (_retryQuery ?? _nameCtrl.text).trim();
+    if (query.isNotEmpty) _search(query);
   }
 
   Future<void> _useCurrentLocation() async {
@@ -236,14 +255,8 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
       children: [
         if (_results.isEmpty) directoryAttribution,
         if (_results.isEmpty) const SizedBox(height: 12),
-        TextField(
+        PlaceQueryField(
           controller: _nameCtrl,
-          keyboardType: TextInputType.text,
-          textCapitalization: TextCapitalization.none,
-          autocorrect: false,
-          enableSuggestions: false,
-          smartDashesType: SmartDashesType.disabled,
-          smartQuotesType: SmartQuotesType.disabled,
           onChanged: _onNameChanged,
           decoration: InputDecoration(
             labelText: l10n.plannerResortName,
@@ -294,9 +307,22 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
         if (_error != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              _error!,
-              style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _error!,
+                  style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                  onPressed: _loading ? null : _retry,
+                  child: Text(l10n.commonRetry),
+                ),
+              ],
             ),
           ),
         if (_settled && _error == null && _results.isEmpty && !_loading)

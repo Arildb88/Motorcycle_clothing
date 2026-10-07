@@ -79,6 +79,9 @@ export class FnuggResortAdapter implements ResortDirectoryPort {
   async searchByName(query: string): Promise<SkiResortHit[]> {
     const q = query.trim().slice(0, 80);
     if (q.length < 1) return [];
+    // `/search` matches the provider's resort name. A town the index does not
+    // list, including Kongsberg in the live index, stays an empty result.
+    // Nearby resorts are not substituted, and no resort record is invented.
     const params = new URLSearchParams({
       type: 'resort',
       q,

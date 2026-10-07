@@ -39,7 +39,9 @@ describe('OrsGeocodingService', () => {
     });
 
     const hits = await service.autocomplete('Kristiansand');
-    expect(url.startsWith(`${HEIGIT_PELIAS_BASE_URL}/autocomplete?`)).toBe(true);
+    expect(url.startsWith(`${HEIGIT_PELIAS_BASE_URL}/autocomplete?`)).toBe(
+      true,
+    );
     expect(url.includes('api.openrouteservice.org')).toBe(false);
     expect(auth).toBe('pelias-key');
     expect(hits).toEqual([
@@ -130,6 +132,21 @@ describe('OrsGeocodingService', () => {
     await service.autocomplete('Tromsø');
     expect(url).toContain('text=Troms%C3%B8');
     expect(url).not.toContain('Tromso');
+
+    for (const name of ['Åmli', 'Øyer', 'Sæby', 'ÆØÅ']) {
+      await service.autocomplete(name);
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get('text')).toBe(name);
+      expect(url).not.toContain('%25');
+      const folded = name
+        .replace(/Å/g, 'A')
+        .replace(/Ø/g, 'O')
+        .replace(/Æ/g, 'AE')
+        .replace(/æ/g, 'ae')
+        .replace(/ø/g, 'o')
+        .replace(/å/g, 'a');
+      expect(url).not.toContain(`text=${folded}`);
+    }
   });
 
   it('surfaces provider failures without throwing the raw HTTP error', async () => {
@@ -172,13 +189,18 @@ describe('OrsGeocodingService', () => {
       apiKey: 'pelias-key',
       get: async () => ({ status: 404, data: '<html>404</html>' }),
     });
-    await expect(missing.resolve('whosonfirst:locality:arendal')).rejects.toMatchObject({
+    await expect(
+      missing.resolve('whosonfirst:locality:arendal'),
+    ).rejects.toMatchObject({
       reason: 'not_found',
     });
 
     const denied = new OrsGeocodingService({
       apiKey: 'pelias-key',
-      get: async () => ({ status: 401, data: { error: 'Authorization field missing' } }),
+      get: async () => ({
+        status: 401,
+        data: { error: 'Authorization field missing' },
+      }),
     });
     await expect(denied.autocomplete('Kristiansand')).rejects.toMatchObject({
       reason: 'authentication',
@@ -188,7 +210,9 @@ describe('OrsGeocodingService', () => {
       apiKey: 'pelias-key',
       get: async () => ({ status: 200, data: { features: [] } }),
     });
-    await expect(empty.resolve('whosonfirst:locality:arendal')).resolves.toBeNull();
+    await expect(
+      empty.resolve('whosonfirst:locality:arendal'),
+    ).resolves.toBeNull();
 
     const timedOut = new OrsGeocodingService({
       apiKey: 'pelias-key',
@@ -217,8 +241,10 @@ describe('OrsGeocodingService', () => {
 
 function captureWarnings(): string[] {
   const warnings: string[] = [];
-  jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
-    warnings.push(String(message));
-  });
+  jest
+    .spyOn(Logger.prototype, 'warn')
+    .mockImplementation((message: unknown) => {
+      warnings.push(String(message));
+    });
   return warnings;
 }

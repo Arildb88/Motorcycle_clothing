@@ -12,6 +12,7 @@ import 'package:motorcycle_clothing/features/plan/ride_analysis_result_screen.da
 import 'package:motorcycle_clothing/features/plan/resort_discovery.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_models.dart';
 import 'package:motorcycle_clothing/features/plan/trail_discovery.dart';
+import 'package:motorcycle_clothing/features/routes/place_query_field.dart';
 import 'package:motorcycle_clothing/features/routes/place_search_field.dart';
 import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
@@ -934,7 +935,7 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
               value: _state.avoidMotorways,
               onChanged: (v) => _update(_state.copyWith(avoidMotorways: v)),
             ),
-          TextField(
+          PlaceQueryField(
             controller: _nameCtrl,
             onChanged: (v) =>
                 setState(() => _state = _state.copyWith(routeName: v)),

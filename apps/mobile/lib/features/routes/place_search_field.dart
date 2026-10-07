@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
+import 'package:motorcycle_clothing/features/routes/place_query_field.dart';
 import 'package:motorcycle_clothing/services/location/location_models.dart';
 import 'package:motorcycle_clothing/services/location/location_search_service.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
@@ -67,15 +68,22 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     super.didUpdateWidget(oldWidget);
     final next = widget.initialDisplay ?? '';
     final prev = oldWidget.initialDisplay ?? '';
-    if (next == prev) return;
-
     final typed = _controller.text;
-    final userIsEditing = typed.trim().isNotEmpty && typed != prev;
-    if (userIsEditing && next.isEmpty) {
-      // The parent cleared the selected place because typing started.
-      // Keep the typed query, including Norwegian characters, and let the
-      // in-flight search finish.
-      _hadSelection = false;
+    final composing = _controller.value.composing;
+    if (shouldKeepTypedPlaceQuery(
+      previousDisplay: prev,
+      nextDisplay: next,
+      typed: typed,
+      composing: composing.isValid && !composing.isCollapsed,
+    )) {
+      // The parent cleared the selected place because typing started, or the
+      // keyboard is still composing a Norwegian letter. Keep the typed query.
+      if (next != prev &&
+          next.isEmpty &&
+          typed.trim().isNotEmpty &&
+          typed != prev) {
+        _hadSelection = false;
+      }
       return;
     }
 
@@ -336,16 +344,10 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
+        PlaceQueryField(
           controller: _controller,
           focusNode: _focus,
           enabled: widget.enabled,
-          keyboardType: TextInputType.text,
-          textCapitalization: TextCapitalization.none,
-          autocorrect: false,
-          enableSuggestions: false,
-          smartDashesType: SmartDashesType.disabled,
-          smartQuotesType: SmartQuotesType.disabled,
           onChanged: _onChanged,
           decoration: InputDecoration(
             labelText: widget.label,
