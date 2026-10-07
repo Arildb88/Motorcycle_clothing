@@ -2906,6 +2906,18 @@ abstract class AppLocalizations {
   /// **'Place search is temporarily unavailable.'**
   String get placeSearchUnavailable;
 
+  /// No description provided for @placeSearchNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Place search is not configured on the server.'**
+  String get placeSearchNotConfigured;
+
+  /// No description provided for @placeNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'That place could not be selected. Try again.'**
+  String get placeNotFound;
+
   /// No description provided for @routeStraightSegmentsNotice.
   ///
   /// In en, this message translates to:

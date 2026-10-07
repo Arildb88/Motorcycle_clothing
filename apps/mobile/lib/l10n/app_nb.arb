@@ -618,6 +618,8 @@
   "placeNoResults": "Ingen steder funnet",
   "placeSearchFailed": "Stedsøket mislyktes",
   "placeSearchUnavailable": "Stedsøk er midlertidig utilgjengelig.",
+  "placeSearchNotConfigured": "Stedsøk er ikke konfigurert på serveren.",
+  "placeNotFound": "Stedet kunne ikke velges. Prøv igjen.",
   "routeStraightSegmentsNotice": "Forhåndsvisningen bruker rette streker fordi veiruting ikke er tilgjengelig.",
   "plannerCouldNotSave": "Kunne ikke lagre ruten for analyse.",
   "feedbackTitle": "Hvordan kjentes antrekket?",

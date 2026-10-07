@@ -1,7 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { HEIGIT_PELIAS_BASE_URL } from './ors.constants';
 import {
   GeocodingUnavailableError,
   OrsGeocodingService,
+  placeSearchHit,
 } from './ors-geocoding.service';
 
 const pelias = {
@@ -19,6 +21,10 @@ const pelias = {
 };
 
 describe('OrsGeocodingService', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('maps autocomplete hits and calls Pelias on HeiGIT', async () => {
     let url = '';
     let auth = '';
@@ -137,9 +143,82 @@ describe('OrsGeocodingService', () => {
   });
 
   it('is unavailable when the key is missing', async () => {
+    const warnings = captureWarnings();
     const service = new OrsGeocodingService({ apiKey: '' });
     await expect(service.autocomplete('Kristiansand')).rejects.toMatchObject({
       reason: 'not_configured',
     });
+    expect(warnings).toEqual(['autocomplete failed (status not_configured)']);
+  });
+
+  it('keeps autocomplete coordinates on the API hit', () => {
+    const [hit] = [
+      {
+        providerPlaceId: 'whosonfirst:locality:arendal',
+        primaryText: 'Arendal',
+        secondaryText: 'Agder, Norway',
+        label: 'Arendal, Agder, Norway',
+        lat: 58.461,
+        lon: 8.766,
+        address: 'Arendal, Agder, Norway',
+      },
+    ];
+    expect(placeSearchHit(hit)).toEqual(hit);
+  });
+
+  it('classifies resolve 404, auth, timeout, and an empty body without secrets', async () => {
+    const warnings = captureWarnings();
+    const missing = new OrsGeocodingService({
+      apiKey: 'pelias-key',
+      get: async () => ({ status: 404, data: '<html>404</html>' }),
+    });
+    await expect(missing.resolve('whosonfirst:locality:arendal')).rejects.toMatchObject({
+      reason: 'not_found',
+    });
+
+    const denied = new OrsGeocodingService({
+      apiKey: 'pelias-key',
+      get: async () => ({ status: 401, data: { error: 'Authorization field missing' } }),
+    });
+    await expect(denied.autocomplete('Kristiansand')).rejects.toMatchObject({
+      reason: 'authentication',
+    });
+
+    const empty = new OrsGeocodingService({
+      apiKey: 'pelias-key',
+      get: async () => ({ status: 200, data: { features: [] } }),
+    });
+    await expect(empty.resolve('whosonfirst:locality:arendal')).resolves.toBeNull();
+
+    const timedOut = new OrsGeocodingService({
+      apiKey: 'pelias-key',
+      get: async () => {
+        const error = new Error('timeout') as Error & { code?: string };
+        error.code = 'ECONNABORTED';
+        throw error;
+      },
+    });
+    await expect(timedOut.autocomplete('Kristiansand')).rejects.toMatchObject({
+      reason: 'provider',
+    });
+
+    const text = warnings.join('\n');
+    expect(text).toContain('resolve failed (status 404)');
+    expect(text).toContain('autocomplete failed (status 401 authentication)');
+    expect(text).toContain('resolve failed (status 200 empty)');
+    expect(text).toContain('autocomplete failed (status timeout)');
+    expect(text).not.toContain('pelias-key');
+    expect(text).not.toContain('Kristiansand');
+    expect(text).not.toContain('whosonfirst');
+    expect(text).not.toContain('58.');
+    expect(text).not.toContain('8.766');
   });
 });
+
+function captureWarnings(): string[] {
+  const warnings: string[] = [];
+  jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+    warnings.push(String(message));
+  });
+  return warnings;
+}

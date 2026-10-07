@@ -15,10 +15,27 @@ export type GeocodedPlace = {
 };
 
 export class GeocodingUnavailableError extends Error {
-  constructor(readonly reason: 'not_configured' | 'provider') {
+  constructor(
+    readonly reason: 'not_configured' | 'authentication' | 'provider' | 'not_found',
+  ) {
     super(reason);
     this.name = 'GeocodingUnavailableError';
   }
+}
+
+export type GeocodingOperation = 'autocomplete' | 'resolve';
+
+/** Autocomplete hit returned to the app. Coordinates stay on this payload. */
+export function placeSearchHit(hit: GeocodedPlace) {
+  return {
+    providerPlaceId: hit.providerPlaceId,
+    primaryText: hit.primaryText,
+    secondaryText: hit.secondaryText,
+    label: hit.label,
+    lat: hit.lat,
+    lon: hit.lon,
+    address: hit.address,
+  };
 }
 
 /**
@@ -45,12 +62,12 @@ export class OrsGeocodingService {
   }
 
   async autocomplete(text: string): Promise<GeocodedPlace[]> {
-    this.assertConfigured();
+    this.assertConfigured('autocomplete');
     const query = text.trim().slice(0, 200);
     if (query.length < 2) return [];
 
     const url = `${this.baseUrl}/autocomplete?text=${encodeURIComponent(query)}&size=8`;
-    const data = await this.request(url);
+    const data = await this.request(url, 'autocomplete');
     return featuresOf(data)
       .map(mapFeature)
       .filter((place): place is GeocodedPlace => place != null)
@@ -58,32 +75,52 @@ export class OrsGeocodingService {
   }
 
   async resolve(providerPlaceId: string): Promise<GeocodedPlace | null> {
-    this.assertConfigured();
+    this.assertConfigured('resolve');
     const id = providerPlaceId.trim();
     if (!id) return null;
+    // HeiGIT does not route Pelias `/place` (nginx HTML 404). That status is
+    // not a temporary outage. Selection uses autocomplete coordinates instead.
     const url = `${this.baseUrl}/place?ids=${encodeURIComponent(id)}`;
-    const data = await this.request(url);
+    const data = await this.request(url, 'resolve');
     const place = featuresOf(data).map(mapFeature).find((hit) => hit != null);
-    return place ?? null;
+    if (!place) {
+      logger.warn('resolve failed (status 200 empty)');
+      return null;
+    }
+    return place;
   }
 
-  private assertConfigured() {
+  private assertConfigured(operation: GeocodingOperation) {
     if (!this.isConfigured) {
+      logger.warn(`${operation} failed (status not_configured)`);
       throw new GeocodingUnavailableError('not_configured');
     }
   }
 
-  private async request(url: string): Promise<unknown> {
+  private async request(url: string, operation: GeocodingOperation): Promise<unknown> {
     try {
       const res = await this.get(url, orsAuthHeaders(this.apiKey));
+      if (res.status === 401 || res.status === 403) {
+        logger.warn(`${operation} failed (status ${res.status} authentication)`);
+        throw new GeocodingUnavailableError('authentication');
+      }
+      if (operation === 'resolve' && res.status === 404) {
+        logger.warn('resolve failed (status 404)');
+        throw new GeocodingUnavailableError('not_found');
+      }
       if (res.status < 200 || res.status >= 300) {
-        logger.warn(`geocoding failed (status ${res.status})`);
+        logger.warn(`${operation} failed (status ${res.status})`);
         throw new GeocodingUnavailableError('provider');
       }
       return res.data;
     } catch (err) {
       if (err instanceof GeocodingUnavailableError) throw err;
-      logger.warn('geocoding failed (status network)');
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code?: unknown }).code ?? '')
+          : '';
+      const timedOut = code === 'ECONNABORTED' || code === 'ETIMEDOUT';
+      logger.warn(`${operation} failed (status ${timedOut ? 'timeout' : 'network'})`);
       throw new GeocodingUnavailableError('provider');
     }
   }

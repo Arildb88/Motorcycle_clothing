@@ -23,7 +23,7 @@ ROUTING_PROVIDER=ors
 ORS_API_KEY=your-heigit-key
 ```
 
-Directions use `https://api.heigit.org/openrouteservice/`. Geocoding uses `https://api.heigit.org/pelias/v1`. The preview is road-following **driving** geometry and is not motorcycle-optimized. There is no basemap yet; the screen draws the returned line schematically.
+Directions use `https://api.heigit.org/openrouteservice/`. Geocoding uses HeiGIT Pelias autocomplete. The API returns each suggestion's coordinates, and selecting a suggestion uses those coordinates. HeiGIT does not serve `/pelias/v1/place`. The preview is road-following **driving** geometry and is not motorcycle-optimized. There is no basemap yet; the screen draws the returned line schematically.
 
 `GOOGLE_MAPS_API_KEY` is not required for normal RideWear routing or place search.
 

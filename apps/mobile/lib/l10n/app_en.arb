@@ -623,6 +623,8 @@
   "placeNoResults": "No places found",
   "placeSearchFailed": "Place search failed",
   "placeSearchUnavailable": "Place search is temporarily unavailable.",
+  "placeSearchNotConfigured": "Place search is not configured on the server.",
+  "placeNotFound": "That place could not be selected. Try again.",
   "routeStraightSegmentsNotice": "Preview uses straight segments because road routing is not available.",
   "plannerCouldNotSave": "Could not save the route for analysis.",
   "feedbackTitle": "How did the kit feel?",

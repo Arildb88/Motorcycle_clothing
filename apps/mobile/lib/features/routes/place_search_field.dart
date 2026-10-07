@@ -46,13 +46,16 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
   int _requestId = 0;
   int _hideGeneration = 0;
   String _typedQuery = '';
+  String? _retryQuery;
+  PlaceSuggestion? _retrySuggestion;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialDisplay ?? '');
     _hadSelection =
-        widget.initialDisplay != null && widget.initialDisplay!.trim().isNotEmpty;
+        widget.initialDisplay != null &&
+        widget.initialDisplay!.trim().isNotEmpty;
     _focus.addListener(() {
       if (_focus.hasFocus) return;
       _scheduleHideSuggestions();
@@ -87,6 +90,9 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     _suggestions = const [];
     _error = null;
     _loading = false;
+    _resolving = false;
+    _retryQuery = null;
+    _retrySuggestion = null;
   }
 
   @override
@@ -116,6 +122,14 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     if (_hadSelection) {
       _hadSelection = false;
       widget.onCleared?.call();
+    }
+    if (_resolving || _error != null || _retrySuggestion != null) {
+      setState(() {
+        _resolving = false;
+        _error = null;
+        _retryQuery = null;
+        _retrySuggestion = null;
+      });
     }
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 320), () {
@@ -151,6 +165,8 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     } on LocationProviderException catch (e) {
       if (!mounted || requestId != _requestId) return;
       setState(() {
+        _retryQuery = q;
+        _retrySuggestion = null;
         _publish(
           suggestions: const [],
           error: localizeLocationError(e, AppLocalizations.of(context)),
@@ -159,6 +175,8 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     } catch (_) {
       if (!mounted || requestId != _requestId) return;
       setState(() {
+        _retryQuery = q;
+        _retrySuggestion = null;
         _publish(
           suggestions: const [],
           error: AppLocalizations.of(context).placeSearchFailed,
@@ -188,9 +206,17 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
     _hideGeneration++;
     _hideTimer?.cancel();
     final typedQuery = _typedQuery;
+    if (suggestion.hasCoordinates) {
+      _applySelection(
+        _resolvedFromSuggestion(suggestion, typedQuery: typedQuery),
+      );
+      return;
+    }
     setState(() {
       _resolving = true;
       _error = null;
+      _retryQuery = null;
+      _retrySuggestion = null;
       _suggestions = const [];
     });
     try {
@@ -201,24 +227,21 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
         suggestionLabel: suggestion.displayLabel,
         resolvedLabel: place.label,
       );
-      final kept = ResolvedPlace(
-        providerPlaceId: place.providerPlaceId,
-        label: label,
-        lat: place.lat,
-        lon: place.lon,
-        address: place.address,
+      _applySelection(
+        ResolvedPlace(
+          providerPlaceId: place.providerPlaceId,
+          label: label,
+          lat: place.lat,
+          lon: place.lon,
+          address: place.address,
+        ),
       );
-      _suppressSearch = true;
-      _controller.text = label;
-      _suppressSearch = false;
-      _typedQuery = '';
-      _hadSelection = true;
-      _focus.unfocus();
-      widget.onSelected?.call(kept);
     } on LocationProviderException catch (e) {
       if (mounted && requestId == _requestId) {
         setState(() {
           _suggestions = const [];
+          _retryQuery = null;
+          _retrySuggestion = suggestion;
           _error = localizeLocationError(e, AppLocalizations.of(context));
         });
       }
@@ -226,6 +249,8 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
       if (mounted && requestId == _requestId) {
         setState(() {
           _suggestions = const [];
+          _retryQuery = null;
+          _retrySuggestion = suggestion;
           _error = AppLocalizations.of(context).placeSearchFailed;
         });
       }
@@ -234,6 +259,54 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
         setState(() => _resolving = false);
       }
     }
+  }
+
+  ResolvedPlace _resolvedFromSuggestion(
+    PlaceSuggestion suggestion, {
+    required String typedQuery,
+  }) {
+    final label = preserveSelectedPlaceLabel(
+      typedQuery: typedQuery,
+      suggestionLabel: suggestion.displayLabel,
+      resolvedLabel: suggestion.label?.trim().isNotEmpty == true
+          ? suggestion.label!.trim()
+          : suggestion.displayLabel,
+    );
+    return ResolvedPlace(
+      providerPlaceId: suggestion.providerPlaceId,
+      label: label,
+      lat: suggestion.lat!,
+      lon: suggestion.lon!,
+      address: suggestion.address,
+    );
+  }
+
+  void _applySelection(ResolvedPlace place) {
+    _suppressSearch = true;
+    _controller.text = place.label;
+    _suppressSearch = false;
+    _typedQuery = '';
+    _hadSelection = true;
+    setState(() {
+      _loading = false;
+      _resolving = false;
+      _suggestions = const [];
+      _error = null;
+      _retryQuery = null;
+      _retrySuggestion = null;
+    });
+    _focus.unfocus();
+    widget.onSelected?.call(place);
+  }
+
+  void _retry() {
+    final suggestion = _retrySuggestion;
+    final query = _retryQuery ?? _controller.text;
+    if (suggestion != null) {
+      _select(suggestion);
+      return;
+    }
+    if (query.trim().length >= 2) _runAutocomplete(query);
   }
 
   void _clear() {
@@ -251,6 +324,8 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
       _resolving = false;
       _suggestions = const [];
       _error = null;
+      _retryQuery = null;
+      _retrySuggestion = null;
     });
     widget.onCleared?.call();
   }
@@ -264,7 +339,7 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
         TextField(
           controller: _controller,
           focusNode: _focus,
-          enabled: widget.enabled && !_resolving,
+          enabled: widget.enabled,
           keyboardType: TextInputType.text,
           textCapitalization: TextCapitalization.none,
           autocorrect: false,
@@ -300,36 +375,53 @@ class _PlaceSearchFieldState extends State<PlaceSearchField> {
         if (_suggestions.isEmpty && _error != null && !_loading)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              _error!,
-              style: TextStyle(
-                color: _error == l10n.placeNoResults
-                    ? AppTheme.steel
-                    : Colors.red.shade700,
-                fontSize: 13,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _error!,
+                  style: TextStyle(
+                    color: _error == l10n.placeNoResults
+                        ? AppTheme.steel
+                        : Colors.red.shade700,
+                    fontSize: 13,
+                  ),
+                ),
+                if (_error != l10n.placeNoResults)
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      tapTargetSize: MaterialTapTargetSize.padded,
+                    ),
+                    onPressed: widget.enabled ? _retry : null,
+                    child: Text(l10n.commonRetry),
+                  ),
+              ],
             ),
           ),
         if (_suggestions.isNotEmpty)
-          Material(
-            elevation: 2,
-            borderRadius: BorderRadius.circular(8),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _suggestions.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) {
-                final s = _suggestions[i];
-                return ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.place_outlined),
-                  title: Text(s.primaryText),
-                  subtitle:
-                      s.secondaryText == null ? null : Text(s.secondaryText!),
-                  onTap: () => _select(s),
-                );
-              },
+          TextFieldTapRegion(
+            child: Material(
+              elevation: 2,
+              borderRadius: BorderRadius.circular(8),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _suggestions.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final s = _suggestions[i];
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.place_outlined),
+                    title: Text(s.primaryText),
+                    subtitle: s.secondaryText == null
+                        ? null
+                        : Text(s.secondaryText!),
+                    onTap: () => _select(s),
+                  );
+                },
+              ),
             ),
           ),
       ],

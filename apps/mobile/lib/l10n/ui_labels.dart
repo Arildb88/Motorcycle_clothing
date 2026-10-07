@@ -324,6 +324,10 @@ String localizeUserError(Object error, AppLocalizations l10n) {
 
 String localizeApiMessage(ApiException error, AppLocalizations l10n) {
   if (error.code == 'ROUTING_UNAVAILABLE') return l10n.routeRoutingUnavailable;
+  if (error.code == 'GEOCODING_NOT_CONFIGURED') {
+    return l10n.placeSearchNotConfigured;
+  }
+  if (error.code == 'PLACE_NOT_FOUND') return l10n.placeNotFound;
   if (error.code == 'GEOCODING_UNAVAILABLE') return l10n.placeSearchUnavailable;
   final text = error.toString().toLowerCase();
   if (error.statusCode == null ||
@@ -340,6 +344,10 @@ String localizeLocationError(
   AppLocalizations l10n,
 ) {
   if (error.code == 'ROUTING_UNAVAILABLE') return l10n.routeRoutingUnavailable;
+  if (error.code == 'GEOCODING_NOT_CONFIGURED') {
+    return l10n.placeSearchNotConfigured;
+  }
+  if (error.code == 'PLACE_NOT_FOUND') return l10n.placeNotFound;
   if (error.code == 'GEOCODING_UNAVAILABLE') return l10n.placeSearchUnavailable;
   if (error.isNetwork) return l10n.placeSearchFailed;
   return l10n.errorGeneric;

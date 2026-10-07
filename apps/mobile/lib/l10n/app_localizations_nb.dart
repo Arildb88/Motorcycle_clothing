@@ -1579,6 +1579,13 @@ class AppLocalizationsNb extends AppLocalizations {
   String get placeSearchUnavailable => 'Stedsøk er midlertidig utilgjengelig.';
 
   @override
+  String get placeSearchNotConfigured =>
+      'Stedsøk er ikke konfigurert på serveren.';
+
+  @override
+  String get placeNotFound => 'Stedet kunne ikke velges. Prøv igjen.';
+
+  @override
   String get routeStraightSegmentsNotice =>
       'Forhåndsvisningen bruker rette streker fordi veiruting ikke er tilgjengelig.';
 

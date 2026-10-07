@@ -15,6 +15,7 @@ import { ResolvePlaceDto, RoutePreviewDto } from './dto/location.dto';
 import {
   GeocodingUnavailableError,
   OrsGeocodingService,
+  placeSearchHit,
 } from './ors-geocoding.service';
 import { OpenRouteServiceRoutingAdapter } from './ors-routing.adapter';
 
@@ -31,13 +32,9 @@ export class LocationController {
   async places(@Query('q') q = '') {
     try {
       const hits = await this.geocoding.autocomplete(q ?? '');
-      return hits.map((hit) => ({
-        providerPlaceId: hit.providerPlaceId,
-        primaryText: hit.primaryText,
-        secondaryText: hit.secondaryText,
-      }));
+      return hits.map(placeSearchHit);
     } catch (err) {
-      throw geocodingUnavailable(err);
+      throw geocodingHttpException(err);
     }
   }
 
@@ -45,7 +42,7 @@ export class LocationController {
   async resolve(@Body() dto: ResolvePlaceDto) {
     try {
       const place = await this.geocoding.resolve(dto.providerPlaceId);
-      if (!place) throw new NotFoundException('Place not found');
+      if (!place) throw placeNotFound();
       return {
         providerPlaceId: place.providerPlaceId,
         label: place.label,
@@ -55,7 +52,7 @@ export class LocationController {
       };
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
-      throw geocodingUnavailable(err);
+      throw geocodingHttpException(err);
     }
   }
 
@@ -87,22 +84,31 @@ function routingUnavailable(message: string): ServiceUnavailableException {
   });
 }
 
-function geocodingUnavailable(err: unknown): ServiceUnavailableException {
+export function geocodingHttpException(err: unknown) {
   if (err instanceof GeocodingUnavailableError) {
-    return new ServiceUnavailableException({
-      statusCode: 503,
-      code: 'GEOCODING_UNAVAILABLE',
-      message:
-        err.reason === 'not_configured'
-          ? 'Place search is not configured on the server.'
-          : 'Place search is temporarily unavailable.',
-      error: 'Service Unavailable',
-    });
+    if (err.reason === 'not_configured' || err.reason === 'authentication') {
+      return new ServiceUnavailableException({
+        statusCode: 503,
+        code: 'GEOCODING_NOT_CONFIGURED',
+        message: 'Place search is not configured on the server.',
+        error: 'Service Unavailable',
+      });
+    }
+    if (err.reason === 'not_found') return placeNotFound();
   }
   return new ServiceUnavailableException({
     statusCode: 503,
     code: 'GEOCODING_UNAVAILABLE',
     message: 'Place search is temporarily unavailable.',
     error: 'Service Unavailable',
+  });
+}
+
+function placeNotFound(): NotFoundException {
+  return new NotFoundException({
+    statusCode: 404,
+    code: 'PLACE_NOT_FOUND',
+    message: 'Place was not found.',
+    error: 'Not Found',
   });
 }

@@ -1580,6 +1580,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Place search is temporarily unavailable.';
 
   @override
+  String get placeSearchNotConfigured =>
+      'Place search is not configured on the server.';
+
+  @override
+  String get placeNotFound => 'That place could not be selected. Try again.';
+
+  @override
   String get routeStraightSegmentsNotice =>
       'Preview uses straight segments because road routing is not available.';
 

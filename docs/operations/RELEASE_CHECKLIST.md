@@ -42,7 +42,7 @@ Follow [SUPABASE_FIRST_DEPLOY.md](SUPABASE_FIRST_DEPLOY.md) for the hosted datab
 | `CORS_ORIGINS` | Browser origins only. Native Flutter sends no Origin |
 | `SMTP_HOST`, `MAIL_FROM`, `PASSWORD_RESET_PUBLIC_URL` | Required for password-reset email. Without SMTP, production still hides the reset token and does not send mail |
 | `WEATHER_PROVIDER` | `met`. `mock` and unknown names are configuration errors. Set `MET_USER_AGENT` to an app name plus a real contact address. Change an existing local `.env` that still says `mock`; do not commit secrets |
-| `ROUTING_PROVIDER` and `ORS_API_KEY` | `ors` plus a server-side key. An empty key makes road routing unavailable. It does not estimate a straight-line route |
+| `ROUTING_PROVIDER` and `ORS_API_KEY` | `ors` plus a server-side key. An empty key makes road routing unavailable and place search reports that it is not configured. It does not estimate a straight-line route. Place selection uses Pelias autocomplete coordinates; HeiGIT does not serve `/pelias/v1/place`. |
 | `ELEVATION_PROVIDER` | `kartverket` (default, no key) or `off` |
 | Resort and trail providers | Fnugg and Kartverket Turrutebasen need no key. Do not send Fnugg weather |
 | `FACEBOOK_*`, `MICROSOFT_*` | Leave empty. Do not enable those logins from this checklist |

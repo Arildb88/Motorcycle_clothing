@@ -22,7 +22,8 @@ class ApiLocationSearchService implements LocationSearchService {
   final Future<Map<String, dynamic>> Function(
     String path,
     Map<String, dynamic> body,
-  ) post;
+  )
+  post;
 
   factory ApiLocationSearchService.fromClient(ApiClient api) {
     return ApiLocationSearchService(
@@ -47,6 +48,10 @@ class ApiLocationSearchService implements LocationSearchService {
               providerPlaceId: row['providerPlaceId']?.toString() ?? '',
               primaryText: row['primaryText']?.toString() ?? '',
               secondaryText: row['secondaryText']?.toString(),
+              label: row['label']?.toString(),
+              lat: _finiteCoordinate(row['lat']),
+              lon: _finiteCoordinate(row['lon']),
+              address: row['address']?.toString(),
             ),
       ].where((hit) => hit.providerPlaceId.isNotEmpty).toList();
     } on ApiException catch (e) {
@@ -87,4 +92,11 @@ class ApiLocationSearchService implements LocationSearchService {
       );
     }
   }
+}
+
+double? _finiteCoordinate(Object? value) {
+  if (value is! num) return null;
+  final coordinate = value.toDouble();
+  if (!coordinate.isFinite) return null;
+  return coordinate;
 }

@@ -9,21 +9,44 @@ class GeoPoint {
   final double lon;
 }
 
-/// Lightweight autocomplete row (before place details are resolved).
+/// Lightweight autocomplete row.
+///
+/// HeiGIT Pelias autocomplete already includes coordinates. They travel with
+/// the suggestion so selection does not depend on `/place`, which that host
+/// does not serve.
 class PlaceSuggestion {
   const PlaceSuggestion({
     required this.providerPlaceId,
     required this.primaryText,
     this.secondaryText,
+    this.label,
+    this.lat,
+    this.lon,
+    this.address,
   });
 
   final String providerPlaceId;
   final String primaryText;
   final String? secondaryText;
+  final String? label;
+  final double? lat;
+  final double? lon;
+  final String? address;
 
   String get displayLabel {
+    final explicit = label?.trim();
+    if (explicit != null && explicit.isNotEmpty) return explicit;
     if (secondaryText == null || secondaryText!.isEmpty) return primaryText;
     return '$primaryText, $secondaryText';
+  }
+
+  bool get hasCoordinates {
+    final latitude = lat;
+    final longitude = lon;
+    return latitude != null &&
+        longitude != null &&
+        latitude.isFinite &&
+        longitude.isFinite;
   }
 }
 
