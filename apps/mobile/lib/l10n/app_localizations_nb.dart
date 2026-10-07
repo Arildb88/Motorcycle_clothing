@@ -1073,7 +1073,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get activityAlpineSkiing => 'Alpint';
 
   @override
-  String get activitySnowboarding => 'Snøbrett';
+  String get activitySnowboarding => 'Snowboard';
 
   @override
   String get activityAlpineAndSnowboard => 'Alpint & snowboard';
@@ -1082,7 +1082,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get activityXcSkiing => 'Langrenn';
 
   @override
-  String get plannerResortDiscipline => 'Alpint eller snøbrett';
+  String get plannerResortDiscipline => 'Alpint eller snowboard';
 
   @override
   String get plannerIntensity => 'Innsats';

@@ -5,6 +5,7 @@ import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/activity/activity_chooser_screen.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
+import 'package:motorcycle_clothing/features/plan/resort_discipline_control.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
@@ -60,6 +61,7 @@ void main() {
     await _pumpChooser(tester, const Locale('nb'));
     expect(find.text('Alpint & snowboard'), findsOneWidget);
     expect(find.text('Snøbrett'), findsNothing);
+    expect(find.text('Snowboard'), findsNothing);
     expect(find.text('Alpint'), findsNothing);
     expect(find.text('Langrenn'), findsOneWidget);
     expect(find.text('Fottur'), findsOneWidget);
@@ -155,6 +157,38 @@ void main() {
     expect(directory.searches, 1);
     expect(find.text('Selected resort: Ål Skisenter'), findsOneWidget);
     expect(activity.currentActivity, AppActivity.alpineSkiing);
+  });
+
+  testWidgets('Norwegian planner says Snowboard and keeps snowboarding', (
+    tester,
+  ) async {
+    AppActivity? chosen;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('nb'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: ResortDisciplineControl(
+            activityType: 'alpine_skiing',
+            onChanged: (activity) => chosen = activity,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alpint eller snowboard'), findsOneWidget);
+    expect(find.text('Snøbrett'), findsNothing);
+    expect(find.text('Alpint'), findsOneWidget);
+    expect(find.text('Snowboard'), findsOneWidget);
+    expect(find.text('Snowboarding'), findsNothing);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Snowboard'));
+    await tester.pump();
+
+    expect(chosen, AppActivity.snowboarding);
+    expect(chosen!.apiValue, 'snowboarding');
   });
 }
 
