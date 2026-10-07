@@ -1,3 +1,4 @@
+import { maxFiniteWeatherNumber } from '../weather.types';
 import { ALPINE_EXPOSURE } from './constants';
 import {
   alpineExposureC,
@@ -140,9 +141,8 @@ export function runAlpineRecommendationPipeline(
       maxWindMs: round1(
         Math.max(0, ...samples.map((sample) => sample.weather.windSpeedMs), 0),
       ),
-      maxPrecipitationProbPct: Math.max(
-        0,
-        ...samples.map((sample) => sample.weather.precipitationProbPct),
+      maxPrecipitationProbPct: maxFiniteWeatherNumber(
+        samples.map((sample) => sample.weather.precipitationProbPct),
       ),
       upperWindMs,
       sites: input.plan.sites,

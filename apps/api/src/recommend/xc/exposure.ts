@@ -1,4 +1,7 @@
-import type { WeatherPoint } from '../weather.types';
+import {
+  precipitationProbAtLeast,
+  type WeatherPoint,
+} from '../weather.types';
 import {
   XC_EXPOSURE,
   XC_METABOLIC_OFFSET_C,
@@ -27,7 +30,10 @@ export function xcExposureC(
   const chill = above * XC_EXPOSURE.windChillPerMs;
   const wet =
     point.precipitationMm >= XC_EXPOSURE.precipMmWetThreshold ||
-    point.precipitationProbPct >= XC_EXPOSURE.rainProbWetThreshold
+    precipitationProbAtLeast(
+      point.precipitationProbPct,
+      XC_EXPOSURE.rainProbWetThreshold,
+    )
       ? XC_EXPOSURE.wetExposurePenaltyC
       : 0;
   const metabolic =
@@ -57,10 +63,10 @@ export function xcWindDemand(windSpeedMs: number): number {
 export function xcWaterDemand(point: WeatherPoint): number {
   const prob = point.precipitationProbPct;
   const mm = point.precipitationMm;
-  if (prob >= 70 || mm >= 1) return 5;
-  if (prob >= 50 || mm >= 0.5) return 4;
-  if (prob >= 30 || mm >= 0.2) return 3;
-  if (prob >= 15 || mm > 0) return 2;
+  if (precipitationProbAtLeast(prob, 70) || mm >= 1) return 5;
+  if (precipitationProbAtLeast(prob, 50) || mm >= 0.5) return 4;
+  if (precipitationProbAtLeast(prob, 30) || mm >= 0.2) return 3;
+  if (precipitationProbAtLeast(prob, 15) || mm > 0) return 2;
   return 1;
 }
 

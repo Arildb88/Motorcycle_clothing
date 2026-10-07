@@ -1,4 +1,7 @@
-import type { WeatherPoint } from '../weather.types';
+import {
+  precipitationProbAtLeast,
+  type WeatherPoint,
+} from '../weather.types';
 import {
   CYCLING_EXPOSURE,
   CYCLING_METABOLIC_OFFSET_C,
@@ -69,7 +72,10 @@ export function cyclingExposureC(
   const chill = above * CYCLING_EXPOSURE.windChillPerMs;
   const wet =
     point.precipitationMm >= CYCLING_EXPOSURE.precipMmWetThreshold ||
-    point.precipitationProbPct >= CYCLING_EXPOSURE.rainProbWetThreshold
+    precipitationProbAtLeast(
+      point.precipitationProbPct,
+      CYCLING_EXPOSURE.rainProbWetThreshold,
+    )
       ? CYCLING_EXPOSURE.wetExposurePenaltyC
       : 0;
   const bias = finiteBias(input.personalColdBiasC);
@@ -101,10 +107,10 @@ export function cyclingWindDemand(apparentAirflowMs: number): number {
 export function cyclingWaterDemand(point: WeatherPoint): number {
   const prob = point.precipitationProbPct;
   const mm = point.precipitationMm;
-  if (prob >= 70 || mm >= 1) return 5;
-  if (prob >= 50 || mm >= 0.5) return 4;
-  if (prob >= 30 || mm >= 0.2) return 3;
-  if (prob >= 15 || mm > 0) return 2;
+  if (precipitationProbAtLeast(prob, 70) || mm >= 1) return 5;
+  if (precipitationProbAtLeast(prob, 50) || mm >= 0.5) return 4;
+  if (precipitationProbAtLeast(prob, 30) || mm >= 0.2) return 3;
+  if (precipitationProbAtLeast(prob, 15) || mm > 0) return 2;
   return 1;
 }
 

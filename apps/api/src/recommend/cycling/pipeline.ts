@@ -1,3 +1,4 @@
+import { maxFiniteWeatherNumber } from '../weather.types';
 import {
   CYCLING_EXPOSURE,
   CYCLING_INTENSITIES,
@@ -48,9 +49,8 @@ export function runCyclingRecommendationPipeline(
       weight: segment.durationMin,
     })),
   );
-  const maxRain = Math.max(
-    0,
-    ...segments.map((segment) => segment.weather.precipitationProbPct),
+  const maxRain = maxFiniteWeatherNumber(
+    segments.map((segment) => segment.weather.precipitationProbPct),
   );
   const matched = matchCyclingKit({
     demand,

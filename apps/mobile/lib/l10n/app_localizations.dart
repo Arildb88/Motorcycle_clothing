@@ -3143,8 +3143,68 @@ abstract class AppLocalizations {
   /// No description provided for @commuteUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'The return forecast is unavailable. Morning conditions are not used for the return.'**
+  /// **'Return weather is unavailable. Morning conditions are not used for the return. Try again.'**
   String get commuteUnavailable;
+
+  /// No description provided for @commuteOutboundWeatherUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Outbound weather is unavailable. The return forecast is not used for this leg. Try again.'**
+  String get commuteOutboundWeatherUnavailable;
+
+  /// No description provided for @routeProviderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Road routing is unavailable. This is not a travel time from the road provider.'**
+  String get routeProviderUnavailable;
+
+  /// No description provided for @weatherUnavailableRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get weatherUnavailableRetry;
+
+  /// No description provided for @weatherUnavailableConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather is not configured on the server. No clothing was suggested.'**
+  String get weatherUnavailableConfiguration;
+
+  /// No description provided for @weatherUnavailableTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The weather service timed out. No clothing was suggested. Try again.'**
+  String get weatherUnavailableTimeout;
+
+  /// No description provided for @weatherUnavailableEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The weather service returned no forecast. No clothing was suggested. Try again.'**
+  String get weatherUnavailableEmpty;
+
+  /// No description provided for @weatherUnavailableMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The forecast is missing temperature, rain, or wind. No clothing was suggested. Try again.'**
+  String get weatherUnavailableMissing;
+
+  /// No description provided for @weatherUnavailableOutOfRange.
+  ///
+  /// In en, this message translates to:
+  /// **'No forecast covers this time. Another time was not used. Try again.'**
+  String get weatherUnavailableOutOfRange;
+
+  /// No description provided for @weatherUnavailableProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'The weather service failed. No clothing was suggested. Try again.'**
+  String get weatherUnavailableProvider;
+
+  /// No description provided for @weatherUnavailablePartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Part of this forecast is missing. No complete clothing recommendation was made. Try again.'**
+  String get weatherUnavailablePartial;
 
   /// No description provided for @commuteForecastNote.
   ///

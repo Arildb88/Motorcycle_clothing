@@ -11,9 +11,9 @@ export DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}"
 export PORT="${PORT:-3001}"
 export JWT_SECRET="${JWT_SECRET:-smoke-secret}"
 export JWT_EXPIRES_IN="${JWT_EXPIRES_IN:-1d}"
-export WEATHER_PROVIDER="${WEATHER_PROVIDER:-mock}"
+export WEATHER_PROVIDER="${WEATHER_PROVIDER:-met}"
 export NODE_ENV="${NODE_ENV:-test}"
-export MET_USER_AGENT="${MET_USER_AGENT:-MotorcycleClothingApp/smoke}"
+export MET_USER_AGENT="${MET_USER_AGENT:-RideWear/1.0 (https://github.com/Arildb88/Motorcycle_clothing)}"
 # Required for legacy demo OAuth smoke (IdPs unset in CI).
 export ALLOW_DEMO_OAUTH="${ALLOW_DEMO_OAUTH:-true}"
 export TOKEN_ENCRYPTION_KEY="${TOKEN_ENCRYPTION_KEY:-smoke-only-token-encryption-key}"
@@ -147,6 +147,7 @@ REC=$(expect_http "GET /api/recommend" \
   -X GET "http://localhost:${PORT}/api/recommend" \
   -H "Authorization: Bearer ${TOKEN}")
 expect_contains "GET /api/recommend" "effectiveTempC" "$REC"
+expect_contains "GET /api/recommend" '"source":"met"' "$REC"
 
 step "POST /api/wardrobe (base_layer)"
 GARM=$(expect_http "POST /api/wardrobe" \

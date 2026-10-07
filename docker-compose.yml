@@ -25,6 +25,7 @@ services:
       DIRECT_URL: postgresql://motorcycle:motorcycle@postgres:5432/motorcycle
       JWT_SECRET: change-me-in-staging
       WEATHER_PROVIDER: met
+      # Replace with an app name and a real contact before forecasts succeed.
       MET_USER_AGENT: MotorcycleClothingApp/0.1 (staging)
       NODE_ENV: staging
     depends_on:

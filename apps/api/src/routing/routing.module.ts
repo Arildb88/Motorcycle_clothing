@@ -4,7 +4,7 @@ import { LocationController } from './location.controller';
 import { OrsGeocodingService } from './ors-geocoding.service';
 import { OpenRouteServiceRoutingAdapter } from './ors-routing.adapter';
 import { resolveOrsBaseUrl, resolvePeliasBaseUrl } from './ors.constants';
-import { NullRoutingAdapter } from './null-routing.adapter';
+import { UnavailableRoutingAdapter } from './unavailable-routing.adapter';
 import { ROUTING_PORT } from './routing.port';
 
 function orsCredentials(config: ConfigService): { enabled: boolean; apiKey: string } {
@@ -31,7 +31,7 @@ function orsCredentials(config: ConfigService): { enabled: boolean; apiKey: stri
       provide: ROUTING_PORT,
       inject: [OpenRouteServiceRoutingAdapter],
       useFactory: (ors: OpenRouteServiceRoutingAdapter) =>
-        ors.isConfigured ? ors : new NullRoutingAdapter(),
+        ors.isConfigured ? ors : new UnavailableRoutingAdapter('not_configured'),
     },
     {
       provide: OrsGeocodingService,

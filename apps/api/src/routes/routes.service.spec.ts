@@ -508,8 +508,9 @@ describe('RoutesService', () => {
     expect(snap.version).toBe(2);
     expect(snap.preferences.avoidMotorways).toBe(true);
     expect(snap.waypoints).toHaveLength(3);
-    expect(plan.routeAnalysisJson).toBeTruthy();
-    expect(result.analysis?.travelSegments.length).toBeGreaterThanOrEqual(2);
+    expect(plan.routeAnalysisJson).toBeNull();
+    expect(result.analysis).toBeNull();
+    expect(result.routing).toEqual({ available: false, reason: 'provider' });
   });
 
   it('keeps existing saved routes working without preferences', async () => {

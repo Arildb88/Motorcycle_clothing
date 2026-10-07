@@ -39,8 +39,13 @@ function createWeather(provider = 'met'): {
     },
   };
   const config = {
-    get: (key: string, fallback?: string) =>
-      key === 'WEATHER_PROVIDER' ? provider : fallback,
+    get: (key: string, fallback?: string) => {
+      if (key === 'WEATHER_PROVIDER') return provider;
+      if (key === 'MET_USER_AGENT') {
+        return 'RideWearTest/1.0 (https://github.com/Arildb88/Motorcycle_clothing)';
+      }
+      return fallback;
+    },
   };
   return {
     weather: new WeatherService(
@@ -183,7 +188,10 @@ describe('altitude-aware weather', () => {
       undefined,
     ]);
     expect(summary.points.every((point) => point.airTempC === 1)).toBe(true);
-    expect(upsert.mock.calls.map((call) => call[0].where.cacheKey)).toEqual([
+    const pointKeys = upsert.mock.calls
+      .map((call) => call[0].where.cacheKey as string)
+      .filter((key) => !key.includes(':series:'));
+    expect(pointKeys).toEqual([
       weatherCacheKey({
         provider: 'met',
         ...belowSea,
@@ -195,12 +203,8 @@ describe('altitude-aware weather', () => {
       weatherCacheKey({ provider: 'met', ...summit, at, altitudeM: 2470 }),
       weatherCacheKey({ provider: 'met', ...unknown, at, altitudeM: null }),
     ]);
-    expect(upsert.mock.calls[2][0].where.cacheKey).toBe(
-      'met:59.914,10.752@2m@2026-10-02T12',
-    );
-    expect(upsert.mock.calls[4][0].where.cacheKey).toBe(
-      'met:62.100,7.200@2026-10-02T12',
-    );
+    expect(pointKeys[2]).toBe('wx2:met:59.914,10.752@2m@2026-10-02T12');
+    expect(pointKeys[4]).toBe('wx2:met:62.100,7.200@2026-10-02T12');
   });
 
   it('reuses a four-decimal elevation cache hit and still requests MET with that sample coordinate', async () => {
@@ -431,6 +435,8 @@ describe('altitude-aware weather', () => {
           precipitationMm: 0,
           windSpeedMs: 1,
           groundElevationM: 12,
+          source: 'met',
+          forecastValidAt: '2026-10-02T12:00:00.000Z',
         }),
         validUntil: new Date(Date.now() + 60_000),
       };
@@ -445,8 +451,10 @@ describe('altitude-aware weather', () => {
     expect(fresh.points[0].airTempC).toBe(4);
     expect(fresh.points[0].groundElevationM).toBe(12);
     expect(fresh.points[1].groundElevationM).toBe(2470);
-    expect(upsert).toHaveBeenCalledTimes(1);
-    expect(upsert.mock.calls[0][0].where.cacheKey).toBe(highKey);
+    const freshPointKeys = upsert.mock.calls
+      .map((call) => call[0].where.cacheKey as string)
+      .filter((key) => !key.includes(':series:'));
+    expect(freshPointKeys).toEqual([highKey]);
 
     mockedGet.mockClear();
     upsert.mockClear();
@@ -467,7 +475,11 @@ describe('altitude-aware weather', () => {
     expect(mockedGet).toHaveBeenCalledTimes(1);
     expect(altitudeOf(metUrls()[0])).toBe('12');
     expect(stale.points[0].groundElevationM).toBe(12);
-    expect(upsert).toHaveBeenCalledTimes(1);
+    expect(
+      upsert.mock.calls
+        .map((call) => call[0].where.cacheKey as string)
+        .filter((key) => !key.includes(':series:')),
+    ).toEqual([lowKey]);
   });
 
   it('keeps a known height when MET fails, and does not invent one when elevation is unknown', async () => {
@@ -479,30 +491,22 @@ describe('altitude-aware weather', () => {
       { lat: 60, lon: 9, at, altitudeM: Number.NaN },
       { lat: 60, lon: 9.1, at, altitudeM: Number.POSITIVE_INFINITY },
     ]);
-    expect(summary.points).toHaveLength(4);
-    expect(summary.points.map((point) => point.groundElevationM)).toEqual([
-      2,
-      undefined,
-      undefined,
-      undefined,
-    ]);
-    expect(
-      summary.points.every((point) => Number.isFinite(point.airTempC)),
-    ).toBe(true);
+    expect(summary.status).toBe('unavailable');
+    expect(summary.points).toEqual([]);
+    expect(summary.source).toBeUndefined();
     expect(metUrls().map(altitudeOf)).toEqual(['2', null, null, null]);
   });
 
-  it('does not call MET when the weather provider is mock, and still records a valid height', async () => {
+  it('does not call MET or invent weather when the provider is mock', async () => {
     const { weather } = createWeather('mock');
     const summary = await weather.forRouteSamples([
       { lat: 59.91, lon: 10.75, altitudeM: 2.4 },
       { lat: 60.5, lon: 8, altitudeM: null },
     ]);
     expect(mockedGet).not.toHaveBeenCalled();
-    expect(summary.points.map((point) => point.groundElevationM)).toEqual([
-      2,
-      undefined,
-    ]);
+    expect(summary.status).toBe('unavailable');
+    expect(summary.reason).toBe('configuration');
+    expect(summary.points).toEqual([]);
   });
 
   it('omits MET altitude when the elevation adapter is the null fallback', async () => {

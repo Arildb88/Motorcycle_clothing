@@ -1,6 +1,7 @@
 export * from './routing.types';
 export * from './routing.port';
 export * from './null-routing.adapter';
+export * from './unavailable-routing.adapter';
 export * from './ors-routing.adapter';
 export * from './plan-with-routing';
 export * from './route-weather-sampling';

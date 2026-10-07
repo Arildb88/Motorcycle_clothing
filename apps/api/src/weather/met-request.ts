@@ -10,10 +10,12 @@ export function metLocationForecastUrl(
 }
 
 /**
- * Weather cache key. Omitting altitude or ETA keeps the previous key shape
- * so existing cached forecasts still match.
+ * Cache namespace. `wx2` is not readable as an older `met:` or `series:met:`
+ * key, so synthetic points stored under those keys are never reused.
  */
-export function weatherCacheKey(input: {
+export const WEATHER_CACHE_NAMESPACE = 'wx2';
+
+function weatherPlaceKey(input: {
   provider: string;
   lat: number;
   lon: number;
@@ -32,6 +34,17 @@ export function weatherCacheKey(input: {
   return `${place}${altitude}${hour}`;
 }
 
+/** Weather cache key. Older keys without this namespace are not read. */
+export function weatherCacheKey(input: {
+  provider: string;
+  lat: number;
+  lon: number;
+  at?: Date;
+  altitudeM?: number | null;
+}): string {
+  return `${WEATHER_CACHE_NAMESPACE}:${weatherPlaceKey(input)}`;
+}
+
 /**
  * One locationforecast payload covers every hour at this place.
  * The key has no ETA, so a departure comparison can reuse it.
@@ -43,7 +56,7 @@ export function weatherSeriesCacheKey(input: {
   lon: number;
   altitudeM?: number | null;
 }): string {
-  return `series:${weatherCacheKey({
+  return `${WEATHER_CACHE_NAMESPACE}:series:${weatherPlaceKey({
     provider: input.provider,
     lat: input.lat,
     lon: input.lon,

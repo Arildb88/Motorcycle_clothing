@@ -8,7 +8,7 @@ export class HealthController {
       status: 'ok',
       service: 'motorcycle-clothing-api',
       env: process.env.NODE_ENV ?? 'development',
-      weatherProvider: process.env.WEATHER_PROVIDER ?? 'mock',
+      weatherProvider: (process.env.WEATHER_PROVIDER ?? '').trim() || 'met',
     };
   }
 }

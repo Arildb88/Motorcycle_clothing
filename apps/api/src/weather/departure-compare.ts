@@ -1,3 +1,5 @@
+import { maxFiniteWeatherNumber } from '../recommend/weather.types';
+
 /**
  * Factual nearby departure times. Nothing here ranks or scores a departure.
  */
@@ -48,10 +50,17 @@ export function nearbyDepartureTimes(anchor: Date, now: Date): Date[] {
 export type DepartureSampleConditions = {
   requestedAt: string;
   available: boolean;
-  reason?: 'missing' | 'out_of_range';
+  reason?:
+    | 'missing'
+    | 'out_of_range'
+    | 'configuration'
+    | 'timeout'
+    | 'empty'
+    | 'missing_fields'
+    | 'provider';
   forecastAt?: string;
   airTempC?: number;
-  precipitationProbPct?: number;
+  precipitationProbPct?: number | null;
   precipitationMm?: number;
   windSpeedMs?: number;
 };
@@ -59,7 +68,7 @@ export type DepartureSampleConditions = {
 export type DepartureConditions = {
   minTempC: number;
   maxTempC: number;
-  maxRainProbPct: number;
+  maxRainProbPct: number | null;
   maxPrecipMm: number;
   maxWindMs: number;
   forecastFrom: string;
@@ -68,11 +77,37 @@ export type DepartureConditions = {
 
 export type DepartureComparisonRow = {
   available: boolean;
-  unavailableReason?: 'missing' | 'out_of_range';
+  unavailableReason?:
+    | 'missing'
+    | 'out_of_range'
+    | 'configuration'
+    | 'timeout'
+    | 'empty'
+    | 'missing_fields'
+    | 'provider';
   variesByTime: boolean;
   conditions?: DepartureConditions;
   missingAt: string[];
 };
+
+const FAILURE_ORDER = [
+  'configuration',
+  'timeout',
+  'empty',
+  'missing_fields',
+  'out_of_range',
+  'provider',
+  'missing',
+] as const;
+
+function departureFailureReason(
+  samples: DepartureSampleConditions[],
+): (typeof FAILURE_ORDER)[number] {
+  for (const reason of FAILURE_ORDER) {
+    if (samples.some((sample) => sample.reason === reason)) return reason;
+  }
+  return 'missing';
+}
 
 /** Summarize the samples that actually have a forecast. No combined score. */
 export function comparisonRowFromSamples(
@@ -84,7 +119,6 @@ export function comparisonRowFromSamples(
       sample.available &&
       sample.forecastAt != null &&
       Number.isFinite(sample.airTempC) &&
-      Number.isFinite(sample.precipitationProbPct) &&
       Number.isFinite(sample.precipitationMm) &&
       Number.isFinite(sample.windSpeedMs),
   );
@@ -97,12 +131,9 @@ export function comparisonRowFromSamples(
     .sort((a, b) => a - b);
 
   if (matched.length === 0 || forecastTimes.length === 0) {
-    const outOfRange = samples.some(
-      (sample) => sample.reason === 'out_of_range',
-    );
     return {
       available: false,
-      unavailableReason: outOfRange ? 'out_of_range' : 'missing',
+      unavailableReason: departureFailureReason(samples),
       variesByTime,
       missingAt,
     };
@@ -115,8 +146,8 @@ export function comparisonRowFromSamples(
     conditions: {
       minTempC: Math.min(...matched.map((sample) => sample.airTempC as number)),
       maxTempC: Math.max(...matched.map((sample) => sample.airTempC as number)),
-      maxRainProbPct: Math.max(
-        ...matched.map((sample) => sample.precipitationProbPct as number),
+      maxRainProbPct: maxFiniteWeatherNumber(
+        matched.map((sample) => sample.precipitationProbPct),
       ),
       maxPrecipMm: Math.max(
         ...matched.map((sample) => sample.precipitationMm as number),

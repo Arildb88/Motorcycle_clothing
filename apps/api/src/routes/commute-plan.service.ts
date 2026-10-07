@@ -39,7 +39,7 @@ import type { LegForecast, RouteWeatherSummary } from '../recommend/weather.type
 import { WeatherService } from '../weather/weather.service';
 import {
   analyzePlanRoute,
-  NullRoutingAdapter,
+  UnavailableRoutingAdapter,
   resolveRouteWeatherSamples,
   ROUTING_PORT,
   type RoutingPort,
@@ -99,7 +99,7 @@ export class CommutePlanService {
     @Inject(ELEVATION_PORT) private readonly elevations: ElevationPort,
     @Optional() @Inject(ROUTING_PORT) routing?: RoutingPort,
   ) {
-    this.routing = routing ?? new NullRoutingAdapter();
+    this.routing = routing ?? new UnavailableRoutingAdapter('not_configured');
   }
 
   async plan(userId: string, routeId: string, dto: CommutePlanDto) {
@@ -255,7 +255,10 @@ export class CommutePlanService {
       departAt: input.departAt,
       durationHintMin: input.route.typicalDurationMin,
     });
-    const durationMin = analysis?.durationMin ?? input.route.typicalDurationMin;
+    const providerAnalysis =
+      analysis?.meta.fromProvider && !analysis.meta.fallback ? analysis : null;
+    const durationMin =
+      providerAnalysis?.durationMin ?? input.route.typicalDurationMin;
     const sampled = resolveRouteWeatherSamples({
       fallbackPoints: points,
       fallbackDurationMin: durationMin,
@@ -290,7 +293,7 @@ export class CommutePlanService {
       arrivalAt: new Date(input.departAt.getTime() + durationMin * 60_000),
       durationMin,
       waypoints: input.waypoints,
-      analysis,
+      analysis: providerAnalysis,
       forecast,
       engine,
       ambiguous: input.ambiguous,
@@ -363,6 +366,7 @@ export class CommutePlanService {
       durationMin: leg.durationMin,
       ambiguousLocalTime: leg.ambiguous,
       available: leg.forecast.available,
+      routingAvailable: leg.analysis != null,
       ...(leg.forecast.available
         ? {}
         : { unavailableReason: leg.forecast.reason }),

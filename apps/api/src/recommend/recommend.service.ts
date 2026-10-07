@@ -46,6 +46,7 @@ import {
   XC_EXPOSURE,
   type XcKitItem,
 } from './xc';
+import { maxFiniteWeatherNumber } from './weather.types';
 import { explainKitItems } from './explain-kit';
 import {
   InvalidBasicLayerError,
@@ -168,6 +169,14 @@ export class RecommendService {
       sampleRequests,
     );
     const weather = await this.weather.forRouteSamples(sampleRequests);
+    if (this.forecastIsBlocked(weather)) {
+      return this.blockedForecast(
+        route,
+        _departureAt,
+        weather.reason ?? 'missing',
+        weather.status === 'partial' ? 'partial' : 'unavailable',
+      );
+    }
     if (elevation.attribution) {
       weather.elevation = {
         provider: elevation.provider,
@@ -343,6 +352,14 @@ export class RecommendService {
       sampleRequests,
     );
     const weather = await this.weather.forRouteSamples(sampleRequests);
+    if (this.forecastIsBlocked(weather)) {
+      return this.blockedForecast(
+        route,
+        departureAt,
+        weather.reason ?? 'missing',
+        weather.status === 'partial' ? 'partial' : 'unavailable',
+      );
+    }
     if (elevation.attribution) {
       weather.elevation = {
         provider: elevation.provider,
@@ -512,6 +529,19 @@ export class RecommendService {
               altitudeM: request.altitudeM,
             })),
           );
+    if (
+      requests.length > 0 &&
+      (fetched == null ||
+        this.forecastIsBlocked(fetched) ||
+        fetched.points.length !== requests.length)
+    ) {
+      return this.blockedForecast(
+        route,
+        departureAt,
+        fetched?.reason ?? 'missing',
+        fetched?.status === 'partial' ? 'partial' : 'unavailable',
+      );
+    }
     const samples = requests.flatMap((request, index) => {
       const point = fetched?.points[index];
       if (!point) return [];
@@ -530,6 +560,14 @@ export class RecommendService {
         },
       ];
     });
+    if (requests.length > 0 && samples.length === 0) {
+      return this.blockedForecast(
+        route,
+        departureAt,
+        fetched?.reason ?? 'missing',
+        'unavailable',
+      );
+    }
     const calibration = await this.thermalCalibration(userId, discipline);
     const engine = runAlpineRecommendationPipeline({
       discipline,
@@ -547,13 +585,16 @@ export class RecommendService {
     const winds = samples.map((sample) => sample.weather.windSpeedMs);
     const weather = {
       provider: fetched?.provider ?? 'none',
+      status: fetched?.status,
+      source: fetched?.source,
+      forecastValidAt: fetched?.forecastValidAt,
       sampledAt: fetched?.sampledAt ?? new Date().toISOString(),
       points: samples.map((sample) => sample.weather),
-      minTempC: temps.length > 0 ? Math.min(...temps) : 0,
-      maxTempC: temps.length > 0 ? Math.max(...temps) : 0,
-      maxRainProbPct: rains.length > 0 ? Math.max(...rains) : 0,
-      maxPrecipMm: precips.length > 0 ? Math.max(...precips) : 0,
-      maxWindMs: winds.length > 0 ? Math.max(...winds) : 0,
+      minTempC: Math.min(...temps),
+      maxTempC: Math.max(...temps),
+      maxRainProbPct: maxFiniteWeatherNumber(rains),
+      maxPrecipMm: Math.max(...precips),
+      maxWindMs: Math.max(...winds),
       elevation: elevation.attribution
         ? {
             provider: elevation.provider,
@@ -716,19 +757,35 @@ export class RecommendService {
       }
       return [next];
     });
+    if (
+      fetched == null ||
+      this.forecastIsBlocked(fetched) ||
+      points.length === 0 ||
+      points.length !== requests.length
+    ) {
+      return this.blockedForecast(
+        route,
+        departureAt,
+        fetched?.reason ?? 'missing',
+        fetched?.status === 'partial' ? 'partial' : 'unavailable',
+      );
+    }
     const temps = points.map((point) => point.airTempC);
     const rains = points.map((point) => point.precipitationProbPct);
     const precips = points.map((point) => point.precipitationMm);
     const winds = points.map((point) => point.windSpeedMs);
     const weather = {
       provider: fetched?.provider ?? 'none',
+      status: fetched?.status,
+      source: fetched?.source,
+      forecastValidAt: fetched?.forecastValidAt,
       sampledAt: fetched?.sampledAt ?? new Date().toISOString(),
       points,
-      minTempC: temps.length > 0 ? Math.min(...temps) : 0,
-      maxTempC: temps.length > 0 ? Math.max(...temps) : 0,
-      maxRainProbPct: rains.length > 0 ? Math.max(...rains) : 0,
-      maxPrecipMm: precips.length > 0 ? Math.max(...precips) : 0,
-      maxWindMs: winds.length > 0 ? Math.max(...winds) : 0,
+      minTempC: Math.min(...temps),
+      maxTempC: Math.max(...temps),
+      maxRainProbPct: maxFiniteWeatherNumber(rains),
+      maxPrecipMm: Math.max(...precips),
+      maxWindMs: Math.max(...winds),
       elevation: elevation.attribution
         ? {
             provider: elevation.provider,
@@ -859,6 +916,48 @@ export class RecommendService {
             : {}),
         };
       }),
+    };
+  }
+
+  private forecastIsBlocked(weather: { status?: string } | null): boolean {
+    return weather?.status === 'unavailable' || weather?.status === 'partial';
+  }
+
+  private blockedForecast(
+    route: {
+      id: string;
+      name: string;
+      activityType?: string;
+      startLabel?: string | null;
+      endLabel?: string | null;
+    },
+    departureAt: string | undefined,
+    reason: string,
+    status: 'partial' | 'unavailable',
+  ) {
+    return {
+      route: {
+        id: route.id,
+        name: route.name,
+        activityType: route.activityType,
+        startLabel: route.startLabel ?? null,
+        endLabel: route.endLabel ?? null,
+      },
+      departureAt: departureAt ?? new Date().toISOString(),
+      weather: {
+        status,
+        reason,
+        source: null,
+        points: [],
+      },
+      recommendation: {
+        status: 'unavailable',
+        reason,
+        wear: [],
+        pack: [],
+        items: [],
+        reasonCodes: [],
+      },
     };
   }
 

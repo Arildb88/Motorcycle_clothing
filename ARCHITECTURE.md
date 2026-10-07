@@ -146,7 +146,7 @@ interface RoutingPort {
 }
 ```
 
-`NullRoutingAdapter` remains the fallback and test implementation: haversine legs plus an explicit `durationMin` hint.
+`NullRoutingAdapter` remains a test double: haversine legs plus an explicit `durationMin` hint. The running API does not use it when OpenRouteService is missing or fails.
 
 `OpenRouteServiceRoutingAdapter` is the v1 road adapter (`ROUTING_PROVIDER=ors`, `ORS_API_KEY`). It calls HeiGIT `https://api.heigit.org/openrouteservice/v2/directions/driving-car` and returns provider distance, duration, and travel segments. `avoidMotorways` maps to ORS `avoid_features: ["highways"]`. The profile is driving geometry, not motorcycle-optimized routing. Place search uses HeiGIT Pelias (`https://api.heigit.org/pelias/v1`) behind `GET /location/places` and `POST /location/places/resolve`. Preview geometry is `POST /location/route-preview` and is not stored.
 

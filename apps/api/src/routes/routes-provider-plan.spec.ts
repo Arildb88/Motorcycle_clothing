@@ -139,16 +139,22 @@ describe('RoutesService provider planning', () => {
     expect(JSON.stringify(stored).includes('should-not-persist')).toBe(false);
   });
 
-  it('keeps the duration hint when the provider is unavailable', async () => {
+  it('keeps the rider duration and does not store a simulated road route', async () => {
     const port: RoutingPort = { analyze: async () => null };
     const result = await serviceWith(port).planFromRoute('u1', 'r1', {
       planningMode: 'arrival',
       arrivalAt: '2026-09-14T08:00:00.000Z',
       durationMin: 50,
     });
-    const plan = result.plan as { durationMin: number; departureAt: Date };
+    const plan = result.plan as {
+      durationMin: number;
+      departureAt: Date;
+      routeAnalysisJson: string | null;
+    };
     expect(plan.durationMin).toBe(50);
     expect(plan.departureAt.toISOString()).toBe('2026-09-14T07:10:00.000Z');
-    expect(result.analysis?.meta.fallback).toBe(true);
+    expect(result.analysis).toBeNull();
+    expect(plan.routeAnalysisJson).toBeNull();
+    expect(result.routing).toEqual({ available: false, reason: 'provider' });
   });
 });

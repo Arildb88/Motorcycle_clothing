@@ -25,8 +25,13 @@ function service(provider: string): {
     },
   };
   const config = {
-    get: (key: string, fallback?: string) =>
-      key === 'WEATHER_PROVIDER' ? provider : fallback,
+    get: (key: string, fallback?: string) => {
+      if (key === 'WEATHER_PROVIDER') return provider;
+      if (key === 'MET_USER_AGENT') {
+        return 'RideWearTest/1.0 (https://github.com/Arildb88/Motorcycle_clothing)';
+      }
+      return fallback;
+    },
   };
   return {
     weather: new WeatherService(
@@ -89,9 +94,14 @@ describe('WeatherService altitude', () => {
     expect(summary.points[0].airTempC).toBe(9);
     expect(summary.points[0].forecastAt).toBe(at.toISOString());
     expect(summary.points[0].groundElevationM).toBe(987);
-    expect(upsert.mock.calls[0][0].where.cacheKey).toBe(
-      'met:60.500,8.000@987m@2026-10-02T12',
-    );
+    expect(
+      upsert.mock.calls
+        .map((call) => call[0].where.cacheKey as string)
+        .filter((key) => !key.includes(':series:')),
+    ).toContain('wx2:met:60.500,8.000@987m@2026-10-02T12');
+    expect(summary.status).toBe('available');
+    expect(summary.source).toBe('met');
+    expect(summary.points[0].forecastValidAt).toBe('2026-10-02T12:00:00.000Z');
   });
 
   it('keeps the lat/lon MET request when elevation is unknown', async () => {
@@ -103,7 +113,12 @@ describe('WeatherService altitude', () => {
               time: '2026-10-02T10:00:00Z',
               data: {
                 instant: { details: { air_temperature: 4, wind_speed: 2 } },
-                next_1_hours: { details: {} },
+                next_1_hours: {
+                  details: {
+                    probability_of_precipitation: 0,
+                    precipitation_amount: 0,
+                  },
+                },
               },
             },
           ],
@@ -122,7 +137,7 @@ describe('WeatherService altitude', () => {
     expect(summary.points[0].airTempC).toBe(4);
   });
 
-  it('uses the failure forecast when MET returns no temperature', async () => {
+  it('does not invent a forecast when MET is empty, incomplete, or down', async () => {
     const place = { lat: 59.91, lon: 10.75, altitudeM: 40 };
     mockedGet.mockResolvedValueOnce({
       data: { properties: { timeseries: [] } },
@@ -130,24 +145,135 @@ describe('WeatherService altitude', () => {
     const { weather, upsert } = service('met');
     const empty = await weather.forRouteSamples([place]);
 
-    mockedGet.mockResolvedValueOnce({ data: {} });
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        properties: {
+          timeseries: [
+            {
+              time: '2026-10-02T10:00:00Z',
+              data: {
+                instant: { details: { air_temperature: 4 } },
+                next_1_hours: { details: {} },
+              },
+            },
+          ],
+        },
+      },
+    });
     const missing = await weather.forRouteSamples([
       { lat: 60.1, lon: 9.2, altitudeM: 12 },
     ]);
 
-    mockedGet.mockRejectedValueOnce(new Error('met down'));
+    const timeout = Object.assign(new Error('timeout'), {
+      isAxiosError: true,
+      code: 'ECONNABORTED',
+    });
+    mockedGet.mockRejectedValueOnce(timeout);
     const failed = await weather.forRouteSamples([place]);
 
-    expect(empty.points[0].airTempC).toBe(failed.points[0].airTempC);
-    expect(empty.points[0].windSpeedMs).toBe(failed.points[0].windSpeedMs);
-    expect(empty.points[0].groundElevationM).toBe(40);
-    expect(missing.points[0].groundElevationM).toBe(12);
-    expect(missing.points[0].windSpeedMs).toBeGreaterThanOrEqual(2);
-    const cached = JSON.parse(
-      String(upsert.mock.calls[0][0].create.payloadJson),
-    ) as { airTempC: number };
-    expect(cached.airTempC).toBe(empty.points[0].airTempC);
-    expect(cached.airTempC).not.toBe(0);
+    expect(empty.status).toBe('unavailable');
+    expect(empty.reason).toBe('empty');
+    expect(empty.points).toEqual([]);
+    expect(empty.source).toBeUndefined();
+    expect(missing.status).toBe('unavailable');
+    expect(missing.reason).toBe('missing_fields');
+    expect(missing.points).toEqual([]);
+    expect(failed.status).toBe('unavailable');
+    expect(failed.reason).toBe('timeout');
+    expect(JSON.stringify(empty)).not.toContain('"airTempC"');
+    const storedPayloads = upsert.mock.calls.map((call) =>
+      JSON.parse(String(call[0].create.payloadJson)),
+    );
+    expect(storedPayloads).toHaveLength(1);
+    expect(Array.isArray(storedPayloads[0])).toBe(true);
+  });
+
+  it('keeps a MET forecast when precipitation probability is omitted', async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        properties: {
+          timeseries: [
+            {
+              time: '2026-10-07T20:00:00Z',
+              data: {
+                instant: {
+                  details: { air_temperature: 0, wind_speed: 3.5 },
+                },
+                next_1_hours: {
+                  details: { precipitation_amount: 0 },
+                  summary: { symbol_code: 'cloudy' },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+    const { weather } = service('met');
+    const summary = await weather.forRouteSamples([
+      { lat: 59.91, lon: 10.75 },
+    ]);
+    expect(summary.status).toBe('available');
+    expect(summary.source).toBe('met');
+    expect(summary.points[0].airTempC).toBe(0);
+    expect(summary.points[0].precipitationMm).toBe(0);
+    expect(summary.points[0].precipitationProbPct).toBeNull();
+    expect(summary.maxRainProbPct).toBeNull();
+    expect(summary.points[0].windSpeedMs).toBe(3.5);
+  });
+
+  it('rejects mock and unknown providers before any forecast is built', async () => {
+    const { weather: mockWeather } = service('mock');
+    const mocked = await mockWeather.forRouteSamples([
+      { lat: 59.91, lon: 10.75 },
+    ]);
+    const { weather: unknown } = service('yr');
+    const rejected = await unknown.forRouteSamples([
+      { lat: 59.91, lon: 10.75 },
+    ]);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(mocked.status).toBe('unavailable');
+    expect(mocked.reason).toBe('configuration');
+    expect(rejected.reason).toBe('configuration');
+    expect(mocked.points).toEqual([]);
+  });
+
+  it('leaves an out-of-range time unavailable', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        properties: {
+          timeseries: [
+            {
+              time: '2026-10-02T10:00:00Z',
+              data: {
+                instant: { details: { air_temperature: 1, wind_speed: 1 } },
+                next_1_hours: {
+                  details: {
+                    probability_of_precipitation: 0,
+                    precipitation_amount: 0,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+    const { weather, upsert } = service('met');
+    const summary = await weather.forRouteSamples([
+      {
+        lat: 59.91,
+        lon: 10.75,
+        at: new Date('2026-10-05T10:00:00Z'),
+      },
+    ]);
+    expect(summary.status).toBe('unavailable');
+    expect(summary.reason).toBe('out_of_range');
+    expect(summary.points).toEqual([]);
+    const pointWrites = upsert.mock.calls.filter(
+      (call) => !String(call[0].where.cacheKey).includes(':series:'),
+    );
+    expect(pointWrites).toHaveLength(0);
   });
 
   it('keeps a real MET temperature of zero', async () => {
@@ -199,7 +325,12 @@ describe('WeatherService altitude', () => {
                         instant: {
                           details: { air_temperature: lat, wind_speed: 2 },
                         },
-                        next_1_hours: { details: {} },
+                        next_1_hours: {
+                  details: {
+                    probability_of_precipitation: 0,
+                    precipitation_amount: 0,
+                  },
+                },
                       },
                     },
                   ],
@@ -229,15 +360,16 @@ describe('WeatherService altitude', () => {
     expect(summary.points.map((point) => point.airTempC)).toEqual([58, 59, 60]);
   });
 
-  it('still returns a forecast when MET fails', async () => {
+  it('does not return a forecast when MET fails', async () => {
     mockedGet.mockRejectedValue(new Error('met down'));
     const { weather } = service('met');
     const summary = await weather.forRouteSamples([
       { lat: 59.91, lon: 10.75, altitudeM: 40 },
     ]);
-    expect(summary.points).toHaveLength(1);
-    expect(summary.points[0].groundElevationM).toBe(40);
-    expect(Number.isFinite(summary.points[0].airTempC)).toBe(true);
+    expect(summary.status).toBe('unavailable');
+    expect(summary.reason).toBe('provider');
+    expect(summary.points).toEqual([]);
+    expect(summary.source).toBeUndefined();
   });
 });
 
@@ -336,8 +468,8 @@ describe('WeatherService departure comparison', () => {
     const keys = upsert.mock.calls.map(
       (call) => call[0].where.cacheKey as string,
     );
-    expect(keys).toContain('series:met:60.500,8.250@120m');
-    expect(keys).toContain('met:60.500,8.250@120m@2026-10-03T15');
+    expect(keys).toContain('wx2:series:met:60.500,8.250@120m');
+    expect(keys).toContain('wx2:met:60.500,8.250@120m@2026-10-03T15');
     expect(keys.some((key) => key.includes('2026-10-05'))).toBe(false);
   });
 
@@ -346,7 +478,7 @@ describe('WeatherService departure comparison', () => {
       { time: '2026-10-03T15:00:00Z', temp: 1, rain: 0, wind: 1 },
     ]).data.properties.timeseries;
     const findUnique = jest.fn(({ where }: { where: { cacheKey: string } }) => {
-      if (where.cacheKey !== 'series:met:59.910,10.750') return null;
+      if (where.cacheKey !== 'wx2:series:met:59.910,10.750') return null;
       return {
         cacheKey: where.cacheKey,
         payloadJson: JSON.stringify(payload),
@@ -362,8 +494,13 @@ describe('WeatherService departure comparison', () => {
     };
     const weather = new WeatherService(
       {
-        get: (key: string, fallback?: string) =>
-          key === 'WEATHER_PROVIDER' ? 'met' : fallback,
+        get: (key: string, fallback?: string) => {
+          if (key === 'WEATHER_PROVIDER') return 'met';
+          if (key === 'MET_USER_AGENT') {
+            return 'RideWearTest/1.0 (https://github.com/Arildb88/Motorcycle_clothing)';
+          }
+          return fallback;
+        },
       } as ConfigService,
       prisma as unknown as PrismaService,
     );
@@ -375,16 +512,17 @@ describe('WeatherService departure comparison', () => {
     expect(rows[0].conditions?.forecastFrom).toBe('2026-10-03T15:00:00.000Z');
   });
 
-  it('does not call MET for the mock provider and does not pretend the hours differ', async () => {
+  it('does not call MET or invent hours when the provider is mock', async () => {
     const { weather } = service('mock');
     const rows = await weather.compareSampleGroups([
       [{ lat: 59.91, lon: 10.75, at: new Date('2026-10-03T15:00:00Z') }],
       [{ lat: 59.91, lon: 10.75, at: new Date('2026-10-03T16:00:00Z') }],
     ]);
     expect(mockedGet).not.toHaveBeenCalled();
-    expect(rows[0].variesByTime).toBe(false);
-    expect(rows[1].variesByTime).toBe(false);
-    expect(rows[0].conditions?.minTempC).toBe(rows[1].conditions?.minTempC);
+    expect(rows[0].available).toBe(false);
+    expect(rows[0].unavailableReason).toBe('configuration');
+    expect(rows[1].unavailableReason).toBe('configuration');
+    expect(rows[0].conditions).toBeUndefined();
   });
 
   it('does not put coordinates in MET failure logs', () => {
@@ -396,7 +534,7 @@ describe('WeatherService departure comparison', () => {
 
   it('returns the caller coordinate from a shared cache row', async () => {
     const findUnique = jest.fn().mockResolvedValue({
-      cacheKey: 'met:59.914,10.752',
+      cacheKey: 'wx2:met:59.914,10.752',
       payloadJson: JSON.stringify({
         lat: 59.913946,
         lon: 10.752214,
@@ -404,13 +542,20 @@ describe('WeatherService departure comparison', () => {
         precipitationProbPct: 1,
         precipitationMm: 0,
         windSpeedMs: 2,
+        source: 'met',
+        forecastValidAt: '2026-10-06T12:00:00.000Z',
       }),
       validUntil: new Date(Date.now() + 60_000),
     });
     const weather = new WeatherService(
       {
-        get: (key: string, fallback?: string) =>
-          key === 'WEATHER_PROVIDER' ? 'met' : fallback,
+        get: (key: string, fallback?: string) => {
+          if (key === 'WEATHER_PROVIDER') return 'met';
+          if (key === 'MET_USER_AGENT') {
+            return 'RideWearTest/1.0 (https://github.com/Arildb88/Motorcycle_clothing)';
+          }
+          return fallback;
+        },
       } as ConfigService,
       {
         weatherCache: { findUnique, upsert: jest.fn(), deleteMany: jest.fn() },
@@ -422,7 +567,72 @@ describe('WeatherService departure comparison', () => {
     expect(summary.points[0].lat).toBe(59.9135);
     expect(summary.points[0].lon).toBe(10.7524);
     expect(summary.points[0].airTempC).toBe(4);
+    expect(summary.source).toBe('met');
     expect(mockedGet).not.toHaveBeenCalled();
+  });
+
+  it('does not reuse a legacy synthetic point stored under a met key', async () => {
+    const findUnique = jest.fn(
+      ({ where }: { where: { cacheKey: string } }) => {
+        if (where.cacheKey.startsWith('wx2:')) return null;
+        return {
+          cacheKey: where.cacheKey,
+          payloadJson: JSON.stringify({
+            lat: 59.914,
+            lon: 10.752,
+            airTempC: 11.4,
+            precipitationProbPct: 40,
+            precipitationMm: 0,
+            windSpeedMs: 3,
+          }),
+          validUntil: new Date(Date.now() + 60_000),
+        };
+      },
+    );
+    const weather = new WeatherService(
+      {
+        get: (key: string, fallback?: string) => {
+          if (key === 'WEATHER_PROVIDER') return 'met';
+          if (key === 'MET_USER_AGENT') {
+            return 'RideWearTest/1.0 (https://github.com/Arildb88/Motorcycle_clothing)';
+          }
+          return fallback;
+        },
+      } as ConfigService,
+      {
+        weatherCache: {
+          findUnique,
+          upsert: jest.fn().mockResolvedValue({}),
+          deleteMany: jest.fn(),
+        },
+      } as unknown as PrismaService,
+    );
+    mockedGet.mockResolvedValue({
+      data: {
+        properties: {
+          timeseries: [
+            {
+              time: '2026-10-06T12:00:00Z',
+              data: {
+                instant: { details: { air_temperature: 2, wind_speed: 1 } },
+                next_1_hours: {
+                  details: {
+                    probability_of_precipitation: 0,
+                    precipitation_amount: 0,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+    const summary = await weather.forRouteSamples([
+      { lat: 59.9135, lon: 10.7524 },
+    ]);
+    expect(summary.points[0].airTempC).toBe(2);
+    expect(summary.points[0].airTempC).not.toBe(11.4);
+    expect(mockedGet).toHaveBeenCalled();
   });
 
   it('persists cache-key coordinates and only the MET fields the forecast reads', async () => {
@@ -469,7 +679,7 @@ describe('WeatherService departure comparison', () => {
     const storedSeries = JSON.parse(
       String(
         upsert.mock.calls.find((call) =>
-          String(call[0].where.cacheKey).startsWith('series:'),
+          String(call[0].where.cacheKey).startsWith('wx2:series:'),
         )?.[0].create.payloadJson,
       ),
     );
@@ -486,7 +696,7 @@ describe('WeatherService departure comparison', () => {
     const storedPoint = JSON.parse(
       String(
         upsert.mock.calls.find((call) =>
-          String(call[0].where.cacheKey).startsWith('met:'),
+          String(call[0].where.cacheKey).startsWith('wx2:met:'),
         )?.[0].create.payloadJson,
       ),
     ) as { lat: number; lon: number };
@@ -499,6 +709,8 @@ describe('WeatherService departure comparison', () => {
         precipitationMm: 0.4,
         windSpeedMs: 5,
         symbol: 'lightrain',
+        source: 'met',
+        forecastValidAt: '2026-10-06T12:00:00.000Z',
       }),
     );
     expect(storedPoint.lat).toBe(59.914);

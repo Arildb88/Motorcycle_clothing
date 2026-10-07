@@ -272,7 +272,7 @@ describe('analyzePlanRoute provider fallback', () => {
     },
   };
 
-  it('falls back to the duration hint when the provider fails', async () => {
+  it('does not invent a straight-line route when the provider fails', async () => {
     const analysis = await analyzePlanRoute({
       port: hintPort,
       waypoints: waypoints.slice(0, 2),
@@ -280,10 +280,7 @@ describe('analyzePlanRoute provider fallback', () => {
       departAt: new Date('2026-09-11T07:30:00.000Z'),
       durationHintMin: 45,
     });
-    expect(analysis!.meta.fallback).toBe(true);
-    expect(analysis!.meta.provider).toBe('null');
-    expect(analysis!.durationMin).toBe(45);
-    expect(analysis!.geometry.encoding).toBe('none');
+    expect(analysis).toBeNull();
   });
 
   it('keeps provider distance and duration and strips dense geometry', async () => {

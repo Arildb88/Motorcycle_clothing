@@ -354,14 +354,14 @@ Never commit `.env`. Never put server secrets in Flutter.
 | `PORT` | HTTP port | `3000` |
 | `JWT_SECRET` | JWT signing | dev placeholder — change for shared envs |
 | `JWT_EXPIRES_IN` | Token lifetime | `7d` |
-| `MET_USER_AGENT` | Contact string if using MET Norway | example UA |
-| `WEATHER_PROVIDER` | `mock` (default) or MET provider | `mock` |
+| `MET_USER_AGENT` | App name plus a real contact address or contact URL for MET Norway | placeholder in the example file; replace it locally |
+| `WEATHER_PROVIDER` | `met`. `mock` and other names are rejected | `met` |
 | `NODE_ENV` | Node environment | `development` |
 | `OAUTH_REDIRECT_URI` | Mobile deep link for OAuth | `ridewear://oauth/callback` |
 | `TOKEN_ENCRYPTION_KEY` | Encrypts Strava tokens at rest | dev placeholder |
 | `ALLOW_DEMO_OAUTH` | Allow `demo:` OAuth tokens in non-prod | `true` |
 
-With `WEATHER_PROVIDER=mock`, no external weather key is required.
+`WEATHER_PROVIDER` defaults to `met`. A local `.env` that still sets `mock` must be changed to `met`, and `MET_USER_AGENT` must identify the app with a contact address or URL. The `example.com` value in `.env.example` is a placeholder and is rejected. Do not commit that contact or any provider key.
 
 ### Optional integrations (leave empty to disable)
 
@@ -470,7 +470,7 @@ There is **no** automatic Prisma seed on first migrate for a full demo user.
 - **Demo wardrobe:** authenticated `POST /api/wardrobe/actions/seed-demo` (exposed from the wardrobe screen).
 - **Users:** create via Register in the app (or auth API).
 - **Routes:** create manually in the Routes UI.
-- **Weather:** `WEATHER_PROVIDER=mock` returns deterministic local weather without MET credentials.
+- **Weather:** the API calls MET Norway. It does not substitute a local simulated forecast.
 
 ---
 
@@ -570,7 +570,7 @@ Verify against code before assuming otherwise:
 |------|----------------|
 | Recommendation engines | **Motorcycle M3 only**; hiking/cycling may appear in activity UI without full engines |
 | Route builder | Manual lat/lon waypoints — **no** Google Maps / place-search builder on `dev` yet |
-| Weather | Defaults to **mock**; MET Norway via `WEATHER_PROVIDER` when configured |
+| Weather | MET Norway. Missing or invalid forecasts stay unavailable |
 | Personalization | Feedback foundations exist; full M5 personalization is not complete |
 | Ads | Disabled by default (`ADS_ENABLED=false`) |
 | Production DB | Local API uses Postgres 16. Applying the baseline to hosted Supabase is a manual operator step and is not done by CI. |

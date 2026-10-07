@@ -3,7 +3,10 @@ import {
   computeApparentAirflow,
   type ApparentAirflow,
 } from './airflow';
-import type { WeatherPoint } from '../weather.types';
+import {
+  precipitationProbAtLeast,
+  type WeatherPoint,
+} from '../weather.types';
 
 export type ExposureOptions = {
   /**
@@ -35,7 +38,10 @@ function resolveSpeedKmh(options?: ExposureOptions): number {
 
 function wetPenaltyC(point: WeatherPoint): number {
   return point.precipitationMm >= MOTORCYCLE_EXPOSURE.precipMmWetThreshold ||
-    point.precipitationProbPct >= MOTORCYCLE_EXPOSURE.rainProbWetThreshold
+    precipitationProbAtLeast(
+      point.precipitationProbPct,
+      MOTORCYCLE_EXPOSURE.rainProbWetThreshold,
+    )
     ? MOTORCYCLE_EXPOSURE.wetExposurePenaltyC
     : 0;
 }
@@ -130,19 +136,19 @@ export function windDemandFromPoint(
 export function waterDemandFromPoint(point: WeatherPoint): number {
   if (
     point.precipitationMm >= 0.8 ||
-    point.precipitationProbPct >= 55
+    precipitationProbAtLeast(point.precipitationProbPct, 55)
   ) {
     return 4;
   }
   if (
     point.precipitationMm >= 0.2 ||
-    point.precipitationProbPct >= 35
+    precipitationProbAtLeast(point.precipitationProbPct, 35)
   ) {
     return 3;
   }
   if (
     point.precipitationMm > 0 ||
-    point.precipitationProbPct >= 25
+    precipitationProbAtLeast(point.precipitationProbPct, 25)
   ) {
     return 2;
   }

@@ -555,11 +555,12 @@ class _RecommendationBody extends StatelessWidget {
                     ? fmt.temperatureFromC(exposureC as num)
                     : '—',
               ),
-              _Metric(
-                label: l10n.metricRain,
-                value:
-                    '${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
-              ),
+              if (weather['maxRainProbPct'] is num)
+                _Metric(
+                  label: l10n.metricRain,
+                  value:
+                      '${(weather['maxRainProbPct'] as num).toStringAsFixed(0)}%',
+                ),
               _Metric(
                 label: l10n.metricWind,
                 value: fmt.windFromMs(weather['maxWindMs'] as num),

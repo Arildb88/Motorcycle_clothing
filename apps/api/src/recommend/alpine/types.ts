@@ -153,7 +153,7 @@ export type AlpineRecommendationResult = {
     midTempC: number | null;
     upperTempC: number | null;
     maxWindMs: number;
-    maxPrecipitationProbPct: number;
+    maxPrecipitationProbPct: number | null;
     upperWindMs: number | null;
     sites: AlpineSite[];
     samples: Array<{

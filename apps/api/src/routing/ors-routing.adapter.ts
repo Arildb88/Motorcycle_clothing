@@ -147,13 +147,21 @@ export class OpenRouteServiceRoutingAdapter implements RoutingPort {
       });
       status = res.status;
       if (res.status < 200 || res.status >= 300) {
-        logger.warn(`directions failed (status ${res.status})`);
+        const authentication = res.status === 401 || res.status === 403;
+        logger.warn(
+          `directions failed (status ${res.status}${authentication ? ' authentication' : ''})`,
+        );
         return null;
       }
       return mapOrsDirections(res.data, waypoints, preferences);
-    } catch {
+    } catch (err) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? String((err as { code?: unknown }).code ?? '')
+          : '';
+      const timedOut = code === 'ECONNABORTED' || code === 'ETIMEDOUT';
       logger.warn(
-        `directions failed (status ${status != null ? status : 'network'})`,
+        `directions failed (status ${timedOut ? 'timeout' : status != null ? status : 'network'})`,
       );
       return null;
     }

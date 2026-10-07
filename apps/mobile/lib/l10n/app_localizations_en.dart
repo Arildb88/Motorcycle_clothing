@@ -1720,7 +1720,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commuteUnavailable =>
-      'The return forecast is unavailable. Morning conditions are not used for the return.';
+      'Return weather is unavailable. Morning conditions are not used for the return. Try again.';
+
+  @override
+  String get commuteOutboundWeatherUnavailable =>
+      'Outbound weather is unavailable. The return forecast is not used for this leg. Try again.';
+
+  @override
+  String get routeProviderUnavailable =>
+      'Road routing is unavailable. This is not a travel time from the road provider.';
+
+  @override
+  String get weatherUnavailableRetry => 'Try again';
+
+  @override
+  String get weatherUnavailableConfiguration =>
+      'Weather is not configured on the server. No clothing was suggested.';
+
+  @override
+  String get weatherUnavailableTimeout =>
+      'The weather service timed out. No clothing was suggested. Try again.';
+
+  @override
+  String get weatherUnavailableEmpty =>
+      'The weather service returned no forecast. No clothing was suggested. Try again.';
+
+  @override
+  String get weatherUnavailableMissing =>
+      'The forecast is missing temperature, rain, or wind. No clothing was suggested. Try again.';
+
+  @override
+  String get weatherUnavailableOutOfRange =>
+      'No forecast covers this time. Another time was not used. Try again.';
+
+  @override
+  String get weatherUnavailableProvider =>
+      'The weather service failed. No clothing was suggested. Try again.';
+
+  @override
+  String get weatherUnavailablePartial =>
+      'Part of this forecast is missing. No complete clothing recommendation was made. Try again.';
 
   @override
   String get commuteForecastNote => 'A forecast is not a guarantee.';

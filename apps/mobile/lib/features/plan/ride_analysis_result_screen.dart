@@ -27,6 +27,9 @@ class RideAnalysisResultScreen extends StatelessWidget {
     );
     final route = payload['route'] as Map<String, dynamic>? ?? const {};
     final weather = payload['weather'] as Map<String, dynamic>? ?? const {};
+    final recommendation =
+        payload['recommendation'] as Map<String, dynamic>? ?? const {};
+    final weatherBlocked = _weatherBlocksRecommendation(weather, recommendation);
     final view = presentRecommendation(payload);
     final wear = view.wear;
     final pack = view.pack;
@@ -120,6 +123,19 @@ class RideAnalysisResultScreen extends StatelessWidget {
             formatTemp: fmt.temperatureFromC,
           ),
           const SizedBox(height: 24),
+          if (weatherBlocked) ...[
+            Text(
+              weatherUnavailableMessage(l10n, weather, recommendation),
+              key: const Key('weather-unavailable'),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: const Key('weather-unavailable-retry'),
+              style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.weatherUnavailableRetry),
+            ),
+          ] else ...[
           recommendationSectionTitle(l10n.wearSection),
           const SizedBox(height: 4),
           Text(
@@ -167,6 +183,7 @@ class RideAnalysisResultScreen extends StatelessWidget {
             onPressed: () => showFeedbackSheet(context, payload),
             child: Text(l10n.homeHowWasTheRide),
           ),
+          ],
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () => Navigator.pop(context),
@@ -175,5 +192,42 @@ class RideAnalysisResultScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+bool _weatherBlocksRecommendation(
+  Map<String, dynamic> weather,
+  Map<String, dynamic> recommendation,
+) {
+  final weatherStatus = weather['status']?.toString();
+  final recommendationStatus = recommendation['status']?.toString();
+  return weatherStatus == 'unavailable' ||
+      weatherStatus == 'partial' ||
+      recommendationStatus == 'unavailable';
+}
+
+String weatherUnavailableMessage(
+  AppLocalizations l10n,
+  Map<String, dynamic> weather,
+  Map<String, dynamic> recommendation,
+) {
+  if (weather['status']?.toString() == 'partial' ||
+      recommendation['status']?.toString() == 'partial') {
+    return l10n.weatherUnavailablePartial;
+  }
+  switch (weather['reason']?.toString() ?? recommendation['reason']?.toString()) {
+    case 'configuration':
+      return l10n.weatherUnavailableConfiguration;
+    case 'timeout':
+      return l10n.weatherUnavailableTimeout;
+    case 'empty':
+      return l10n.weatherUnavailableEmpty;
+    case 'missing_fields':
+    case 'missing':
+      return l10n.weatherUnavailableMissing;
+    case 'out_of_range':
+      return l10n.weatherUnavailableOutOfRange;
+    default:
+      return l10n.weatherUnavailableProvider;
   }
 }

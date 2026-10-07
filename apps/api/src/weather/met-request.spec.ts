@@ -20,10 +20,13 @@ describe('MET altitude request', () => {
     const at = new Date('2026-10-02T12:40:00Z');
     expect(
       weatherCacheKey({ provider: 'met', lat: 59.9139, lon: 10.7522 }),
-    ).toBe('met:59.914,10.752');
+    ).toBe('wx2:met:59.914,10.752');
     expect(
       weatherCacheKey({ provider: 'met', lat: 59.9139, lon: 10.7522, at }),
-    ).toBe('met:59.914,10.752@2026-10-02T12');
+    ).toBe('wx2:met:59.914,10.752@2026-10-02T12');
+    expect(
+      weatherCacheKey({ provider: 'met', lat: 59.9139, lon: 10.7522 }),
+    ).not.toBe('met:59.914,10.752');
   });
 
   it('includes rounded altitude and the ETA hour together', () => {
@@ -35,6 +38,6 @@ describe('MET altitude request', () => {
         at: new Date('2026-10-02T15:10:00Z'),
         altitudeM: 987.25,
       }),
-    ).toBe('met:60.500,8.000@987m@2026-10-02T15');
+    ).toBe('wx2:met:60.500,8.000@987m@2026-10-02T15');
   });
 });

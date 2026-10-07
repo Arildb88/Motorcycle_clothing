@@ -477,6 +477,39 @@ void main() {
       expect(find.text('Litt kaldt'), findsNothing);
     },
   );
+
+  testWidgets('unavailable weather is not shown as a clothing recommendation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _analysisApp(
+        home: const RideAnalysisResultScreen(
+          payload: {
+            'route': {'name': 'Commute'},
+            'weather': {
+              'status': 'unavailable',
+              'reason': 'timeout',
+              'points': [],
+            },
+            'recommendation': {
+              'status': 'unavailable',
+              'reason': 'timeout',
+              'wear': [
+                {'garmentName': 'Should not show'},
+              ],
+              'pack': [],
+            },
+          },
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('weather-unavailable')), findsOneWidget);
+    expect(find.textContaining('timed out'), findsOneWidget);
+    expect(find.text('Should not show'), findsNothing);
+    expect(find.byKey(const Key('thermal-feedback-open')), findsNothing);
+    expect(find.byKey(const Key('weather-unavailable-retry')), findsOneWidget);
+  });
 }
 
 Widget _analysisApp({

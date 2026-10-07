@@ -1719,7 +1719,46 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get commuteUnavailable =>
-      'Været for hjemturen er ikke tilgjengelig. Morgenforhold brukes ikke for hjemturen.';
+      'Været for hjemturen er ikke tilgjengelig. Morgenforhold brukes ikke for hjemturen. Prøv igjen.';
+
+  @override
+  String get commuteOutboundWeatherUnavailable =>
+      'Været for utturen er ikke tilgjengelig. Hjemturens prognose brukes ikke for denne etappen. Prøv igjen.';
+
+  @override
+  String get routeProviderUnavailable =>
+      'Vei-ruting er ikke tilgjengelig. Dette er ikke en reisetid fra veitjenesten.';
+
+  @override
+  String get weatherUnavailableRetry => 'Prøv igjen';
+
+  @override
+  String get weatherUnavailableConfiguration =>
+      'Været er ikke konfigurert på serveren. Ingen bekledning er foreslått.';
+
+  @override
+  String get weatherUnavailableTimeout =>
+      'Værtjenesten svarte ikke i tide. Ingen bekledning er foreslått. Prøv igjen.';
+
+  @override
+  String get weatherUnavailableEmpty =>
+      'Værtjenesten returnerte ingen prognose. Ingen bekledning er foreslått. Prøv igjen.';
+
+  @override
+  String get weatherUnavailableMissing =>
+      'Prognosen mangler temperatur, regn eller vind. Ingen bekledning er foreslått. Prøv igjen.';
+
+  @override
+  String get weatherUnavailableOutOfRange =>
+      'Ingen prognose dekker dette tidspunktet. Et annet tidspunkt er ikke brukt. Prøv igjen.';
+
+  @override
+  String get weatherUnavailableProvider =>
+      'Værtjenesten feilet. Ingen bekledning er foreslått. Prøv igjen.';
+
+  @override
+  String get weatherUnavailablePartial =>
+      'Deler av prognosen mangler. Ingen fullstendig bekledningsanbefaling ble laget. Prøv igjen.';
 
   @override
   String get commuteForecastNote => 'Et varsel er ikke en garanti.';

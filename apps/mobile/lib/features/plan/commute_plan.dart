@@ -208,27 +208,48 @@ class _LegSection extends StatelessWidget {
           Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
           Text('${leg['startLabel'] ?? ''} → ${leg['endLabel'] ?? ''}'),
           Text('${leg['departureLocal'] ?? ''} · ${leg['civilDate'] ?? ''}'),
-          if (leg['arrivalLocal'] != null)
+          if (leg['routingAvailable'] == false)
+            Text(
+              l10n.routeProviderUnavailable,
+              key: Key(
+                outbound
+                    ? 'commute-routing-outbound'
+                    : 'commute-routing-return',
+              ),
+            )
+          else if (leg['arrivalLocal'] != null)
             Text(l10n.commuteArrival('${leg['arrivalLocal']}')),
           if (!available)
             Text(
-              l10n.commuteUnavailable,
-              key: const Key('commute-return-unavailable'),
+              outbound
+                  ? l10n.commuteOutboundWeatherUnavailable
+                  : l10n.commuteUnavailable,
+              key: Key(
+                outbound
+                    ? 'commute-outbound-unavailable'
+                    : 'commute-return-unavailable',
+              ),
             )
-          else if (weatherMap != null) ...[
+          else if (weatherMap != null &&
+              weatherMap['minTempC'] is num &&
+              weatherMap['maxTempC'] is num) ...[
             Text(
               units.temperatureRangeFromC(
-                weatherMap['minTempC'] as num? ?? weatherMap['maxTempC'] as num? ?? 0,
-                weatherMap['maxTempC'] as num? ?? weatherMap['minTempC'] as num? ?? 0,
+                weatherMap['minTempC'] as num,
+                weatherMap['maxTempC'] as num,
               ),
               key: Key(outbound ? 'commute-temp-outbound' : 'commute-temp-return'),
             ),
-            Text(
-              l10n.commuteRain(
-                '${weatherMap['maxPrecipMm']}',
-                '${weatherMap['maxRainProbPct']}',
-              ),
-            ),
+            if (weatherMap['maxPrecipMm'] is num &&
+                weatherMap['maxRainProbPct'] is num)
+              Text(
+                l10n.commuteRain(
+                  '${weatherMap['maxPrecipMm']}',
+                  '${weatherMap['maxRainProbPct']}',
+                ),
+              )
+            else if (weatherMap['maxPrecipMm'] is num)
+              Text('${weatherMap['maxPrecipMm']} mm'),
             Text(l10n.commuteWind('${weatherMap['maxWindMs']} m/s')),
             if (leg['recommendation'] is Map)
               Text(_confidence(l10n, Map<String, dynamic>.from(leg['recommendation'] as Map))),

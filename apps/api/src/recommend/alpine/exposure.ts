@@ -1,4 +1,7 @@
-import type { WeatherPoint } from '../weather.types';
+import {
+  precipitationProbAtLeast,
+  type WeatherPoint,
+} from '../weather.types';
 import {
   ALPINE_EXPOSURE,
   ALPINE_EXPOSURE_MODES,
@@ -26,7 +29,10 @@ export function alpineExposureC(
   const chill = above * ALPINE_EXPOSURE.windChillPerMs;
   const wet =
     point.precipitationMm >= ALPINE_EXPOSURE.precipMmWetThreshold ||
-    point.precipitationProbPct >= ALPINE_EXPOSURE.rainProbWetThreshold
+    precipitationProbAtLeast(
+      point.precipitationProbPct,
+      ALPINE_EXPOSURE.rainProbWetThreshold,
+    )
       ? ALPINE_EXPOSURE.wetExposurePenaltyC
       : 0;
   const bias = finiteBias(personalColdBiasC);
@@ -55,10 +61,10 @@ export function alpineWindDemand(windMs: number): number {
 export function alpineWaterDemand(point: WeatherPoint): number {
   const prob = point.precipitationProbPct;
   const mm = point.precipitationMm;
-  if (prob >= 70 || mm >= 1) return 5;
-  if (prob >= 50 || mm >= 0.5) return 4;
-  if (prob >= 30 || mm >= 0.2) return 3;
-  if (prob >= 15 || mm > 0) return 2;
+  if (precipitationProbAtLeast(prob, 70) || mm >= 1) return 5;
+  if (precipitationProbAtLeast(prob, 50) || mm >= 0.5) return 4;
+  if (precipitationProbAtLeast(prob, 30) || mm >= 0.2) return 3;
+  if (precipitationProbAtLeast(prob, 15) || mm > 0) return 2;
   return 1;
 }
 

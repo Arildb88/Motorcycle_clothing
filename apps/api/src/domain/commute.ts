@@ -251,7 +251,10 @@ export type CommuteDifferenceCode =
   | 'WARM_OUTBOUND_COLD_RETURN';
 
 function reportsRain(weather: RouteWeatherSummary): boolean {
-  return weather.maxPrecipMm >= RAIN_MM || weather.maxRainProbPct >= RAIN_PROB;
+  return (
+    weather.maxPrecipMm >= RAIN_MM ||
+    (weather.maxRainProbPct != null && weather.maxRainProbPct >= RAIN_PROB)
+  );
 }
 
 /**

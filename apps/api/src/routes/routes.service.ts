@@ -26,7 +26,7 @@ import {
 import { parseClock } from '../domain/commute';
 import {
   analyzePlanRoute,
-  NullRoutingAdapter,
+  UnavailableRoutingAdapter,
   ROUTING_PORT,
   type RoutingPort,
 } from '../routing';
@@ -55,7 +55,7 @@ export class RoutesService {
     private readonly prisma: PrismaService,
     @Optional() @Inject(ROUTING_PORT) routing?: RoutingPort,
   ) {
-    this.routing = routing ?? new NullRoutingAdapter();
+    this.routing = routing ?? new UnavailableRoutingAdapter('not_configured');
   }
 
   list(userId: string, activityType?: string) {
@@ -329,13 +329,15 @@ export class RoutesService {
       departAt: schedule.departureAt,
       durationHintMin: schedule.durationMin,
     });
+    const providerAnalysis =
+      analysis?.meta.fromProvider && !analysis.meta.fallback ? analysis : null;
 
-    if (analysis?.meta.fromProvider && !analysis.meta.fallback) {
+    if (providerAnalysis) {
       schedule = resolvePlanSchedule({
         planningMode,
         departureAt: dto.departureAt ? new Date(dto.departureAt) : schedule.departureAt,
         arrivalAt: dto.arrivalAt ? new Date(dto.arrivalAt) : schedule.arrivalAt,
-        durationMin: analysis.durationMin,
+        durationMin: providerAnalysis.durationMin,
       });
     }
 
@@ -380,7 +382,9 @@ export class RoutesService {
         arrivalAt: schedule.arrivalAt,
         durationMin: schedule.durationMin,
         snapshotJson: JSON.stringify(snapshot),
-        routeAnalysisJson: analysis ? JSON.stringify(analysis) : null,
+        routeAnalysisJson: providerAnalysis
+          ? JSON.stringify(providerAnalysis)
+          : null,
       },
     });
 
@@ -398,7 +402,10 @@ export class RoutesService {
         typicalDurationMin: route.typicalDurationMin,
         preferences,
       },
-      analysis,
+      analysis: providerAnalysis,
+      routing: providerAnalysis
+        ? { available: true as const, provider: providerAnalysis.meta.provider }
+        : { available: false as const, reason: 'provider' as const },
       note: 'Weather and clothing must be recalculated for this departure; do not reuse prior recommendations.',
     };
   }

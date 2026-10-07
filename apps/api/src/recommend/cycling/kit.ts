@@ -39,7 +39,7 @@ export function matchCyclingKit(input: {
   demand: CyclingDemandSummary;
   wardrobe: CyclingGarmentInput[];
   intensity: CyclingIntensity;
-  maxRainProbPct: number;
+  maxRainProbPct: number | null;
   sustainedExposureC: number;
 }): {
   wear: CyclingKitItem[];
@@ -54,6 +54,7 @@ export function matchCyclingKit(input: {
   const peak = zone(input.demand.peak, 'torso');
   const overheat =
     input.intensity === 'hard' &&
+    input.maxRainProbPct != null &&
     input.maxRainProbPct < 30 &&
     sustained.water <= 2 &&
     sustained.warmth <= 2;

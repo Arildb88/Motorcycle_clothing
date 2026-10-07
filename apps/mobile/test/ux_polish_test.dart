@@ -7,6 +7,7 @@ import 'package:motorcycle_clothing/features/profile/profile_settings_screen.dar
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/screens/login_screen.dart';
 import 'package:motorcycle_clothing/services/api_client.dart';
+import 'package:motorcycle_clothing/services/location/fake_location_services.dart';
 import 'package:motorcycle_clothing/services/location/location_services.dart';
 import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
@@ -178,7 +179,12 @@ Widget _loginApp(_QuietApi api) {
 Widget _plannerApp({required String activityType}) {
   return MultiProvider(
     providers: [
-      Provider<LocationServices>(create: (_) => LocationServices()),
+      Provider<LocationServices>(
+        create: (_) => LocationServices(
+          search: FakeLocationSearchService(),
+          geometry: FakeRouteGeometryService(),
+        ),
+      ),
       Provider<DeviceLocationService>(
         create: (_) => FakeDeviceLocationService(),
       ),

@@ -25,8 +25,9 @@ export function persistedRouteAnalysis(analysis: RouteAnalysis): RouteAnalysis {
 }
 
 /**
- * Use a configured routing provider when it returns road distance/duration.
- * Otherwise keep the duration hint via NullRoutingAdapter (tests and outages).
+ * Use a configured routing provider when it returns road distance and duration.
+ * A miss is not replaced with a straight-line estimate. NullRoutingAdapter
+ * stays available only when a test injects it directly.
  */
 export async function analyzePlanRoute(input: {
   port: RoutingPort;
@@ -35,7 +36,18 @@ export async function analyzePlanRoute(input: {
   departAt: Date;
   durationHintMin: number;
 }): Promise<RouteAnalysis | null> {
-  if (!(input.port instanceof NullRoutingAdapter)) {
+  if (input.port instanceof NullRoutingAdapter) {
+    const fallback = await input.port.analyze({
+      waypoints: input.waypoints,
+      preferences: input.preferences,
+      departAt: input.departAt,
+      durationMin: input.durationHintMin,
+      travelProfile: 'motorcycle',
+    });
+    return fallback ? persistedRouteAnalysis(fallback) : null;
+  }
+
+  try {
     const provider = await input.port.analyze({
       waypoints: input.waypoints,
       preferences: input.preferences,
@@ -45,14 +57,8 @@ export async function analyzePlanRoute(input: {
     if (provider?.meta.fromProvider && !provider.meta.fallback) {
       return persistedRouteAnalysis(provider);
     }
+  } catch {
+    return null;
   }
-
-  const fallback = await new NullRoutingAdapter().analyze({
-    waypoints: input.waypoints,
-    preferences: input.preferences,
-    departAt: input.departAt,
-    durationMin: input.durationHintMin,
-    travelProfile: 'motorcycle',
-  });
-  return fallback ? persistedRouteAnalysis(fallback) : null;
+  return null;
 }

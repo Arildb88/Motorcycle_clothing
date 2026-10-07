@@ -16,7 +16,7 @@ Validated on 2026-10-06 from `dev_test` at generation 42 (`RELEASE-READINESS-001
 | `npx prisma migrate deploy` on local Postgres 16 | Both committed migrations applied |
 | `npx prisma migrate diff` from migrations to `schema.prisma` | No difference |
 | `scripts/check-supabase-readiness.sh` | Passed. No hosted connection |
-| `scripts/smoke-api.sh` | Passed against local Postgres, mock weather, and demo OAuth |
+| `scripts/smoke-api.sh` | Passed against local Postgres, MET weather, and demo OAuth |
 | Android release build | Not run. This machine has no Android SDK |
 | iOS / TestFlight | Not run. This machine is Linux, not macOS |
 
@@ -41,8 +41,8 @@ Follow [SUPABASE_FIRST_DEPLOY.md](SUPABASE_FIRST_DEPLOY.md) for the hosted datab
 | `TOKEN_ENCRYPTION_KEY` | Required before any Strava token is stored. 64 hex characters or a passphrase |
 | `CORS_ORIGINS` | Browser origins only. Native Flutter sends no Origin |
 | `SMTP_HOST`, `MAIL_FROM`, `PASSWORD_RESET_PUBLIC_URL` | Required for password-reset email. Without SMTP, production still hides the reset token and does not send mail |
-| `WEATHER_PROVIDER` | `met` for live forecasts. Unset or `mock` stays on deterministic local weather. Set `MET_USER_AGENT` to an app name plus a real contact address |
-| `ROUTING_PROVIDER` and `ORS_API_KEY` | `ors` plus a server-side key. An empty key keeps the null routing adapter |
+| `WEATHER_PROVIDER` | `met`. `mock` and unknown names are configuration errors. Set `MET_USER_AGENT` to an app name plus a real contact address. Change an existing local `.env` that still says `mock`; do not commit secrets |
+| `ROUTING_PROVIDER` and `ORS_API_KEY` | `ors` plus a server-side key. An empty key makes road routing unavailable. It does not estimate a straight-line route |
 | `ELEVATION_PROVIDER` | `kartverket` (default, no key) or `off` |
 | Resort and trail providers | Fnugg and Kartverket Turrutebasen need no key. Do not send Fnugg weather |
 | `FACEBOOK_*`, `MICROSOFT_*` | Leave empty. Do not enable those logins from this checklist |

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   LegForecast,
+  maxFiniteWeatherNumber,
   RouteWeatherSummary,
   WeatherPoint,
 } from '../recommend/weather.types';
@@ -12,18 +13,61 @@ import {
   type DepartureComparisonRow,
   type DepartureSampleConditions,
 } from './departure-compare';
-import { matchMetTimeseries, selectMetTimeseriesIndex } from './met-timeseries';
+import { matchMetTimeseries } from './met-timeseries';
 import {
   metLocationForecastUrl,
   weatherCacheKey,
   weatherSeriesCacheKey,
 } from './met-request';
+import type { WeatherFailureReason } from '../recommend/weather.types';
 
 export const MET_FAILURE_LOGS = {
-  series: 'MET fetch failed; comparison has no series',
-  noTemperature: 'MET fetch returned no temperature; using mock',
-  fetch: 'MET fetch failed; using mock',
+  series: 'MET forecast series unavailable',
+  noTemperature: 'MET forecast missing required measurement',
+  fetch: 'MET forecast request failed',
+  timeout: 'MET forecast request timed out',
+  outOfRange: 'MET forecast time out of range',
+  configuration: 'Weather provider configuration rejected',
 } as const;
+
+/** Runtime provider. Unset means MET. `mock` and any other name are rejected. */
+export function resolveRuntimeWeatherProvider(raw: string | null | undefined):
+  | { ok: true }
+  | { ok: false; message: string } {
+  const provider = (raw ?? '').trim().toLowerCase();
+  if (provider === '' || provider === 'met') return { ok: true };
+  if (provider === 'mock') {
+    return {
+      ok: false,
+      message:
+        'WEATHER_PROVIDER=mock is not a runtime weather provider. Set WEATHER_PROVIDER=met in the local environment and set MET_USER_AGENT to an app name plus a contact address. The example.com value in .env.example is a placeholder. Do not commit secrets. Restart the API after changing .env.',
+    };
+  }
+  return {
+    ok: false,
+    message: `WEATHER_PROVIDER=${provider} is not supported. Set WEATHER_PROVIDER=met and MET_USER_AGENT to an app name plus a contact address.`,
+  };
+}
+
+/** MET requires an identifying contact. Placeholders are not that contact. */
+export function resolveMetUserAgent(raw: string | null | undefined): string | null {
+  const ua = (raw ?? '').trim();
+  if (!ua) return null;
+  if (/example\.(com|org|net)/i.test(ua)) return null;
+  if (/\((dev|staging|test|smoke)\)/i.test(ua)) return null;
+  const hasContact =
+    ua.includes('@') || ua.includes('http://') || ua.includes('https://');
+  return hasContact ? ua : null;
+}
+
+export function weatherConfigurationMessage(rawProvider: string | null | undefined, rawAgent: string | null | undefined): string | null {
+  const provider = resolveRuntimeWeatherProvider(rawProvider);
+  if (!provider.ok) return provider.message;
+  if (!resolveMetUserAgent(rawAgent)) {
+    return 'MET_USER_AGENT must identify this app and include a contact address or contact URL before MET is called. Set it in the local environment. Do not commit secrets. Restart the API after changing .env.';
+  }
+  return null;
+}
 
 @Injectable()
 export class WeatherService {
@@ -37,22 +81,8 @@ export class WeatherService {
   async forRoutePoints(
     points: Array<{ lat: number; lon: number }>,
   ): Promise<RouteWeatherSummary> {
-    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
-    const samples =
-      points.length > 0 ? points : [{ lat: 59.9139, lon: 10.7522 }];
-
-    // Always include start, mid (if multiple), end
-    const sampled = this.samplePoints(samples);
-
-    // Samples are independent cache/provider lookups. Running them serially made
-    // route-weather latency the sum of every sample latency (up to three here).
-    // Promise.all preserves sample order while allowing the existing provider and
-    // cache abstractions to do the independent work concurrently.
-    const weatherPoints = await Promise.all(
-      sampled.map((p) => this.pointWeather(p.lat, p.lon, provider)),
-    );
-
-    return this.summarize(provider, weatherPoints);
+    if (points.length === 0) return blockedWeather('unavailable', 'missing');
+    return this.forRouteSamples(this.samplePoints(points));
   }
 
   /**
@@ -67,28 +97,38 @@ export class WeatherService {
       altitudeM?: number | null;
     }>,
   ): Promise<RouteWeatherSummary> {
-    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
-    const usable =
-      samples.length > 0 ? samples : [{ lat: 59.9139, lon: 10.7522 }];
+    const gate = this.runtimeGate();
+    if (!gate.ok) return blockedWeather('unavailable', 'configuration');
+    if (samples.length === 0) return blockedWeather('unavailable', 'missing');
 
-    // Route samples have no ordering dependency. Start their cache/provider
-    // lookups together; Promise.all keeps the returned points in route order.
-    const weatherPoints = await Promise.all(
-      usable.map(async (sample) => {
-        const point = await this.pointWeather(
+    const loaded = await Promise.all(
+      samples.map((sample) =>
+        this.pointWeather(
           sample.lat,
           sample.lon,
-          provider,
+          gate.userAgent,
           sample.at,
           sample.altitudeM,
-        );
-        return sample.at
-          ? { ...point, forecastAt: sample.at.toISOString() }
-          : point;
-      }),
+        ),
+      ),
     );
-
-    return this.summarize(provider, weatherPoints);
+    const failures = loaded.filter(
+      (item): item is PointFailure => item.ok === false,
+    );
+    if (failures.length > 0) {
+      return blockedWeather(
+        failures.length === loaded.length ? 'unavailable' : 'partial',
+        dominantReason(failures.map((item) => item.reason)),
+      );
+    }
+    const points = loaded.map((item, index) => {
+      const point = (item as PointSuccess).point;
+      const at = samples[index].at;
+      return at && !Number.isNaN(at.getTime())
+        ? { ...point, forecastAt: at.toISOString() }
+        : point;
+    });
+    return this.summarize(points);
   }
 
   /**
@@ -104,54 +144,11 @@ export class WeatherService {
       altitudeM?: number | null;
     }>,
   ): Promise<LegForecast> {
-    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
-    const usable =
-      samples.length > 0 ? samples : [{ lat: 59.9139, lon: 10.7522 }];
-    if (provider !== 'met') {
-      return {
-        available: true,
-        weather: await this.forRouteSamples(usable),
-      };
+    const weather = await this.forRouteSamples(samples);
+    if (weather.status !== 'available' || weather.source !== 'met') {
+      return { available: false, reason: weather.reason ?? 'missing' };
     }
-
-    const seriesByPlace = new Map<string, Promise<MetSeriesEntry[] | null>>();
-    const points: WeatherPoint[] = [];
-    let sawOutOfRange = false;
-    for (const sample of usable) {
-      if (!sample.at || Number.isNaN(sample.at.getTime())) {
-        continue;
-      }
-      const series = await this.metSeriesFor(
-        sample.lat,
-        sample.lon,
-        sample.altitudeM,
-        seriesByPlace,
-      );
-      if (!series) continue;
-      const match = matchMetTimeseries(
-        series.map((entry) => entry.time),
-        sample.at,
-      );
-      const entry = match ? series[match.index] : undefined;
-      const point =
-        match && match.inRange
-          ? metPointFromEntry(entry, sample.lat, sample.lon)
-          : null;
-      if (!match || !match.inRange || !point) {
-        if (match && !match.inRange) sawOutOfRange = true;
-        continue;
-      }
-      const stored = withGroundElevation(point, sample.altitudeM);
-      points.push({ ...stored, forecastAt: match.matchedAt });
-    }
-
-    if (points.length !== usable.length) {
-      return {
-        available: false,
-        reason: sawOutOfRange ? 'out_of_range' : 'missing',
-      };
-    }
-    return { available: true, weather: this.summarize('met', points) };
+    return { available: true, weather };
   }
 
   /**
@@ -171,10 +168,20 @@ export class WeatherService {
       }>
     >,
   ): Promise<DepartureComparisonRow[]> {
-    const provider = this.config.get('WEATHER_PROVIDER', 'mock');
-    const variesByTime = provider === 'met';
-    const seriesByPlace = new Map<string, Promise<MetSeriesEntry[] | null>>();
-    const mockByPlace = new Map<string, WeatherPoint>();
+    const gate = this.runtimeGate();
+    if (!gate.ok) {
+      return groups.map((group) =>
+        comparisonRowFromSamples(
+          group.map((sample) => ({
+            requestedAt: sample.at?.toISOString() ?? '',
+            available: false,
+            reason: 'configuration' as const,
+          })),
+          false,
+        ),
+      );
+    }
+    const seriesByPlace = new Map<string, Promise<SeriesLoad>>();
 
     const rows: DepartureSampleConditions[][] = [];
     for (const group of groups) {
@@ -190,71 +197,46 @@ export class WeatherService {
           continue;
         }
 
-        if (!variesByTime) {
-          const place = weatherSeriesCacheKey({
-            provider,
-            lat: sample.lat,
-            lon: sample.lon,
-            altitudeM: sample.altitudeM,
-          });
-          let point = mockByPlace.get(place);
-          if (!point) {
-            point = withGroundElevation(
-              this.mockWeather(sample.lat, sample.lon),
-              sample.altitudeM,
-            );
-            mockByPlace.set(place, point);
-          }
-          await this.storePoint(
-            weatherCacheKey({
-              provider,
-              lat: sample.lat,
-              lon: sample.lon,
-              at: sample.at,
-              altitudeM: sample.altitudeM,
-            }),
-            point,
-          );
-          samples.push(
-            sampleConditions(requestedAt, sample.at.toISOString(), point),
-          );
-          continue;
-        }
-
         const series = await this.metSeriesFor(
           sample.lat,
           sample.lon,
           sample.altitudeM,
+          gate.userAgent,
           seriesByPlace,
         );
-        if (!series) {
+        if (!series.ok) {
           samples.push({
             requestedAt,
             available: false,
-            reason: 'missing',
+            reason: series.reason,
           });
           continue;
         }
         const match = matchMetTimeseries(
-          series.map((entry) => entry.time),
+          series.series.map((entry) => entry.time),
           sample.at,
         );
         const point =
           match == null
             ? null
-            : metPointFromEntry(series[match.index], sample.lat, sample.lon);
+            : metPointFromEntry(series.series[match.index], sample.lat, sample.lon);
         if (!match || !match.inRange || !point) {
           samples.push({
             requestedAt,
             available: false,
-            reason: match && !match.inRange ? 'out_of_range' : 'missing',
+            reason:
+              match && !match.inRange
+                ? 'out_of_range'
+                : point
+                  ? 'missing'
+                  : 'missing_fields',
           });
           continue;
         }
         const stored = withGroundElevation(point, sample.altitudeM);
         await this.storePoint(
           weatherCacheKey({
-            provider,
+            provider: 'met',
             lat: sample.lat,
             lon: sample.lon,
             at: sample.at,
@@ -267,27 +249,46 @@ export class WeatherService {
       rows.push(samples);
     }
 
-    return rows.map((samples) =>
-      comparisonRowFromSamples(samples, variesByTime),
-    );
+    return rows.map((samples) => comparisonRowFromSamples(samples, true));
   }
 
-  private summarize(
-    provider: string,
-    weatherPoints: WeatherPoint[],
-  ): RouteWeatherSummary {
+  private runtimeGate():
+    | { ok: true; userAgent: string }
+    | { ok: false } {
+    const message = weatherConfigurationMessage(
+      this.config.get<string>('WEATHER_PROVIDER'),
+      this.config.get<string>('MET_USER_AGENT'),
+    );
+    if (message) {
+      this.logger.warn(MET_FAILURE_LOGS.configuration);
+      return { ok: false };
+    }
+    return {
+      ok: true,
+      userAgent: resolveMetUserAgent(this.config.get<string>('MET_USER_AGENT'))!,
+    };
+  }
+
+  private summarize(weatherPoints: WeatherPoint[]): RouteWeatherSummary {
     const temps = weatherPoints.map((p) => p.airTempC);
     const rains = weatherPoints.map((p) => p.precipitationProbPct);
     const precips = weatherPoints.map((p) => p.precipitationMm);
     const winds = weatherPoints.map((p) => p.windSpeedMs);
+    const validAt = weatherPoints
+      .map((point) => point.forecastValidAt)
+      .filter((time): time is string => typeof time === 'string')
+      .sort();
 
     return {
-      provider,
+      provider: 'met',
+      status: 'available',
+      source: 'met',
+      forecastValidAt: validAt[0],
       sampledAt: new Date().toISOString(),
       points: weatherPoints,
       minTempC: Math.min(...temps),
       maxTempC: Math.max(...temps),
-      maxRainProbPct: Math.max(...rains),
+      maxRainProbPct: maxFiniteWeatherNumber(rains),
       maxPrecipMm: Math.max(...precips),
       maxWindMs: Math.max(...winds),
     };
@@ -304,28 +305,85 @@ export class WeatherService {
   private async pointWeather(
     lat: number,
     lon: number,
-    provider: string,
+    userAgent: string,
     at?: Date,
     altitudeM?: number | null,
-  ): Promise<WeatherPoint> {
-    const key = weatherCacheKey({ provider, lat, lon, at, altitudeM });
+  ): Promise<PointSuccess | PointFailure> {
+    const key = weatherCacheKey({
+      provider: 'met',
+      lat,
+      lon,
+      at,
+      altitudeM,
+    });
+    const cached = await this.readCachedPoint(key);
+    if (cached) {
+      return {
+        ok: true,
+        point: withGroundElevation({ ...cached, lat, lon }, altitudeM),
+      };
+    }
+
+    const loaded = await this.loadMetSeries(
+      lat,
+      lon,
+      altitudeM,
+      weatherSeriesCacheKey({
+        provider: 'met',
+        lat,
+        lon,
+        altitudeM,
+      }),
+      userAgent,
+    );
+    if (!loaded.ok) return loaded;
+
+    let entry: MetSeriesEntry | undefined;
+    let validAt: string | undefined;
+    if (at && !Number.isNaN(at.getTime())) {
+      const match = matchMetTimeseries(
+        loaded.series.map((item) => item.time),
+        at,
+      );
+      if (!match) return { ok: false, reason: 'missing' };
+      if (!match.inRange) {
+        this.logger.warn(MET_FAILURE_LOGS.outOfRange);
+        return { ok: false, reason: 'out_of_range' };
+      }
+      entry = loaded.series[match.index];
+      validAt = match.matchedAt;
+    } else {
+      entry = loaded.series[0];
+      const parsed = Date.parse(entry?.time ?? '');
+      if (!Number.isFinite(parsed)) return { ok: false, reason: 'empty' };
+      validAt = new Date(parsed).toISOString();
+    }
+
+    const point = metPointFromEntry(entry, lat, lon);
+    if (!point) {
+      this.logger.warn(MET_FAILURE_LOGS.noTemperature);
+      return { ok: false, reason: 'missing_fields' };
+    }
+    const stored = withGroundElevation(
+      { ...point, forecastValidAt: validAt },
+      altitudeM,
+    );
+    await this.storePoint(key, stored);
+    return { ok: true, point: stored };
+  }
+
+  private async readCachedPoint(key: string): Promise<WeatherPoint | null> {
     const cached = await this.prisma.weatherCache.findUnique({
       where: { cacheKey: key },
     });
-    if (cached && cached.validUntil > new Date()) {
+    if (!cached || cached.validUntil <= new Date()) return null;
+    try {
       const stored = JSON.parse(cached.payloadJson) as WeatherPoint;
-      // The shared cache must not hand one rider another rider's sample.
-      return { ...stored, lat, lon };
+      if (!usableCachedPoint(stored)) return null;
+      return stored;
+    } catch {
+      return null;
     }
-
-    const fetched =
-      provider === 'met'
-        ? await this.fetchMet(lat, lon, at, altitudeM)
-        : this.mockWeather(lat, lon);
-    const point = withGroundElevation(fetched, altitudeM);
-
-    await this.storePoint(key, point);
-    return point;
   }
 
   private async storePoint(key: string, point: WeatherPoint): Promise<void> {
@@ -360,8 +418,9 @@ export class WeatherService {
     lat: number,
     lon: number,
     altitudeM: number | null | undefined,
-    memo: Map<string, Promise<MetSeriesEntry[] | null>>,
-  ): Promise<MetSeriesEntry[] | null> {
+    userAgent: string,
+    memo: Map<string, Promise<SeriesLoad>>,
+  ): Promise<SeriesLoad> {
     const key = weatherSeriesCacheKey({
       provider: 'met',
       lat,
@@ -370,7 +429,7 @@ export class WeatherService {
     });
     const pending = memo.get(key);
     if (pending) return pending;
-    const loading = this.loadMetSeries(lat, lon, altitudeM, key);
+    const loading = this.loadMetSeries(lat, lon, altitudeM, key, userAgent);
     memo.set(key, loading);
     return loading;
   }
@@ -380,19 +439,16 @@ export class WeatherService {
     lon: number,
     altitudeM: number | null | undefined,
     key: string,
-  ): Promise<MetSeriesEntry[] | null> {
+    userAgent: string,
+  ): Promise<SeriesLoad> {
     const cached = await this.prisma.weatherCache.findUnique({
       where: { cacheKey: key },
     });
     if (cached && cached.validUntil > new Date()) {
       const parsed = parseMetSeries(cached.payloadJson);
-      if (parsed) return parsed;
+      if (parsed) return { ok: true, series: parsed };
     }
 
-    const userAgent = this.config.get(
-      'MET_USER_AGENT',
-      'MotorcycleClothingApp/0.1 (dev)',
-    );
     try {
       const url = metLocationForecastUrl(lat, lon, altitudeM);
       const { data } = await axios.get(url, {
@@ -400,89 +456,23 @@ export class WeatherService {
         timeout: 8000,
       });
       const timeseries = data?.properties?.timeseries;
-      if (!Array.isArray(timeseries) || timeseries.length === 0) return null;
-      const minimized = minimizeMetSeries(timeseries);
-      if (minimized.length === 0) return null;
-      await this.storeJson(key, minimized);
-      return minimized;
-    } catch {
-      this.logger.warn(MET_FAILURE_LOGS.series);
-      return null;
-    }
-  }
-
-  private mockWeather(lat: number, lon: number): WeatherPoint {
-    // Deterministic-ish mock from coordinates + day of year
-    const day = new Date().getMonth() * 30 + new Date().getDate();
-    const base = 8 + Math.sin((day / 365) * Math.PI * 2) * 10;
-    const jitter = ((Math.abs(lat * 1000 + lon * 100) % 7) - 3) * 0.4;
-    const airTempC = Number((base + jitter).toFixed(1));
-    const precipitationProbPct = Math.abs(Math.floor(lat * 100 + day)) % 70;
-    const precipitationMm =
-      precipitationProbPct > 50
-        ? Number((precipitationProbPct / 80).toFixed(2))
-        : 0;
-    const windSpeedMs = 2 + (Math.abs(Math.floor(lon * 50 + day)) % 8);
-
-    return {
-      lat,
-      lon,
-      airTempC,
-      precipitationProbPct,
-      precipitationMm,
-      windSpeedMs,
-      symbol: precipitationProbPct > 50 ? 'rain' : 'fair',
-    };
-  }
-
-  private async fetchMet(
-    lat: number,
-    lon: number,
-    at?: Date,
-    altitudeM?: number | null,
-  ): Promise<WeatherPoint> {
-    const userAgent = this.config.get(
-      'MET_USER_AGENT',
-      'MotorcycleClothingApp/0.1 (dev)',
-    );
-    try {
-      const url = metLocationForecastUrl(lat, lon, altitudeM);
-      const { data } = await axios.get(url, {
-        headers: { 'User-Agent': userAgent, Accept: 'application/json' },
-        timeout: 8000,
-      });
-      const timeseries = data?.properties?.timeseries ?? [];
-      const index = selectMetTimeseriesIndex(
-        timeseries.map((entry: { time?: string }) => entry?.time),
-        at,
-      );
-      const series = timeseries[index]?.data;
-      const instant = series?.instant?.details;
-      // An empty payload is a provider miss. Caching it as 0 °C would dress
-      // the rider for a calm freeze that MET did not report.
-      if (
-        !Array.isArray(timeseries) ||
-        timeseries.length === 0 ||
-        instant?.air_temperature == null
-      ) {
-        this.logger.warn(MET_FAILURE_LOGS.noTemperature);
-        return this.mockWeather(lat, lon);
+      if (!Array.isArray(timeseries) || timeseries.length === 0) {
+        this.logger.warn(MET_FAILURE_LOGS.series);
+        return { ok: false, reason: 'empty' };
       }
-      const next1 = series?.next_1_hours ?? series?.next_6_hours ?? {};
-      return {
-        lat,
-        lon,
-        airTempC: Number(instant.air_temperature),
-        precipitationProbPct: Number(
-          next1?.details?.probability_of_precipitation ?? 0,
-        ),
-        precipitationMm: Number(next1?.details?.precipitation_amount ?? 0),
-        windSpeedMs: Number(instant.wind_speed ?? 0),
-        symbol: next1?.summary?.symbol_code,
-      };
-    } catch {
-      this.logger.warn(MET_FAILURE_LOGS.fetch);
-      return this.mockWeather(lat, lon);
+      const minimized = minimizeMetSeries(timeseries);
+      if (minimized.length === 0) {
+        this.logger.warn(MET_FAILURE_LOGS.series);
+        return { ok: false, reason: 'empty' };
+      }
+      await this.storeJson(key, minimized);
+      return { ok: true, series: minimized };
+    } catch (err) {
+      const reason = axiosFailureReason(err);
+      this.logger.warn(
+        reason === 'timeout' ? MET_FAILURE_LOGS.timeout : MET_FAILURE_LOGS.fetch,
+      );
+      return { ok: false, reason };
     }
   }
 }
@@ -594,19 +584,99 @@ function metPointFromEntry(
   lon: number,
 ): WeatherPoint | null {
   const instant = entry?.data?.instant?.details;
-  if (instant?.air_temperature == null) return null;
-  const next = entry?.data?.next_1_hours ?? entry?.data?.next_6_hours ?? {};
+  const next = entry?.data?.next_1_hours ?? entry?.data?.next_6_hours;
+  const airTempC = finiteNumber(instant?.air_temperature);
+  const windSpeedMs = finiteNumber(instant?.wind_speed);
+  const precipitationProbPct = finiteNumber(
+    next?.details?.probability_of_precipitation,
+  );
+  const precipitationMm = finiteNumber(next?.details?.precipitation_amount);
+  const parsed = Date.parse(entry?.time ?? '');
+  if (
+    airTempC == null ||
+    windSpeedMs == null ||
+    precipitationMm == null ||
+    !Number.isFinite(parsed)
+  ) {
+    return null;
+  }
   return {
     lat,
     lon,
-    airTempC: Number(instant.air_temperature),
-    precipitationProbPct: Number(
-      next.details?.probability_of_precipitation ?? 0,
-    ),
-    precipitationMm: Number(next.details?.precipitation_amount ?? 0),
-    windSpeedMs: Number(instant.wind_speed ?? 0),
-    symbol: next.summary?.symbol_code,
+    airTempC,
+    precipitationProbPct,
+    precipitationMm,
+    windSpeedMs,
+    symbol: next?.summary?.symbol_code,
+    source: 'met',
+    forecastValidAt: new Date(parsed).toISOString(),
   };
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function usableCachedPoint(point: WeatherPoint): boolean {
+  return (
+    point.source === 'met' &&
+    typeof point.forecastValidAt === 'string' &&
+    point.forecastValidAt.length > 0 &&
+    finiteNumber(point.airTempC) != null &&
+    finiteNumber(point.windSpeedMs) != null &&
+    (point.precipitationProbPct == null ||
+      finiteNumber(point.precipitationProbPct) != null) &&
+    finiteNumber(point.precipitationMm) != null
+  );
+}
+
+type PointSuccess = { ok: true; point: WeatherPoint };
+type PointFailure = { ok: false; reason: WeatherFailureReason };
+type SeriesLoad =
+  | { ok: true; series: MetSeriesEntry[] }
+  | { ok: false; reason: WeatherFailureReason };
+
+function blockedWeather(
+  status: 'partial' | 'unavailable',
+  reason: WeatherFailureReason,
+): RouteWeatherSummary {
+  return {
+    provider: 'met',
+    status,
+    reason,
+    sampledAt: new Date().toISOString(),
+    points: [],
+    minTempC: Number.NaN,
+    maxTempC: Number.NaN,
+    maxRainProbPct: Number.NaN,
+    maxPrecipMm: Number.NaN,
+    maxWindMs: Number.NaN,
+  };
+}
+
+function dominantReason(reasons: WeatherFailureReason[]): WeatherFailureReason {
+  const order: WeatherFailureReason[] = [
+    'configuration',
+    'timeout',
+    'empty',
+    'missing_fields',
+    'out_of_range',
+    'provider',
+    'missing',
+  ];
+  for (const reason of order) {
+    if (reasons.includes(reason)) return reason;
+  }
+  return 'provider';
+}
+
+function axiosFailureReason(err: unknown): 'timeout' | 'provider' {
+  const code =
+    err && typeof err === 'object' && 'code' in err
+      ? String((err as { code?: unknown }).code ?? '')
+      : '';
+  if (code === 'ECONNABORTED' || code === 'ETIMEDOUT') return 'timeout';
+  return 'provider';
 }
 
 function sampleConditions(
