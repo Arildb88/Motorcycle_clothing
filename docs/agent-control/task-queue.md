@@ -2113,3 +2113,34 @@ Verification:
 - Read architecture/security/privacy docs. Work from latest dev_test on a dedicated maintenance branch, PR to dev_test only; merge after required checks pass. Keep dev/main untouched.
 - Follow queue completion/blocker protocol, report old/new versions, compatibility edits, verification and remaining operator steps in docs/agent-reports/latest.md. Stop after this task.
 ~~~~~
+
+
+### ALPINE-PLANNER-SIMPLIFY-001
+
+- status: queued
+- title: Simplify lift-based alpine and snowboard planner and resort information
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE_IMPLEMENTATION
+## ID: ALPINE-PLANNER-SIMPLIFY-001
+## Task: Simplify lift-based alpine and snowboard planner and resort information
+
+Arild explicitly authorized these changes in chat on 2026-10-07.
+
+Requirements:
+- For alpine skiing and snowboarding remove the "Hvor du oppholder deg / Exposure" choice, including walking/uphill selections. Treat these resort sessions as lift-assisted downhill skiing/snowboarding by default. Use the existing lift exposure domain value server-side and mobile-side; do not merely hide the control while retaining a stale walking choice. Existing clients remain compatible where practical. Do not alter cross-country, hiking or cycling semantics.
+- Preserve cold exposure during lift rides/queues and descent behavior in the existing alpine engine. No new exposure model or unrelated recommendation tuning.
+- Clarify "Øktlengde": intended elapsed time in the ski area, including descents, lift rides and breaks, not a single descent, travel to the resort, or uphill walking time. Inspect current semantics and align input and engine use with this meaning; keep travel departure/arrival and session start distinct. Add short nb/en helper text, e.g. "Hvor lenge planlegger du å være i bakken, inkludert heisturer og pauser?"
+- Hide latitude/longitude in user-visible resort result cards and selected-resort information. Keep coordinates internally for selection, weather/elevation and nearby discovery; do not remove stored/API coordinates.
+- Keep ONE visible attribution above resort results: "Informasjon om skianlegg er hentet fra Fnugg.no", linking to https://fnugg.no. Remove repeated per-result and selected-resort Fnugg.no links on this planner screen. Keep attribution readable and accessible, not hidden. Preserve resort names, selection and weather/elevation functionality. No provider change.
+
+Verification and boundaries:
+- Use current Flutter/NestJS architecture and existing localization. No new dependency, schema migration, external provider, paid service or deployment.
+- Quota-conscious checks per Arild: Flutter analyze once and focused tests for hidden exposure choice/default lift payload, helper text, coordinates hidden while selections retain coordinates, and exactly one visible attribution link. Run focused API tests/build only if API behavior changes. No full suites or repeated builds by default; broaden only for a concrete failure.
+- Read current architecture/security/privacy constraints. Dedicated feature/fix branch from latest dev_test; PR to dev_test, merge only after required checks. Keep dev/main untouched.
+- Follow queue completion/blocker protocol, update docs/agent-reports/latest.md with results and limitations, and stop after this task.
+~~~~~
