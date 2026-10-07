@@ -37,7 +37,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get languageSaved => 'Språk lagret';
 
   @override
-  String get quickRoutes => 'Hurtigruter';
+  String get quickRoutes => 'Legg til ruter';
 
   @override
   String get planNewRide => 'Planlegg ny tur';
@@ -968,7 +968,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get routesSubtitle =>
-      'Gjenbrukbare maler for motorsykkel. Vær og antrekk beregnes på nytt hver gang du starter en tur.';
+      'Reusable templates for motorcycle. Weather and kit are always recalculated when you launch a ride.';
 
   @override
   String get routesEditTemplate => 'Rediger rutemal';
@@ -1121,11 +1121,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get plannerStyleSkate => 'Skøyting';
 
   @override
-  String get plannerBasicClothing => 'Klær under det beskyttende utstyret';
+  String get plannerBasicClothing => 'Klær under det mc-utstyret';
 
   @override
   String get plannerBasicHint =>
-      'Valgfritt. Ingen er et gyldig valg, også når mc-plagget er det eneste laget du trenger.';
+      'Optional. None is a valid choice, including when the motorcycle garment is the only layer you need.';
 
   @override
   String get plannerBasicUpper => 'Overdel';
@@ -1146,10 +1146,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get plannerBasicThickSweater => 'Tykk genser';
 
   @override
-  String get plannerBasicWoolTop => 'Ullundertøy, overdel';
+  String get plannerBasicWoolTop => 'Ull-undertøy, overdel';
 
   @override
-  String get plannerBasicWoolBottom => 'Ullundertøy, underdel';
+  String get plannerBasicWoolBottom => 'Ull-undertøy, underdel';
 
   @override
   String get plannerBasicJeans => 'Jeans';
@@ -1271,11 +1271,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wardrobeSharingBody =>
-      'Mc-klær kan aldri deles. Velg to eller flere aktiviteter for å dele personlige plagg. Demoklær følger sin aktivitet.';
+      'Motorcycle clothes can never be shared. Choose two or more activities to share personal garments. Demo clothes stay with their activity.';
 
   @override
   String get wardrobeMotorcycleIsolated =>
-      'Mc-klær blir i sitt eget garderobeskap.';
+      'Motorcycle clothes stay in their own wardrobe.';
 
   @override
   String get wardrobeHikingUnavailable => 'Tur har ikke en garderobe ennå.';
@@ -1285,7 +1285,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get garmentMotorcycleLocked =>
-      'Dette plagget blir i mc-garderoben og deles ikke.';
+      'This piece stays in the motorcycle wardrobe and is not shared.';
 
   @override
   String get garmentEditTitle => 'Rediger plagg';
