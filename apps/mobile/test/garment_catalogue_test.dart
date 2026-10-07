@@ -15,7 +15,12 @@ void main() {
   });
 
   test('omits untouched defaults and shares only an explicit rating', () {
-    const warmth = TierField(value: 4, touched: false, source: 'community', sampleCount: 6);
+    const warmth = TierField(
+      value: 4,
+      touched: false,
+      source: 'community',
+      sampleCount: 6,
+    );
     const wind = TierField(value: 5, touched: false, source: 'fallback');
     const water = TierField(value: 2, touched: true, source: 'explicit');
     const breath = TierField(value: 3, touched: false);
@@ -82,30 +87,35 @@ void main() {
     expect(editRefreshesCatalogue, isFalse);
   });
 
-  test('an edit keeps the saved tiers and does not rebuild them from a preview', () {
-    const existing = TierField(value: 2, touched: false, source: 'existing');
-    final body = garmentSaveBody(
-      isEdit: true,
-      name: 'Renamed',
-      category: 'shell_jacket',
-      writeYourself: false,
-      brand: 'Klim',
-      model: 'Badlands Pro',
-      hasVentilation: false,
-      isHeated: false,
-      activityTags: const ['motorcycle'],
-      linerKinds: const [],
-      warmth: existing,
-      wind: existing,
-      water: existing,
-      breath: existing,
-    );
-    expect(body['warmthTier'], 2);
-    expect(body['name'], 'Renamed');
-    expect(editRefreshesCatalogue, isFalse);
-  });
+  test(
+    'an edit keeps the saved tiers and does not rebuild them from a preview',
+    () {
+      const existing = TierField(value: 2, touched: false, source: 'existing');
+      final body = garmentSaveBody(
+        isEdit: true,
+        name: 'Renamed',
+        category: 'shell_jacket',
+        writeYourself: false,
+        brand: 'Klim',
+        model: 'Badlands Pro',
+        hasVentilation: false,
+        isHeated: false,
+        activityTags: const ['motorcycle'],
+        linerKinds: const [],
+        warmth: existing,
+        wind: existing,
+        water: existing,
+        breath: existing,
+      );
+      expect(body['warmthTier'], 2);
+      expect(body['name'], 'Renamed');
+      expect(editRefreshesCatalogue, isFalse);
+    },
+  );
 
-  testWidgets('offers a curated product and a private free-text path', (tester) async {
+  testWidgets('offers a curated product and a private free-text path', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(900, 4200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -126,7 +136,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Badlands Pro').first);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Community estimate · 6 contributions'), findsWidgets);
+    expect(
+      find.textContaining('Community estimate · 6 contributions'),
+      findsWidgets,
+    );
     expect(api.previewCalls, greaterThan(0));
 
     await tester.tap(find.text('Change product'));
@@ -155,7 +168,7 @@ void main() {
     );
   });
 
-  testWidgets('a deliberate rating is shared and an untouched default is not', (
+  testWidgets('a deliberate personal rating is saved and not contributed', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(900, 4200);
@@ -176,11 +189,9 @@ void main() {
     tester.widget<Slider>(slider).onChanged!(4);
     await tester.pumpAndSettle();
     expect(find.text('Your value'), findsWidgets);
+    expect(find.text('Share this rating'), findsNothing);
+    expect(find.textContaining('not of different people'), findsNothing);
 
-    expect(find.textContaining('not of different people'), findsOneWidget);
-    await tester.ensureVisible(find.text('Share this rating'));
-    await tester.tap(find.text('Share this rating'));
-    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Add to wardrobe'));
     await tester.tap(find.text('Add to wardrobe'));
     await tester.pumpAndSettle();
@@ -188,14 +199,14 @@ void main() {
     final create = api.posts.lastWhere((call) => call.path == '/wardrobe');
     expect(create.body.containsKey('warmthTier'), isTrue);
     expect(create.body.containsKey('windResistTier'), isFalse);
-    final share = api.posts.lastWhere(
-      (call) => call.path.endsWith('/contributions'),
+    expect(create.body['name'], isNotNull);
+    expect(
+      api.posts.where((call) => call.path.endsWith('/contributions')),
+      isEmpty,
     );
-    expect(share.body['explicitMetrics'], ['warmth']);
-    expect(share.body.containsKey('name'), isFalse);
   });
 
-  testWidgets('Norwegian explains the contribution and English stays available', (
+  testWidgets('Norwegian omits the share prompt and English stays separate', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(900, 4200);
@@ -207,52 +218,59 @@ void main() {
     await tester.pumpWidget(_harness(api, const Locale('nb')));
     await tester.pumpAndSettle();
     expect(find.text('Annet / skriv selv'), findsOneWidget);
-    expect(find.textContaining('ikke et antall personer'), findsWidgets);
+    expect(find.text('Del denne vurderingen'), findsNothing);
+    expect(find.textContaining('ikke et antall personer'), findsNothing);
     expect(find.text('Other / write yourself'), findsNothing);
+    expect(find.text('Share this rating'), findsNothing);
   });
 
-  testWidgets('editing an existing garment does not refresh it from the catalogue', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(900, 4200);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'editing an existing garment does not refresh it from the catalogue',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 4200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final api = _FakeCatalogueApi();
-    final existing = Garment(
-      id: 'g1',
-      name: 'Snapshot',
-      category: 'shell_jacket',
-      layer: 'outer',
-      primaryBodyZone: 'torso',
-      warmthTier: 2,
-      windResistTier: 5,
-      waterResistTier: 4,
-      breathabilityTier: 3,
-      brand: 'Klim',
-      model: 'Badlands Pro',
-      activityTags: const ['motorcycle'],
-    );
-    await tester.pumpWidget(_harness(api, const Locale('en'), existing));
-    await tester.pumpAndSettle();
+      final api = _FakeCatalogueApi();
+      final existing = Garment(
+        id: 'g1',
+        name: 'Snapshot',
+        category: 'shell_jacket',
+        layer: 'outer',
+        primaryBodyZone: 'torso',
+        warmthTier: 2,
+        windResistTier: 5,
+        waterResistTier: 4,
+        breathabilityTier: 3,
+        brand: 'Klim',
+        model: 'Badlands Pro',
+        activityTags: const ['motorcycle'],
+      );
+      await tester.pumpWidget(_harness(api, const Locale('en'), existing));
+      await tester.pumpAndSettle();
 
-    expect(api.previewCalls, 0);
-    expect(find.text('2/5'), findsWidgets);
-    expect(find.textContaining('Community estimate'), findsNothing);
+      expect(api.previewCalls, 0);
+      expect(find.text('2/5'), findsWidgets);
+      expect(find.textContaining('Community estimate'), findsNothing);
 
-    await tester.enterText(find.byType(TextField).first, 'Renamed snapshot');
-    await tester.pumpAndSettle();
-    expect(api.previewCalls, 0);
-    await tester.ensureVisible(find.text('Save changes'));
-    await tester.tap(find.text('Save changes'));
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Renamed snapshot');
+      await tester.pumpAndSettle();
+      expect(api.previewCalls, 0);
+      await tester.ensureVisible(find.text('Save changes'));
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
 
-    final patch = api.patches.single;
-    expect(patch.body['name'], 'Renamed snapshot');
-    expect(patch.body['warmthTier'], 2);
-    expect(api.previewCalls, 0);
-  });
+      final patch = api.patches.single;
+      expect(patch.body['name'], 'Renamed snapshot');
+      expect(patch.body['warmthTier'], 2);
+      expect(api.previewCalls, 0);
+      expect(
+        api.posts.where((call) => call.path.endsWith('/contributions')),
+        isEmpty,
+      );
+    },
+  );
 }
 
 Widget _harness(
@@ -318,7 +336,8 @@ class _FakeCatalogueApi extends ApiClient {
     posts.add(_Call(path, Map<String, dynamic>.from(body)));
     if (path.endsWith('/preview')) {
       previewCalls += 1;
-      final matched = body['brand'] == 'Klim' && body['model'] == 'Badlands Pro';
+      final matched =
+          body['brand'] == 'Klim' && body['model'] == 'Badlands Pro';
       return {
         'matched': matched,
         'matchKind': matched ? 'identity' : 'none',

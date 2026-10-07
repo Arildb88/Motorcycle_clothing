@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import 'package:motorcycle_clothing/domain/garment.dart';
 import 'package:motorcycle_clothing/domain/garment_catalogue_form.dart';
 import 'package:motorcycle_clothing/domain/wardrobe_sharing.dart';
@@ -53,8 +52,6 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
   bool _writeYourself = false;
   String? _selectedBrand;
   String? _selectedModel;
-  bool _shareRating = false;
-  final String _submissionId = const Uuid().v4();
   List<String> _brands = const [];
   List<CatalogueChoice> _modelChoices = const [];
   bool _busy = false;
@@ -193,7 +190,6 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       _windTouched = false;
       _waterTouched = false;
       _breathTouched = false;
-      _shareRating = false;
     });
     _refreshPreview();
   }
@@ -202,7 +198,6 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
     setState(() {
       _preset = id;
       _warmthBand = null;
-      _shareRating = false;
       _warmthTouched = false;
       _windTouched = false;
       _waterTouched = false;
@@ -234,7 +229,6 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       _warmth = tier.toDouble();
       _warmthTouched = false;
       _warmthSource = 'fallback';
-      _shareRating = false;
     });
   }
 
@@ -367,11 +361,12 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
         _material = choice.materialKey;
       }
       _thermalLiner = choice.linerKey.split(',').contains('thermal_liner');
-      _waterproofLiner = choice.linerKey.split(',').contains('waterproof_liner');
+      _waterproofLiner = choice.linerKey
+          .split(',')
+          .contains('waterproof_liner');
       _warmthTouched = false;
       _windTouched = false;
       _waterTouched = false;
-      _shareRating = false;
       if (_name.text.trim().isEmpty) {
         _name.text = choice.curatedName.isEmpty
             ? '${choice.brand} ${choice.model}'
@@ -387,7 +382,6 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
     setState(() {
       _writeYourself = false;
       _selectedModel = model;
-      _shareRating = false;
       _warmthTouched = false;
       _windTouched = false;
       _waterTouched = false;
@@ -455,38 +449,11 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       water: water,
       breath: breath,
     );
-    final share = contributionBody(
-      isDemo: widget.existing?.isDemo ?? false,
-      share: _shareRating,
-      writeYourself: _writeYourself,
-      brand: brand,
-      model: model,
-      category: _category,
-      activityTags: _activityTags(),
-      isHeated: _isHeated,
-      material: _material,
-      linerKinds: _linerKinds(),
-      warmth: warmth,
-      wind: wind,
-      water: water,
-      submissionId: _submissionId,
-      garmentId: widget.existing?.id,
-    );
     try {
       if (_isEdit) {
         await api.patch('/wardrobe/${widget.existing!.id}', body);
-        if (share != null) {
-          await api.post('/wardrobe/catalogue/contributions', share, auth: true);
-        }
       } else {
-        final created = await api.post('/wardrobe', body, auth: true);
-        if (share != null) {
-          await api.post(
-            '/wardrobe/catalogue/contributions',
-            {...share, 'garmentId': created['id']},
-            auth: true,
-          );
-        }
+        await api.post('/wardrobe', body, auth: true);
       }
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -555,303 +522,289 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
           ),
           if (_cyclingChoices) ..._cyclingFields(l10n),
           if (!_cyclingChoices) ...[
-          if (!_isEdit)
+            if (!_isEdit)
+              OutlineFormField(
+                child: DropdownButtonFormField<String?>(
+                  // ignore: deprecated_member_use
+                  value: _preset,
+                  decoration: InputDecoration(labelText: l10n.garmentQuickType),
+                  items: [
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text(l10n.commonCustom),
+                    ),
+                    ...garmentPresets.map(
+                      (p) => DropdownMenuItem(
+                        value: p['id'],
+                        child: Text(garmentPresetLabel(l10n, p['id']!)),
+                      ),
+                    ),
+                  ],
+                  onChanged: _applyPreset,
+                ),
+              ),
+            OutlineFormField(
+              child: DropdownButtonFormField<String>(
+                // ignore: deprecated_member_use
+                value: _category,
+                decoration: InputDecoration(labelText: l10n.commonCategory),
+                items: garmentCategories
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c,
+                        child: Text(garmentCategoryLabel(l10n, c)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    setState(() {
+                      _category = v;
+                      _selectedModel = null;
+                      _model.clear();
+                    });
+                    _loadChoices();
+                    _refreshPreview();
+                  }
+                },
+              ),
+            ),
             OutlineFormField(
               child: DropdownButtonFormField<String?>(
                 // ignore: deprecated_member_use
-                value: _preset,
-                decoration: InputDecoration(labelText: l10n.garmentQuickType),
+                value: _material,
+                decoration: InputDecoration(labelText: l10n.garmentMaterial),
                 items: [
-                  DropdownMenuItem(value: null, child: Text(l10n.commonCustom)),
-                  ...garmentPresets.map(
-                    (p) => DropdownMenuItem(
-                      value: p['id'],
-                      child: Text(garmentPresetLabel(l10n, p['id']!)),
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(l10n.garmentUnspecified),
+                  ),
+                  ...garmentMaterials.map(
+                    (m) => DropdownMenuItem(
+                      value: m,
+                      child: Text(garmentMaterialLabel(l10n, m)),
                     ),
                   ),
                 ],
-                onChanged: _applyPreset,
+                onChanged: (v) => setState(() => _material = v),
               ),
             ),
-          OutlineFormField(
-            child: DropdownButtonFormField<String>(
-              // ignore: deprecated_member_use
-              value: _category,
-              decoration: InputDecoration(labelText: l10n.commonCategory),
-              items: garmentCategories
-                  .map(
-                    (c) => DropdownMenuItem(
-                      value: c,
-                      child: Text(garmentCategoryLabel(l10n, c)),
-                    ),
-                  )
-                  .toList(),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.garmentVentilation),
+              subtitle: Text(l10n.garmentVentilationHint),
+              value: _hasVentilation,
+              onChanged: (v) => setState(() => _hasVentilation = v),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.garmentHeated),
+              value: _isHeated,
               onChanged: (v) {
-                if (v != null) {
-                  setState(() {
-                    _category = v;
-                    _selectedModel = null;
-                    _model.clear();
-                  });
-                  _loadChoices();
-                  _refreshPreview();
-                }
+                setState(() => _isHeated = v);
+                if (!_isEdit) _refreshPreview();
               },
             ),
-          ),
-          OutlineFormField(
-            child: DropdownButtonFormField<String?>(
-              // ignore: deprecated_member_use
-              value: _material,
-              decoration: InputDecoration(labelText: l10n.garmentMaterial),
-              items: [
-                DropdownMenuItem(
-                  value: null,
-                  child: Text(l10n.garmentUnspecified),
-                ),
-                ...garmentMaterials.map(
-                  (m) => DropdownMenuItem(
-                    value: m,
-                    child: Text(garmentMaterialLabel(l10n, m)),
-                  ),
-                ),
-              ],
-              onChanged: (v) => setState(() => _material = v),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.garmentThermalLiner),
+              subtitle: Text(l10n.garmentThermalLinerHint),
+              value: _thermalLiner,
+              onChanged: (v) {
+                setState(() => _thermalLiner = v);
+                if (!_isEdit) _refreshPreview();
+              },
             ),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.garmentVentilation),
-            subtitle: Text(l10n.garmentVentilationHint),
-            value: _hasVentilation,
-            onChanged: (v) => setState(() => _hasVentilation = v),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.garmentHeated),
-            value: _isHeated,
-            onChanged: (v) {
-              setState(() => _isHeated = v);
-              if (!_isEdit) _refreshPreview();
-            },
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.garmentThermalLiner),
-            subtitle: Text(l10n.garmentThermalLinerHint),
-            value: _thermalLiner,
-            onChanged: (v) {
-              setState(() => _thermalLiner = v);
-              if (!_isEdit) _refreshPreview();
-            },
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.garmentWaterproofLiner),
-            value: _waterproofLiner,
-            onChanged: (v) {
-              setState(() => _waterproofLiner = v);
-              if (!_isEdit) _refreshPreview();
-            },
-          ),
-          if (_isEdit) ...[
-            OutlineFormField(
-              child: TextField(
-                controller: _brand,
-                decoration: InputDecoration(labelText: l10n.garmentBrand),
-              ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.garmentWaterproofLiner),
+              value: _waterproofLiner,
+              onChanged: (v) {
+                setState(() => _waterproofLiner = v);
+                if (!_isEdit) _refreshPreview();
+              },
             ),
-            OutlineFormField(
-              child: TextField(
-                controller: _model,
-                decoration: InputDecoration(labelText: l10n.garmentModel),
-              ),
-            ),
-          ] else ...[
-            Text(
-              l10n.catalogueNotVerified,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            if (_selectedBrand != null && _selectedModel != null)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text('$_selectedBrand $_selectedModel'),
-                subtitle: Text(
-                  _warmthSource == 'community'
-                      ? l10n.catalogueCommunityEstimate(_warmthSamples)
-                      : l10n.catalogueAutomaticDefault,
-                ),
-                trailing: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedBrand = null;
-                      _selectedModel = null;
-                      _brand.clear();
-                      _model.clear();
-                      _shareRating = false;
-                    });
-                    _refreshPreview();
-                  },
-                  child: Text(l10n.catalogueChangeProduct),
-                ),
-              )
-            else ...[
+            if (_isEdit) ...[
               OutlineFormField(
                 child: TextField(
                   controller: _brand,
-                  decoration: InputDecoration(
-                    labelText: l10n.catalogueSearchBrand,
-                  ),
-                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(labelText: l10n.garmentBrand),
                 ),
               ),
-              for (final brand in filterLabels(_brands, _brand.text).take(6))
+              OutlineFormField(
+                child: TextField(
+                  controller: _model,
+                  decoration: InputDecoration(labelText: l10n.garmentModel),
+                ),
+              ),
+            ] else ...[
+              Text(
+                l10n.catalogueNotVerified,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              if (_selectedBrand != null && _selectedModel != null)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(brand),
-                  onTap: () {
-                    setState(() {
-                      _writeYourself = false;
-                      _selectedBrand = brand;
-                      _selectedModel = null;
-                      _brand.text = brand;
-                      _model.clear();
-                      _shareRating = false;
-                    });
-                    _loadChoices();
-                  },
-                ),
-              if (_selectedBrand != null) ...[
+                  title: Text('$_selectedBrand $_selectedModel'),
+                  subtitle: Text(
+                    _warmthSource == 'community'
+                        ? l10n.catalogueCommunityEstimate(_warmthSamples)
+                        : l10n.catalogueAutomaticDefault,
+                  ),
+                  trailing: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedBrand = null;
+                        _selectedModel = null;
+                        _brand.clear();
+                        _model.clear();
+                      });
+                      _refreshPreview();
+                    },
+                    child: Text(l10n.catalogueChangeProduct),
+                  ),
+                )
+              else ...[
                 OutlineFormField(
                   child: TextField(
-                    controller: _model,
+                    controller: _brand,
                     decoration: InputDecoration(
-                      labelText: l10n.catalogueSearchModel,
+                      labelText: l10n.catalogueSearchBrand,
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
-                for (final choice in _modelChoices
-                    .where(
-                      (choice) =>
-                          choice.brand.toLowerCase() ==
-                              _selectedBrand!.toLowerCase() &&
-                          (_model.text.trim().isEmpty ||
-                              choice.model.toLowerCase().contains(
-                                _model.text.trim().toLowerCase(),
-                              )),
-                    )
-                    .take(6))
+                for (final brand in filterLabels(_brands, _brand.text).take(6))
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(choice.model),
-                    subtitle: Text(choice.curatedName),
-                    onTap: () => _selectProduct(choice),
+                    title: Text(brand),
+                    onTap: () {
+                      setState(() {
+                        _writeYourself = false;
+                        _selectedBrand = brand;
+                        _selectedModel = null;
+                        _brand.text = brand;
+                        _model.clear();
+                      });
+                      _loadChoices();
+                    },
                   ),
-                if (_model.text.trim().isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: _useTypedModel,
-                      child: Text(l10n.catalogueUseModel),
+                if (_selectedBrand != null) ...[
+                  OutlineFormField(
+                    child: TextField(
+                      controller: _model,
+                      decoration: InputDecoration(
+                        labelText: l10n.catalogueSearchModel,
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
+                  for (final choice
+                      in _modelChoices
+                          .where(
+                            (choice) =>
+                                choice.brand.toLowerCase() ==
+                                    _selectedBrand!.toLowerCase() &&
+                                (_model.text.trim().isEmpty ||
+                                    choice.model.toLowerCase().contains(
+                                      _model.text.trim().toLowerCase(),
+                                    )),
+                          )
+                          .take(6))
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(choice.model),
+                      subtitle: Text(choice.curatedName),
+                      onTap: () => _selectProduct(choice),
+                    ),
+                  if (_model.text.trim().isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: _useTypedModel,
+                        child: Text(l10n.catalogueUseModel),
+                      ),
+                    ),
+                ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _writeYourself = true;
+                        _selectedBrand = null;
+                        _selectedModel = null;
+                        _brand.clear();
+                        _model.clear();
+                        _warmthTouched = false;
+                        _windTouched = false;
+                        _waterTouched = false;
+                      });
+                      _refreshPreview();
+                    },
+                    child: Text(l10n.catalogueWriteYourself),
+                  ),
+                ),
+                if (_writeYourself)
+                  Text(
+                    l10n.catalogueWriteYourselfHint,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
               ],
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _writeYourself = true;
-                      _selectedBrand = null;
-                      _selectedModel = null;
-                      _brand.clear();
-                      _model.clear();
-                      _shareRating = false;
-                      _warmthTouched = false;
-                      _windTouched = false;
-                      _waterTouched = false;
-                    });
-                    _refreshPreview();
-                  },
-                  child: Text(l10n.catalogueWriteYourself),
-                ),
-              ),
-              if (_writeYourself)
-                Text(
-                  l10n.catalogueWriteYourselfHint,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
             ],
-          ],
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.garmentMoreDetails),
-            subtitle: Text(l10n.garmentMoreDetailsHint),
-            value: _advanced || _isEdit,
-            onChanged: (v) => setState(() => _advanced = v),
-          ),
-          ...[
-            _tier(
-              l10n.tierWarmth,
-              _warmth,
-              _caption(l10n, _warmthTouched, _warmthSource, _warmthSamples),
-              (v) => setState(() {
-                _warmth = v;
-                _warmthTouched = true;
-                _warmthSource = 'explicit';
-              }),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.garmentMoreDetails),
+              subtitle: Text(l10n.garmentMoreDetailsHint),
+              value: _advanced || _isEdit,
+              onChanged: (v) => setState(() => _advanced = v),
             ),
-            _tier(
-              l10n.tierWind,
-              _wind,
-              _caption(l10n, _windTouched, _windSource, _windSamples),
-              (v) => setState(() {
-                _wind = v;
-                _windTouched = true;
-                _windSource = 'explicit';
-              }),
-            ),
-            _tier(
-              l10n.tierWater,
-              _water,
-              _caption(l10n, _waterTouched, _waterSource, _waterSamples),
-              (v) => setState(() {
-                _water = v;
-                _waterTouched = true;
-                _waterSource = 'explicit';
-              }),
-            ),
-            if (_advanced || _isEdit)
+            ...[
               _tier(
-                l10n.tierBreath,
-                _breath,
-                _breathTouched
-                    ? l10n.catalogueYourValue
-                    : l10n.catalogueAutomaticDefault,
+                l10n.tierWarmth,
+                _warmth,
+                _caption(l10n, _warmthTouched, _warmthSource, _warmthSamples),
                 (v) => setState(() {
-                  _breath = v;
-                  _breathTouched = true;
+                  _warmth = v;
+                  _warmthTouched = true;
+                  _warmthSource = 'explicit';
                 }),
               ),
-          ],
-          if (!_isEdit || widget.existing?.isDemo != true)
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _shareRating,
-              onChanged: (_warmthTouched || _windTouched || _waterTouched) &&
-                      !_writeYourself &&
-                      (_isEdit
-                          ? _brand.text.trim().isNotEmpty &&
-                              _model.text.trim().isNotEmpty
-                          : _selectedBrand != null && _selectedModel != null)
-                  ? (value) => setState(() => _shareRating = value ?? false)
-                  : null,
-              title: Text(l10n.catalogueContributeTitle),
-              subtitle: Text(l10n.catalogueContributeBody),
-            ),
+              _tier(
+                l10n.tierWind,
+                _wind,
+                _caption(l10n, _windTouched, _windSource, _windSamples),
+                (v) => setState(() {
+                  _wind = v;
+                  _windTouched = true;
+                  _windSource = 'explicit';
+                }),
+              ),
+              _tier(
+                l10n.tierWater,
+                _water,
+                _caption(l10n, _waterTouched, _waterSource, _waterSamples),
+                (v) => setState(() {
+                  _water = v;
+                  _waterTouched = true;
+                  _waterSource = 'explicit';
+                }),
+              ),
+              if (_advanced || _isEdit)
+                _tier(
+                  l10n.tierBreath,
+                  _breath,
+                  _breathTouched
+                      ? l10n.catalogueYourValue
+                      : l10n.catalogueAutomaticDefault,
+                  (v) => setState(() {
+                    _breath = v;
+                    _breathTouched = true;
+                  }),
+                ),
+            ],
           ],
           OutlineFormField(
             child: TextField(
@@ -1040,24 +993,14 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       _tier(
         l10n.tierBreath,
         _breath,
-        _breathTouched ? l10n.catalogueYourValue : l10n.catalogueAutomaticDefault,
+        _breathTouched
+            ? l10n.catalogueYourValue
+            : l10n.catalogueAutomaticDefault,
         (v) => setState(() {
           _breath = v;
           _breathTouched = true;
         }),
       ),
-      if (!_isEdit || widget.existing?.isDemo != true)
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          value: _shareRating,
-          onChanged: (_warmthTouched || _windTouched || _waterTouched) &&
-                  _brand.text.trim().isNotEmpty &&
-                  _model.text.trim().isNotEmpty
-              ? (value) => setState(() => _shareRating = value ?? false)
-              : null,
-          title: Text(l10n.catalogueContributeTitle),
-          subtitle: Text(l10n.catalogueContributeBody),
-        ),
     ];
   }
 
