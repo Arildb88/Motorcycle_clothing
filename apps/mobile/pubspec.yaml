@@ -16,15 +16,15 @@ dependencies:
   provider: ^6.1.5+1
   # 11.2.0 still sets compileSdk from flutter.compileSdkVersion.
   flutter_secure_storage: ^11.2.0
-  shared_preferences: ^2.5.5
+  shared_preferences: ^2.5.6
   google_mobile_ads: ^9.1.0
   intl: any
   uuid: ^4.6.0
   google_fonts: ^9.0.0
   flutter_web_auth_2: ^5.1.0
   geolocator: ^14.1.1
-  # Already locked transitively. Direct so attribution links can open Fnugg.
-  url_launcher: 6.3.2
+  # Direct so attribution links can open Fnugg.
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
