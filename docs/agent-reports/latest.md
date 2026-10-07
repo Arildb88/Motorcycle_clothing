@@ -1,39 +1,50 @@
-# COMMUTE-ROUNDTRIP-001
+# REAL-DATA-ONLY-001
 
 ## Task
 
-`COMMUTE-ROUNDTRIP-001`, generation 45, authorized from idle by `8f74609039cb5a3161804677e37fe11b7a52a86b`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
+`REAL-DATA-ONLY-001`, generation 46, authorized from `COMMUTE-ROUNDTRIP-001`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/commute-roundtrip-001`
-- Implementation commit: `d4166b412cc7cb3ce8fbd25bae3747d38b88bcd0`
-- Migration: `apps/api/prisma/migrations/20261007200000_commute_roundtrip`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/77 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `fix/real-data-only-001`
+- Implementation commit: `503c31d5db12e6c6072867208c9d2dca2706d24c`
+- PR: into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Motorcycle route creation can save a named private commute with From and To endpoints, existing waypoints and preferences, and editable Europe/Oslo outbound and return clock templates. The templates are not forecasts, and the endpoints are not labeled as the rider's actual home or work. `isDefaultCommute` stays the default-route flag.
+Runtime weather is MET. `WEATHER_PROVIDER` unset or `met` is the only accepted provider. `mock` and any other name stop before a forecast is built and return a configuration error. There is no synthetic weather fallback for timeouts, empty payloads, missing temperature, wind, or precipitation amount, or a requested time outside the MET series.
 
-Planning a commute chooses a civil date and two clock times. The return defaults to that day's saved return time and can be the next civil day. A return that departs before the outbound arrival is rejected. Europe/Oslo spring-forward gaps are rejected. An autumn overlap uses the earlier instant.
+A usable point records `source: met` and `forecastValidAt` from the MET step. The configured label `met` is not that proof. Explicit zero temperature, wind, or precipitation amount is kept. Current locationforecast compact responses omit `probability_of_precipitation`. That omission is stored as null and is not turned into 0. Rain decisions use the precipitation amount MET did send, and a missing probability does not count as dry or wet. Temperature, wind, and precipitation amount are still required.
 
-Each leg calls routing and weather on its own departure and direction. The return reverses waypoints and does not reuse the outbound duration. The response is one block with Til jobb / Outbound and Hjem / Return. Wear follows the outbound leg. Rain gear and other return-only garments are packed before leaving. A different liner or vent setup for a garment already worn is a return adjustment, not a second copy of that garment. Morning weather is not averaged with the afternoon and is not copied when the return forecast is missing or out of range.
+Weather cache keys use the `wx2` namespace. Older `met:` and `series:met:` rows, including synthetic points stored under those keys, are not read. Unrelated user data and historical snapshots are not rewritten.
 
-Each leg is its own activity plan in one commute group. Feedback sent with that plan id updates the motorcycle offset once. A second submission for the same plan is rejected. Route edits do not rewrite the stored plan snapshot. Stored route analysis drops dense provider geometry. Ordinary one-way planning is unchanged.
+The running app no longer uses `NullRoutingAdapter` or a fake place/route service. An unconfigured or failed OpenRouteService result is `routing.available: false`. It is not stored as a straight-line route or presented as a provider arrival. A rider-entered duration can still build the schedule. Manual coordinates remain available. Test doubles stay inside tests.
+
+Unavailable and partial forecasts do not produce a clothing recommendation. Norwegian and English copy names the failed commute leg and offers retry. The home rain chip is hidden when MET did not send a probability.
+
+## Local environment
+
+An existing local `.env` that still says `WEATHER_PROVIDER=mock` must be changed to `WEATHER_PROVIDER=met`. `MET_USER_AGENT` must name the app and include a contact address or `http(s)://` URL. The `.env.example` value that contains `example.com` is a placeholder and is rejected. Values containing `(dev)`, `(staging)`, `(test)`, or `(smoke)` are rejected, including the compose placeholder `MotorcycleClothingApp/0.1 (staging)`. Do not commit the contact address or provider keys. Restart the API after editing `.env`. This run did not overwrite a local secrets file.
 
 ## Checks
 
-- `npm test`: 369 passed
-- `npm run build`: passed
-- `npx prisma generate` and `npx prisma validate`: passed
-- `npx prisma migrate deploy`: 4 migrations applied on local Postgres 16, including `20261007200000_commute_roundtrip`
-- `npx prisma migrate diff`: no difference
+- API production build: passed (`npm run build` in `apps/api`)
+- Production typecheck: passed
+- Focused API tests passed: weather service, altitude-aware weather, MET cache keys, departure comparison, alpine/cycling/xc recommend, motorcycle/cycling/alpine engines, commute domain, commute plan, routes service, provider plan, and ORS adapter
 - `flutter analyze`: no issues found
-- `flutter test test/commute_roundtrip_test.dart`: 7 passed
-- Android and iOS were not run
+- `flutter test test/ride_analysis_result_test.dart test/commute_roundtrip_test.dart test/ux_polish_test.dart`: passed
+- Live MET: one `GET https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=59.91&lon=10.75` with the repository User-Agent returned HTTP 200 in 0.52s. The payload had 84 timeseries steps. The first step included air temperature, wind speed, and precipitation amount. None of the 84 steps included `probability_of_precipitation`. Numeric forecast values are not copied here.
+- Live ORS: not verified. This environment has no `ORS_API_KEY`, no alternate routing key, and no `apps/api/.env`. No ORS request was sent.
+- `scripts/smoke-api.sh` was not run. This environment has no Docker and no local Postgres, so the script could not migrate or start the API. The live MET request above is the provider check. It was not replaced with a mock.
 
-## Limitations
+## Place search notes for PLACE-SEARCH-AVAILABILITY-001
 
-Commute planning is motorcycle only. Saved times are Europe/Oslo templates even if the phone is set to another zone. The autumn overlap uses the earlier of the two possible instants. A missing return forecast does not invent clothing for that leg. No notification, background refresh, or daily schedule was added.
+This run did not change place search and did not reproduce the Arendal selection failure.
+
+- `GET /location/places` returns provider id and labels only. Coordinates stay off that response.
+- `POST /location/places/resolve` returns label, latitude, and longitude.
+- `PlaceSearchField._select` catches `LocationProviderException` and also a generic failure that shows the localized search-failed text.
+- A 200 ms focus-loss timer still hides suggestions.
+- Directions failures log HTTP status, including 401/403 as authentication, and distinguish timeout from other network failures. Logs do not include the key or coordinates.
 
 ## Final control state
 
-`COMMUTE-ROUNDTRIP-001` is completed and appended once to `consumed.md`. `active_id` is `REAL-DATA-ONLY-001`. `handoff_state` is `authorized`. `handoff_generation` is 46. `promotion` stays `automatic`. `next-task.md` authorizes `REAL-DATA-ONLY-001` with `Handoff-From: COMMUTE-ROUNDTRIP-001`. This run does not execute that ID.
+`REAL-DATA-ONLY-001` is completed and appended once to `consumed.md`. `active_id` is `PLACE-SEARCH-AVAILABILITY-001`. `handoff_state` is `authorized`. `handoff_generation` is 47. `promotion` stays `automatic`. `next-task.md` authorizes `PLACE-SEARCH-AVAILABILITY-001` with `Handoff-From: REAL-DATA-ONLY-001`. This run does not execute that ID.
