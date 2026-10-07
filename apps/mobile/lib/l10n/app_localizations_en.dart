@@ -1352,6 +1352,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get garmentNameRequired => 'Name is required';
 
   @override
+  String get catalogueSearchBrand => 'Search brand';
+
+  @override
+  String get catalogueSearchModel => 'Search model';
+
+  @override
+  String get catalogueWriteYourself => 'Other / write yourself';
+
+  @override
+  String get catalogueWriteYourselfHint =>
+      'Your own name stays on this garment. It is not added to the shared catalogue.';
+
+  @override
+  String get catalogueYourValue => 'Your value';
+
+  @override
+  String get catalogueAutomaticDefault => 'Automatic default';
+
+  @override
+  String catalogueCommunityEstimate(int count) {
+    return 'Community estimate · $count contributions';
+  }
+
+  @override
+  String get catalogueNotVerified =>
+      'Brand and model choices are a curated list, not verified manufacturer measurements.';
+
+  @override
+  String get catalogueUseModel => 'Use this model';
+
+  @override
+  String get catalogueChangeProduct => 'Change product';
+
+  @override
+  String get catalogueContributeTitle => 'Share this rating';
+
+  @override
+  String get catalogueContributeBody =>
+      'Only values you set yourself are counted. Automatic defaults, demo clothes, copied values, and adding the same product again without a new rating are not counted. RideWear stores a count for each score from 1 to 5. It does not store your name, notes, account, or garment. The number is a count of contributions, not of different people. Removing the highest and lowest score is not protection against misuse.';
+
+  @override
   String get tierWarmth => 'Warmth';
 
   @override

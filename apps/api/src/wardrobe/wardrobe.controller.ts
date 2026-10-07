@@ -17,11 +17,42 @@ import { demoLanguage } from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
 import { UpdateGarmentDto } from './dto/update-garment.dto';
 import { UpdateWardrobeSharingDto } from './dto/update-wardrobe-sharing.dto';
+import {
+  CatalogueContributionDto,
+  CataloguePreviewDto,
+} from './dto/catalogue.dto';
+import { GarmentCatalogueService } from './garment-catalogue.service';
 
 @Controller('wardrobe')
 @UseGuards(JwtAuthGuard)
 export class WardrobeController {
-  constructor(private readonly wardrobe: WardrobeService) {}
+  constructor(
+    private readonly wardrobe: WardrobeService,
+    private readonly catalogue: GarmentCatalogueService,
+  ) {}
+
+  @Get('catalogue/choices')
+  catalogueChoices(
+    @Query('q') q?: string,
+    @Query('brand') brand?: string,
+    @Query('category') category?: string,
+    @Query('activityScope') activityScope?: string,
+  ) {
+    return this.catalogue.choices({ q, brand, category, activityScope });
+  }
+
+  @Post('catalogue/preview')
+  cataloguePreview(@Body() dto: CataloguePreviewDto) {
+    return this.catalogue.preview(dto);
+  }
+
+  @Post('catalogue/contributions')
+  catalogueContribution(
+    @Req() req: AuthRequest,
+    @Body() dto: CatalogueContributionDto,
+  ) {
+    return this.catalogue.contribute(req.user.userId, dto);
+  }
 
   @Get('meta')
   meta() {
@@ -66,10 +97,7 @@ export class WardrobeController {
   }
 
   @Delete('actions/demo')
-  deleteDemo(
-    @Req() req: AuthRequest,
-    @Query('activity') activity?: string,
-  ) {
+  deleteDemo(@Req() req: AuthRequest, @Query('activity') activity?: string) {
     return this.wardrobe.deleteDemo(req.user.userId, activity ?? '');
   }
 

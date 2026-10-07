@@ -1352,6 +1352,47 @@ class AppLocalizationsNb extends AppLocalizations {
   String get garmentNameRequired => 'Navn er påkrevd';
 
   @override
+  String get catalogueSearchBrand => 'Søk merke';
+
+  @override
+  String get catalogueSearchModel => 'Søk modell';
+
+  @override
+  String get catalogueWriteYourself => 'Annet / skriv selv';
+
+  @override
+  String get catalogueWriteYourselfHint =>
+      'Ditt eget navn blir på plagget. Det legges ikke i den delte katalogen.';
+
+  @override
+  String get catalogueYourValue => 'Din verdi';
+
+  @override
+  String get catalogueAutomaticDefault => 'Automatisk standard';
+
+  @override
+  String catalogueCommunityEstimate(int count) {
+    return 'Fellesskapsestimat · $count bidrag';
+  }
+
+  @override
+  String get catalogueNotVerified =>
+      'Merke- og modellvalg er en kuratert liste, ikke verifiserte produsentmålinger.';
+
+  @override
+  String get catalogueUseModel => 'Bruk denne modellen';
+
+  @override
+  String get catalogueChangeProduct => 'Bytt produkt';
+
+  @override
+  String get catalogueContributeTitle => 'Del denne vurderingen';
+
+  @override
+  String get catalogueContributeBody =>
+      'Bare verdier du selv har satt, blir telt. Automatiske standardverdier, demoklær, kopierte verdier og å legge til samme produkt på nytt uten en ny vurdering blir ikke telt. RideWear lagrer et antall for hver poengsum fra 1 til 5. Navn, notater, konto og plagg lagres ikke. Tallet er et antall bidrag, ikke et antall personer. Å fjerne høyeste og laveste verdi er ikke beskyttelse mot misbruk.';
+
+  @override
   String get tierWarmth => 'Varme';
 
   @override

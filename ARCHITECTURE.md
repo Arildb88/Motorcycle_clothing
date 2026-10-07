@@ -221,6 +221,9 @@ Garment
   … material?, hasVentilation, isHeated, activityTagsJson
 GarmentComponent
   kind (thermal_liner|waterproof_liner|other), tier deltas
+GarmentCatalogueEntry
+  shared product identity and warmth/wind/water score counts only.
+  No user, garment, name, or contribution timestamp.
 ConnectedAccount
   provider (strava|…), encrypted tokens, status, metadata
 OAuthState

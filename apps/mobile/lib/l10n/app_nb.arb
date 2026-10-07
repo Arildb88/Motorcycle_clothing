@@ -530,6 +530,25 @@
   "garmentSaveChanges": "Lagre endringer",
   "garmentAddToWardrobe": "Legg i garderoben",
   "garmentNameRequired": "Navn er påkrevd",
+  "catalogueSearchBrand": "Søk merke",
+  "catalogueSearchModel": "Søk modell",
+  "catalogueWriteYourself": "Annet / skriv selv",
+  "catalogueWriteYourselfHint": "Ditt eget navn blir på plagget. Det legges ikke i den delte katalogen.",
+  "catalogueYourValue": "Din verdi",
+  "catalogueAutomaticDefault": "Automatisk standard",
+  "catalogueCommunityEstimate": "Fellesskapsestimat · {count} bidrag",
+  "@catalogueCommunityEstimate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogueNotVerified": "Merke- og modellvalg er en kuratert liste, ikke verifiserte produsentmålinger.",
+  "catalogueUseModel": "Bruk denne modellen",
+  "catalogueChangeProduct": "Bytt produkt",
+  "catalogueContributeTitle": "Del denne vurderingen",
+  "catalogueContributeBody": "Bare verdier du selv har satt, blir telt. Automatiske standardverdier, demoklær, kopierte verdier og å legge til samme produkt på nytt uten en ny vurdering blir ikke telt. RideWear lagrer et antall for hver poengsum fra 1 til 5. Navn, notater, konto og plagg lagres ikke. Tallet er et antall bidrag, ikke et antall personer. Å fjerne høyeste og laveste verdi er ikke beskyttelse mot misbruk.",
   "tierWarmth": "Varme",
   "tierWind": "Vindtetthet",
   "tierWater": "Vanntetthet",

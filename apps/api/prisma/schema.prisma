@@ -156,6 +156,39 @@ model GarmentComponent {
   @@index([garmentId])
 }
 
+/// Shared product identity and per-metric histograms.
+/// Counts only. No user, garment, name, note, or contribution timestamp.
+model GarmentCatalogueEntry {
+  id            String  @id @default(cuid())
+  brandKey      String
+  modelKey      String
+  category      String
+  activityScope String
+  heated        Boolean
+  linerKey      String
+  materialKey   String
+  brandLabel    String
+  modelLabel    String
+  warmth1       Int     @default(0)
+  warmth2       Int     @default(0)
+  warmth3       Int     @default(0)
+  warmth4       Int     @default(0)
+  warmth5       Int     @default(0)
+  wind1         Int     @default(0)
+  wind2         Int     @default(0)
+  wind3         Int     @default(0)
+  wind4         Int     @default(0)
+  wind5         Int     @default(0)
+  water1        Int     @default(0)
+  water2        Int     @default(0)
+  water3        Int     @default(0)
+  water4        Int     @default(0)
+  water5        Int     @default(0)
+
+  @@unique([brandKey, modelKey, category, activityScope, heated, linerKey, materialKey], map: "garment_catalogue_identity_key")
+  @@index([brandKey, category])
+}
+
 model Place {
   id        String   @id @default(cuid())
   userId    String

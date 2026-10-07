@@ -12,7 +12,6 @@ import {
   GARMENT_CATEGORY_DEFAULTS,
   GARMENT_PRESETS,
   GarmentCategory,
-  GarmentComponentKind,
   MVP_ACTIVITY_TYPE,
   SHAREABLE_WARDROBE_CATEGORIES,
   WardrobeCategory,
@@ -34,6 +33,7 @@ import {
 import { DemoLanguage } from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
 import { UpdateGarmentDto } from './dto/update-garment.dto';
+import { GarmentCatalogueService } from './garment-catalogue.service';
 
 export type GarmentComponentResponse = {
   id: string;
@@ -79,7 +79,10 @@ type ComponentInput = {
 
 @Injectable()
 export class WardrobeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly catalogue: GarmentCatalogueService,
+  ) {}
 
   async list(userId: string, activity?: string): Promise<GarmentResponse[]> {
     const rows = await this.prisma.garment.findMany({
@@ -110,9 +113,7 @@ export class WardrobeService {
   async updateSharing(userId: string, sharedCategories: string[]) {
     for (const category of sharedCategories) {
       if (
-        !(SHAREABLE_WARDROBE_CATEGORIES as readonly string[]).includes(
-          category,
-        )
+        !(SHAREABLE_WARDROBE_CATEGORIES as readonly string[]).includes(category)
       ) {
         throw new BadRequestException(
           'Only cycling, alpine & snowboard, and cross-country skiing can share a wardrobe',
@@ -140,7 +141,10 @@ export class WardrobeService {
     return this.toResponse(garment);
   }
 
-  async create(userId: string, dto: CreateGarmentDto): Promise<GarmentResponse> {
+  async create(
+    userId: string,
+    dto: CreateGarmentDto,
+  ): Promise<GarmentResponse> {
     const preset = dto.preset ? presetById(dto.preset) : undefined;
     if (dto.preset && !preset) {
       throw new BadRequestException(`Unknown garment preset: ${dto.preset}`);
@@ -150,10 +154,7 @@ export class WardrobeService {
     const defaults = defaultsForCategory(category);
     const activityTags = this.normalizeActivityTags(dto.activityTags);
 
-    const material =
-      dto.material ??
-      preset?.material ??
-      null;
+    const material = dto.material ?? preset?.material ?? null;
     if (material && !isGarmentMaterial(material)) {
       throw new BadRequestException(`Invalid material: ${material}`);
     }
@@ -172,6 +173,18 @@ export class WardrobeService {
       }));
     }
 
+    const community = await this.catalogue.roundedDefaults({
+      brand: dto.brand,
+      model: dto.model,
+      name: dto.name,
+      category,
+      activityTags,
+      isHeated,
+      material: material ?? undefined,
+      linerKinds: (componentInputs ?? []).map((component) => component.kind),
+      preset: dto.preset,
+    });
+
     const created = await this.prisma.garment.create({
       data: {
         userId,
@@ -180,15 +193,20 @@ export class WardrobeService {
         layer: defaults.layer,
         primaryBodyZone: defaults.primaryBodyZone,
         warmthTier: clampTier(
-          dto.warmthTier ?? preset?.warmthTier ?? defaults.warmthTier,
+          dto.warmthTier ??
+            community.warmth ??
+            preset?.warmthTier ??
+            defaults.warmthTier,
         ),
         windResistTier: clampTier(
           dto.windResistTier ??
+            community.wind ??
             preset?.windResistTier ??
             defaults.windResistTier,
         ),
         waterResistTier: clampTier(
           dto.waterResistTier ??
+            community.water ??
             preset?.waterResistTier ??
             defaults.waterResistTier,
         ),
@@ -238,7 +256,9 @@ export class WardrobeService {
     }
 
     if (dto.components !== undefined) {
-      await this.prisma.garmentComponent.deleteMany({ where: { garmentId: id } });
+      await this.prisma.garmentComponent.deleteMany({
+        where: { garmentId: id },
+      });
       await this.prisma.garmentComponent.createMany({
         data: this.normalizeComponents(dto.components).map((c) => ({
           garmentId: id,
@@ -381,7 +401,7 @@ export class WardrobeService {
       if (!isGarmentComponentKind(c.kind)) {
         throw new BadRequestException(`Invalid component kind: ${c.kind}`);
       }
-      const kind = c.kind as GarmentComponentKind;
+      const kind = c.kind;
       const defaults = COMPONENT_KIND_DEFAULTS[kind];
       return {
         kind,
@@ -389,8 +409,7 @@ export class WardrobeService {
         warmthDelta: c.warmthDelta ?? defaults.warmthDelta,
         windResistDelta: c.windResistDelta ?? defaults.windResistDelta,
         waterResistDelta: c.waterResistDelta ?? defaults.waterResistDelta,
-        breathabilityDelta:
-          c.breathabilityDelta ?? defaults.breathabilityDelta,
+        breathabilityDelta: c.breathabilityDelta ?? defaults.breathabilityDelta,
       };
     });
   }
@@ -406,7 +425,8 @@ export class WardrobeService {
     try {
       return normalizeGarmentActivityTags(tags);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid activity';
+      const message =
+        error instanceof Error ? error.message : 'Invalid activity';
       throw new BadRequestException(message);
     }
   }

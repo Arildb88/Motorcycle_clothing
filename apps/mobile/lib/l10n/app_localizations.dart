@@ -2474,6 +2474,78 @@ abstract class AppLocalizations {
   /// **'Name is required'**
   String get garmentNameRequired;
 
+  /// No description provided for @catalogueSearchBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search brand'**
+  String get catalogueSearchBrand;
+
+  /// No description provided for @catalogueSearchModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Search model'**
+  String get catalogueSearchModel;
+
+  /// No description provided for @catalogueWriteYourself.
+  ///
+  /// In en, this message translates to:
+  /// **'Other / write yourself'**
+  String get catalogueWriteYourself;
+
+  /// No description provided for @catalogueWriteYourselfHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your own name stays on this garment. It is not added to the shared catalogue.'**
+  String get catalogueWriteYourselfHint;
+
+  /// No description provided for @catalogueYourValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Your value'**
+  String get catalogueYourValue;
+
+  /// No description provided for @catalogueAutomaticDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic default'**
+  String get catalogueAutomaticDefault;
+
+  /// No description provided for @catalogueCommunityEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Community estimate · {count} contributions'**
+  String catalogueCommunityEstimate(int count);
+
+  /// No description provided for @catalogueNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand and model choices are a curated list, not verified manufacturer measurements.'**
+  String get catalogueNotVerified;
+
+  /// No description provided for @catalogueUseModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this model'**
+  String get catalogueUseModel;
+
+  /// No description provided for @catalogueChangeProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Change product'**
+  String get catalogueChangeProduct;
+
+  /// No description provided for @catalogueContributeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this rating'**
+  String get catalogueContributeTitle;
+
+  /// No description provided for @catalogueContributeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Only values you set yourself are counted. Automatic defaults, demo clothes, copied values, and adding the same product again without a new rating are not counted. RideWear stores a count for each score from 1 to 5. It does not store your name, notes, account, or garment. The number is a count of contributions, not of different people. Removing the highest and lowest score is not protection against misuse.'**
+  String get catalogueContributeBody;
+
   /// No description provided for @tierWarmth.
   ///
   /// In en, this message translates to:

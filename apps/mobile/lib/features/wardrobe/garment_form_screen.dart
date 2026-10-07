@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import 'package:motorcycle_clothing/domain/garment.dart';
+import 'package:motorcycle_clothing/domain/garment_catalogue_form.dart';
 import 'package:motorcycle_clothing/domain/wardrobe_sharing.dart';
 import 'package:motorcycle_clothing/l10n/app_localizations.dart';
 import 'package:motorcycle_clothing/l10n/ui_labels.dart';
@@ -38,6 +40,23 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
   double _wind = 2;
   double _water = 1;
   double _breath = 3;
+  bool _warmthTouched = false;
+  bool _windTouched = false;
+  bool _waterTouched = false;
+  bool _breathTouched = false;
+  String _warmthSource = 'fallback';
+  String _windSource = 'fallback';
+  String _waterSource = 'fallback';
+  int _warmthSamples = 0;
+  int _windSamples = 0;
+  int _waterSamples = 0;
+  bool _writeYourself = false;
+  String? _selectedBrand;
+  String? _selectedModel;
+  bool _shareRating = false;
+  final String _submissionId = const Uuid().v4();
+  List<String> _brands = const [];
+  List<CatalogueChoice> _modelChoices = const [];
   bool _busy = false;
   bool _advanced = false;
   bool _motorcycleLocked = true;
@@ -74,6 +93,10 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
       if (!_motorcycleLocked && category != null) {
         _membership.add(category);
       }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadChoices();
+        _refreshPreview();
+      });
     }
   }
 
@@ -152,7 +175,170 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
           _isHeated = true;
           break;
       }
+      _warmthTouched = false;
+      _windTouched = false;
+      _waterTouched = false;
+      _breathTouched = false;
+      _shareRating = false;
     });
+    _refreshPreview();
+  }
+
+  Future<void> _loadChoices() async {
+    if (_isEdit || !mounted) return;
+    final api = context.read<ApiClient>();
+    final tags = [..._activityTags()]..sort();
+    final scope = Uri.encodeQueryComponent(tags.join(','));
+    final category = Uri.encodeQueryComponent(_category);
+    try {
+      final json = await api.get(
+        '/wardrobe/catalogue/choices?category=$category&activityScope=$scope',
+      );
+      if (!mounted) return;
+      final brands = (json['brands'] as List? ?? const [])
+          .map((item) => item.toString())
+          .toList();
+      final models = (json['models'] as List? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(CatalogueChoice.fromJson)
+          .toList();
+      setState(() {
+        _brands = brands;
+        _modelChoices = models;
+      });
+    } catch (_) {
+      // Free-text entry still works when the choice list cannot load.
+    }
+  }
+
+  Future<void> _refreshPreview() async {
+    if (_isEdit || !mounted) return;
+    final api = context.read<ApiClient>();
+    final liners = _linerKinds();
+    final body = <String, dynamic>{
+      'category': _category,
+      'activityTags': _activityTags(),
+      'isHeated': _isHeated,
+      'linerKinds': liners,
+      if (_material != null) 'material': _material,
+      if (_preset != null) 'preset': _preset,
+      if (!_writeYourself && _selectedBrand != null) 'brand': _selectedBrand,
+      if (!_writeYourself && _selectedModel != null) 'model': _selectedModel,
+      if (_writeYourself || _selectedBrand == null || _selectedModel == null)
+        'name': _name.text.trim(),
+    };
+    try {
+      final json = await api.post(
+        '/wardrobe/catalogue/preview',
+        body,
+        auth: true,
+      );
+      if (!mounted || _isEdit) return;
+      final preview = CataloguePreviewView.fromJson(json);
+      setState(() {
+        final warmth = _tierField(
+          _warmth,
+          _warmthTouched,
+          _warmthSource,
+          _warmthSamples,
+        ).applyPreview(preview.warmth, preview.fallbackWarmth);
+        final wind = _tierField(
+          _wind,
+          _windTouched,
+          _windSource,
+          _windSamples,
+        ).applyPreview(preview.wind, preview.fallbackWind);
+        final water = _tierField(
+          _water,
+          _waterTouched,
+          _waterSource,
+          _waterSamples,
+        ).applyPreview(preview.water, preview.fallbackWater);
+        if (!_warmthTouched) {
+          _warmth = warmth.value.toDouble();
+          _warmthSource = warmth.source;
+          _warmthSamples = warmth.sampleCount;
+        }
+        if (!_windTouched) {
+          _wind = wind.value.toDouble();
+          _windSource = wind.source;
+          _windSamples = wind.sampleCount;
+        }
+        if (!_waterTouched) {
+          _water = water.value.toDouble();
+          _waterSource = water.source;
+          _waterSamples = water.sampleCount;
+        }
+        if (!_breathTouched) {
+          _breath = preview.fallbackBreath.toDouble();
+        }
+      });
+    } catch (_) {
+      // The server applies the same lookup when the tier is left untouched.
+    }
+  }
+
+  TierField _tierField(
+    double value,
+    bool touched,
+    String source,
+    int sampleCount,
+  ) {
+    return TierField(
+      value: value.round(),
+      touched: touched,
+      source: source,
+      sampleCount: sampleCount,
+    );
+  }
+
+  List<String> _linerKinds() {
+    return [
+      if (_thermalLiner) 'thermal_liner',
+      if (_waterproofLiner) 'waterproof_liner',
+    ];
+  }
+
+  void _selectProduct(CatalogueChoice choice) {
+    setState(() {
+      _writeYourself = false;
+      _selectedBrand = choice.brand;
+      _selectedModel = choice.model;
+      _brand.text = choice.brand;
+      _model.text = choice.model;
+      _category = choice.category;
+      _preset = null;
+      _isHeated = choice.heated;
+      if (choice.materialKey != 'unspecified') {
+        _material = choice.materialKey;
+      }
+      _thermalLiner = choice.linerKey.split(',').contains('thermal_liner');
+      _waterproofLiner = choice.linerKey.split(',').contains('waterproof_liner');
+      _warmthTouched = false;
+      _windTouched = false;
+      _waterTouched = false;
+      _shareRating = false;
+      if (_name.text.trim().isEmpty) {
+        _name.text = choice.curatedName.isEmpty
+            ? '${choice.brand} ${choice.model}'
+            : choice.curatedName;
+      }
+    });
+    _refreshPreview();
+  }
+
+  void _useTypedModel() {
+    final model = _model.text.trim();
+    if (_selectedBrand == null || model.isEmpty) return;
+    setState(() {
+      _writeYourself = false;
+      _selectedModel = model;
+      _shareRating = false;
+      _warmthTouched = false;
+      _windTouched = false;
+      _waterTouched = false;
+    });
+    _refreshPreview();
   }
 
   Future<void> _save() async {
@@ -176,34 +362,73 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
     }
     setState(() => _busy = true);
     final api = context.read<ApiClient>();
-    final components = <Map<String, dynamic>>[];
-    if (_thermalLiner) components.add({'kind': 'thermal_liner'});
-    if (_waterproofLiner) components.add({'kind': 'waterproof_liner'});
-
-    final body = <String, dynamic>{
-      'name': _name.text.trim(),
-      'category': _category,
-      if (!_isEdit && _preset != null) 'preset': _preset,
-      if (_material != null) 'material': _material,
-      'hasVentilation': _hasVentilation,
-      'isHeated': _isHeated,
-      'brand': _brand.text.trim().isEmpty ? null : _brand.text.trim(),
-      'model': _model.text.trim().isEmpty ? null : _model.text.trim(),
-      'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-      'activityTags': _activityTags(),
-      'components': components,
-    };
-    if (_isEdit || _advanced) {
-      body['warmthTier'] = _warmth.round();
-      body['windResistTier'] = _wind.round();
-      body['waterResistTier'] = _water.round();
-      body['breathabilityTier'] = _breath.round();
-    }
+    final warmth = _tierField(
+      _warmth,
+      _warmthTouched,
+      _warmthSource,
+      _warmthSamples,
+    );
+    final wind = _tierField(_wind, _windTouched, _windSource, _windSamples);
+    final water = _tierField(
+      _water,
+      _waterTouched,
+      _waterSource,
+      _waterSamples,
+    );
+    final breath = _tierField(_breath, _breathTouched, 'fallback', 0);
+    final brand = _isEdit ? _brand.text : _selectedBrand;
+    final model = _isEdit ? _model.text : _selectedModel;
+    final body = garmentSaveBody(
+      isEdit: _isEdit,
+      name: _name.text,
+      category: _category,
+      writeYourself: _isEdit ? false : _writeYourself,
+      brand: brand,
+      model: model,
+      preset: _preset,
+      material: _material,
+      hasVentilation: _hasVentilation,
+      isHeated: _isHeated,
+      notes: _notes.text,
+      activityTags: _activityTags(),
+      linerKinds: _linerKinds(),
+      warmth: warmth,
+      wind: wind,
+      water: water,
+      breath: breath,
+    );
+    final share = contributionBody(
+      isDemo: widget.existing?.isDemo ?? false,
+      share: _shareRating,
+      writeYourself: _writeYourself,
+      brand: brand,
+      model: model,
+      category: _category,
+      activityTags: _activityTags(),
+      isHeated: _isHeated,
+      material: _material,
+      linerKinds: _linerKinds(),
+      warmth: warmth,
+      wind: wind,
+      water: water,
+      submissionId: _submissionId,
+      garmentId: widget.existing?.id,
+    );
     try {
       if (_isEdit) {
         await api.patch('/wardrobe/${widget.existing!.id}', body);
+        if (share != null) {
+          await api.post('/wardrobe/catalogue/contributions', share, auth: true);
+        }
       } else {
-        await api.post('/wardrobe', body, auth: true);
+        final created = await api.post('/wardrobe', body, auth: true);
+        if (share != null) {
+          await api.post(
+            '/wardrobe/catalogue/contributions',
+            {...share, 'garmentId': created['id']},
+            auth: true,
+          );
+        }
       }
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -266,6 +491,9 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
               hintText: l10n.garmentNameHint,
             ),
             textCapitalization: TextCapitalization.sentences,
+            onChanged: (_) {
+              if (!_isEdit) _refreshPreview();
+            },
           ),
           if (!_isEdit)
             OutlineFormField(
@@ -299,7 +527,15 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
                   )
                   .toList(),
               onChanged: (v) {
-                if (v != null) setState(() => _category = v);
+                if (v != null) {
+                  setState(() {
+                    _category = v;
+                    _selectedModel = null;
+                    _model.clear();
+                  });
+                  _loadChoices();
+                  _refreshPreview();
+                }
               },
             ),
           ),
@@ -334,33 +570,161 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.garmentHeated),
             value: _isHeated,
-            onChanged: (v) => setState(() => _isHeated = v),
+            onChanged: (v) {
+              setState(() => _isHeated = v);
+              if (!_isEdit) _refreshPreview();
+            },
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.garmentThermalLiner),
             subtitle: Text(l10n.garmentThermalLinerHint),
             value: _thermalLiner,
-            onChanged: (v) => setState(() => _thermalLiner = v),
+            onChanged: (v) {
+              setState(() => _thermalLiner = v);
+              if (!_isEdit) _refreshPreview();
+            },
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(l10n.garmentWaterproofLiner),
             value: _waterproofLiner,
-            onChanged: (v) => setState(() => _waterproofLiner = v),
+            onChanged: (v) {
+              setState(() => _waterproofLiner = v);
+              if (!_isEdit) _refreshPreview();
+            },
           ),
-          OutlineFormField(
-            child: TextField(
-              controller: _brand,
-              decoration: InputDecoration(labelText: l10n.garmentBrand),
+          if (_isEdit) ...[
+            OutlineFormField(
+              child: TextField(
+                controller: _brand,
+                decoration: InputDecoration(labelText: l10n.garmentBrand),
+              ),
             ),
-          ),
-          OutlineFormField(
-            child: TextField(
-              controller: _model,
-              decoration: InputDecoration(labelText: l10n.garmentModel),
+            OutlineFormField(
+              child: TextField(
+                controller: _model,
+                decoration: InputDecoration(labelText: l10n.garmentModel),
+              ),
             ),
-          ),
+          ] else ...[
+            Text(
+              l10n.catalogueNotVerified,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            if (_selectedBrand != null && _selectedModel != null)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('$_selectedBrand $_selectedModel'),
+                subtitle: Text(
+                  _warmthSource == 'community'
+                      ? l10n.catalogueCommunityEstimate(_warmthSamples)
+                      : l10n.catalogueAutomaticDefault,
+                ),
+                trailing: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedBrand = null;
+                      _selectedModel = null;
+                      _brand.clear();
+                      _model.clear();
+                      _shareRating = false;
+                    });
+                    _refreshPreview();
+                  },
+                  child: Text(l10n.catalogueChangeProduct),
+                ),
+              )
+            else ...[
+              OutlineFormField(
+                child: TextField(
+                  controller: _brand,
+                  decoration: InputDecoration(
+                    labelText: l10n.catalogueSearchBrand,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              for (final brand in filterLabels(_brands, _brand.text).take(6))
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(brand),
+                  onTap: () {
+                    setState(() {
+                      _writeYourself = false;
+                      _selectedBrand = brand;
+                      _selectedModel = null;
+                      _brand.text = brand;
+                      _model.clear();
+                      _shareRating = false;
+                    });
+                    _loadChoices();
+                  },
+                ),
+              if (_selectedBrand != null) ...[
+                OutlineFormField(
+                  child: TextField(
+                    controller: _model,
+                    decoration: InputDecoration(
+                      labelText: l10n.catalogueSearchModel,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                for (final choice in _modelChoices
+                    .where(
+                      (choice) =>
+                          choice.brand.toLowerCase() ==
+                              _selectedBrand!.toLowerCase() &&
+                          (_model.text.trim().isEmpty ||
+                              choice.model.toLowerCase().contains(
+                                _model.text.trim().toLowerCase(),
+                              )),
+                    )
+                    .take(6))
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(choice.model),
+                    subtitle: Text(choice.curatedName),
+                    onTap: () => _selectProduct(choice),
+                  ),
+                if (_model.text.trim().isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _useTypedModel,
+                      child: Text(l10n.catalogueUseModel),
+                    ),
+                  ),
+              ],
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _writeYourself = true;
+                      _selectedBrand = null;
+                      _selectedModel = null;
+                      _brand.clear();
+                      _model.clear();
+                      _shareRating = false;
+                      _warmthTouched = false;
+                      _windTouched = false;
+                      _waterTouched = false;
+                    });
+                    _refreshPreview();
+                  },
+                  child: Text(l10n.catalogueWriteYourself),
+                ),
+              ),
+              if (_writeYourself)
+                Text(
+                  l10n.catalogueWriteYourselfHint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+          ],
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -369,12 +733,65 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             value: _advanced || _isEdit,
             onChanged: (v) => setState(() => _advanced = v),
           ),
-          if (_advanced || _isEdit) ...[
-            _tier(l10n.tierWarmth, _warmth, (v) => setState(() => _warmth = v)),
-            _tier(l10n.tierWind, _wind, (v) => setState(() => _wind = v)),
-            _tier(l10n.tierWater, _water, (v) => setState(() => _water = v)),
-            _tier(l10n.tierBreath, _breath, (v) => setState(() => _breath = v)),
+          ...[
+            _tier(
+              l10n.tierWarmth,
+              _warmth,
+              _caption(l10n, _warmthTouched, _warmthSource, _warmthSamples),
+              (v) => setState(() {
+                _warmth = v;
+                _warmthTouched = true;
+                _warmthSource = 'explicit';
+              }),
+            ),
+            _tier(
+              l10n.tierWind,
+              _wind,
+              _caption(l10n, _windTouched, _windSource, _windSamples),
+              (v) => setState(() {
+                _wind = v;
+                _windTouched = true;
+                _windSource = 'explicit';
+              }),
+            ),
+            _tier(
+              l10n.tierWater,
+              _water,
+              _caption(l10n, _waterTouched, _waterSource, _waterSamples),
+              (v) => setState(() {
+                _water = v;
+                _waterTouched = true;
+                _waterSource = 'explicit';
+              }),
+            ),
+            if (_advanced || _isEdit)
+              _tier(
+                l10n.tierBreath,
+                _breath,
+                _breathTouched
+                    ? l10n.catalogueYourValue
+                    : l10n.catalogueAutomaticDefault,
+                (v) => setState(() {
+                  _breath = v;
+                  _breathTouched = true;
+                }),
+              ),
           ],
+          if (!_isEdit || widget.existing?.isDemo != true)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _shareRating,
+              onChanged: (_warmthTouched || _windTouched || _waterTouched) &&
+                      !_writeYourself &&
+                      (_isEdit
+                          ? _brand.text.trim().isNotEmpty &&
+                              _model.text.trim().isNotEmpty
+                          : _selectedBrand != null && _selectedModel != null)
+                  ? (value) => setState(() => _shareRating = value ?? false)
+                  : null,
+              title: Text(l10n.catalogueContributeTitle),
+              subtitle: Text(l10n.catalogueContributeBody),
+            ),
           OutlineFormField(
             child: TextField(
               controller: _notes,
@@ -412,7 +829,28 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
     }
   }
 
-  Widget _tier(String label, double value, ValueChanged<double> onChanged) {
+  String _caption(
+    AppLocalizations l10n,
+    bool touched,
+    String source,
+    int sampleCount,
+  ) {
+    return tierCaption(
+      touched: touched,
+      source: source,
+      sampleCount: sampleCount,
+      yourValue: l10n.catalogueYourValue,
+      automaticDefault: l10n.catalogueAutomaticDefault,
+      communityEstimate: l10n.catalogueCommunityEstimate,
+    );
+  }
+
+  Widget _tier(
+    String label,
+    double value,
+    String caption,
+    ValueChanged<double> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -422,6 +860,7 @@ class _GarmentFormScreenState extends State<GarmentFormScreen> {
             Text('${value.round()}/5'),
           ],
         ),
+        Text(caption, style: Theme.of(context).textTheme.bodySmall),
         Slider(
           value: value,
           min: 1,

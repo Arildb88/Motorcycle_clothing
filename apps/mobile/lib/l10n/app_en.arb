@@ -530,6 +530,25 @@
   "garmentSaveChanges": "Save changes",
   "garmentAddToWardrobe": "Add to wardrobe",
   "garmentNameRequired": "Name is required",
+  "catalogueSearchBrand": "Search brand",
+  "catalogueSearchModel": "Search model",
+  "catalogueWriteYourself": "Other / write yourself",
+  "catalogueWriteYourselfHint": "Your own name stays on this garment. It is not added to the shared catalogue.",
+  "catalogueYourValue": "Your value",
+  "catalogueAutomaticDefault": "Automatic default",
+  "catalogueCommunityEstimate": "Community estimate · {count} contributions",
+  "@catalogueCommunityEstimate": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogueNotVerified": "Brand and model choices are a curated list, not verified manufacturer measurements.",
+  "catalogueUseModel": "Use this model",
+  "catalogueChangeProduct": "Change product",
+  "catalogueContributeTitle": "Share this rating",
+  "catalogueContributeBody": "Only values you set yourself are counted. Automatic defaults, demo clothes, copied values, and adding the same product again without a new rating are not counted. RideWear stores a count for each score from 1 to 5. It does not store your name, notes, account, or garment. The number is a count of contributions, not of different people. Removing the highest and lowest score is not protection against misuse.",
   "tierWarmth": "Warmth",
   "tierWind": "Wind resistance",
   "tierWater": "Waterproofness",

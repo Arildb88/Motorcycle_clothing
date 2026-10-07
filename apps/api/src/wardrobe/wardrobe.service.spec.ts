@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { WardrobeService } from './wardrobe.service';
+import { GarmentCatalogueService } from './garment-catalogue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { effectiveGarmentTiers } from '../domain';
 import { CreateGarmentDto } from './dto/create-garment.dto';
@@ -166,6 +167,11 @@ describe('WardrobeService', () => {
         },
       ),
     },
+    garmentCatalogueEntry: {
+      findUnique: jest.fn(async () => null),
+      findMany: jest.fn(async () => []),
+    },
+    $executeRawUnsafe: jest.fn(async () => 1),
     userProfile: {
       findUnique: jest.fn(async ({ where }: { where: { userId: string } }) => {
         if (!profiles.has(where.userId)) return null;
@@ -203,6 +209,7 @@ describe('WardrobeService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WardrobeService,
+        GarmentCatalogueService,
         { provide: PrismaService, useValue: prismaMock },
       ],
     }).compile();
