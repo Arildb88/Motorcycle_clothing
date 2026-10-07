@@ -6,7 +6,7 @@
 
 - Branch: `feature/cycling-wardrobe-ux-001`
 - Implementation commit: `a0f6b11e63789d6bddb79be393dfdbe34ab72dba`
-- PR: targeting `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/80 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
