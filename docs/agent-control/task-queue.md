@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: ALPINE-PLANNER-SIMPLIFY-001
+active_id: none
 promotion: automatic
 handoff_generation: 54
-handoff_state: authorized
+handoff_state: idle
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -122,6 +122,8 @@ Generation `51` is spent: `SNOWBOARD-LABEL-001` was authorized and completed. Th
 Generation `52` is spent: `THERMAL-ZONE-FEEDBACK-001` was authorized and completed. The automatic final control update authorizes `DEPENDENCY-MAINTENANCE-002` at generation `53`. Do not reuse generation `52`. Do not execute `THERMAL-ZONE-FEEDBACK-001` again.
 
 Generation `53` is spent: `DEPENDENCY-MAINTENANCE-002` was authorized and completed. The automatic final control update authorizes `ALPINE-PLANNER-SIMPLIFY-001` at generation `54`. Do not reuse generation `53`. Do not execute `DEPENDENCY-MAINTENANCE-002` again.
+
+Generation `54` is spent: `ALPINE-PLANNER-SIMPLIFY-001` was authorized and completed. No queued unconsumed item remained, so the final close is idle at generation `54`. Do not reuse generation `54`. Do not execute `ALPINE-PLANNER-SIMPLIFY-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -2184,7 +2186,7 @@ Verification:
 
 ### ALPINE-PLANNER-SIMPLIFY-001
 
-- status: active
+- status: completed
 - title: Simplify lift-based alpine and snowboard planner and resort information
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 
