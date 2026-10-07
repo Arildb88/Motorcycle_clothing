@@ -7,7 +7,7 @@
 - Branch: `feature/commute-roundtrip-001`
 - Implementation commit: `d4166b412cc7cb3ce8fbd25bae3747d38b88bcd0`
 - Migration: `apps/api/prisma/migrations/20261007200000_commute_roundtrip`
-- PR: against `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/77 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
