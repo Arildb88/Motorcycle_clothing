@@ -61,6 +61,7 @@ export type GarmentResponse = {
   brand: string | null;
   model: string | null;
   notes: string | null;
+  preset: string | null;
   activityTags: string[];
   isDemo: boolean;
   components: GarmentComponentResponse[];
@@ -221,6 +222,7 @@ export class WardrobeService {
         brand: dto.brand?.trim() || null,
         model: dto.model?.trim() || null,
         notes: dto.notes?.trim() || null,
+        preset: preset?.id ?? null,
         activityTagsJson: JSON.stringify(activityTags),
         components: {
           create: this.normalizeComponents(componentInputs),
@@ -299,6 +301,12 @@ export class WardrobeService {
         brand: dto.brand === undefined ? undefined : dto.brand.trim() || null,
         model: dto.model === undefined ? undefined : dto.model.trim() || null,
         notes: dto.notes === undefined ? undefined : dto.notes.trim() || null,
+        preset:
+          dto.preset === undefined
+            ? undefined
+            : dto.preset === null || dto.preset.trim() === ''
+              ? null
+              : this.requirePreset(dto.preset),
         activityTagsJson:
           dto.activityTags !== undefined
             ? JSON.stringify(this.normalizeActivityTags(dto.activityTags))
@@ -421,6 +429,14 @@ export class WardrobeService {
     return value;
   }
 
+  private requirePreset(value: string): string {
+    const preset = presetById(value);
+    if (!preset) {
+      throw new BadRequestException(`Unknown garment preset: ${value}`);
+    }
+    return preset.id;
+  }
+
   private normalizeActivityTags(tags?: string[]): ActivityType[] {
     try {
       return normalizeGarmentActivityTags(tags);
@@ -482,6 +498,7 @@ export class WardrobeService {
     brand: string | null;
     model: string | null;
     notes: string | null;
+    preset?: string | null;
     activityTagsJson: string;
     isDemo: boolean;
     createdAt: Date;
@@ -513,6 +530,7 @@ export class WardrobeService {
       brand: g.brand,
       model: g.model,
       notes: g.notes,
+      preset: g.preset ?? null,
       activityTags,
       isDemo: g.isDemo,
       components: (g.components ?? []).map((c) => ({

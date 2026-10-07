@@ -65,6 +65,7 @@ export type CyclingGarmentInput = {
   material: string | null;
   hasVentilation: boolean;
   isHeated: boolean;
+  preset?: string | null;
   activityTags: string[];
   components: Array<{
     id: string;
@@ -91,7 +92,7 @@ export type CyclingKitItem = {
   mode: 'wear' | 'pack';
   source: 'wardrobe' | 'generic';
   slot: string;
-  zone: CyclingZoneId | 'rain';
+  zone: CyclingZoneId | 'full_body' | 'rain';
   garmentId?: string;
   garmentName?: string;
   genericLabel?: string;

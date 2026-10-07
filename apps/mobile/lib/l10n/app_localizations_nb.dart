@@ -1503,6 +1503,49 @@ class AppLocalizationsNb extends AppLocalizations {
   String get presetHeatedGloves => 'Oppvarmede hansker';
 
   @override
+  String get cyclingGarmentType => 'Sykkelplagg';
+
+  @override
+  String get cyclingLongTrousers => 'Lange sykkelbukser / tights';
+
+  @override
+  String get cyclingShorts => 'Korte sykkelshorts';
+
+  @override
+  String get cyclingTriathlonSuit => 'Triatlondrakt';
+
+  @override
+  String get cyclingShortSleeveTee => 'Teknisk T-skjorte med korte ermer';
+
+  @override
+  String get cyclingLongJersey => 'Teknisk trøye med lange ermer';
+
+  @override
+  String get cyclingJacket => 'Tynn sykkeljakke';
+
+  @override
+  String get cyclingFingerlessGloves => 'Fingreløse sykkelhansker';
+
+  @override
+  String get cyclingFullFingerGloves => 'Tynne sykkelhansker med fingre';
+
+  @override
+  String get cyclingWarmthThin => 'Tynn';
+
+  @override
+  String get cyclingWarmthMedium => 'Middels';
+
+  @override
+  String get cyclingWarmthWarm => 'Varm';
+
+  @override
+  String get cyclingAdvancedWinter => 'Avanserte innstillinger / vinter';
+
+  @override
+  String get cyclingDefaultsEstimate =>
+      'Disse standardverdiene er anslag, ikke målte produsentverdier.';
+
+  @override
   String get routeNew => 'Ny rute';
 
   @override

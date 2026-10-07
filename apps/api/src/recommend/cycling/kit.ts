@@ -1,4 +1,7 @@
-import { effectiveGarmentTiers } from '../../domain/garment-config';
+import {
+  CYCLING_TRIATHLON_PRESET,
+  effectiveGarmentTiers,
+} from '../../domain/garment-config';
 import type {
   CyclingConfigInstruction,
   CyclingDemandSummary,
@@ -11,6 +14,30 @@ import type {
 } from './types';
 
 const EXCLUDED_CATEGORIES = new Set(['one_piece_suit', 'heated_vest']);
+
+export function isCyclingKitGarment(garment: {
+  category: string;
+  preset?: string | null;
+  activityTags: readonly string[];
+}): boolean {
+  if (!garment.activityTags.includes('cycling')) return false;
+  if (garment.category === 'heated_vest') return false;
+  if (
+    garment.category === 'one_piece_suit' &&
+    garment.preset !== CYCLING_TRIATHLON_PRESET
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function isTriathlonSuit(garment: CyclingGarmentInput): boolean {
+  return (
+    garment.preset === CYCLING_TRIATHLON_PRESET &&
+    garment.category === 'one_piece_suit' &&
+    garment.activityTags.includes('cycling')
+  );
+}
 
 const GENERIC = {
   base: 'Breathable cycling base layer',
@@ -83,17 +110,44 @@ export function matchCyclingKit(input: {
     (mode === 'wear' ? wear : pack).push(item);
   };
 
-  push('wear', {
-    slot: 'base',
-    zone: 'torso',
-    categories: ['base_layer'],
-    genericLabel: GENERIC.base,
-    warmth: Math.max(1, sustained.warmth),
-    wind: 1,
-    water: 1,
-  });
+  const suit = selectTriathlonSuit(input.wardrobe, sustained);
+  if (suit) {
+    used.add(suit.id);
+    const tiers = effectiveGarmentTiers(
+      {
+        warmthTier: suit.warmthTier,
+        windResistTier: suit.windResistTier,
+        waterResistTier: suit.waterResistTier,
+        breathabilityTier: suit.breathabilityTier,
+      },
+      [],
+    );
+    wear.push({
+      mode: 'wear',
+      source: 'wardrobe',
+      slot: 'suit',
+      zone: 'full_body',
+      garmentId: suit.id,
+      garmentName: suit.name,
+      category: suit.category,
+      configuration: [],
+      effectiveTiers: tiers,
+    });
+  }
 
-  if (sustained.warmth >= 3) {
+  if (!suit) {
+    push('wear', {
+      slot: 'base',
+      zone: 'torso',
+      categories: ['base_layer'],
+      genericLabel: GENERIC.base,
+      warmth: Math.max(1, sustained.warmth),
+      wind: 1,
+      water: 1,
+    });
+  }
+
+  if (!suit && sustained.warmth >= 3) {
     push('wear', {
       slot: 'mid',
       zone: 'torso',
@@ -103,7 +157,7 @@ export function matchCyclingKit(input: {
       wind: sustained.wind,
       water: 1,
     });
-  } else if (input.demand.shortExtremeInfluencesPackOnly) {
+  } else if (!suit && input.demand.shortExtremeInfluencesPackOnly) {
     push('pack', {
       slot: 'mid',
       zone: 'torso',
@@ -182,15 +236,17 @@ export function matchCyclingKit(input: {
   }
 
   const legsCold = sustained.warmth >= 3 || sustained.water >= 3;
-  push('wear', {
-    slot: 'legs',
-    zone: 'legs',
-    categories: ['pants'],
-    genericLabel: legsCold ? GENERIC.legsCold : GENERIC.legsMild,
-    warmth: Math.max(sustained.warmth, legsCold ? 3 : 1),
-    wind: sustained.wind,
-    water: sustained.water,
-  });
+  if (!suit) {
+    push('wear', {
+      slot: 'legs',
+      zone: 'legs',
+      categories: ['pants'],
+      genericLabel: legsCold ? GENERIC.legsCold : GENERIC.legsMild,
+      warmth: Math.max(sustained.warmth, legsCold ? 3 : 1),
+      wind: sustained.wind,
+      water: sustained.water,
+    });
+  }
 
   const hands = zone(input.demand.sustained, 'hands');
   if (hands.warmth >= 2 || hands.wind >= 3) {
@@ -260,6 +316,36 @@ export function matchCyclingKit(input: {
   }
 
   return { wear, pack, reasons: dedupe(reasons) };
+}
+
+/**
+ * One triathlon suit covers torso and legs. A cold, wet, or windy ride uses
+ * warmer separate cycling garments when the wardrobe has them.
+ */
+function selectTriathlonSuit(
+  wardrobe: CyclingGarmentInput[],
+  sustained: CyclingZoneDemand,
+): CyclingGarmentInput | null {
+  const suits = wardrobe.filter(isTriathlonSuit);
+  if (suits.length === 0) return null;
+  const demanding =
+    sustained.warmth >= 3 || sustained.water >= 3 || sustained.wind >= 4;
+  if (demanding && hasWarmerCyclingLayers(wardrobe)) return null;
+  return suits[0];
+}
+
+function hasWarmerCyclingLayers(wardrobe: CyclingGarmentInput[]): boolean {
+  return wardrobe.some((garment) => {
+    if (!garment.activityTags.includes('cycling') || isTriathlonSuit(garment)) {
+      return false;
+    }
+    const separateLayer =
+      garment.category === 'pants' ||
+      garment.category === 'base_layer' ||
+      garment.category === 'mid_layer' ||
+      garment.category === 'shell_jacket';
+    return separateLayer && garment.warmthTier >= 3;
+  });
 }
 
 function choose(

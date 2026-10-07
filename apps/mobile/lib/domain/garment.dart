@@ -15,6 +15,7 @@ class Garment {
     this.brand,
     this.model,
     this.notes,
+    this.preset,
     required this.activityTags,
     this.isDemo = false,
     this.components = const [],
@@ -35,6 +36,7 @@ class Garment {
   final String? brand;
   final String? model;
   final String? notes;
+  final String? preset;
   final List<String> activityTags;
   final bool isDemo;
   final List<GarmentComponent> components;
@@ -57,6 +59,7 @@ class Garment {
       brand: json['brand'] as String?,
       model: json['model'] as String?,
       notes: json['notes'] as String?,
+      preset: json['preset'] as String?,
       activityTags: (json['activityTags'] as List? ?? const [])
           .map((e) => e.toString())
           .toList(),
@@ -153,3 +156,110 @@ const garmentPresets = <Map<String, String>>[
   {'id': 'winter_gloves', 'label': 'Winter gloves'},
   {'id': 'heated_gloves', 'label': 'Heated gloves'},
 ];
+
+/// Cycling choices reuse canonical categories. Tiers are estimates.
+class CyclingGarmentChoice {
+  const CyclingGarmentChoice({
+    required this.id,
+    required this.category,
+    required this.warmth,
+    required this.wind,
+    required this.water,
+    required this.breath,
+    this.material = 'synthetic',
+    this.warmthBands = false,
+  });
+
+  final String id;
+  final String category;
+  final int warmth;
+  final int wind;
+  final int water;
+  final int breath;
+  final String material;
+  final bool warmthBands;
+}
+
+const cyclingWarmthBandTier = <String, int>{
+  'thin': 2,
+  'medium': 3,
+  'warm': 4,
+};
+
+const cyclingGarmentChoices = <CyclingGarmentChoice>[
+  CyclingGarmentChoice(
+    id: 'cycling_long_trousers',
+    category: 'pants',
+    warmth: 2,
+    wind: 2,
+    water: 1,
+    breath: 4,
+    warmthBands: true,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_shorts',
+    category: 'pants',
+    warmth: 1,
+    wind: 1,
+    water: 1,
+    breath: 5,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_triathlon_suit',
+    category: 'one_piece_suit',
+    warmth: 1,
+    wind: 1,
+    water: 1,
+    breath: 5,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_short_sleeve_tee',
+    category: 'base_layer',
+    warmth: 1,
+    wind: 1,
+    water: 1,
+    breath: 5,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_long_jersey',
+    category: 'base_layer',
+    warmth: 2,
+    wind: 2,
+    water: 1,
+    breath: 4,
+    warmthBands: true,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_jacket',
+    category: 'shell_jacket',
+    warmth: 2,
+    wind: 4,
+    water: 2,
+    breath: 4,
+    warmthBands: true,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_fingerless_gloves',
+    category: 'gloves',
+    warmth: 1,
+    wind: 2,
+    water: 1,
+    breath: 5,
+  ),
+  CyclingGarmentChoice(
+    id: 'cycling_full_finger_gloves',
+    category: 'gloves',
+    warmth: 2,
+    wind: 3,
+    water: 2,
+    breath: 3,
+  ),
+];
+
+CyclingGarmentChoice? cyclingGarmentChoice(String? id) {
+  if (id == null) return null;
+  for (final choice in cyclingGarmentChoices) {
+    if (choice.id == id) return choice;
+  }
+  return null;
+}

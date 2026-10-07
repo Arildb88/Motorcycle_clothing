@@ -173,11 +173,14 @@ Map<String, dynamic> garmentSaveBody({
   required TierField wind,
   required TierField water,
   required TierField breath,
+  bool writePreset = false,
+  bool includeUntouchedPresetTiers = false,
 }) {
   final body = <String, dynamic>{
     'name': name.trim(),
     'category': category,
-    if (!isEdit && preset != null) 'preset': preset,
+    if (writePreset) 'preset': preset,
+    if (!writePreset && !isEdit && preset != null) 'preset': preset,
     'material': ?material,
     'hasVentilation': hasVentilation,
     'isHeated': isHeated,
@@ -190,7 +193,9 @@ Map<String, dynamic> garmentSaveBody({
     ],
   };
   void putTier(String key, TierField field) {
-    if (isEdit || field.touched) body[key] = field.value;
+    if (isEdit || field.touched || includeUntouchedPresetTiers) {
+      body[key] = field.value;
+    }
   }
 
   putTier('warmthTier', warmth);

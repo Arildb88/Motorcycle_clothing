@@ -1503,6 +1503,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get presetHeatedGloves => 'Heated gloves';
 
   @override
+  String get cyclingGarmentType => 'Cycling garment';
+
+  @override
+  String get cyclingLongTrousers => 'Long cycling trousers / tights';
+
+  @override
+  String get cyclingShorts => 'Short cycling shorts';
+
+  @override
+  String get cyclingTriathlonSuit => 'Triathlon suit';
+
+  @override
+  String get cyclingShortSleeveTee => 'Short-sleeve technical T-shirt';
+
+  @override
+  String get cyclingLongJersey => 'Long-sleeve technical jersey';
+
+  @override
+  String get cyclingJacket => 'Thin cycling jacket';
+
+  @override
+  String get cyclingFingerlessGloves => 'Fingerless cycling gloves';
+
+  @override
+  String get cyclingFullFingerGloves => 'Thin full-finger cycling gloves';
+
+  @override
+  String get cyclingWarmthThin => 'Thin';
+
+  @override
+  String get cyclingWarmthMedium => 'Medium';
+
+  @override
+  String get cyclingWarmthWarm => 'Warm';
+
+  @override
+  String get cyclingAdvancedWinter => 'Advanced settings / winter';
+
+  @override
+  String get cyclingDefaultsEstimate =>
+      'These defaults are estimates, not measured manufacturer values.';
+
+  @override
   String get routeNew => 'New route';
 
   @override

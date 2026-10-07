@@ -1077,6 +1077,7 @@ export class RecommendService {
     material: string | null;
     hasVentilation: boolean;
     isHeated: boolean;
+    preset?: string | null;
     activityTagsJson: string;
     components: Array<{
       id: string;
@@ -1102,6 +1103,7 @@ export class RecommendService {
       material: g.material,
       hasVentilation: g.hasVentilation,
       isHeated: g.isHeated,
+      preset: g.preset ?? null,
       activityTags,
       components: g.components.map((c) => ({
         id: c.id,

@@ -12,7 +12,7 @@ import {
   cyclingWaterDemand,
   cyclingWindDemand,
 } from './exposure';
-import { matchCyclingKit } from './kit';
+import { isCyclingKitGarment, matchCyclingKit } from './kit';
 import type {
   CyclingConfidenceLevel,
   CyclingDemandSummary,
@@ -66,11 +66,8 @@ export function runCyclingRecommendationPipeline(
   const elevationUsed =
     Boolean(input.weather.elevation?.attribution) ||
     segments.some((segment) => segment.weather.groundElevationM != null);
-  const cyclingGarments = input.wardrobe.filter(
-    (garment) =>
-      garment.activityTags.includes('cycling') &&
-      garment.category !== 'one_piece_suit' &&
-      garment.category !== 'heated_vest',
+  const cyclingGarments = input.wardrobe.filter((garment) =>
+    isCyclingKitGarment(garment),
   );
   const speedSource = segments[0]?.speedSource ?? 'style_default';
   const confidence = scoreConfidence({

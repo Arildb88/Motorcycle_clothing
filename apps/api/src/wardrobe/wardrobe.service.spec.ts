@@ -246,6 +246,52 @@ describe('WardrobeService', () => {
     );
   });
 
+  it('stores cycling presets without turning a light tee into a winter layer', async () => {
+    const tee = await service.create('user1', {
+      name: 'Club tee',
+      category: 'shell_jacket',
+      preset: 'cycling_short_sleeve_tee',
+      activityTags: ['cycling'],
+    });
+    expect(tee.preset).toBe('cycling_short_sleeve_tee');
+    expect(tee.category).toBe('base_layer');
+    expect(tee.layer).toBe('base');
+    expect(tee.primaryBodyZone).toBe('torso');
+    expect(tee.warmthTier).toBe(1);
+    expect(tee.activityTags).toEqual(['cycling']);
+
+    const suit = await service.create('user1', {
+      name: 'Race suit',
+      category: 'base_layer',
+      preset: 'cycling_triathlon_suit',
+      activityTags: ['cycling'],
+    });
+    expect(suit.category).toBe('one_piece_suit');
+    expect(suit.primaryBodyZone).toBe('full_body');
+    expect(suit.preset).toBe('cycling_triathlon_suit');
+
+    const warm = await service.create('user1', {
+      name: 'Winter tights',
+      category: 'pants',
+      preset: 'cycling_long_trousers',
+      warmthTier: 4,
+      activityTags: ['cycling'],
+    });
+    expect(warm.warmthTier).toBe(4);
+    expect(warm.primaryBodyZone).toBe('legs');
+    expect(warm.preset).toBe('cycling_long_trousers');
+
+    const edited = await service.update('user1', tee.id, {
+      name: 'Club tee',
+      preset: 'cycling_long_jersey',
+      category: 'base_layer',
+      warmthTier: 3,
+    });
+    expect(edited.preset).toBe('cycling_long_jersey');
+    expect(edited.warmthTier).toBe(3);
+    expect(edited.category).toBe('base_layer');
+  });
+
   it('creates motorcycle jeans via preset (pants + denim)', async () => {
     const g = await service.create('user1', {
       name: 'Bull-it jeans',

@@ -237,8 +237,37 @@ String garmentPresetLabel(AppLocalizations l10n, String id) {
       return l10n.presetWinterGloves;
     case 'heated_gloves':
       return l10n.presetHeatedGloves;
+    case 'cycling_long_trousers':
+      return l10n.cyclingLongTrousers;
+    case 'cycling_shorts':
+      return l10n.cyclingShorts;
+    case 'cycling_triathlon_suit':
+      return l10n.cyclingTriathlonSuit;
+    case 'cycling_short_sleeve_tee':
+      return l10n.cyclingShortSleeveTee;
+    case 'cycling_long_jersey':
+      return l10n.cyclingLongJersey;
+    case 'cycling_jacket':
+      return l10n.cyclingJacket;
+    case 'cycling_fingerless_gloves':
+      return l10n.cyclingFingerlessGloves;
+    case 'cycling_full_finger_gloves':
+      return l10n.cyclingFullFingerGloves;
     default:
       return id;
+  }
+}
+
+String cyclingWarmthBandLabel(AppLocalizations l10n, String band) {
+  switch (band) {
+    case 'thin':
+      return l10n.cyclingWarmthThin;
+    case 'medium':
+      return l10n.cyclingWarmthMedium;
+    case 'warm':
+      return l10n.cyclingWarmthWarm;
+    default:
+      return band;
   }
 }
 

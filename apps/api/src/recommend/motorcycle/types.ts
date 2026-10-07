@@ -78,6 +78,7 @@ export type GarmentInput = {
   material: string | null;
   hasVentilation: boolean;
   isHeated: boolean;
+  preset?: string | null;
   activityTags: string[];
   components: Array<{
     id: string;

@@ -137,7 +137,15 @@ export type GarmentPresetId =
   | 'summer_gloves'
   | 'mid_gloves'
   | 'winter_gloves'
-  | 'heated_gloves';
+  | 'heated_gloves'
+  | 'cycling_long_trousers'
+  | 'cycling_shorts'
+  | 'cycling_triathlon_suit'
+  | 'cycling_short_sleeve_tee'
+  | 'cycling_long_jersey'
+  | 'cycling_jacket'
+  | 'cycling_fingerless_gloves'
+  | 'cycling_full_finger_gloves';
 
 export type GarmentPreset = {
   id: GarmentPresetId;
@@ -151,7 +159,27 @@ export type GarmentPreset = {
   waterResistTier?: number;
   breathabilityTier?: number;
   suggestedComponents?: GarmentComponentKind[];
+  /** Thin / medium / warm map onto the existing 1–5 warmth tiers. */
+  warmthBands?: boolean;
 };
+
+/**
+ * Cycling UX presets. Tiers are estimates, not measured manufacturer values.
+ * Thin / medium / warm use the existing warmth scale. They are not a second scale.
+ */
+export const CYCLING_WARMTH_BANDS = ['thin', 'medium', 'warm'] as const;
+export type CyclingWarmthBand = (typeof CYCLING_WARMTH_BANDS)[number];
+
+export const CYCLING_WARMTH_BAND_TIER: Record<CyclingWarmthBand, number> = {
+  thin: 2,
+  medium: 3,
+  warm: 4,
+};
+
+export const CYCLING_TRIATHLON_PRESET = 'cycling_triathlon_suit' as const;
+
+/** Zones a triathlon suit covers once. It is not worn as a separate torso and legs item. */
+export const CYCLING_TRIATHLON_ZONES = ['torso', 'legs'] as const;
 
 export const GARMENT_PRESETS: GarmentPreset[] = [
   {
@@ -264,7 +292,107 @@ export const GARMENT_PRESETS: GarmentPreset[] = [
     windResistTier: 4,
     waterResistTier: 3,
   },
+  {
+    id: 'cycling_long_trousers',
+    label: 'Long cycling trousers / tights',
+    category: 'pants',
+    material: 'synthetic',
+    warmthTier: CYCLING_WARMTH_BAND_TIER.thin,
+    windResistTier: 2,
+    waterResistTier: 1,
+    breathabilityTier: 4,
+    warmthBands: true,
+  },
+  {
+    id: 'cycling_shorts',
+    label: 'Short cycling shorts',
+    category: 'pants',
+    material: 'synthetic',
+    warmthTier: 1,
+    windResistTier: 1,
+    waterResistTier: 1,
+    breathabilityTier: 5,
+  },
+  {
+    id: 'cycling_triathlon_suit',
+    label: 'Triathlon suit',
+    category: 'one_piece_suit',
+    material: 'synthetic',
+    warmthTier: 1,
+    windResistTier: 1,
+    waterResistTier: 1,
+    breathabilityTier: 5,
+  },
+  {
+    id: 'cycling_short_sleeve_tee',
+    label: 'Short-sleeve technical T-shirt',
+    category: 'base_layer',
+    material: 'synthetic',
+    warmthTier: 1,
+    windResistTier: 1,
+    waterResistTier: 1,
+    breathabilityTier: 5,
+  },
+  {
+    id: 'cycling_long_jersey',
+    label: 'Long-sleeve technical jersey',
+    category: 'base_layer',
+    material: 'synthetic',
+    warmthTier: CYCLING_WARMTH_BAND_TIER.thin,
+    windResistTier: 2,
+    waterResistTier: 1,
+    breathabilityTier: 4,
+    warmthBands: true,
+  },
+  {
+    id: 'cycling_jacket',
+    label: 'Thin cycling jacket',
+    category: 'shell_jacket',
+    material: 'synthetic',
+    warmthTier: CYCLING_WARMTH_BAND_TIER.thin,
+    windResistTier: 4,
+    waterResistTier: 2,
+    breathabilityTier: 4,
+    warmthBands: true,
+  },
+  {
+    id: 'cycling_fingerless_gloves',
+    label: 'Fingerless cycling gloves',
+    category: 'gloves',
+    material: 'synthetic',
+    warmthTier: 1,
+    windResistTier: 2,
+    waterResistTier: 1,
+    breathabilityTier: 5,
+  },
+  {
+    id: 'cycling_full_finger_gloves',
+    label: 'Thin full-finger cycling gloves',
+    category: 'gloves',
+    material: 'synthetic',
+    warmthTier: 2,
+    windResistTier: 3,
+    waterResistTier: 2,
+    breathabilityTier: 3,
+  },
 ];
+
+export function isCyclingGarmentPreset(id: string): boolean {
+  return (
+    id === 'cycling_long_trousers' ||
+    id === 'cycling_shorts' ||
+    id === 'cycling_triathlon_suit' ||
+    id === 'cycling_short_sleeve_tee' ||
+    id === 'cycling_long_jersey' ||
+    id === 'cycling_jacket' ||
+    id === 'cycling_fingerless_gloves' ||
+    id === 'cycling_full_finger_gloves'
+  );
+}
+
+export function isCyclingWarmthBand(value: string): value is CyclingWarmthBand {
+  return (CYCLING_WARMTH_BANDS as readonly string[]).includes(value);
+}
 
 export function presetById(id: string): GarmentPreset | undefined {
   return GARMENT_PRESETS.find((p) => p.id === id);

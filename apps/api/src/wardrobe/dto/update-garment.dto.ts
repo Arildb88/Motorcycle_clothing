@@ -32,6 +32,12 @@ export class UpdateGarmentDto {
   @IsIn([...GARMENT_CATEGORIES])
   category?: string;
 
+  /** Known UX preset id, or null to clear a stored preset. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  preset?: string | null;
+
   @IsOptional()
   @IsIn([...GARMENT_MATERIALS])
   material?: string | null;

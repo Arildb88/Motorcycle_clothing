@@ -2762,6 +2762,90 @@ abstract class AppLocalizations {
   /// **'Heated gloves'**
   String get presetHeatedGloves;
 
+  /// No description provided for @cyclingGarmentType.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycling garment'**
+  String get cyclingGarmentType;
+
+  /// No description provided for @cyclingLongTrousers.
+  ///
+  /// In en, this message translates to:
+  /// **'Long cycling trousers / tights'**
+  String get cyclingLongTrousers;
+
+  /// No description provided for @cyclingShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Short cycling shorts'**
+  String get cyclingShorts;
+
+  /// No description provided for @cyclingTriathlonSuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Triathlon suit'**
+  String get cyclingTriathlonSuit;
+
+  /// No description provided for @cyclingShortSleeveTee.
+  ///
+  /// In en, this message translates to:
+  /// **'Short-sleeve technical T-shirt'**
+  String get cyclingShortSleeveTee;
+
+  /// No description provided for @cyclingLongJersey.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-sleeve technical jersey'**
+  String get cyclingLongJersey;
+
+  /// No description provided for @cyclingJacket.
+  ///
+  /// In en, this message translates to:
+  /// **'Thin cycling jacket'**
+  String get cyclingJacket;
+
+  /// No description provided for @cyclingFingerlessGloves.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerless cycling gloves'**
+  String get cyclingFingerlessGloves;
+
+  /// No description provided for @cyclingFullFingerGloves.
+  ///
+  /// In en, this message translates to:
+  /// **'Thin full-finger cycling gloves'**
+  String get cyclingFullFingerGloves;
+
+  /// No description provided for @cyclingWarmthThin.
+  ///
+  /// In en, this message translates to:
+  /// **'Thin'**
+  String get cyclingWarmthThin;
+
+  /// No description provided for @cyclingWarmthMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get cyclingWarmthMedium;
+
+  /// No description provided for @cyclingWarmthWarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Warm'**
+  String get cyclingWarmthWarm;
+
+  /// No description provided for @cyclingAdvancedWinter.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced settings / winter'**
+  String get cyclingAdvancedWinter;
+
+  /// No description provided for @cyclingDefaultsEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'These defaults are estimates, not measured manufacturer values.'**
+  String get cyclingDefaultsEstimate;
+
   /// No description provided for @routeNew.
   ///
   /// In en, this message translates to:

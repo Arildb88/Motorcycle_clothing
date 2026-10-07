@@ -124,6 +124,8 @@ model Garment {
   brand             String?
   model             String?
   notes             String?
+  /// UX preset id. Null on garments saved before the id was stored.
+  preset            String?
   activityTagsJson  String   @default("[\"motorcycle\"]")
   /// Inserted by the demo wardrobe seed. Survives rename and edit.
   /// Clients cannot set or clear this value.

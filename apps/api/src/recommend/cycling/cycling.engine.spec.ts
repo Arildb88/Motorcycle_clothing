@@ -343,4 +343,248 @@ describe('cycling recommendation foundation', () => {
     ).toBe(true);
     expect(elevated.exposure.segments[0].groundElevationM).toBe(420);
   });
+
+  it('wears warmer cycling layers in cold wind and does not treat a light tee as winter', () => {
+    const result = runCyclingRecommendationPipeline({
+      weather: weather([
+        point({ airTempC: 2, windSpeedMs: 6, precipitationProbPct: 0 }),
+      ]),
+      wardrobe: [
+        garment({
+          id: 'tee',
+          name: 'Light technical tee',
+          category: 'base_layer',
+          layer: 'base',
+          warmthTier: 1,
+          windResistTier: 1,
+          preset: 'cycling_short_sleeve_tee',
+        }),
+        garment({
+          id: 'jersey',
+          name: 'Warm long jersey',
+          category: 'base_layer',
+          layer: 'base',
+          warmthTier: 4,
+          windResistTier: 2,
+          preset: 'cycling_long_jersey',
+        }),
+        garment({
+          id: 'shorts',
+          name: 'Cycling shorts',
+          category: 'pants',
+          layer: 'outer',
+          primaryBodyZone: 'legs',
+          warmthTier: 1,
+          preset: 'cycling_shorts',
+        }),
+        garment({
+          id: 'tights',
+          name: 'Warm tights',
+          category: 'pants',
+          layer: 'outer',
+          primaryBodyZone: 'legs',
+          warmthTier: 4,
+          preset: 'cycling_long_trousers',
+        }),
+        garment({
+          id: 'jacket',
+          name: 'Warm cycling jacket',
+          category: 'shell_jacket',
+          warmthTier: 4,
+          windResistTier: 4,
+          preset: 'cycling_jacket',
+        }),
+        garment({
+          id: 'fingerless',
+          name: 'Fingerless gloves',
+          category: 'gloves',
+          layer: 'accessory',
+          primaryBodyZone: 'hands',
+          warmthTier: 1,
+          preset: 'cycling_fingerless_gloves',
+        }),
+        garment({
+          id: 'full',
+          name: 'Thin full-finger gloves',
+          category: 'gloves',
+          layer: 'accessory',
+          primaryBodyZone: 'hands',
+          warmthTier: 2,
+          windResistTier: 3,
+          preset: 'cycling_full_finger_gloves',
+        }),
+        garment({
+          id: 'moto',
+          name: 'Motorcycle jacket',
+          category: 'shell_jacket',
+          activityTags: ['motorcycle'],
+          warmthTier: 5,
+        }),
+      ],
+      rideDurationMin: 60,
+      intensity: 'easy',
+      geometryFallback: true,
+    });
+    expect(result.wear.find((item) => item.slot === 'base')?.garmentId).toBe(
+      'jersey',
+    );
+    expect(result.wear.find((item) => item.slot === 'legs')?.garmentId).toBe(
+      'tights',
+    );
+    expect(result.wear.find((item) => item.slot === 'shell')?.garmentId).toBe(
+      'jacket',
+    );
+    expect(result.wear.find((item) => item.slot === 'hands')?.garmentId).toBe(
+      'full',
+    );
+    const ids = result.wear.concat(result.pack).map((item) => item.garmentId);
+    expect(ids).not.toContain('tee');
+    expect(ids).not.toContain('shorts');
+    expect(ids).not.toContain('moto');
+  });
+
+  it('uses a light tee on a hot hard ride and does not force the warm jacket', () => {
+    const result = runCyclingRecommendationPipeline({
+      weather: weather([
+        point({ airTempC: 24, windSpeedMs: 1, precipitationProbPct: 0 }),
+      ]),
+      wardrobe: [
+        garment({
+          id: 'tee',
+          name: 'Light technical tee',
+          category: 'base_layer',
+          layer: 'base',
+          warmthTier: 1,
+          preset: 'cycling_short_sleeve_tee',
+        }),
+        garment({
+          id: 'jacket',
+          name: 'Warm cycling jacket',
+          category: 'shell_jacket',
+          warmthTier: 4,
+          hasVentilation: false,
+          preset: 'cycling_jacket',
+        }),
+        garment({
+          id: 'shorts',
+          name: 'Cycling shorts',
+          category: 'pants',
+          primaryBodyZone: 'legs',
+          warmthTier: 1,
+          preset: 'cycling_shorts',
+        }),
+        garment({
+          id: 'tights',
+          name: 'Warm tights',
+          category: 'pants',
+          primaryBodyZone: 'legs',
+          warmthTier: 4,
+          preset: 'cycling_long_trousers',
+        }),
+      ],
+      rideDurationMin: 50,
+      intensity: 'hard',
+      geometryFallback: true,
+    });
+    expect(result.wear.find((item) => item.slot === 'base')?.garmentId).toBe(
+      'tee',
+    );
+    expect(result.wear.find((item) => item.slot === 'legs')?.garmentId).toBe(
+      'shorts',
+    );
+    expect(result.wear.some((item) => item.garmentId === 'jacket')).toBe(false);
+    expect(result.wear.some((item) => item.garmentId === 'tights')).toBe(false);
+  });
+
+  it('wears one triathlon suit for torso and legs without a second top or tights', () => {
+    const result = runCyclingRecommendationPipeline({
+      weather: weather([
+        point({ airTempC: 22, windSpeedMs: 2, precipitationProbPct: 5 }),
+      ]),
+      wardrobe: [
+        garment({
+          id: 'suit',
+          name: 'Tri suit',
+          category: 'one_piece_suit',
+          layer: 'outer',
+          primaryBodyZone: 'full_body',
+          warmthTier: 1,
+          preset: 'cycling_triathlon_suit',
+        }),
+        garment({
+          id: 'tee',
+          name: 'Light technical tee',
+          category: 'base_layer',
+          layer: 'base',
+          warmthTier: 1,
+          preset: 'cycling_short_sleeve_tee',
+        }),
+        garment({
+          id: 'shorts',
+          name: 'Cycling shorts',
+          category: 'pants',
+          primaryBodyZone: 'legs',
+          warmthTier: 1,
+          preset: 'cycling_shorts',
+        }),
+      ],
+      rideDurationMin: 40,
+      intensity: 'steady',
+      geometryFallback: true,
+    });
+    const worn = result.wear.filter((item) => item.garmentId === 'suit');
+    expect(worn).toHaveLength(1);
+    expect(worn[0].zone).toBe('full_body');
+    expect(result.wear.some((item) => item.slot === 'base')).toBe(false);
+    expect(result.wear.some((item) => item.slot === 'legs')).toBe(false);
+    expect(result.wear.some((item) => item.garmentId === 'tee')).toBe(false);
+    expect(result.wear.some((item) => item.garmentId === 'shorts')).toBe(false);
+    expect(result.pack.some((item) => item.garmentId === 'suit')).toBe(false);
+  });
+
+  it('keeps warmer trousers and a jersey when a triathlon suit is also owned', () => {
+    const result = runCyclingRecommendationPipeline({
+      weather: weather([
+        point({ airTempC: 2, windSpeedMs: 6, precipitationProbPct: 10 }),
+      ]),
+      wardrobe: [
+        garment({
+          id: 'suit',
+          name: 'Tri suit',
+          category: 'one_piece_suit',
+          primaryBodyZone: 'full_body',
+          warmthTier: 1,
+          preset: 'cycling_triathlon_suit',
+        }),
+        garment({
+          id: 'jersey',
+          name: 'Warm long jersey',
+          category: 'base_layer',
+          layer: 'base',
+          warmthTier: 4,
+          preset: 'cycling_long_jersey',
+        }),
+        garment({
+          id: 'tights',
+          name: 'Warm tights',
+          category: 'pants',
+          primaryBodyZone: 'legs',
+          warmthTier: 4,
+          preset: 'cycling_long_trousers',
+        }),
+      ],
+      rideDurationMin: 70,
+      intensity: 'easy',
+      geometryFallback: true,
+    });
+    expect(result.wear.find((item) => item.slot === 'base')?.garmentId).toBe(
+      'jersey',
+    );
+    expect(result.wear.find((item) => item.slot === 'legs')?.garmentId).toBe(
+      'tights',
+    );
+    expect(
+      result.wear.concat(result.pack).some((item) => item.garmentId === 'suit'),
+    ).toBe(false);
+  });
 });
