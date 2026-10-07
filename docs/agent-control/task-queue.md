@@ -2174,6 +2174,8 @@ Requirements:
 - Hide latitude/longitude in user-visible resort result cards and selected-resort information. Keep coordinates internally for selection, weather/elevation and nearby discovery; do not remove stored/API coordinates.
 - Keep ONE visible attribution above resort results: "Informasjon om skianlegg er hentet fra Fnugg.no", linking to https://fnugg.no. Remove repeated per-result and selected-resort Fnugg.no links on this planner screen. Keep attribution readable and accessible, not hidden. Preserve resort names, selection and weather/elevation functionality. No provider change.
 
+- In the alpine/snowboard result section "Begrensninger og antagelser / Limitations and assumptions", show only the existing notice that no top station was found ("Ingen toppstasjon ble funnet"), and only when that condition actually applies. Remove other assumption/limitation rows from this section. Hide the section when no top-station notice applies. Preserve internal diagnostics and confidence calculations; actual provider failures/unavailable weather still require their separate explicit error states under REAL-DATA-ONLY-001. Localize nb/en without inventing missing-station conditions.
+
 Verification and boundaries:
 - Use current Flutter/NestJS architecture and existing localization. No new dependency, schema migration, external provider, paid service or deployment.
 - Quota-conscious checks per Arild: Flutter analyze once and focused tests for hidden exposure choice/default lift payload, helper text, coordinates hidden while selections retain coordinates, and exactly one visible attribution link. Run focused API tests/build only if API behavior changes. No full suites or repeated builds by default; broaden only for a concrete failure.
