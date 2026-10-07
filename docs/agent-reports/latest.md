@@ -6,7 +6,7 @@
 
 - Branch: `feature/place-unicode-resort-001`
 - Implementation commit: `e9fa6587f8cb147bc73cd73a9f021f0c78f2c0eb`
-- PR: pending, into `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/82 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
