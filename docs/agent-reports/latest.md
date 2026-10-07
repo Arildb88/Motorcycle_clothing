@@ -6,7 +6,7 @@
 
 - Branch: `fix/place-search-availability-001`
 - Implementation commit: `4e26287eabb38bd24d924d9f8263435aec07b87b`
-- PR: targeting `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/79 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
