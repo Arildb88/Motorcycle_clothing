@@ -8,10 +8,10 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: none
+active_id: REAL-DATA-ONLY-001
 promotion: automatic
-handoff_generation: 44
-handoff_state: idle
+handoff_generation: 46
+handoff_state: authorized
 ```
 
 - `paused` is `true` or `false`. Agents stop before any edit when it is `true`. Only a human push may set it back to `false`.
@@ -102,6 +102,10 @@ Generation `41` is spent: `SOCIAL-AUTH-RESEARCH-001` completed and the automatic
 Generation `42` is spent: `RELEASE-READINESS-001` completed and no queued unconsumed item remained, so the final close is idle at generation `42`. Do not reuse generation `42`. Do not execute `RELEASE-READINESS-001` again.
 
 Generation `43` is spent: `SHARED-GARMENT-CATALOG-001` was authorized from idle and completed. No queued unconsumed item remained, so the final close is idle at generation `43`. Do not reuse generation `43`. Do not execute `SHARED-GARMENT-CATALOG-001` again.
+
+Generation `44` is spent: `COMMUTE-ROUNDTRIP-001` was authorized and recovered without being consumed. Do not reuse generation `44`.
+
+Generation `45` is spent: `COMMUTE-ROUNDTRIP-001` was authorized from idle and completed. The automatic final control update authorizes `REAL-DATA-ONLY-001` at generation `46`. Do not reuse generation `45`. Do not execute `COMMUTE-ROUNDTRIP-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -1869,7 +1873,7 @@ Verification:
 
 ### COMMUTE-ROUNDTRIP-001
 
-- status: queued
+- status: completed
 - title: Commute route with combined outbound and return recommendations
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 
@@ -1906,7 +1910,7 @@ Acceptance and verification:
 
 ### REAL-DATA-ONLY-001
 
-- status: queued
+- status: active
 - title: Real provider data only; explicit weather and routing failures
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 

@@ -1,42 +1,39 @@
-# SHARED-GARMENT-CATALOG-001
+# COMMUTE-ROUNDTRIP-001
 
 ## Task
 
-`SHARED-GARMENT-CATALOG-001`, generation 43, authorized from idle by `b0c5f98a09a8c186276c8b75e9f384cf5176e2bc`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
+`COMMUTE-ROUNDTRIP-001`, generation 45, authorized from idle by `8f74609039cb5a3161804677e37fe11b7a52a86b`. This run did not write a claim commit. The validated `next-task.md` token stayed the ownership record until this branch's final control state.
 
-- Branch: `feature/shared-garment-catalog-001`
-- Implementation commit: `d9e3d138bf824e09fdb24d6678df0e26c8eb8d26`
-- Migration: `apps/api/prisma/migrations/20261007180000_garment_catalogue`
-- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/74 into `dev_test` only. Not merged to `dev` or `main`.
+- Branch: `feature/commute-roundtrip-001`
+- Implementation commit: `d4166b412cc7cb3ce8fbd25bae3747d38b88bcd0`
+- Migration: `apps/api/prisma/migrations/20261007200000_commute_roundtrip`
+- PR: against `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
-Searchable curated brand and model choices, plus "Other / write yourself". A personal garment name is kept and is not published. Catalogue identity is normalized brand + model + category + activity scope + heated flag + liner key + material key. Case and whitespace fold. Distinct models, generations, liners, heated variants, and motorcycle versus other activities stay separate. A name-only match is exact, category-scoped, and variant-scoped, and only against one curated name.
+Motorcycle route creation can save a named private commute with From and To endpoints, existing waypoints and preferences, and editable Europe/Oslo outbound and return clock templates. The templates are not forecasts, and the endpoints are not labeled as the rider's actual home or work. `isDefaultCommute` stays the default-route flag.
 
-Warmth, wind, and water use the existing 1–5 scale. Five or more explicit contributions drop one lowest and one highest occurrence, then the mean of the rest is stored as a fraction and copied with half-up rounding. Below five, the existing preset or category default remains. Community values are estimates and the number shown is a contribution count, not a count of people. Breathability is unchanged.
+Planning a commute chooses a civil date and two clock times. The return defaults to that day's saved return time and can be the next civil day. A return that departs before the outbound arrival is rejected. Europe/Oslo spring-forward gaps are rejected. An autumn overlap uses the earlier instant.
 
-Defaults apply only while creating a garment, and only for tiers the client did not set. The server looks up the catalogue even when the client did not fetch a preview. An explicit tier wins. Rename, edit, read, and recommendation do not refresh an existing garment. Deleting it and adding the same product again uses the current defaults.
+Each leg calls routing and weather on its own departure and direction. The return reverses waypoints and does not reuse the outbound duration. The response is one block with Til jobb / Outbound and Hjem / Return. Wear follows the outbound leg. Rain gear and other return-only garments are packed before leaving. A different liner or vent setup for a garment already worn is a return adjustment, not a second copy of that garment. Morning weather is not averaged with the afternoon and is not copied when the return forecast is missing or out of range.
 
-Only an explicit rating is counted. Demo garments, seeds, copied defaults, and creating a garment do not add a count. A repeated submission id is ignored for 10 minutes in that API process. That is not unique-person deduplication. Out-of-range values are rejected. Histogram writes are one `INSERT ... ON CONFLICT` that adds the new counts. Trimming is not fraud resistance.
-
-The additive table stores product identity and the fifteen score counts. It has no user id, garment id, free-text name, note, or contribution timestamp.
+Each leg is its own activity plan in one commute group. Feedback sent with that plan id updates the motorcycle offset once. A second submission for the same plan is rejected. Route edits do not rewrite the stored plan snapshot. Stored route analysis drops dense provider geometry. Ordinary one-way planning is unchanged.
 
 ## Checks
 
-- `npm test`: 350 passed
+- `npm test`: 369 passed
 - `npm run build`: passed
 - `npx prisma generate` and `npx prisma validate`: passed
-- `npx prisma migrate deploy`: 3 migrations applied on local Postgres 16, including `20261007180000_garment_catalogue`
+- `npx prisma migrate deploy`: 4 migrations applied on local Postgres 16, including `20261007200000_commute_roundtrip`
 - `npx prisma migrate diff`: no difference
-- Conflict increment on that database: two inserts of the same identity left one row and `warmth3 = 2`, then the row was deleted
 - `flutter analyze`: no issues found
-- `flutter test test/garment_catalogue_test.dart`: 6 passed
+- `flutter test test/commute_roundtrip_test.dart`: 7 passed
 - Android and iOS were not run
 
 ## Limitations
 
-Trimming one high and one low score does not identify distinct people and does not stop misuse. The submission guard is process-local and expires. Curated brands and models are a list of names, not verified manufacturer measurements. No backfill from existing wardrobes was done.
+Commute planning is motorcycle only. Saved times are Europe/Oslo templates even if the phone is set to another zone. The autumn overlap uses the earlier of the two possible instants. A missing return forecast does not invent clothing for that leg. No notification, background refresh, or daily schedule was added.
 
 ## Final control state
 
-`SHARED-GARMENT-CATALOG-001` is completed and appended once to `consumed.md`. `active_id` is `none`. `handoff_state` is `idle`. `handoff_generation` is 43. `promotion` stays `automatic`. `next-task.md` is the idle body with `Authorization: none`. No other ID is authorized.
+`COMMUTE-ROUNDTRIP-001` is completed and appended once to `consumed.md`. `active_id` is `REAL-DATA-ONLY-001`. `handoff_state` is `authorized`. `handoff_generation` is 46. `promotion` stays `automatic`. `next-task.md` authorizes `REAL-DATA-ONLY-001` with `Handoff-From: COMMUTE-ROUNDTRIP-001`. This run does not execute that ID.

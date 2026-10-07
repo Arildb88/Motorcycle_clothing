@@ -1,28 +1,28 @@
 # Authorized RideWear Task
-## Type: FEATURE_IMPLEMENTATION
-## ID: COMMUTE-ROUNDTRIP-001
-## Generation: 45
-## Handoff-From: none
+## Type: BUG_FIX
+## ID: REAL-DATA-ONLY-001
+## Generation: 46
+## Handoff-From: COMMUTE-ROUNDTRIP-001
 ## Authorization: authorized
-## Task: Saved commute with outbound and return weather in one recommendation block
+## Promoted: 2026-10-07T20:25:08Z
+## Task: Real provider data only in app runtime; remove silent simulated fallbacks
 
-Arild authorized this task in chat on 2026-10-07: add a commute route with home/work endpoints and a combined outbound/return recommendation, including dry morning versus rainy afternoon. Implement within existing Flutter -> NestJS -> Prisma/PostgreSQL architecture. Minimal additive migrations needed for commute settings or paired plan linkage are authorized. No new dependencies, providers, paid services or deployment.
+Arild explicitly authorized this change on 2026-10-07: no mock data in the running app; use real data so actual provider problems can be diagnosed.
 
-Product requirements:
-- Offer "Pendlerrute / Commute" in route creation for motorcycle first. Save a user-named private commute with From and To endpoints, optional existing waypoints/preferences, and editable default outbound and return departure times. Do not force users to label endpoints as their actual home/work.
-- When planning a commute choose a date and two departure date/times. Default return to the chosen day's saved return time, but allow an explicit next-day return for overnight shifts. Validate return departure is after outbound arrival; handle Europe/Oslo daylight-saving transitions using existing timezone conventions. Saved times are templates, not stored forecasts.
-- Calculate each leg separately using existing routing, ETA/weather sampling, activity exposure and wardrobe logic. Return reverses ordered endpoints/waypoints, but must request its own direction-specific route analysis: one-way roads and direction-dependent travel times mean outbound geometry/duration cannot simply be reused.
-- Show ONE combined commute block with clearly labeled "Til jobb / Outbound" and "Hjem / Return" sections, each with its own departure, estimated arrival, forecast temperature/rain/wind, clothing/configuration and confidence/limitations.
-- Explain differences, e.g. "Opphold på morgenen, regn meldt på hjemturen – ta med regntøy", only when supported by actual forecast data. Forecasts are forecasts, not guarantees. Missing/out-of-range return forecast must be explicitly unavailable; do not substitute morning conditions.
-- Combined preparation separates wear for outbound from pack before leaving for items/configuration needed on return. Deduplicate physical garments and respect existing protective gear, liners/vents and wear/pack engine rules. Do not average morning/afternoon weather or force maximum warmth on the morning leg; preserve appropriate changes for the return.
-- Use latest forecasts when analyzing again. Route edit/delete must not rewrite past plan snapshots. Keep the two legs associated so UI and existing feedback identify the actual leg/activity; do not apply one feedback event twice.
-- Preserve existing one-way, loop, multi-stop routes and default-route behavior. Resolve existing isDefaultCommute/defaultRouteId overlap only if necessary for this task; no unrelated refactor.
-- Norwegian Bokmål and English localization. Reuse existing route/planner/recommendation UI and APIs where practical.
-- Scope all commute/plan resources to authenticated owner. No background location tracking, notifications, automatic daily scheduling, continuous forecast refresh, or extra home/work logging. No permanent dense provider geometry or raw forecast storage.
+Requirements:
+- Make MET the default runtime weather provider. Remove runtime mockWeather paths, implicit non-met -> mock selection, and catch/empty-payload fallback to synthetic weather from WeatherService and all normal app flows.
+- Update .env.example, compose/runtime examples and startup docs to real MET configuration. An existing WEATHER_PROVIDER=mock or unknown provider must produce an actionable explicit configuration error, never simulated data. Explain how existing local .env must be changed; do not overwrite secrets.
+- Keep test doubles only inside isolated tests, never selectable as a normal app provider. Do not call live services from every unit test.
+- Provider failure, empty/invalid forecast, out-of-range requested time and missing required measurements must return explicit weather-unavailable/partial status. Never invent 0 temperature/rain/wind for missing values or dress the rider using fabricated conditions. Preserve valid zero readings.
+- Recommendations depending on unavailable weather must not masquerade as a complete valid recommendation. Display readable nb/en retry/error states, including which commute leg is unavailable. Do not substitute another time/location's forecast.
+- Track actual source/forecast valid time on usable results; configuration label "met" is not proof of successful retrieval.
+- Remove/reject legacy cached synthetic weather (including synthetic points previously stored under met keys) using a cache format/namespace change or another bounded safe invalidation. Never flush unrelated user data or rewrite historical snapshots; preserve past records without claiming they were real.
+- Inspect normal location/routing service creation for fake autocomplete/geometry and NullRoutingAdapter estimates. Normal app route/search analysis must use configured real ORS; provider/configuration failures must be explicit, not fake places, straight-line simulated road routes or assumed travel times presented as provider results. Keep deliberate manual coordinates available if already supported, with honest limits. Test-only fakes remain isolated.
+- User says ORS is configured locally. Do not copy the key from chat, print secrets or assume the shown abbreviated value is the full key. Diagnose provider authentication/status/timeouts via sanitized logs. Existing PLACE-SEARCH-AVAILABILITY-001 handles detailed search fixes; avoid duplication and record findings for it.
+- Real MET needs identifying contact User-Agent; use existing valid project/contact configuration. No new provider, credentials, dependency, schema migration, paid service or deployment.
 
-Acceptance and verification:
-- Deterministic API tests: dry outbound/rainy return puts rain equipment in pack before leaving; warm outbound/cold return recommends appropriate extra layer/configuration; each leg uses its own datetime/ETA/direction; missing return forecast is explicit; invalid sequence, next-day return, timezone/DST handling; owner isolation and snapshot stability; ordinary routes remain unchanged.
-- Flutter tests: commute creation and saved defaults, two date/time selections, one combined block with two clearly labeled sections, deduped preparation, missing data, localized copy and existing one-way flow.
-- Run focused API tests and production build, Flutter analyze and relevant tests. If schema changes, Prisma generate/validate and additive migration verification against disposable local Postgres. Report unsupported checks honestly.
-- Read current source and architecture/security/privacy docs; preserve current implemented engines rather than relying on stale context summaries.
-- Feature branch from latest dev_test, PR to dev_test only, merge after required checks. Keep dev/main untouched. Follow existing queue completion/blocker protocol; update docs/agent-reports/latest.md and stop after this task.
+Quota-conscious verification:
+- Run API production build once and focused tests proving no synthetic fallback on missing/invalid config, MET timeout/empty/missing fields/out-of-range, cache version isolation, and honest route-provider failures.
+- Flutter analyze once and focused tests for changed unavailable/partial states. No full suites, repeated builds or native builds unless a concrete regression warrants them.
+- One real provider smoke check when existing authorized credentials/network permit; report precisely whether live MET/ORS was verified. Missing credentials/network must not be hidden by mocks. Follow blocker rules for required unavailable checks.
+- Dedicated fix branch from latest dev_test; PR to dev_test only, merge after required checks pass. Keep dev/main untouched. Follow queue completion/blocker rules, update docs/agent-reports/latest.md and stop after this ID.
