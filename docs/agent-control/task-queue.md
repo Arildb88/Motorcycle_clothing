@@ -1964,6 +1964,15 @@ Scope:
 - Preserve latest-query result handling, Unicode Norwegian names, selected coordinates/labels, and single-location/multi-stop/commute flows. Offer clear localized nb/en retry behavior.
 - Update relevant local-start/configuration documentation only as needed to prevent recurrence.
 
+Concrete selection failure reported by Arild on 2026-10-07:
+- Searching "arendal" returns suggestions, but tapping a result does not select it. Reproduce start/destination/stop selection with the keyboard open and closed. This report does not establish a permissions problem.
+- Code inspection: autocomplete is GET /location/places -> Pelias /autocomplete; selection is POST /location/places/resolve -> Pelias /place?ids=... using the same server key. Autocomplete already has coordinates server-side but its API response currently omits them. Check the actual resolve provider status/empty response before attributing this to key scope.
+- In PlaceSearchField._select, only LocationProviderException is caught. Unexpected decode/network exceptions can escape without a visible error; add safe localized error handling with retry and no raw exception disclosure.
+- Inspect the 200ms focus-loss hide timer, suggestion pointer/tap handling, didUpdateWidget request invalidation and _clear (which currently does not invalidate in-flight requests or reset loading/error state). Reproduce before choosing a fix; do not assert a blur race from inspection alone.
+- Prevent stale resolve completion from applying after clear/edit/swap; ensure failed/cancelled resolve releases loading and keeps input usable. Verify selection callback actually updates canonical coordinates.
+- Add sanitized operation-specific diagnostics distinguishing autocomplete versus resolve and provider HTTP status, without keys/search strings/coordinates. Avoid collecting new user location logs.
+- Focused checks only: successful Arendal fixture selection, provider resolve rejection/empty result, unexpected exception, and clear/edit during pending resolve. Run Flutter analyze and affected tests once, API build/tests only if API changes.
+
 Verification:
 - Add focused regression tests for identified cause, missing configuration, provider timeout/error and successful response mapping, Norwegian place names/encoding, and search UI retry/empty states where touched.
 - Run relevant API tests and production build, Flutter analyze and relevant Flutter tests for changed mobile code.
