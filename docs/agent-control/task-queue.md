@@ -1902,3 +1902,36 @@ Acceptance and verification:
 - Read current source and architecture/security/privacy docs; preserve current implemented engines rather than relying on stale context summaries.
 - Feature branch from latest dev_test, PR to dev_test only, merge after required checks. Keep dev/main untouched. Follow existing queue completion/blocker protocol; update docs/agent-reports/latest.md and stop after this task.
 ~~~~~
+
+
+### PLACE-SEARCH-AVAILABILITY-001
+
+- status: queued
+- title: Diagnose and fix temporarily unavailable place search
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: BUG_FIX
+## ID: PLACE-SEARCH-AVAILABILITY-001
+## Task: Diagnose and fix temporarily unavailable place search
+
+Arild explicitly authorized this queued task in chat on 2026-10-07. Investigate the reported Norwegian UI error "Stedsøk er midlertidig utilgjengelig" and restore working place search through the existing Flutter -> NestJS -> configured provider integration. The cause is unverified; do not assume this feature is unimplemented.
+
+Scope:
+- Trace search from all relevant route/planner fields through mobile requests, API configuration and provider adapter. Check missing/invalid server configuration, current documented endpoint/auth usage, timeout/rate-limit/error mapping, Unicode and encoding, and whether a stale/incorrect API base URL or session failure is being masked as a provider outage.
+- Correct repository defects within existing architecture. No new provider, dependency, schema change, paid service, deployment or credential creation/rotation. Never print or commit secrets. Provider keys stay server-side.
+- If the cause is missing/invalid operator credentials or inaccessible external service, document the exact environment variable/setup needed and a sanitized diagnostic, distinguish that from a code defect, and follow the queue blocker rule when required verification cannot be completed. Do not invent a working key or claim a live success from mocks.
+- Retain legitimate unavailable/empty-result states. Distinguish no matches, temporarily unavailable provider, and configuration problems safely; no internal stack trace or credential exposure in UI.
+- Preserve latest-query result handling, Unicode Norwegian names, selected coordinates/labels, and single-location/multi-stop/commute flows. Offer clear localized nb/en retry behavior.
+- Update relevant local-start/configuration documentation only as needed to prevent recurrence.
+
+Verification:
+- Add focused regression tests for identified cause, missing configuration, provider timeout/error and successful response mapping, Norwegian place names/encoding, and search UI retry/empty states where touched.
+- Run relevant API tests and production build, Flutter analyze and relevant Flutter tests for changed mobile code.
+- Attempt a live smoke search only when existing authorized configuration and network permit, e.g. Arendal and Kristiansand; otherwise explicitly report what was and was not verified.
+- Work from latest dev_test on a dedicated fix branch. PR targets dev_test only; merge after required checks pass. Keep dev/main untouched.
+- Follow existing authorization, completion/blocker and report rules. Stop after this task.
+~~~~~
