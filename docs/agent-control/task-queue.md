@@ -1865,3 +1865,216 @@ Verification:
 - Keep dev and main untouched. Work on a feature branch from latest dev_test; open PR against dev_test. Merge only after required checks pass. If tooling prevents a required check, report/block rather than inventing results.
 - Read architecture/security/privacy constraints and follow existing queue success/blocker rules. Record implementation, migrations, verification and limitations in latest report.
 ~~~~~
+
+
+### COMMUTE-ROUNDTRIP-001
+
+- status: queued
+- title: Commute route with combined outbound and return recommendations
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE_IMPLEMENTATION
+## ID: COMMUTE-ROUNDTRIP-001
+## Task: Saved commute with outbound and return weather in one recommendation block
+
+Arild authorized this task in chat on 2026-10-07: add a commute route with home/work endpoints and a combined outbound/return recommendation, including dry morning versus rainy afternoon. Implement within existing Flutter -> NestJS -> Prisma/PostgreSQL architecture. Minimal additive migrations needed for commute settings or paired plan linkage are authorized. No new dependencies, providers, paid services or deployment.
+
+Product requirements:
+- Offer "Pendlerrute / Commute" in route creation for motorcycle first. Save a user-named private commute with From and To endpoints, optional existing waypoints/preferences, and editable default outbound and return departure times. Do not force users to label endpoints as their actual home/work.
+- When planning a commute choose a date and two departure date/times. Default return to the chosen day's saved return time, but allow an explicit next-day return for overnight shifts. Validate return departure is after outbound arrival; handle Europe/Oslo daylight-saving transitions using existing timezone conventions. Saved times are templates, not stored forecasts.
+- Calculate each leg separately using existing routing, ETA/weather sampling, activity exposure and wardrobe logic. Return reverses ordered endpoints/waypoints, but must request its own direction-specific route analysis: one-way roads and direction-dependent travel times mean outbound geometry/duration cannot simply be reused.
+- Show ONE combined commute block with clearly labeled "Til jobb / Outbound" and "Hjem / Return" sections, each with its own departure, estimated arrival, forecast temperature/rain/wind, clothing/configuration and confidence/limitations.
+- Explain differences, e.g. "Opphold på morgenen, regn meldt på hjemturen – ta med regntøy", only when supported by actual forecast data. Forecasts are forecasts, not guarantees. Missing/out-of-range return forecast must be explicitly unavailable; do not substitute morning conditions.
+- Combined preparation separates wear for outbound from pack before leaving for items/configuration needed on return. Deduplicate physical garments and respect existing protective gear, liners/vents and wear/pack engine rules. Do not average morning/afternoon weather or force maximum warmth on the morning leg; preserve appropriate changes for the return.
+- Use latest forecasts when analyzing again. Route edit/delete must not rewrite past plan snapshots. Keep the two legs associated so UI and existing feedback identify the actual leg/activity; do not apply one feedback event twice.
+- Preserve existing one-way, loop, multi-stop routes and default-route behavior. Resolve existing isDefaultCommute/defaultRouteId overlap only if necessary for this task; no unrelated refactor.
+- Norwegian Bokmål and English localization. Reuse existing route/planner/recommendation UI and APIs where practical.
+- Scope all commute/plan resources to authenticated owner. No background location tracking, notifications, automatic daily scheduling, continuous forecast refresh, or extra home/work logging. No permanent dense provider geometry or raw forecast storage.
+
+Acceptance and verification:
+- Deterministic API tests: dry outbound/rainy return puts rain equipment in pack before leaving; warm outbound/cold return recommends appropriate extra layer/configuration; each leg uses its own datetime/ETA/direction; missing return forecast is explicit; invalid sequence, next-day return, timezone/DST handling; owner isolation and snapshot stability; ordinary routes remain unchanged.
+- Flutter tests: commute creation and saved defaults, two date/time selections, one combined block with two clearly labeled sections, deduped preparation, missing data, localized copy and existing one-way flow.
+- Run focused API tests and production build, Flutter analyze and relevant tests. If schema changes, Prisma generate/validate and additive migration verification against disposable local Postgres. Report unsupported checks honestly.
+- Read current source and architecture/security/privacy docs; preserve current implemented engines rather than relying on stale context summaries.
+- Feature branch from latest dev_test, PR to dev_test only, merge after required checks. Keep dev/main untouched. Follow existing queue completion/blocker protocol; update docs/agent-reports/latest.md and stop after this task.
+~~~~~
+
+
+### PLACE-SEARCH-AVAILABILITY-001
+
+- status: queued
+- title: Diagnose and fix temporarily unavailable place search
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: BUG_FIX
+## ID: PLACE-SEARCH-AVAILABILITY-001
+## Task: Diagnose and fix temporarily unavailable place search
+
+Arild explicitly authorized this queued task in chat on 2026-10-07. Investigate the reported Norwegian UI error "Stedsøk er midlertidig utilgjengelig" and restore working place search through the existing Flutter -> NestJS -> configured provider integration. The cause is unverified; do not assume this feature is unimplemented.
+
+Scope:
+- Trace search from all relevant route/planner fields through mobile requests, API configuration and provider adapter. Check missing/invalid server configuration, current documented endpoint/auth usage, timeout/rate-limit/error mapping, Unicode and encoding, and whether a stale/incorrect API base URL or session failure is being masked as a provider outage.
+- Correct repository defects within existing architecture. No new provider, dependency, schema change, paid service, deployment or credential creation/rotation. Never print or commit secrets. Provider keys stay server-side.
+- If the cause is missing/invalid operator credentials or inaccessible external service, document the exact environment variable/setup needed and a sanitized diagnostic, distinguish that from a code defect, and follow the queue blocker rule when required verification cannot be completed. Do not invent a working key or claim a live success from mocks.
+- Retain legitimate unavailable/empty-result states. Distinguish no matches, temporarily unavailable provider, and configuration problems safely; no internal stack trace or credential exposure in UI.
+- Preserve latest-query result handling, Unicode Norwegian names, selected coordinates/labels, and single-location/multi-stop/commute flows. Offer clear localized nb/en retry behavior.
+- Update relevant local-start/configuration documentation only as needed to prevent recurrence.
+
+Verification:
+- Add focused regression tests for identified cause, missing configuration, provider timeout/error and successful response mapping, Norwegian place names/encoding, and search UI retry/empty states where touched.
+- Run relevant API tests and production build, Flutter analyze and relevant Flutter tests for changed mobile code.
+- Attempt a live smoke search only when existing authorized configuration and network permit, e.g. Arendal and Kristiansand; otherwise explicitly report what was and was not verified.
+- Work from latest dev_test on a dedicated fix branch. PR targets dev_test only; merge after required checks pass. Keep dev/main untouched.
+- Follow existing authorization, completion/blocker and report rules. Stop after this task.
+~~~~~
+
+
+### CYCLING-WARDROBE-UX-001
+
+- status: queued
+- title: Cycling-specific garment choices and simple seasonal defaults
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE_IMPLEMENTATION
+## ID: CYCLING-WARDROBE-UX-001
+## Task: Cycling-specific garment choices and simple seasonal defaults
+
+Add cycling-specific selectable garment types: long cycling trousers/tights, short cycling shorts, triathlon suit, short-sleeve technical T-shirt, long-sleeve technical jersey, thin cycling jacket, fingerless cycling gloves, thin full-finger gloves. "Fingerhansker" is interpreted as fingerless alongside the separate thin full-finger option; use unambiguous nb/en labels.
+Reuse existing canonical categories/body zones with cycling presets/subtypes where possible. Preserve physical garment identity and existing garments; do not mix motorcycle gear into cycling. Triathlon suit must cover torso and legs without double counting.
+Brand/model must be optional and unobtrusive for cycling; free-text garment registration works without catalogue selection. Untouched category defaults must not become explicit community ratings.
+Use category-appropriate simple defaults: short technical T-shirt is light insulation, not automatically treated as a warm winter layer. Long trousers, long jersey and jacket expose thin/medium/warm choices mapped to existing tiers.
+Put detailed warmth/wind/water and winter adjustments in a collapsed "Avanserte innstillinger / vinter" section. Do not add a second warmth scale; preserve existing 1–5 semantics. Defaults are estimates, not measured manufacturer values.
+Recommendation logic must use temperature, wind, precipitation and intensity, not assume summer/cycling always needs a T-shirt or block warmer gear.
+Verify all eight choices, optional brand, advanced controls, saving/editing, presets mapped to correct zones, and existing cycling/non-cycling garments and recommendation flows. Minimal additive schema migration is authorized only if existing fields cannot preserve these distinctions; verify Prisma generate/validate and migration on disposable local Postgres if used.
+
+Execution boundaries and verification:
+- Explicitly approved by Arild in chat on 2026-10-07. Read current code and architecture/security/privacy constraints. Existing Flutter -> NestJS -> Prisma boundaries remain.
+- No new dependencies, external providers, paid services, credentials or deployment. Keep dev/main untouched.
+- Branch from latest dev_test; PR to dev_test; merge only after required checks pass. Follow queue success/blocker protocol, update docs/agent-reports/latest.md, and stop after this ID.
+- Run focused regression tests for changed behavior, API tests/build when API changes, Flutter analyze and relevant Flutter tests when mobile changes. Report checks honestly.
+~~~~~
+
+
+### WARDROBE-REMOVE-SHARING-001
+
+- status: queued
+- title: Remove share-this-rating controls from every wardrobe
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE_IMPLEMENTATION
+## ID: WARDROBE-REMOVE-SHARING-001
+## Task: Remove share-this-rating controls from every wardrobe
+
+Remove "Del denne vurderingen / Share this rating" controls and prompts from every activity wardrobe and garment add/edit/detail surface.
+Stop shared-rating submission from these mobile flows, including hidden auto-submit handlers: adding/editing personal tiers must not silently contribute to the shared catalogue.
+Keep private garment values, ownership, manual edits, existing catalogue data and snapshot defaults intact. Do not delete catalogue tables, erase existing aggregates, or automatically backfill contributions.
+Retain truthful privacy documentation about previously collected aggregates; adjust current-flow wording as needed.
+Test all activity wardrobe surfaces and verify saving/editing garments does not call a contribution endpoint. This is UI/submission removal, not authorization for a new data-collection mechanism.
+
+Execution boundaries and verification:
+- Explicitly approved by Arild in chat on 2026-10-07. Read current code and architecture/security/privacy constraints. Existing Flutter -> NestJS -> Prisma boundaries remain.
+- No new dependencies, external providers, paid services, credentials or deployment. Keep dev/main untouched.
+- Branch from latest dev_test; PR to dev_test; merge only after required checks pass. Follow queue success/blocker protocol, update docs/agent-reports/latest.md, and stop after this ID.
+- Run focused regression tests for changed behavior, API tests/build when API changes, Flutter analyze and relevant Flutter tests when mobile changes. Report checks honestly.
+~~~~~
+
+
+### PLACE-UNICODE-RESORT-001
+
+- status: queued
+- title: Fix Norwegian place input and Kongsberg resort discovery
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: BUG_FIX
+## ID: PLACE-UNICODE-RESORT-001
+## Task: Fix Norwegian place input and Kongsberg resort discovery
+
+User reports that typing Åmli fails and æ/ø/å cannot be entered in place fields. Alpine/snowboard selection can show temperatures but Kongsberg is not found. Causes are unverified.
+Trace text entry (including keyboard composition/input formatters), mobile URL encoding, API validation/normalization, provider queries, resort naming/aliases and displayed results.
+Allow æ ø å Æ Ø Å in every relevant place/resort/route planner input without stripping characters or resetting typing. Encode Unicode once, preserve selected label/coordinates and latest-query handling.
+Investigate Kongsberg resort discovery specifically against the existing resort provider. If its documented resort name differs from town name, support a justified provider-name alias/matching path within the existing integration; do not invent a resort record or misrepresent generic town search as resort data.
+Separate ability to type arbitrary place names from available provider results: Åmli need not be an alpine resort. No matches must remain a legitimate localized result, with retry for actual outage.
+Test typing and roundtrip encoding of Åmli, Øyer, Sæby and uppercase letters, searching Kongsberg with a real documented provider fixture when available, empty results, stale requests and current resort weather/elevation flow.
+Attempt live lookup only with existing authorized configuration/network; explicitly state if only fixtures were verified. No new provider or schema changes. Coordinate with completed PLACE-SEARCH-AVAILABILITY-001 rather than duplicating its fix.
+
+Execution boundaries and verification:
+- Explicitly approved by Arild in chat on 2026-10-07. Read current code and architecture/security/privacy constraints. Existing Flutter -> NestJS -> Prisma boundaries remain.
+- No new dependencies, external providers, paid services, credentials or deployment. Keep dev/main untouched.
+- Branch from latest dev_test; PR to dev_test; merge only after required checks pass. Follow queue success/blocker protocol, update docs/agent-reports/latest.md, and stop after this ID.
+- Run focused regression tests for changed behavior, API tests/build when API changes, Flutter analyze and relevant Flutter tests when mobile changes. Report checks honestly.
+~~~~~
+
+
+### SNOWBOARD-LABEL-001
+
+- status: queued
+- title: Use Snowboard instead of Snøbrett in Norwegian UI
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: BUG_FIX
+## ID: SNOWBOARD-LABEL-001
+## Task: Use Snowboard instead of Snøbrett in Norwegian UI
+
+Replace the Norwegian user-facing activity label "Snøbrett" with "Snowboard" everywhere, including activity chooser, alpine/snowboard planner, wardrobe, profile, recommendations and related compound labels as grammatically appropriate.
+Keep language-neutral snowboarding enum values, persisted data and engine routing unchanged. Do not translate user-created names.
+Use existing nb localization resources and regenerate via existing tooling if needed. Verify no obsolete Norwegian activity labels remain and activity selection still uses the same engine. This is a label-only change; no schema or recommendation changes.
+
+Execution boundaries and verification:
+- Explicitly approved by Arild in chat on 2026-10-07. Read current code and architecture/security/privacy constraints. Existing Flutter -> NestJS -> Prisma boundaries remain.
+- No new dependencies, external providers, paid services, credentials or deployment. Keep dev/main untouched.
+- Branch from latest dev_test; PR to dev_test; merge only after required checks pass. Follow queue success/blocker protocol, update docs/agent-reports/latest.md, and stop after this ID.
+- Run focused regression tests for changed behavior, API tests/build when API changes, Flutter analyze and relevant Flutter tests when mobile changes. Report checks honestly.
+~~~~~
+
+
+### THERMAL-ZONE-FEEDBACK-001
+
+- status: queued
+- title: Optional torso and legs comfort feedback linked to the actual trip
+- source: Explicitly authorized by Arild in chat on 2026-10-07
+
+#### Promotable body
+
+~~~~~markdown
+# Authorized RideWear Task
+## Type: FEATURE_IMPLEMENTATION
+## ID: THERMAL-ZONE-FEEDBACK-001
+## Task: Optional torso and legs comfort feedback linked to the actual trip
+
+Extend "Hvordan kjentes antrekket?" after a trip with optional separate Overkropp / Upper body and Bein / Legs ratings: kaldt / comfortable / varmt (correct nb labels Kaldt / Passe / Varmt and English Cold / Comfortable / Hot).
+Preserve existing overall feedback; users may omit zone ratings. Tie feedback to authenticated owner, actual activity/trip and correct outbound/return leg for commutes.
+Reuse existing body-area feedback/personal offset structures and activity-specific engines. Learn from recorded actual worn kit/configuration when available; do not silently claim a recommendation was worn. Do not turn this into shared garment ratings.
+Apply conservative existing learning/shrinkage and limits to the corresponding body zone. Torso-cold feedback must not directly warm legs, and legs-cold must not warm torso; no cross-activity leakage. Preserve existing overall behavior and avoid applying the same event twice through overall-plus-zone updates or retries.
+Persist zone feedback through existing APIs when possible. Minimal additive migration is authorized only if needed; no unrelated personalization rewrite or unsupported personal claims.
+Test optional zone input, cold/comfortable/hot for each zone, owner/trip/leg binding, duplicate submission handling, activity isolation, overall compatibility, targeted future recommendation changes and unchanged unrelated zones/new-user defaults. If migrating, verify Prisma generate/validate and additive migration on disposable local Postgres.
+
+Execution boundaries and verification:
+- Explicitly approved by Arild in chat on 2026-10-07. Read current code and architecture/security/privacy constraints. Existing Flutter -> NestJS -> Prisma boundaries remain.
+- No new dependencies, external providers, paid services, credentials or deployment. Keep dev/main untouched.
+- Branch from latest dev_test; PR to dev_test; merge only after required checks pass. Follow queue success/blocker protocol, update docs/agent-reports/latest.md, and stop after this ID.
+- Run focused regression tests for changed behavior, API tests/build when API changes, Flutter analyze and relevant Flutter tests when mobile changes. Report checks honestly.
+~~~~~
