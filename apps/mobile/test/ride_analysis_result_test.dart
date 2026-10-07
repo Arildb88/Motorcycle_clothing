@@ -472,8 +472,12 @@ void main() {
       await tester.tap(find.byKey(const Key('thermal-feedback-open')));
       await tester.pumpAndSettle();
       expect(find.text('For kald'), findsOneWidget);
-      expect(find.text('Passe'), findsOneWidget);
+      expect(find.text('Passe'), findsNWidgets(3));
       expect(find.text('For varm'), findsOneWidget);
+      expect(find.text('Overkropp'), findsOneWidget);
+      expect(find.text('Bein'), findsOneWidget);
+      expect(find.text('Kaldt'), findsNWidgets(2));
+      expect(find.text('Varmt'), findsNWidgets(2));
       expect(find.text('Litt kaldt'), findsNothing);
     },
   );

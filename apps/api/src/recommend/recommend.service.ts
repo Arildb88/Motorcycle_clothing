@@ -208,6 +208,7 @@ export class RecommendService {
       cruiseKmh: null,
       routeTravelSegments,
       personalColdBiasC,
+      zoneColdBiasC: calibration.zoneColdBiasC,
       personalSampleCount: n,
       shrinkageK: k,
       basicLayers,
@@ -382,6 +383,7 @@ export class RecommendService {
       routeTravelSegments,
       geometryFallback: !sampled.usedRoadGeometry,
       personalColdBiasC: calibration.appliedBiasC,
+      zoneColdBiasC: calibration.zoneColdBiasC,
       personalSampleCount: calibration.n,
     });
     const items = [
@@ -577,6 +579,7 @@ export class RecommendService {
       samples,
       wardrobe: await this.loadActivityWardrobe(userId, discipline),
       personalColdBiasC: calibration.appliedBiasC,
+      zoneColdBiasC: calibration.zoneColdBiasC,
       personalSampleCount: calibration.n,
     });
     const temps = samples.map((sample) => sample.weather.airTempC);
@@ -806,6 +809,7 @@ export class RecommendService {
         durationMin,
       ),
       personalColdBiasC: calibration.appliedBiasC,
+      zoneColdBiasC: calibration.zoneColdBiasC,
       personalSampleCount: calibration.n,
     });
     const items = [
@@ -1004,22 +1008,30 @@ export class RecommendService {
   }
 
   private async thermalCalibration(userId: string, activityType: string) {
-    const offset = await this.prisma.personalOffset.findUnique({
-      where: {
-        userId_activityType_zone: {
-          userId,
-          activityType,
-          zone: 'overall',
+    const load = (zone: string) =>
+      this.prisma.personalOffset.findUnique({
+        where: {
+          userId_activityType_zone: {
+            userId,
+            activityType,
+            zone,
+          },
         },
-      },
-    });
-    const n = offset?.n ?? 0;
+      });
+    const overall = await load('overall');
+    const torso = await load('torso');
+    const legs = await load('legs');
+    const n = overall?.n ?? 0;
     const personalWeight = n > 0 ? n / (n + THERMAL_SHRINKAGE_K) : 0;
     return {
       n,
       shrinkageK: THERMAL_SHRINKAGE_K,
       personalWeight,
-      appliedBiasC: appliedThermalBiasC(offset),
+      appliedBiasC: appliedThermalBiasC(overall),
+      zoneColdBiasC: {
+        torso: appliedThermalBiasC(torso),
+        legs: appliedThermalBiasC(legs),
+      },
     };
   }
 

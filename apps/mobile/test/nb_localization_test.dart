@@ -58,6 +58,16 @@ void main() {
     expect(nb.navProfile, 'Profil');
     expect(nb.routesTitle, 'Lagrede ruter');
     expect(nb.feedbackTitle, 'Hvordan kjentes antrekket?');
+    expect(nb.feedbackZoneTorso, 'Overkropp');
+    expect(nb.feedbackZoneLegs, 'Bein');
+    expect(nb.feedbackZoneCold, 'Kaldt');
+    expect(nb.feedbackZoneComfortable, 'Passe');
+    expect(nb.feedbackZoneHot, 'Varmt');
+    expect(en.feedbackZoneTorso, 'Upper body');
+    expect(en.feedbackZoneLegs, 'Legs');
+    expect(en.feedbackZoneCold, 'Cold');
+    expect(en.feedbackZoneComfortable, 'Comfortable');
+    expect(en.feedbackZoneHot, 'Hot');
     expect(nb.placeSearchHint, 'Søk etter sted eller adresse');
     expect(nb.onboardingStart, 'Start RideWear');
     expect(nb.mapSelectEndpoints, isNot(en.mapSelectEndpoints));

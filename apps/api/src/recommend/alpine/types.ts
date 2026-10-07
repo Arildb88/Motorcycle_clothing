@@ -1,4 +1,4 @@
-import type { VentState } from '../../domain';
+import type { VentState, ZoneColdBiasC } from '../../domain';
 import type { AlpineDiscipline, AlpineExposureMode } from './constants';
 import type { WeatherPoint } from '../weather.types';
 
@@ -192,5 +192,7 @@ export type AlpinePipelineInput = {
   wardrobe: AlpineGarmentInput[];
   /** This discipline's shrunk feedback. Omitted or 0 leaves exposure unchanged. */
   personalColdBiasC?: number;
+  /** Torso and legs feedback. Omitted or zero leaves those zones unchanged. */
+  zoneColdBiasC?: ZoneColdBiasC;
   personalSampleCount?: number;
 };

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -6,8 +7,20 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
-import { ACTIVITY_TYPES } from '../../domain';
+import { ACTIVITY_TYPES, THERMAL_RATINGS } from '../../domain';
+
+/** Optional torso and legs ratings. Omitted zones are not learned. */
+export class ZoneFeedbackDto {
+  @IsOptional()
+  @IsIn([...THERMAL_RATINGS])
+  torso?: string;
+
+  @IsOptional()
+  @IsIn([...THERMAL_RATINGS])
+  legs?: string;
+}
 
 export class CreateFeedbackDto {
   @IsIn([...ACTIVITY_TYPES])
@@ -34,9 +47,23 @@ export class CreateFeedbackDto {
   @IsIn(['too_cold', 'slightly_cold', 'ok', 'slightly_warm', 'too_warm'])
   rating!: string;
 
+  /** Optional. Each zone is learned on its own offset, not copied from rating. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ZoneFeedbackDto)
+  zones?: ZoneFeedbackDto;
+
   @IsOptional()
   @IsArray()
   wornItems?: string[];
+
+  /**
+   * Actual worn configuration, only when the rider recorded it.
+   * Never filled from the recommendation.
+   */
+  @IsOptional()
+  @IsArray()
+  wornConfiguration?: unknown[];
 
   @IsOptional()
   @IsString()

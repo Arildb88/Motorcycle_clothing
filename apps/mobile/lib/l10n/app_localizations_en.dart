@@ -1655,6 +1655,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedbackTooWarm => 'Too warm';
 
   @override
+  String get feedbackZoneTorso => 'Upper body';
+
+  @override
+  String get feedbackZoneLegs => 'Legs';
+
+  @override
+  String get feedbackZoneCold => 'Cold';
+
+  @override
+  String get feedbackZoneComfortable => 'Comfortable';
+
+  @override
+  String get feedbackZoneHot => 'Hot';
+
+  @override
   String get feedbackSubmit => 'Submit feedback';
 
   @override

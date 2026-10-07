@@ -1,3 +1,4 @@
+import { withZoneColdBias, type ZoneColdBiasC } from '../../domain';
 import { XC_EXPOSURE, XC_INTENSITIES, XC_STYLES } from './constants';
 import type { XcIntensity, XcStyle } from './constants';
 import {
@@ -38,7 +39,7 @@ export function runXcRecommendationPipeline(
   const style = parseXcStyle(input.style);
   const incompleteWeather = input.weather.points.length === 0;
   const segments = buildSegments(input, parsed.intensity, incompleteWeather);
-  const demand = summarizeDemand(segments);
+  const demand = summarizeDemand(segments, input.zoneColdBiasC);
   const sustainedExposure = weightedMean(
     segments.map((segment) => ({
       value: segment.exposureC,
@@ -209,7 +210,10 @@ function buildSegments(
   }));
 }
 
-function summarizeDemand(segments: XcSegment[]): XcDemandSummary {
+function summarizeDemand(
+  segments: XcSegment[],
+  zoneColdBias?: ZoneColdBiasC | null,
+): XcDemandSummary {
   const sustainedWarmth = clampTier(
     weightedMean(
       segments.map((segment) => ({
@@ -258,12 +262,33 @@ function summarizeDemand(segments: XcSegment[]): XcDemandSummary {
   const shortExtremeWarmth = shorts.length
     ? clampTier(Math.max(...shorts.map((segment) => segment.warmthDemand)))
     : movingWarmth;
+  const sustainedSamples = (moving.length > 0 ? moving : segments).map(
+    (segment) => ({
+      exposureC: segment.exposureC,
+      weight: segment.durationMin,
+    }),
+  );
+  const peakSamples = segments.map((segment) => ({
+    exposureC: segment.exposureC,
+    weight: segment.durationMin,
+  }));
   return {
-    sustained: ZONES.map((zone) =>
-      zoneDemand(zone, movingWarmth, sustainedWind, sustainedWater),
+    sustained: withZoneColdBias(
+      ZONES.map((zone) =>
+        zoneDemand(zone, movingWarmth, sustainedWind, sustainedWater),
+      ),
+      movingWarmth,
+      sustainedSamples,
+      xcWarmthDemand,
+      zoneColdBias,
     ),
-    peak: ZONES.map((zone) =>
-      zoneDemand(zone, peakWarmth, peakWind, peakWater),
+    peak: withZoneColdBias(
+      ZONES.map((zone) => zoneDemand(zone, peakWarmth, peakWind, peakWater)),
+      peakWarmth,
+      peakSamples,
+      xcWarmthDemand,
+      zoneColdBias,
+      true,
     ),
     sustainedWarmth: movingWarmth,
     peakWarmth,

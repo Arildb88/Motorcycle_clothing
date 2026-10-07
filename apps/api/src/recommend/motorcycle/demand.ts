@@ -1,4 +1,6 @@
+import { withZoneColdBias, type ZoneColdBiasC } from '../../domain';
 import { DEMAND_FROM_EXPOSURE_C } from './constants';
+import { warmthDemandFromExposureC } from './exposure';
 import { durationWeightedMean } from './segments';
 import type {
   DemandSummary,
@@ -49,7 +51,10 @@ function clampTier(n: number): number {
  * A short extreme must not equal a long extreme for WEAR, but may raise
  * peak demand used for PACK decisions.
  */
-export function computeDemand(segments: RideSegment[]): {
+export function computeDemand(
+  segments: RideSegment[],
+  zoneColdBias?: ZoneColdBiasC | null,
+): {
   demand: DemandSummary;
   reasons: Reason[];
 } {
@@ -156,11 +161,26 @@ export function computeDemand(segments: RideSegment[]): {
     });
   }
 
-  const sustained: ZoneDemand[] = ZONES.map((z) =>
-    zoneDemand(z, sustainedWarmth, sustainedWind, sustainedWater),
+  const samples = segments.map((segment) => ({
+    exposureC: segment.motorcycleExposureC,
+    weight: segment.durationMin,
+  }));
+  const sustained: ZoneDemand[] = withZoneColdBias(
+    ZONES.map((z) =>
+      zoneDemand(z, sustainedWarmth, sustainedWind, sustainedWater),
+    ),
+    sustainedWarmth,
+    samples,
+    warmthDemandFromExposureC,
+    zoneColdBias,
   );
-  const peak: ZoneDemand[] = ZONES.map((z) =>
-    zoneDemand(z, peakWarmth, peakWind, peakWater),
+  const peak: ZoneDemand[] = withZoneColdBias(
+    ZONES.map((z) => zoneDemand(z, peakWarmth, peakWind, peakWater)),
+    peakWarmth,
+    samples,
+    warmthDemandFromExposureC,
+    zoneColdBias,
+    true,
   );
 
   return {

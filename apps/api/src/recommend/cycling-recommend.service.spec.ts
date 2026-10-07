@@ -36,8 +36,14 @@ describe('RecommendService cycling foundation', () => {
     offset?: { n: number; meanResidual: number } | null;
     coldSensitivity?: number;
   }) {
-    const personalOffset = jest.fn(() =>
-      overrides && 'offset' in overrides ? overrides.offset : undefined,
+    const personalOffset = jest.fn(
+      (query?: {
+        where?: { userId_activityType_zone?: { zone?: string } };
+      }) => {
+        const zone = query?.where?.userId_activityType_zone?.zone;
+        if (zone != null && zone !== 'overall') return null;
+        return overrides && 'offset' in overrides ? overrides.offset : undefined;
+      },
     );
     const userProfile = jest.fn(() =>
       overrides?.coldSensitivity == null

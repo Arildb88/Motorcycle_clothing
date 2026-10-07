@@ -52,6 +52,7 @@ export function matchXcKit(input: {
   const pack: XcKitItem[] = [];
   const used = new Set<string>();
   const sustained = zone(input.demand.sustained, 'torso');
+  const legsZone = zone(input.demand.sustained, 'legs');
   const openVents =
     input.intensity === 'hard' || (input.climbing && sustained.warmth <= 3);
 
@@ -125,15 +126,15 @@ export function matchXcKit(input: {
   }
   if (!shellWorn) reasons.push({ code: 'PACK_SHELL' });
 
-  const legsCold = sustained.warmth >= 3 || sustained.water >= 3;
+  const legsCold = legsZone.warmth >= 3 || legsZone.water >= 3;
   push('wear', {
     slot: 'legs',
     zone: 'legs',
     categories: ['pants'],
     genericLabel: legsCold ? GENERIC.legsCold : GENERIC.legs,
-    warmth: Math.max(1, sustained.warmth - (legsCold ? 0 : 1)),
-    wind: sustained.wind,
-    water: sustained.water,
+    warmth: Math.max(1, legsZone.warmth - (legsCold ? 0 : 1)),
+    wind: legsZone.wind,
+    water: legsZone.water,
   });
 
   const hands = zone(input.demand.sustained, 'hands');

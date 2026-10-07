@@ -1654,6 +1654,21 @@ class AppLocalizationsNb extends AppLocalizations {
   String get feedbackTooWarm => 'For varm';
 
   @override
+  String get feedbackZoneTorso => 'Overkropp';
+
+  @override
+  String get feedbackZoneLegs => 'Bein';
+
+  @override
+  String get feedbackZoneCold => 'Kaldt';
+
+  @override
+  String get feedbackZoneComfortable => 'Passe';
+
+  @override
+  String get feedbackZoneHot => 'Varmt';
+
+  @override
   String get feedbackSubmit => 'Send tilbakemelding';
 
   @override

@@ -1,4 +1,4 @@
-import type { VentState } from '../../domain';
+import type { VentState, ZoneColdBiasC } from '../../domain';
 import type { XcIntensity, XcStyle } from './constants';
 import type { WeatherPoint, RouteWeatherSummary } from '../weather.types';
 
@@ -186,5 +186,7 @@ export type XcPipelineInput = {
   sampleDurationMin?: number[];
   /** This activity's shrunk feedback. Omitted or 0 leaves exposure unchanged. */
   personalColdBiasC?: number;
+  /** Torso and legs feedback. Omitted or zero leaves those zones unchanged. */
+  zoneColdBiasC?: ZoneColdBiasC;
   personalSampleCount?: number;
 };

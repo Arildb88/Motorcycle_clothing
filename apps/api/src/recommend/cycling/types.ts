@@ -1,4 +1,4 @@
-import type { VentState } from '../../domain';
+import type { VentState, ZoneColdBiasC } from '../../domain';
 import type { CyclingIntensity } from './constants';
 import type { WeatherPoint, RouteWeatherSummary } from '../weather.types';
 
@@ -193,5 +193,7 @@ export type CyclingPipelineInput = {
   geometryFallback: boolean;
   /** This activity's shrunk feedback. Omitted or 0 leaves exposure unchanged. */
   personalColdBiasC?: number;
+  /** Torso and legs feedback. Omitted or zero leaves those zones unchanged. */
+  zoneColdBiasC?: ZoneColdBiasC;
   personalSampleCount?: number;
 };

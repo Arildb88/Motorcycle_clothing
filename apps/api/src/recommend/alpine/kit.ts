@@ -1,3 +1,4 @@
+import { adjustedZoneWarmth } from '../../domain';
 import { effectiveGarmentTiers } from '../../domain/garment-config';
 import { alpineWindDemand, alpineWarmthDemand } from './exposure';
 import type {
@@ -38,6 +39,7 @@ export function matchAlpineKit(input: {
   water: number;
   spreadC: number | null;
   wardrobe: AlpineGarmentInput[];
+  zoneColdBiasC?: { torso: number; legs: number } | null;
 }): { wear: AlpineKitItem[]; pack: AlpineKitItem[]; reasons: AlpineReason[] } {
   const reasons: AlpineReason[] = [];
   const wear: AlpineKitItem[] = [];
@@ -45,6 +47,24 @@ export function matchAlpineKit(input: {
   const used = new Set<string>();
   const warmth =
     input.wornExposureC == null ? 3 : alpineWarmthDemand(input.wornExposureC);
+  const zoneSamples =
+    input.wornExposureC == null
+      ? []
+      : [{ exposureC: input.wornExposureC, weight: 1 }];
+  const torsoWarmth = adjustedZoneWarmth({
+    zone: 'torso',
+    baseWarmth: warmth,
+    samples: zoneSamples,
+    warmthFromExposure: alpineWarmthDemand,
+    bias: input.zoneColdBiasC,
+  });
+  const legsWarmth = adjustedZoneWarmth({
+    zone: 'legs',
+    baseWarmth: warmth,
+    samples: zoneSamples,
+    warmthFromExposure: alpineWarmthDemand,
+    bias: input.zoneColdBiasC,
+  });
   const wind = alpineWindDemand(input.wornWindMs);
   const handsWind = Math.min(5, wind + 1);
 
@@ -64,22 +84,22 @@ export function matchAlpineKit(input: {
     zone: 'torso',
     categories: ['base_layer'],
     genericLabel: GENERIC.base,
-    warmth: Math.max(1, warmth - 1),
+    warmth: Math.max(1, torsoWarmth - 1),
     wind: 1,
     water: 1,
   });
 
-  if (warmth >= 3) {
+  if (torsoWarmth >= 3) {
     push('wear', {
       slot: 'mid',
       zone: 'torso',
       categories: ['mid_layer'],
       genericLabel: GENERIC.mid,
-      warmth,
+      warmth: torsoWarmth,
       wind,
       water: 1,
     });
-  } else if (warmth === 2) {
+  } else if (torsoWarmth === 2) {
     push('pack', {
       slot: 'mid',
       zone: 'torso',
@@ -91,24 +111,24 @@ export function matchAlpineKit(input: {
     });
   }
 
-  const shellOn = warmth >= 2 || wind >= 2 || input.water >= 2;
+  const shellOn = torsoWarmth >= 2 || wind >= 2 || input.water >= 2;
   push(shellOn ? 'wear' : 'pack', {
     slot: 'shell',
     zone: 'torso',
     categories: ['shell_jacket'],
     genericLabel: GENERIC.shell,
-    warmth: Math.max(2, warmth),
+    warmth: Math.max(2, torsoWarmth),
     wind: Math.max(wind, 2),
     water: input.water,
   });
 
-  if (warmth >= 2 || input.water >= 2 || wind >= 3) {
+  if (legsWarmth >= 2 || input.water >= 2 || wind >= 3) {
     push('wear', {
       slot: 'legs',
       zone: 'legs',
       categories: ['pants'],
       genericLabel: GENERIC.legs,
-      warmth,
+      warmth: legsWarmth,
       wind,
       water: input.water,
     });
@@ -162,13 +182,13 @@ export function matchAlpineKit(input: {
     });
   }
 
-  if (input.spreadC != null && input.spreadC >= 6 && warmth >= 4) {
+  if (input.spreadC != null && input.spreadC >= 6 && torsoWarmth >= 4) {
     push('pack', {
       slot: 'lighter_mid',
       zone: 'torso',
       categories: ['mid_layer'],
       genericLabel: 'Lighter mid layer for lower on the hill',
-      warmth: Math.max(1, warmth - 2),
+      warmth: Math.max(1, torsoWarmth - 2),
       wind: 1,
       water: 1,
     });

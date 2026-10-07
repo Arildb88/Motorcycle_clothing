@@ -23,6 +23,7 @@ import type {
 } from './types';
 import { matchWardrobe } from './wardrobe-match';
 import type { RouteTravelSegment } from './route-travel';
+import type { ZoneColdBiasC } from '../../domain';
 import type { RouteWeatherSummary } from '../weather.types';
 
 export type PipelineInput = {
@@ -40,6 +41,8 @@ export type PipelineInput = {
    */
   routeTravelSegments?: RouteTravelSegment[];
   personalColdBiasC?: number;
+  /** Torso and legs feedback. Omitted or zero leaves those zones unchanged. */
+  zoneColdBiasC?: ZoneColdBiasC;
   personalSampleCount?: number;
   shrinkageK?: number;
   /** Omitted or empty means no basic under-clothing. */
@@ -91,7 +94,10 @@ export function runMotorcycleRecommendationPipeline(
     speedSource,
   });
 
-  const { demand, reasons: demandReasons } = computeDemand(segments);
+  const { demand, reasons: demandReasons } = computeDemand(
+    segments,
+    input.zoneColdBiasC,
+  );
 
   const sustainedExposureC = durationWeightedMean(
     segments.map((s) => ({

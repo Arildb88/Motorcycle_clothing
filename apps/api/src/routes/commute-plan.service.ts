@@ -160,6 +160,7 @@ export class CommutePlanService {
       ambiguous: clocks.outboundAmbiguous,
       wardrobe,
       personalColdBiasC,
+      zoneColdBiasC: calibration.zoneColdBiasC,
       calibration,
     });
     if (clocks.returnAt.getTime() <= outbound.arrivalAt.getTime()) {
@@ -180,6 +181,7 @@ export class CommutePlanService {
       ambiguous: clocks.returnAmbiguous,
       wardrobe,
       personalColdBiasC,
+      zoneColdBiasC: calibration.zoneColdBiasC,
       calibration,
     });
 
@@ -241,6 +243,7 @@ export class CommutePlanService {
     ambiguous: boolean;
     wardrobe: GarmentInput[];
     personalColdBiasC: number;
+    zoneColdBiasC: { torso: number; legs: number };
     calibration: { n: number; shrinkageK: number };
   }): Promise<LegDraft> {
     const points: GeoPoint[] = input.waypoints.map((waypoint) => ({
@@ -283,6 +286,7 @@ export class CommutePlanService {
           rideDurationMin: durationMin,
           cruiseKmh: null,
           personalColdBiasC: input.personalColdBiasC,
+          zoneColdBiasC: input.zoneColdBiasC,
           personalSampleCount: input.calibration.n,
           shrinkageK: input.calibration.shrinkageK,
         })
@@ -400,20 +404,28 @@ export class CommutePlanService {
   }
 
   private async thermalCalibration(userId: string) {
-    const offset = await this.prisma.personalOffset.findUnique({
-      where: {
-        userId_activityType_zone: {
-          userId,
-          activityType: MVP_ACTIVITY_TYPE,
-          zone: 'overall',
+    const load = (zone: string) =>
+      this.prisma.personalOffset.findUnique({
+        where: {
+          userId_activityType_zone: {
+            userId,
+            activityType: MVP_ACTIVITY_TYPE,
+            zone,
+          },
         },
-      },
-    });
-    const n = offset?.n ?? 0;
+      });
+    const overall = await load('overall');
+    const torso = await load('torso');
+    const legs = await load('legs');
+    const n = overall?.n ?? 0;
     return {
       n,
       shrinkageK: THERMAL_SHRINKAGE_K,
-      appliedBiasC: appliedThermalBiasC(offset),
+      appliedBiasC: appliedThermalBiasC(overall),
+      zoneColdBiasC: {
+        torso: appliedThermalBiasC(torso),
+        legs: appliedThermalBiasC(legs),
+      },
     };
   }
 

@@ -84,6 +84,7 @@ export function runAlpineRecommendationPipeline(
     water,
     spreadC,
     wardrobe: input.wardrobe,
+    zoneColdBiasC: input.zoneColdBiasC,
   });
 
   const alpineGarments = input.wardrobe.filter(

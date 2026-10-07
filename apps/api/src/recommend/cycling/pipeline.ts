@@ -1,3 +1,4 @@
+import { withZoneColdBias, type ZoneColdBiasC } from '../../domain';
 import { maxFiniteWeatherNumber } from '../weather.types';
 import {
   CYCLING_EXPOSURE,
@@ -42,7 +43,7 @@ export function runCyclingRecommendationPipeline(
   const personalColdBiasC = finiteBias(input.personalColdBiasC);
   const incompleteWeather = input.weather.points.length === 0;
   const segments = buildSegments(input, parsed.intensity, incompleteWeather);
-  const demand = summarizeDemand(segments);
+  const demand = summarizeDemand(segments, input.zoneColdBiasC);
   const sustainedExposure = weightedMean(
     segments.map((segment) => ({
       value: segment.cyclingExposureC,
@@ -262,7 +263,10 @@ function buildSegments(
   }));
 }
 
-function summarizeDemand(segments: CyclingSegment[]): CyclingDemandSummary {
+function summarizeDemand(
+  segments: CyclingSegment[],
+  zoneColdBias?: ZoneColdBiasC | null,
+): CyclingDemandSummary {
   const sustainedWarmth = clampTier(
     weightedMean(
       segments.map((segment) => ({
@@ -303,12 +307,27 @@ function summarizeDemand(segments: CyclingSegment[]): CyclingDemandSummary {
   const shortExtremeWarmth = shorts.length
     ? clampTier(Math.max(...shorts.map((segment) => segment.warmthDemand)))
     : sustainedWarmth;
+  const samples = segments.map((segment) => ({
+    exposureC: segment.cyclingExposureC,
+    weight: segment.durationMin,
+  }));
   return {
-    sustained: ZONES.map((zone) =>
-      zoneDemand(zone, sustainedWarmth, sustainedWind, sustainedWater),
+    sustained: withZoneColdBias(
+      ZONES.map((zone) =>
+        zoneDemand(zone, sustainedWarmth, sustainedWind, sustainedWater),
+      ),
+      sustainedWarmth,
+      samples,
+      cyclingWarmthDemand,
+      zoneColdBias,
     ),
-    peak: ZONES.map((zone) =>
-      zoneDemand(zone, peakWarmth, peakWind, peakWater),
+    peak: withZoneColdBias(
+      ZONES.map((zone) => zoneDemand(zone, peakWarmth, peakWind, peakWater)),
+      peakWarmth,
+      samples,
+      cyclingWarmthDemand,
+      zoneColdBias,
+      true,
     ),
     sustainedWarmth,
     peakWarmth,

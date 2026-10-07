@@ -78,6 +78,7 @@ export function matchCyclingKit(input: {
   const pack: CyclingKitItem[] = [];
   const used = new Set<string>();
   const sustained = zone(input.demand.sustained, 'torso');
+  const legsZone = zone(input.demand.sustained, 'legs');
   const peak = zone(input.demand.peak, 'torso');
   const overheat =
     input.intensity === 'hard' &&
@@ -110,7 +111,7 @@ export function matchCyclingKit(input: {
     (mode === 'wear' ? wear : pack).push(item);
   };
 
-  const suit = selectTriathlonSuit(input.wardrobe, sustained);
+  const suit = selectTriathlonSuit(input.wardrobe, sustained, legsZone);
   if (suit) {
     used.add(suit.id);
     const tiers = effectiveGarmentTiers(
@@ -235,16 +236,16 @@ export function matchCyclingKit(input: {
       reasons.push({ code: 'RAIN_PROTECTION_REQUIRED' });
   }
 
-  const legsCold = sustained.warmth >= 3 || sustained.water >= 3;
+  const legsCold = legsZone.warmth >= 3 || legsZone.water >= 3;
   if (!suit) {
     push('wear', {
       slot: 'legs',
       zone: 'legs',
       categories: ['pants'],
       genericLabel: legsCold ? GENERIC.legsCold : GENERIC.legsMild,
-      warmth: Math.max(sustained.warmth, legsCold ? 3 : 1),
-      wind: sustained.wind,
-      water: sustained.water,
+      warmth: Math.max(legsZone.warmth, legsCold ? 3 : 1),
+      wind: legsZone.wind,
+      water: legsZone.water,
     });
   }
 
@@ -325,11 +326,15 @@ export function matchCyclingKit(input: {
 function selectTriathlonSuit(
   wardrobe: CyclingGarmentInput[],
   sustained: CyclingZoneDemand,
+  legs: CyclingZoneDemand,
 ): CyclingGarmentInput | null {
   const suits = wardrobe.filter(isTriathlonSuit);
   if (suits.length === 0) return null;
   const demanding =
-    sustained.warmth >= 3 || sustained.water >= 3 || sustained.wind >= 4;
+    sustained.warmth >= 3 ||
+    legs.warmth >= 3 ||
+    sustained.water >= 3 ||
+    sustained.wind >= 4;
   if (demanding && hasWarmerCyclingLayers(wardrobe)) return null;
   return suits[0];
 }

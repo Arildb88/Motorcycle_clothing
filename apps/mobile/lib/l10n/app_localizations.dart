@@ -3050,6 +3050,36 @@ abstract class AppLocalizations {
   /// **'Too warm'**
   String get feedbackTooWarm;
 
+  /// No description provided for @feedbackZoneTorso.
+  ///
+  /// In en, this message translates to:
+  /// **'Upper body'**
+  String get feedbackZoneTorso;
+
+  /// No description provided for @feedbackZoneLegs.
+  ///
+  /// In en, this message translates to:
+  /// **'Legs'**
+  String get feedbackZoneLegs;
+
+  /// No description provided for @feedbackZoneCold.
+  ///
+  /// In en, this message translates to:
+  /// **'Cold'**
+  String get feedbackZoneCold;
+
+  /// No description provided for @feedbackZoneComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get feedbackZoneComfortable;
+
+  /// No description provided for @feedbackZoneHot.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot'**
+  String get feedbackZoneHot;
+
   /// No description provided for @feedbackSubmit.
   ///
   /// In en, this message translates to:
