@@ -1965,6 +1965,8 @@ Scope:
 - Update relevant local-start/configuration documentation only as needed to prevent recurrence.
 
 Concrete selection failure reported by Arild on 2026-10-07:
+- Concrete fix branch prepared by ChatGPT: fix/place-selection-state (commit 0c8cc3d). Draft PR targets dev_test. Review/cherry-pick the focused state/error-handling fixes rather than duplicate them; Flutter/Dart were unavailable so checks remain pending. This is not a verified reproduction or full resolution of the user's live Arendal failure. Run focused widget checks before merge; preserve this task's final control close.
+
 - Searching "arendal" returns suggestions, but tapping a result does not select it. Reproduce start/destination/stop selection with the keyboard open and closed. This report does not establish a permissions problem.
 - Code inspection: autocomplete is GET /location/places -> Pelias /autocomplete; selection is POST /location/places/resolve -> Pelias /place?ids=... using the same server key. Autocomplete already has coordinates server-side but its API response currently omits them. Check the actual resolve provider status/empty response before attributing this to key scope.
 - In PlaceSearchField._select, only LocationProviderException is caught. Unexpected decode/network exceptions can escape without a visible error; add safe localized error handling with retry and no raw exception disclosure.
