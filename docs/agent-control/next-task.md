@@ -1,17 +1,19 @@
 # Authorized RideWear Task
-## Type: FEATURE_IMPLEMENTATION
-## ID: WARDROBE-REMOVE-SHARING-001
-## Generation: 49
-## Handoff-From: CYCLING-WARDROBE-UX-001
+## Type: BUG_FIX
+## ID: PLACE-UNICODE-RESORT-001
+## Generation: 50
+## Handoff-From: WARDROBE-REMOVE-SHARING-001
 ## Authorization: authorized
-## Promoted: 2026-10-07T21:38:02Z
-## Task: Remove share-this-rating controls from every wardrobe
+## Promoted: 2026-10-07T21:51:26Z
+## Task: Fix Norwegian place input and Kongsberg resort discovery
 
-Remove "Del denne vurderingen / Share this rating" controls and prompts from every activity wardrobe and garment add/edit/detail surface.
-Stop shared-rating submission from these mobile flows, including hidden auto-submit handlers: adding/editing personal tiers must not silently contribute to the shared catalogue.
-Keep private garment values, ownership, manual edits, existing catalogue data and snapshot defaults intact. Do not delete catalogue tables, erase existing aggregates, or automatically backfill contributions.
-Retain truthful privacy documentation about previously collected aggregates; adjust current-flow wording as needed.
-Test all activity wardrobe surfaces and verify saving/editing garments does not call a contribution endpoint. This is UI/submission removal, not authorization for a new data-collection mechanism.
+User reports that typing Åmli fails and æ/ø/å cannot be entered in place fields. Alpine/snowboard selection can show temperatures but Kongsberg is not found. Causes are unverified.
+Trace text entry (including keyboard composition/input formatters), mobile URL encoding, API validation/normalization, provider queries, resort naming/aliases and displayed results.
+Allow æ ø å Æ Ø Å in every relevant place/resort/route planner input without stripping characters or resetting typing. Encode Unicode once, preserve selected label/coordinates and latest-query handling.
+Investigate Kongsberg resort discovery specifically against the existing resort provider. If its documented resort name differs from town name, support a justified provider-name alias/matching path within the existing integration; do not invent a resort record or misrepresent generic town search as resort data.
+Separate ability to type arbitrary place names from available provider results: Åmli need not be an alpine resort. No matches must remain a legitimate localized result, with retry for actual outage.
+Test typing and roundtrip encoding of Åmli, Øyer, Sæby and uppercase letters, searching Kongsberg with a real documented provider fixture when available, empty results, stale requests and current resort weather/elevation flow.
+Attempt live lookup only with existing authorized configuration/network; explicitly state if only fixtures were verified. No new provider or schema changes. Coordinate with completed PLACE-SEARCH-AVAILABILITY-001 rather than duplicating its fix.
 
 Execution boundaries and verification:
 - Explicitly approved by Arild in chat on 2026-10-07. Read current code and architecture/security/privacy constraints. Existing Flutter -> NestJS -> Prisma boundaries remain.
