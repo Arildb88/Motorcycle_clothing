@@ -29,7 +29,10 @@ class RideAnalysisResultScreen extends StatelessWidget {
     final weather = payload['weather'] as Map<String, dynamic>? ?? const {};
     final recommendation =
         payload['recommendation'] as Map<String, dynamic>? ?? const {};
-    final weatherBlocked = _weatherBlocksRecommendation(weather, recommendation);
+    final weatherBlocked = _weatherBlocksRecommendation(
+      weather,
+      recommendation,
+    );
     final view = presentRecommendation(payload);
     final wear = view.wear;
     final pack = view.pack;
@@ -136,53 +139,60 @@ class RideAnalysisResultScreen extends StatelessWidget {
               child: Text(l10n.weatherUnavailableRetry),
             ),
           ] else ...[
-          recommendationSectionTitle(l10n.wearSection),
-          const SizedBox(height: 4),
-          Text(
-            l10n.wearSectionHint,
-            key: const Key('wear-section'),
-            style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
-          ),
-          const SizedBox(height: 8),
-          if (wear.isEmpty)
-            Text(l10n.plannerNoWearItems)
-          else
-            ...wear.asMap().entries.map(
-              (entry) => recommendationKitEntry(
-                context: context,
-                item: entry.value,
-                icon: Icons.checkroom,
-                index: entry.key,
+            recommendationSectionTitle(l10n.wearSection),
+            const SizedBox(height: 4),
+            Text(
+              l10n.wearSectionHint,
+              key: const Key('wear-section'),
+              style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
+            ),
+            const SizedBox(height: 8),
+            if (wear.isEmpty)
+              Text(l10n.plannerNoWearItems)
+            else
+              ...wear.asMap().entries.map(
+                (entry) => recommendationKitEntry(
+                  context: context,
+                  item: entry.value,
+                  icon: Icons.checkroom,
+                  index: entry.key,
+                ),
+              ),
+            const SizedBox(height: 16),
+            recommendationSectionTitle(l10n.packSection),
+            const SizedBox(height: 4),
+            Text(
+              l10n.packSectionHint,
+              key: const Key('pack-section'),
+              style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
+            ),
+            const SizedBox(height: 8),
+            if (pack.isEmpty)
+              Text(l10n.plannerNoPackItems)
+            else
+              ...pack.asMap().entries.map(
+                (entry) => recommendationKitEntry(
+                  context: context,
+                  item: entry.value,
+                  icon: Icons.backpack_outlined,
+                  index: wear.length + entry.key,
+                ),
+              ),
+            ...recommendationExplanationWidgets(
+              context,
+              view,
+              resortSnowLimits: isResortSnowActivity(
+                route['activityType']?.toString() ??
+                    recommendation['discipline']?.toString(),
               ),
             ),
-          const SizedBox(height: 16),
-          recommendationSectionTitle(l10n.packSection),
-          const SizedBox(height: 4),
-          Text(
-            l10n.packSectionHint,
-            key: const Key('pack-section'),
-            style: TextStyle(color: AppTheme.steel.withValues(alpha: 0.9)),
-          ),
-          const SizedBox(height: 8),
-          if (pack.isEmpty)
-            Text(l10n.plannerNoPackItems)
-          else
-            ...pack.asMap().entries.map(
-              (entry) => recommendationKitEntry(
-                context: context,
-                item: entry.value,
-                icon: Icons.backpack_outlined,
-                index: wear.length + entry.key,
-              ),
+            const SizedBox(height: 24),
+            FilledButton.tonal(
+              key: const Key('thermal-feedback-open'),
+              style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+              onPressed: () => showFeedbackSheet(context, payload),
+              child: Text(l10n.homeHowWasTheRide),
             ),
-          ...recommendationExplanationWidgets(context, view),
-          const SizedBox(height: 24),
-          FilledButton.tonal(
-            key: const Key('thermal-feedback-open'),
-            style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
-            onPressed: () => showFeedbackSheet(context, payload),
-            child: Text(l10n.homeHowWasTheRide),
-          ),
           ],
           const SizedBox(height: 12),
           OutlinedButton(
@@ -215,7 +225,8 @@ String weatherUnavailableMessage(
       recommendation['status']?.toString() == 'partial') {
     return l10n.weatherUnavailablePartial;
   }
-  switch (weather['reason']?.toString() ?? recommendation['reason']?.toString()) {
+  switch (weather['reason']?.toString() ??
+      recommendation['reason']?.toString()) {
     case 'configuration':
       return l10n.weatherUnavailableConfiguration;
     case 'timeout':

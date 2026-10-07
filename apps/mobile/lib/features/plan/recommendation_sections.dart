@@ -83,6 +83,7 @@ List<Widget> recommendationExplanationWidgets(
   BuildContext context,
   RecommendationPresentation view, {
   bool showConfidenceLevel = true,
+  bool resortSnowLimits = false,
 }) {
   final l10n = AppLocalizations.of(context);
   final reasonL10n = AppLocalizationsReasonLookup(l10n);
@@ -100,12 +101,16 @@ List<Widget> recommendationExplanationWidgets(
     );
   }
 
-  if (view.limitReasons.isNotEmpty) {
+  final limits = visibleLimitReasonCodes(
+    view.limitReasons,
+    resortSnow: resortSnowLimits,
+  );
+  if (limits.isNotEmpty) {
     blocks.add(
       _reasonBlock(
         key: const Key('recommendation-limits'),
         title: l10n.limitsSection,
-        lines: view.limitReasons
+        lines: limits
             .map((code) => localizeReasonCode(code, reasonL10n))
             .toList(),
       ),

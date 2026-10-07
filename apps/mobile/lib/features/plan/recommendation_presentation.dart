@@ -106,6 +106,26 @@ const kitReasonCodes = <String>{
   'PERSONAL_COLD_HANDS_HISTORY',
 };
 
+const upperSiteMissingCode = 'UPPER_SITE_MISSING';
+
+/// Alpine skiing and snowboarding share the resort planner.
+bool isResortSnowActivity(String? activityType) {
+  return activityType == 'alpine_skiing' || activityType == 'snowboarding';
+}
+
+/// Resort results keep only the existing missing-top-station notice.
+/// Other activities keep every limit code already classified.
+List<String> visibleLimitReasonCodes(
+  List<String> codes, {
+  required bool resortSnow,
+}) {
+  if (!resortSnow) return codes;
+  return [
+    for (final code in codes)
+      if (code == upperSiteMissingCode) code,
+  ];
+}
+
 const contextNoteCodes = <String>{'ELEVATION_USED', 'ROUTE_SPEED_PROFILE_USED'};
 
 const limitReasonCodes = <String>{

@@ -106,7 +106,8 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Lifts'), findsOneWidget);
+    expect(find.text('Lifts'), findsNothing);
+    expect(find.text('How long are you active?'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

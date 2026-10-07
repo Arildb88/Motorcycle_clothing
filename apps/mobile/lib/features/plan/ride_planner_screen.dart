@@ -244,14 +244,6 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
     return raw.isEmpty ? null : raw;
   }
 
-  String? get _selectedResortName {
-    if (_state.waypoints.isEmpty || !_state.waypoints.first.isResolved) {
-      return null;
-    }
-    final label = _state.waypoints.first.displayLabel;
-    return label.isEmpty ? null : label;
-  }
-
   void _selectResort(SkiResort resort) {
     final draft = WaypointDraft.fromResolved(
       ResolvedPlace(
@@ -630,7 +622,6 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
               deviceLocation: _deviceLocation,
               places: _location.search,
               selectedResortId: _selectedResortId,
-              selectedResortName: _selectedResortName,
               onSelected: _selectResort,
             )
           else ...[
@@ -910,7 +901,11 @@ class _RidePlannerScreenState extends State<RidePlannerScreen> {
                 setState(() => _state = _state.copyWith(inputs: next)),
           ),
           if (!_state.usesRoadPreview) ...[
-            Text(l10n.plannerSessionLength),
+            Text(
+              activityUsesSitePins(_state.activityType)
+                  ? l10n.plannerActiveDuration
+                  : l10n.plannerSessionLength,
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

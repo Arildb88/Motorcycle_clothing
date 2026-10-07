@@ -5,6 +5,7 @@ import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/domain/saved_route.dart';
 import 'package:motorcycle_clothing/features/activity/activity_chooser_screen.dart';
 import 'package:motorcycle_clothing/features/plan/device_location_service.dart';
+import 'package:motorcycle_clothing/features/plan/fnugg_attribution_link.dart';
 import 'package:motorcycle_clothing/features/plan/resort_discipline_control.dart';
 import 'package:motorcycle_clothing/features/plan/ride_planner_screen.dart';
 import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
@@ -125,7 +126,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('Ål Skisenter'));
     await tester.pump();
-    expect(find.text('Selected resort: Ål Skisenter'), findsOneWidget);
+    expect(find.text('Selected resort: Ål Skisenter'), findsNothing);
+    expect(find.textContaining('60.63'), findsNothing);
+    expect(find.byType(FnuggAttributionLink), findsOneWidget);
     expect(directory.searches, 1);
 
     final snowboard = find.widgetWithText(ChoiceChip, 'Snowboarding');
@@ -134,7 +137,18 @@ void main() {
     await tester.pump();
 
     expect(directory.searches, 1);
-    expect(find.text('Selected resort: Ål Skisenter'), findsOneWidget);
+    expect(find.text('Selected resort: Ål Skisenter'), findsNothing);
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(
+              of: find.byKey(const ValueKey('resort-141')),
+              matching: find.byType(Icon),
+            ),
+          )
+          .icon,
+      Icons.check_circle,
+    );
     expect(
       tester
           .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Snowboarding'))
@@ -147,7 +161,8 @@ void main() {
           .selected,
       isFalse,
     );
-    expect(find.text('Lifts'), findsOneWidget);
+    expect(find.text('Lifts'), findsNothing);
+    expect(find.text('Where you spend time'), findsNothing);
     expect(activity.currentActivity, AppActivity.snowboarding);
 
     final alpine = find.widgetWithText(ChoiceChip, 'Alpine skiing');
@@ -155,7 +170,18 @@ void main() {
     await tester.tap(alpine);
     await tester.pump();
     expect(directory.searches, 1);
-    expect(find.text('Selected resort: Ål Skisenter'), findsOneWidget);
+    expect(find.text('Selected resort: Ål Skisenter'), findsNothing);
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(
+              of: find.byKey(const ValueKey('resort-141')),
+              matching: find.byType(Icon),
+            ),
+          )
+          .icon,
+      Icons.check_circle,
+    );
     expect(activity.currentActivity, AppActivity.alpineSkiing);
   });
 

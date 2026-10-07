@@ -68,7 +68,9 @@ void main() {
       ),
       '400 m in a straight line',
     );
-    expect(resortResultSubtitle(l10n, _al), '60.63, 8.56');
+    expect(resortResultSubtitle(l10n, _al), isNull);
+    expect(_al.lat, 60.6301);
+    expect(_al.lon, 8.5604);
 
     final nb = lookupAppLocalizations(const Locale('nb'));
     expect(resortResultSubtitle(nb, _hemsedal), '26.7 km i luftlinje');
@@ -259,7 +261,10 @@ void main() {
 
     expect(find.text('Destination'), findsNothing);
     expect(find.text('Avoid motorways'), findsNothing);
-    expect(find.text('Lifts'), findsOneWidget);
+    expect(find.text('Lifts'), findsNothing);
+    expect(find.text('Where you spend time'), findsNothing);
+    expect(find.text('How long are you active?'), findsOneWidget);
+    expect(find.text('Session length'), findsNothing);
     expect(find.text('Resort information from Fnugg.no'), findsOneWidget);
 
     final name = find.byWidgetPredicate(
@@ -271,8 +276,20 @@ void main() {
     await tester.tap(find.text('Ål Skisenter'));
     await tester.pump();
 
-    expect(find.text('Selected resort: Ål Skisenter'), findsOneWidget);
+    expect(find.text('Selected resort: Ål Skisenter'), findsNothing);
+    expect(find.textContaining('60.63'), findsNothing);
     expect(find.text('Ål Skisenter'), findsWidgets);
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(
+              of: find.byKey(const ValueKey('resort-141')),
+              matching: find.byType(Icon),
+            ),
+          )
+          .icon,
+      Icons.check_circle,
+    );
     final analyze = find.widgetWithText(FilledButton, 'Analyze ride');
     await tester.ensureVisible(analyze);
     final button = tester.widget<FilledButton>(analyze);

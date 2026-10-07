@@ -101,7 +101,6 @@ void main() {
                     deviceLocation: FakeDeviceLocationService(),
                     places: _QuietPlaces(),
                     selectedResortId: selectedId,
-                    selectedResortName: selectedName,
                     onOpenAttribution: (uri) async => opened.add(uri),
                     onSelected: (resort) {
                       setState(() {
@@ -135,6 +134,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Resort information from Fnugg.no'), findsOneWidget);
+    expect(find.byType(FnuggAttributionLink), findsOneWidget);
     expect(
       tester
           .widget<FnuggAttributionLink>(
@@ -143,47 +143,35 @@ void main() {
           .uri,
       fnuggHomeUri,
     );
-    expect(
-      tester
-          .widget<FnuggAttributionLink>(
-            find.byKey(const ValueKey('fnugg-resort-link-62')),
-          )
-          .uri,
-      Uri.parse('https://fnugg.no/al/'),
-    );
-    expect(
-      tester
-          .widget<FnuggAttributionLink>(
-            find.byKey(const ValueKey('fnugg-resort-link-9')),
-          )
-          .uri,
-      fnuggHomeUri,
-    );
-
-    final rowLink = tester.widget<Text>(
-      find.descendant(
-        of: find.byKey(const ValueKey('fnugg-resort-link-62')),
-        matching: find.text('Fnugg.no'),
-      ),
-    );
-    expect(rowLink.style?.fontSize, 14);
+    expect(find.byKey(const ValueKey('fnugg-resort-link-62')), findsNothing);
+    expect(find.byKey(const ValueKey('fnugg-resort-link-9')), findsNothing);
+    expect(find.text('Fnugg.no'), findsNothing);
+    expect(find.textContaining('60.63'), findsNothing);
+    expect(find.textContaining('8.56'), findsNothing);
 
     opened.clear();
-    await tester.tap(find.byKey(const ValueKey('fnugg-resort-link-62')));
+    await tester.tap(find.byKey(const Key('fnugg-attribution')));
     await tester.pump();
-    expect(opened, [Uri.parse('https://fnugg.no/al/')]);
+    expect(opened, [fnuggHomeUri]);
     expect(selectedId, isNull);
 
     await tester.tap(find.text('Ål Skisenter'));
     await tester.pump();
     expect(selectedName, 'Ål Skisenter');
+    expect(selectedId, '62');
+    expect(find.text('Selected resort: Ål Skisenter'), findsNothing);
+    expect(find.byKey(const Key('fnugg-selected-link')), findsNothing);
+    expect(find.byType(FnuggAttributionLink), findsOneWidget);
     expect(
       tester
-          .widget<FnuggAttributionLink>(
-            find.byKey(const Key('fnugg-selected-link')),
+          .widget<Icon>(
+            find.descendant(
+              of: find.byKey(const ValueKey('resort-62')),
+              matching: find.byType(Icon),
+            ),
           )
-          .uri,
-      Uri.parse('https://fnugg.no/al/'),
+          .icon,
+      Icons.check_circle,
     );
     expect(find.textContaining('Yr'), findsNothing);
   });
@@ -213,7 +201,6 @@ void main() {
                 deviceLocation: FakeDeviceLocationService(),
                 places: _QuietPlaces(),
                 selectedResortId: '2',
-                selectedResortName: 'SkiStar Trysil',
                 onOpenAttribution: (uri) async => opened.add(uri),
                 onSelected: (_) {},
               ),
@@ -235,27 +222,36 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'Trysil');
     await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(FnuggAttributionLink), findsOneWidget);
     expect(
       tester
           .widget<FnuggAttributionLink>(
-            find.byKey(const ValueKey('fnugg-resort-link-2')),
+            find.byKey(const Key('fnugg-attribution')),
           )
           .uri,
-      Uri.parse('https://fnugg.no/trysil/'),
+      fnuggHomeUri,
     );
+    expect(find.byKey(const ValueKey('fnugg-resort-link-2')), findsNothing);
+    expect(find.byKey(const Key('fnugg-selected-link')), findsNothing);
+    expect(find.text('Valgt skianlegg: SkiStar Trysil'), findsNothing);
+    expect(find.textContaining('61.30'), findsNothing);
+    expect(find.textContaining('12.20'), findsNothing);
     expect(
       tester
-          .widget<FnuggAttributionLink>(
-            find.byKey(const Key('fnugg-selected-link')),
+          .widget<Icon>(
+            find.descendant(
+              of: find.byKey(const ValueKey('resort-2')),
+              matching: find.byType(Icon),
+            ),
           )
-          .uri,
-      Uri.parse('https://fnugg.no/trysil/'),
+          .icon,
+      Icons.check_circle,
     );
 
     opened.clear();
-    await tester.tap(find.byKey(const Key('fnugg-selected-link')));
+    await tester.tap(find.byKey(const Key('fnugg-attribution')));
     await tester.pump();
-    expect(opened, [Uri.parse('https://fnugg.no/trysil/')]);
+    expect(opened, [fnuggHomeUri]);
   });
 
   testWidgets('MET elevation credit is not labeled as Fnugg data', (

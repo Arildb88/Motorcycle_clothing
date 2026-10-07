@@ -168,10 +168,11 @@ void main() {
       );
       expect(alpine.durationMin, 240);
       expect(alpine.usesRoadPreview, isFalse);
+      expect(alpine.inputs.exposure, AlpineExposureMode.hike);
       expect(alpine.recommendQuery('a', when), {
         'routeId': 'a',
         'departureAt': when,
-        'exposure': 'hike',
+        'exposure': 'lift',
       });
       expect(
         alpine.recommendQuery('a', when).containsKey('intensity'),
@@ -310,8 +311,10 @@ void main() {
     expect(find.text('Classic'), findsNothing);
 
     await pump('snowboarding');
-    expect(find.text('Lifts'), findsOneWidget);
-    expect(find.text('Staying at the base'), findsOneWidget);
+    expect(find.text('Lifts'), findsNothing);
+    expect(find.text('Hiking up'), findsNothing);
+    expect(find.text('Staying at the base'), findsNothing);
+    expect(find.text('Where you spend time'), findsNothing);
     expect(find.text('Easy'), findsNothing);
 
     await pump('xc_skiing');

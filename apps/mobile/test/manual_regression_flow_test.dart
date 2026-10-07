@@ -195,12 +195,15 @@ void main() {
     expect(find.text('Resort information from Fnugg.no'), findsOneWidget);
     expect(find.text('Destination'), findsNothing);
     expect(find.text('Avoid motorways'), findsNothing);
-    expect(find.text('Lifts'), findsOneWidget);
+    expect(find.text('Lifts'), findsNothing);
+    expect(find.text('Where you spend time'), findsNothing);
+    expect(find.text('How long are you active?'), findsOneWidget);
     expect(find.byType(RouteMapPreview), findsNothing);
 
     await _pumpPlanner(tester, activityType: 'snowboarding');
     expect(find.text('Ski resort'), findsOneWidget);
-    expect(find.text('Staying at the base'), findsOneWidget);
+    expect(find.text('Staying at the base'), findsNothing);
+    expect(find.text('How long are you active?'), findsOneWidget);
 
     await _pumpPlanner(tester, activityType: 'cycling');
     expect(find.text('Start'), findsWidgets);
@@ -213,6 +216,9 @@ void main() {
     expect(find.text('Destination'), findsWidgets);
     expect(find.text('Classic'), findsWidgets);
     expect(find.text('Avoid motorways'), findsNothing);
+    expect(find.text('Session length'), findsOneWidget);
+    expect(find.text('How long are you active?'), findsNothing);
+    expect(find.text('Lifts'), findsNothing);
   });
 
   testWidgets('hiking is marked unavailable and does not open motorcycle', (

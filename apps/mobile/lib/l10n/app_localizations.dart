@@ -2132,6 +2132,12 @@ abstract class AppLocalizations {
   /// **'Session length'**
   String get plannerSessionLength;
 
+  /// No description provided for @plannerActiveDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'How long are you active?'**
+  String get plannerActiveDuration;
+
   /// No description provided for @activityWhatToday.
   ///
   /// In en, this message translates to:

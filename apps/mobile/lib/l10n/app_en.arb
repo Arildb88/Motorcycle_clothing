@@ -438,6 +438,7 @@
   "plannerBasicJeans": "Jeans",
   "plannerBasicJoggers": "Sweatpants/joggers",
   "plannerSessionLength": "Session length",
+  "plannerActiveDuration": "How long are you active?",
   "activityWhatToday": "What are you doing today?",
   "activityDefaultLine": "Default: {activity}",
   "@activityDefaultLine": {

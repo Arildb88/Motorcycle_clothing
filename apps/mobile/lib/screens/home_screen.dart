@@ -9,7 +9,6 @@ import 'package:motorcycle_clothing/features/activity/activity_home_screen.dart'
 import 'package:motorcycle_clothing/domain/activity.dart';
 import 'package:motorcycle_clothing/features/plan/activity_recommendation_request.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_presentation.dart';
-import 'package:motorcycle_clothing/features/plan/resort_discipline_control.dart';
 import 'package:motorcycle_clothing/features/plan/saved_activity_routes.dart';
 import 'package:motorcycle_clothing/features/plan/recommendation_sections.dart';
 import 'package:motorcycle_clothing/features/plan/commute_plan_screen.dart';
@@ -280,15 +279,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const ActivitySwitcher(),
                   const SizedBox(height: 6),
-                  ResortDisciplineControl(
-                    activityType: context
-                        .watch<ActivityContext>()
-                        .currentActivity
-                        .apiValue,
-                    onChanged: (discipline) => context
-                        .read<ActivityContext>()
-                        .setCurrentActivity(discipline),
-                  ),
                   ActivityPlanningControls(
                     activityType: context
                         .watch<ActivityContext>()
@@ -636,6 +626,10 @@ class _RecommendationBody extends StatelessWidget {
             context,
             view,
             showConfidenceLevel: false,
+            resortSnowLimits: isResortSnowActivity(
+              route['activityType']?.toString() ??
+                  rec['discipline']?.toString(),
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.tonal(

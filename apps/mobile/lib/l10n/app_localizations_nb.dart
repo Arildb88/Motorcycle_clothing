@@ -1161,6 +1161,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get plannerSessionLength => 'Øktlengde';
 
   @override
+  String get plannerActiveDuration => 'Hvor lenge er du aktiv?';
+
+  @override
   String get activityWhatToday => 'Hva skal du gjøre i dag?';
 
   @override

@@ -221,7 +221,6 @@ void main() {
                       deviceLocation: FakeDeviceLocationService(),
                       places: _QuietSearch(),
                       selectedResortId: selected?.id,
-                      selectedResortName: selected?.name,
                       onSelected: (resort) => setState(() => selected = resort),
                     ),
                   ],
@@ -279,7 +278,19 @@ void main() {
       expect(selected?.id, '141');
       expect(selected?.lat, closeTo(60.6301, 0.0001));
       expect(selected?.lon, closeTo(8.5604, 0.0001));
-      expect(find.text('Valgt skianlegg: Ål Skisenter'), findsOneWidget);
+      expect(find.text('Valgt skianlegg: Ål Skisenter'), findsNothing);
+      expect(find.textContaining('60.63'), findsNothing);
+      expect(
+        tester
+            .widget<Icon>(
+              find.descendant(
+                of: find.byKey(const ValueKey('resort-141')),
+                matching: find.byType(Icon),
+              ),
+            )
+            .icon,
+        Icons.check_circle,
+      );
     },
   );
 }

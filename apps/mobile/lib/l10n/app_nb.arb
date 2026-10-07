@@ -436,6 +436,7 @@
   "plannerBasicJeans": "Jeans",
   "plannerBasicJoggers": "Joggebukse",
   "plannerSessionLength": "Øktlengde",
+  "plannerActiveDuration": "Hvor lenge er du aktiv?",
   "activityWhatToday": "Hva skal du gjøre i dag?",
   "activityDefaultLine": "Standard: {activity}",
   "@activityDefaultLine": {

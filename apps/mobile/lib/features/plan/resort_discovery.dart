@@ -12,16 +12,15 @@ import 'package:motorcycle_clothing/services/resorts/resort_directory.dart';
 import 'package:motorcycle_clothing/services/resorts/ski_resort.dart';
 import 'package:motorcycle_clothing/theme/app_theme.dart';
 
-/// Straight-line context for a resort row. Name search falls back to coordinates.
-String resortResultSubtitle(AppLocalizations l10n, SkiResort resort) {
+/// Straight-line distance when the directory measured one.
+/// Coordinates stay on [SkiResort] and are not shown on the card.
+String? resortResultSubtitle(AppLocalizations l10n, SkiResort resort) {
   final meters = resort.straightLineDistanceM;
-  if (meters != null && meters >= 0) {
-    if (meters < 1000) {
-      return l10n.plannerResortStraightLineMeters(meters);
-    }
-    return l10n.plannerResortStraightLineKm((meters / 1000).toStringAsFixed(1));
+  if (meters == null || meters < 0) return null;
+  if (meters < 1000) {
+    return l10n.plannerResortStraightLineMeters(meters);
   }
-  return '${resort.lat.toStringAsFixed(2)}, ${resort.lon.toStringAsFixed(2)}';
+  return l10n.plannerResortStraightLineKm((meters / 1000).toStringAsFixed(1));
 }
 
 /// Name search and nearby discovery for alpine skiing and snowboarding.
@@ -33,7 +32,6 @@ class ResortDiscoverySection extends StatefulWidget {
     required this.places,
     required this.onSelected,
     this.selectedResortId,
-    this.selectedResortName,
     this.onOpenAttribution,
   });
 
@@ -42,7 +40,6 @@ class ResortDiscoverySection extends StatefulWidget {
   final LocationSearchService places;
   final ValueChanged<SkiResort> onSelected;
   final String? selectedResortId;
-  final String? selectedResortName;
   final Future<void> Function(Uri uri)? onOpenAttribution;
 
   @override
@@ -61,8 +58,6 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
   String? _retryQuery;
   ({double lat, double lon})? _retryNearby;
   List<SkiResort> _results = const [];
-  String? _rememberedResortId;
-  String? _rememberedSourceUrl;
 
   @override
   void dispose() {
@@ -214,20 +209,14 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
     };
   }
 
-  String? _sourceForSelected() {
-    final id = widget.selectedResortId;
-    if (id == null || id.isEmpty) return null;
-    for (final resort in _results) {
-      if (resort.id == id && resort.sourceUrl != null) return resort.sourceUrl;
-    }
-    if (_rememberedResortId == id) return _rememberedSourceUrl;
-    return null;
+  void _choose(SkiResort resort) {
+    widget.onSelected(resort);
   }
 
-  void _choose(SkiResort resort) {
-    _rememberedResortId = resort.id;
-    _rememberedSourceUrl = resort.sourceUrl;
-    widget.onSelected(resort);
+  Widget? _distanceSubtitle(AppLocalizations l10n, SkiResort resort) {
+    final subtitle = resortResultSubtitle(l10n, resort);
+    if (subtitle == null) return null;
+    return Text(subtitle);
   }
 
   Widget _attribution(AppLocalizations l10n, {required Uri uri, Key? key}) {
@@ -242,12 +231,9 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final selected = widget.selectedResortName?.trim() ?? '';
     final directoryAttribution = _attribution(
       l10n,
-      uri: _results.isEmpty
-          ? fnuggAttributionUri(_sourceForSelected())
-          : fnuggHomeUri,
+      uri: fnuggHomeUri,
       key: const Key('fnugg-attribution'),
     );
     return Column(
@@ -339,7 +325,7 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
         if (_results.isNotEmpty) ...[
           const SizedBox(height: 8),
           directoryAttribution,
-          for (final resort in _results) ...[
+          for (final resort in _results)
             ListTile(
               key: ValueKey('resort-${resort.id}'),
               contentPadding: EdgeInsets.zero,
@@ -349,26 +335,9 @@ class _ResortDiscoverySectionState extends State<ResortDiscoverySection> {
                     : Icons.downhill_skiing,
               ),
               title: Text(resort.name),
-              subtitle: Text(resortResultSubtitle(l10n, resort)),
+              subtitle: _distanceSubtitle(l10n, resort),
               onTap: () => _choose(resort),
             ),
-            FnuggAttributionLink(
-              key: ValueKey('fnugg-resort-link-${resort.id}'),
-              label: 'Fnugg.no',
-              uri: fnuggAttributionUri(resort.sourceUrl),
-              onOpen: widget.onOpenAttribution,
-            ),
-          ],
-        ],
-        if (selected.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text('${l10n.plannerResortSelected}: $selected'),
-          FnuggAttributionLink(
-            key: const Key('fnugg-selected-link'),
-            label: 'Fnugg.no',
-            uri: fnuggAttributionUri(_sourceForSelected()),
-            onOpen: widget.onOpenAttribution,
-          ),
         ],
       ],
     );

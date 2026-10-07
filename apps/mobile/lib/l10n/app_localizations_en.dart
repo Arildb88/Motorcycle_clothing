@@ -1159,6 +1159,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plannerSessionLength => 'Session length';
 
   @override
+  String get plannerActiveDuration => 'How long are you active?';
+
+  @override
   String get activityWhatToday => 'What are you doing today?';
 
   @override

@@ -228,7 +228,8 @@ Map<String, String> recommendationQuery({
       query['intensity'] = inputs.intensity.apiValue;
     case 'alpine_skiing':
     case 'snowboarding':
-      query['exposure'] = inputs.exposure.apiValue;
+      // Lift-assisted resort sessions. A stored hike or base choice is not sent.
+      query['exposure'] = AlpineExposureMode.lift.apiValue;
     case 'xc_skiing':
       query['intensity'] = inputs.intensity.apiValue;
       final style = inputs.style;
@@ -260,10 +261,8 @@ class ActivityPlanningControls extends StatelessWidget {
     }
     final showIntensity =
         activityType == 'cycling' || activityType == 'xc_skiing';
-    final showExposure =
-        activityType == 'alpine_skiing' || activityType == 'snowboarding';
     final showStyle = activityType == 'xc_skiing';
-    if (!showIntensity && !showExposure && !showStyle) {
+    if (!showIntensity && !showStyle) {
       return const SizedBox.shrink();
     }
 
@@ -283,24 +282,6 @@ class ActivityPlanningControls extends StatelessWidget {
                   selected: inputs.intensity == value,
                   onSelected: (_) =>
                       onChanged(inputs.copyWith(intensity: value)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-        ],
-        if (showExposure) ...[
-          Text(l10n.plannerExposure),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final value in AlpineExposureMode.values)
-                ChoiceChip(
-                  label: Text(exposureModeLabel(l10n, value.apiValue)),
-                  selected: inputs.exposure == value,
-                  onSelected: (_) =>
-                      onChanged(inputs.copyWith(exposure: value)),
                 ),
             ],
           ),
