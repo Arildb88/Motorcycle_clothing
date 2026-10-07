@@ -8,9 +8,9 @@ Cursor must not add a product or implementation task to this file.
 
 ```text
 paused: false
-active_id: SNOWBOARD-LABEL-001
+active_id: THERMAL-ZONE-FEEDBACK-001
 promotion: automatic
-handoff_generation: 51
+handoff_generation: 52
 handoff_state: authorized
 ```
 
@@ -116,6 +116,8 @@ Generation `48` is spent: `CYCLING-WARDROBE-UX-001` was authorized and completed
 Generation `49` is spent: `WARDROBE-REMOVE-SHARING-001` was authorized and completed. The automatic final control update authorizes `PLACE-UNICODE-RESORT-001` at generation `50`. Do not reuse generation `49`. Do not execute `WARDROBE-REMOVE-SHARING-001` again.
 
 Generation `50` is spent: `PLACE-UNICODE-RESORT-001` was authorized and completed. The automatic final control update authorizes `SNOWBOARD-LABEL-001` at generation `51`. Do not reuse generation `50`. Do not execute `PLACE-UNICODE-RESORT-001` again.
+
+Generation `51` is spent: `SNOWBOARD-LABEL-001` was authorized and completed. The automatic final control update authorizes `THERMAL-ZONE-FEEDBACK-001` at generation `52`. Do not reuse generation `51`. Do not execute `SNOWBOARD-LABEL-001` again.
 
 After a from-idle human token is pushed, and before the accepting run claims it, the control block may still show the previous generation, `active_id: none`, and `handoff_state: idle` while `next-task.md` already holds the token. That window is not a second authorization. The token is the authorization. The claim only records ownership.
 
@@ -2088,7 +2090,7 @@ Execution boundaries and verification:
 
 ### SNOWBOARD-LABEL-001
 
-- status: active
+- status: completed
 - title: Use Snowboard instead of Snøbrett in Norwegian UI
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 
@@ -2114,7 +2116,7 @@ Execution boundaries and verification:
 
 ### THERMAL-ZONE-FEEDBACK-001
 
-- status: queued
+- status: active
 - title: Optional torso and legs comfort feedback linked to the actual trip
 - source: Explicitly authorized by Arild in chat on 2026-10-07
 
