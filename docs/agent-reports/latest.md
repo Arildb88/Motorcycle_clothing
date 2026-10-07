@@ -7,7 +7,7 @@
 - Branch: `feature/shared-garment-catalog-001`
 - Implementation commit: `d9e3d138bf824e09fdb24d6678df0e26c8eb8d26`
 - Migration: `apps/api/prisma/migrations/20261007180000_garment_catalogue`
-- PR: against `dev_test` only. Not merged to `dev` or `main`.
+- PR: https://github.com/Arildb88/Motorcycle_clothing/pull/74 into `dev_test` only. Not merged to `dev` or `main`.
 
 ## Result
 
